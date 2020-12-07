@@ -110,10 +110,13 @@ def cleanOWLOntology(ontologyfile='CoreConceptData_ct.ttl'
     return taxonomyclean
 
 
-"""Extracts a taxonomy of toolnames from the tool description."""
 
 
 def extractToolOntology(tooldesc='ToolDescription_ct.ttl'):
+    """
+    Extracts a taxonomy of toolnames from the tool description.
+    """
+
     print('Extract Tool ontology!')
     output = rdflib.Graph()
     tools = load_rdf(rdflib.Graph(), tooldesc)
@@ -121,7 +124,7 @@ def extractToolOntology(tooldesc='ToolDescription_ct.ttl'):
         output.add((o, RDFS.subClassOf, s))
         output.add((s, RDF.type, OWL.Class))
         output.add((o, RDF.type, OWL.Class))
-        #add common upper class for all tool types
+        # add common upper class for all tool types
         output.add((s, RDFS.subClassOf, TOOLS.Tool))
     n_triples(output)
     return output

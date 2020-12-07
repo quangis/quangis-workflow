@@ -18,31 +18,31 @@ CCD = rdflib.Namespace(
     "http://geographicknowledge.de/vocab/CoreConceptData.rdf#")
 
 
-def pipe(tooldescfile='../../ToolRepository/FlowmapDescription.ttl',
-         ontologyfile='../../Ontology/CoreConceptData.ttl',
-         targetfolder='../flowmap'):
+def pipe(tooldescfile='/mnt/c/Users/3689700/repo/QuAnGIS_Simon/ToolRepository/FlowmapDescription.ttl',
+         ontologyfile='/mnt/c/Users/3689700/repo/QuAnGIS_Simon/Ontology/CoreConceptData.ttl',
+         targetfolder='/mnt/c/Users/3689700/repo/QuAnGIS_Simon/WorkflowSynthesis/flowmap'):
 
-    dimnodes = [CCD.CoreConceptQ, CCD.LayerA, CCD.NominalA]
-    dimnodes_fl = [CCD.DType]
+    # dimnodes = [CCD.CoreConceptQ, CCD.LayerA, CCD.NominalA]
+    # dimnodes_fl = [CCD.DType]
     dimnodes_flgraph = [CCD.CoreConceptQ, CCD.LayerA]
-    tooldescfile_fl = '../../ToolRepository/FlowmapDescription_fl.ttl'
-    tooldescfile_flgraph = '../../ToolRepository/FlowmapDescription_flgraph.ttl'
+    # tooldescfile_fl = '/mnt/c/Users/3689700/repo/QuAnGIS_Simon/ToolRepository/FlowmapDescription_fl.ttl'
+    tooldescfile_flgraph = '/mnt/c/Users/3689700/repo/QuAnGIS_Simon/ToolRepository/FlowmapDescription_flgraph.ttl'
 
     # 1) Generates a taxonomy (_tax) version of the ontology as well as of the
     # given tool hierarchy (using rdfs:subClassOf), by applying reasoning and
     # removing all other statements
-    name, ext = os.path.splitext(os.path.basename(tooldescfile))
+    name, ext = os.path.splitext(tooldescfile)
     to = os.path.join(targetfolder,
                       name + "_tax" + ext)  # to='ToolDescription_tax.ttl'
     name, ext = os.path.splitext(os.path.basename(ontologyfile))
     dto = os.path.join(targetfolder,
                        name + "_tax" + ext)  # dto = 'CoreConceptData_tax.ttl'
-    # cleanWfTaxonomy.main(ontologyfile=ontologyfile, tooldesc=tooldescfile, to=to, dto=dto)
+    wf_taxonomy_cleaner.main(ontologyfile=ontologyfile, tooldesc=tooldescfile, to=to, dto=dto)
 
     # 2) Computes a projection of classes to any of a given set of dimensions given by superconcepts in the type taxonomy file
     tax, ext = os.path.splitext(os.path.basename(dto))
-    coretax = os.path.join(targetfolder, tax + '_core' +
-                           ext)  # 'CoreConceptData_tax_core.ttl'
+    # coretax = os.path.join(targetfolder, tax + '_core' +
+    #                       ext)  # 'CoreConceptData_tax_core.ttl'
     # Generates a file 'CoreConceptData_tax_core.ttl' which contains the ontology cleaned from non-core nodes (=not belonging to the core of a dimension)
     # project = projectSemDimensions.main(taxonomy=dto,dimnodes=dimnodes, targetfolder=targetfolder, coretax=coretax)
     # print(project)
