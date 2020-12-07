@@ -9,16 +9,11 @@ inferences. Removes other triples. Used as input for workflow reasoning.
 @license: MIT
 """
 
+from rdfnamespaces import TOOLS, ADA, CCD
+
 import rdflib
 from rdflib.namespace import RDFS, RDF, OWL
 from rdflib import BNode
-
-TOOLS = rdflib.Namespace("http://geographicknowledge.de/vocab/GISTools.rdf#")
-ADA = rdflib.Namespace("http://geographicknowledge.de/vocab/AnalysisData.rdf#")
-CCD = rdflib.Namespace(
-    "http://geographicknowledge.de/vocab/CoreConceptData.rdf#")
-EXT = rdflib.Namespace(
-    "http://geographicknowledge.de/vocab/ExtensiveMeasures.rdf#")
 
 
 def load_rdf(g, rdffile, format='turtle'):

@@ -9,16 +9,13 @@ turns it into an tool description in JSON according to the APE format
 @license: MIT
 """
 
+from rdfnamespaces import TOOLS, WF, CCD
+
 import rdflib
 from rdflib.namespace import RDFS, RDF, OWL
 import os
 
 import json
-
-TOOLS = rdflib.Namespace("http://geographicknowledge.de/vocab/GISTools.rdf#")
-WF = rdflib.Namespace("http://geographicknowledge.de/vocab/Workflow.rdf#")
-CCD = rdflib.Namespace(
-    "http://geographicknowledge.de/vocab/CoreConceptData.rdf#")
 
 # def prettify(elem):
 #     """Return a pretty-printed XML string for the Element.

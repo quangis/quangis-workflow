@@ -20,17 +20,11 @@ set of subsumption relations.
 @license: MIT
 """
 
+from rdfnamespaces import CCD, EXT
+
 import rdflib
 from rdflib.namespace import RDFS, RDF, OWL
 import os
-
-TOOLS = rdflib.Namespace("http://geographicknowledge.de/vocab/GISTools.rdf#")
-WF = rdflib.Namespace("http://geographicknowledge.de/vocab/Workflow.rdf#")
-TEST = rdflib.Namespace("http://www.semanticweb.org/test#")
-CCD = rdflib.Namespace(
-    "http://geographicknowledge.de/vocab/CoreConceptData.rdf#")
-EXT = rdflib.Namespace(
-    "http://geographicknowledge.de/vocab/ExtensiveMeasures.rdf#")
 
 
 def load_rdf(g, rdffile, format='turtle'):

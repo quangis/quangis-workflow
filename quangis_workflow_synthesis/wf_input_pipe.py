@@ -10,12 +10,13 @@ dimensions.
 @license: MIT
 """
 
-import wf_taxonomy_cleaner, tool_annotator, semdim_projector
+from rdfnamespaces import CCD
+import wf_taxonomy_cleaner
+import tool_annotator
+import semdim_projector
+
 import rdflib
 import os
-
-CCD = rdflib.Namespace(
-    "http://geographicknowledge.de/vocab/CoreConceptData.rdf#")
 
 
 def pipe(tooldescfile='/mnt/c/Users/3689700/repo/QuAnGIS_Simon/ToolRepository/FlowmapDescription.ttl',
