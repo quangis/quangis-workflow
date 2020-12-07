@@ -1,14 +1,13 @@
-#-------------------------------------------------------------------------------
-# Name:        Tool Annotator
-# Purpose:      Takes an RDF based specification of tools with typed inputs and outputs
-#               and turns it into an tool description in JSON according to the APE format
-#
-# Author:      Schei008
-#
-# Created:     22-03-2019
-# Copyright:   (c) Schei008 2019
-# Licence:     MIT
-#-------------------------------------------------------------------------------
+# -*- coding: utf-8 -*-
+"""
+Takes an RDF based specification of tools with typed inputs and outputs and
+turns it into an tool description in JSON according to the APE format
+
+@author: Schei008
+@date: 2019-03-22
+@copyright: (c) Schei008 2019
+@licence: MIT
+"""
 
 import rdflib
 from rdflib.namespace import RDFS, RDF, OWL

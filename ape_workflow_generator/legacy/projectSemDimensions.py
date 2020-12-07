@@ -1,16 +1,23 @@
 # -*- coding: utf-8 -*-
 """
-Created on Wed Apr  8 16:23:39 2020
+These methods are used to construct semantic dimensions (subsumption trees) for
+a given list of superconcepts that identify these dimensions. It returns a
+projection function which projects any subsumed node to all given dimensions.
+None is returned if the node cannot be projected to this dimension. The method
+is used to clean  annotations such that we can represent them as a conjunction
+of concepts from different semantic dimensions.
 
-These methods are used to construct semantic dimensions (subsumption trees) for a given list of superconcepts that identify these dimensions.
-It returns a projection function which projects any subsumed node to all given dimensions. None is returned if the node cannot be projected to this dimension.
-The method is used to clean  annotations such that we can represent them as a conjunction of concepts from different semantic dimensions.
-
-Note: Internally, the method turns a subsumption DAG into a tree (getSubsumptionTree). Since this is in general non-unique (see Topological ordering of a DAG),
-the method is deterministic only when the subsumption graph is in its raw form (similar to a tree). It should not be used on subsumption graphs that were 
-closed with reasoning. The graph needs to contain a minimal set of subsumption relations.
+Note: Internally, the method turns a subsumption DAG into a tree
+(getSubsumptionTree). Since this is in general non-unique (see Topological
+ordering of a DAG), the method is deterministic only when the subsumption graph
+is in its raw form (similar to a tree). It should not be used on subsumption
+graphs that were closed with reasoning. The graph needs to contain a minimal
+set of subsumption relations.
 
 @author: Schei008
+@date: 2020-04-08
+@copyright: (c) Schei008 2020
+@licence: MIT
 """
 
 import rdflib

@@ -1,15 +1,14 @@
-#-------------------------------------------------------------------------------
-# Name:        clean Workflow Taxonomy
-# Purpose:      Takes an OWL 2 ontology and adds subClassOf triples by materializing
-#               OWL 2 RL inferences. Removes other triples. Used as input for workflow
-#               reasoning.
-#
-# Author:      Schei008
-#
-# Created:     22-03-2019
-# Copyright:   (c) Schei008 2019
-# Licence:     MIT
-#-------------------------------------------------------------------------------
+# -*- coding: utf-8 -*-
+"""
+Takes an OWL 2 ontology and adds subClassOf triples by materializing OWL 2 RL
+inferences. Removes other triples. Used as input for workflow reasoning.
+
+@author: Schei008
+@date: 2019-03-22
+@copyright: (c) Schei008 2019
+@licence: MIT
+"""
+
 import rdflib
 from rdflib.namespace import RDFS, RDF, OWL
 from rdflib import BNode

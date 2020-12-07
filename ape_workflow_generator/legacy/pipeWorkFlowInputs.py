@@ -1,14 +1,14 @@
-#-------------------------------------------------------------------------------
-# Name:        pipeWorkFlowInput.py
-# Purpose:      generates input data for workflow generator (APE) from a given OWL
-#               data ontology and a given tool annotation file, by projecting classes to ontology dimensions.
-#
-# Author:      Schei008
-#
-# Created:     08-04-2020
-# Copyright:   (c) Schei008 2020
-# Licence:     MIT
-#-------------------------------------------------------------------------------
+# -*- coding: utf-8 -*-
+"""
+Generates input data for workflow generator (APE) from a given OWL data
+ontology and a given tool annotation file, by projecting classes to ontology
+dimensions.
+
+@author: Schei008
+@date: 2020-04-08
+@copyright: (c) Schei008 2020
+@licence: MIT
+"""
 
 import cleanWfTaxonomy, toolannotator, projectSemDimensions
 import rdflib
