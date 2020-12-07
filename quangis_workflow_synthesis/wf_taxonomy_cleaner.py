@@ -6,7 +6,7 @@ inferences. Removes other triples. Used as input for workflow reasoning.
 @author: Schei008
 @date: 2019-03-22
 @copyright: (c) Schei008 2019
-@licence: MIT
+@license: MIT
 """
 
 import rdflib

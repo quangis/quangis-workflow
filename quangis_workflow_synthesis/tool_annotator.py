@@ -6,7 +6,7 @@ turns it into an tool description in JSON according to the APE format
 @author: Schei008
 @date: 2019-03-22
 @copyright: (c) Schei008 2019
-@licence: MIT
+@license: MIT
 """
 
 import rdflib

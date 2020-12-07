@@ -7,7 +7,7 @@ dimensions.
 @author: Schei008
 @date: 2020-04-08
 @copyright: (c) Schei008 2020
-@licence: MIT
+@license: MIT
 """
 
 import wf_taxonomy_cleaner, tool_annotator, semdim_projector
