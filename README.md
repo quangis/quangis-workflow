@@ -1,4 +1,4 @@
-ape-workflow-generator
+quangis-workflow-synthesis
 ===============================================================================
 
 This is a wrapper around [APE](https://github.com/sanctuuary/APE). 
@@ -10,6 +10,6 @@ a description of the functionality by means of a CCT algebra expression in
 which those input/output types occur as variables.
 
 APE needs the [CCD 
-ontology](https://github.com/simonscheider/QuAnGIS/tree/master/Ontology) and 
-the [tool 
-annotations](https://github.com/simonscheider/QuAnGIS/tree/master/ToolRepository).
+ontology](https://github.com/simonscheider/QuAnGIS/tree/master/Ontology/CoreConceptData.ttl) 
+and the [tool 
+annotations](https://github.com/simonscheider/QuAnGIS/tree/master/ToolRepository/ToolDescription.ttl).
