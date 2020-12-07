@@ -10,7 +10,7 @@ dimensions.
 @licence: MIT
 """
 
-import cleanWfTaxonomy, toolannotator, projectSemDimensions
+import wf_taxonomy_cleaner, tool_annotator, semdim_projector
 import rdflib
 import os
 
