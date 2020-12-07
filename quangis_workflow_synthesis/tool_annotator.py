@@ -48,8 +48,8 @@ def setprefixes(g):
 
 
 def load_rdf(g, rdffile, format='turtle'):
-    #print("load_ontologies")
-    #print("  Load RDF file: "+fn)
+    # print("load_ontologies")
+    # print("  Load RDF file: "+fn)
     g.parse(rdffile, format=format)
     n_triples(g)
     return g
@@ -74,9 +74,6 @@ def shortURInames(URI):
         return URI
 
 
-"""Returns a list of types of some tool input/output which are all projected to given semantic dimension"""
-
-
 def getinoutypes(g,
                  predicate,
                  subject,
@@ -85,6 +82,11 @@ def getinoutypes(g,
                  dim,
                  mainprefix,
                  dodowncast=False):
+    """
+    Returns a list of types of some tool input/output which are all projected
+    to given semantic dimension
+    """
+
     inoutput = g.value(predicate=predicate, subject=subject, any=False)
     if not inoutput:
         raise Exception(
@@ -95,12 +97,12 @@ def getinoutypes(g,
         if outputtype is not None and outputtype in project:
             if project[outputtype][dimix] is not None:
                 outputtypes.append(project[outputtype][dimix])
-    if dodowncast:  #Downcast is used to enforce leaf nodes for types. Is used to make annotations as specific as possible, used only for output nodes
+    if dodowncast:  # Downcast is used to enforce leaf nodes for types. Is used to make annotations as specific as possible, used only for output nodes
         outputtypes = [downcast(t) for t in outputtypes]
     out = [
         shortURInames(t) if str(mainprefix) in t else t for t in outputtypes
     ]
-    if out == []:  #In case there is no type, just use the highest level type of the corresponding dimension
+    if out == []:  # In case there is no type, just use the highest level type of the corresponding dimension
         if dodowncast:
             out = [shortURInames(downcast(dim))]
         else:
@@ -108,11 +110,13 @@ def getinoutypes(g,
     return out
 
 
-"""Read the tool annotations from the TTL file, project them to semantic dimensions and return a string
-representation in JSON format that APE understands."""
-
-
 def getToollistasDict(toolsinrdf, project, dimnodes, mainprefix):
+    """
+    Read the tool annotations from the TTL file, project them to semantic
+    dimensions and return a string representation in JSON format that APE
+    understands.
+    """
+
     toollist = {'functions': []}
     trdf = load_rdf(rdflib.Graph(), toolsinrdf)
     trdf = setprefixes(trdf)
@@ -140,7 +144,7 @@ def getToollistasDict(toolsinrdf, project, dimnodes, mainprefix):
                         dim,
                         mainprefix,
                         dodowncast=True
-                    )  #Tool outputs should always be downcasted
+                    )  # Tool outputs should always be downcasted
                 outputs += [d]
 
         name = shortURInames(t)
@@ -154,7 +158,8 @@ def getToollistasDict(toolsinrdf, project, dimnodes, mainprefix):
 
 
 def downcast(node):
-    #A function that downcasts certain nodes to identifiable leafnodes. This is good practice to prevent APE from considering too many subnodes
+    # A function that downcasts certain nodes to identifiable leafnodes. This
+    # is good practice to prevent APE from considering too many subnodes
     if node == CCD.NominalA:
         return CCD.PlainNominalA
     elif node == CCD.OrdinalA:
@@ -167,7 +172,7 @@ def downcast(node):
         return node
 
 
-shortenURIs = True  #Parameter should be set to true
+shortenURIs = True  # Parameter should be set to true
 
 
 def main(toolsinrdf,
@@ -175,14 +180,17 @@ def main(toolsinrdf,
          dimnodes,
          mainprefix=CCD,
          targetfolder='../test'):
-    """Read tool annotations from TTL file, project them with the projection function, convert it to a dictionary that
-    APE understands, and write it to a JSON file."""
+    """
+    Read tool annotations from TTL file, project them with the projection
+    function, convert it to a dictionary that APE understands, and write it to
+    a JSON file.
+    """
 
     dict_form = getToollistasDict(toolsinrdf, project, dimnodes, mainprefix)
     outpath = os.path.join(
         targetfolder,
         os.path.splitext(os.path.basename(toolsinrdf))[0] + ".json")
-    #outpath = os.path.splitext(toolsinrdf)[0]+".json"
+    # outpath = os.path.splitext(toolsinrdf)[0]+".json"
     with open(outpath, 'w') as f:
         json.dump(dict_form, f, sort_keys=True, indent=2)
 

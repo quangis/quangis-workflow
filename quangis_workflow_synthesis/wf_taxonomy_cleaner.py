@@ -19,10 +19,11 @@ CCD = rdflib.Namespace(
     "http://geographicknowledge.de/vocab/CoreConceptData.rdf#")
 EXT = rdflib.Namespace(
     "http://geographicknowledge.de/vocab/ExtensiveMeasures.rdf#")
-"""Helper stuff"""
 
 
 def load_rdf(g, rdffile, format='turtle'):
+    """Helper stuff"""
+
     #print("load_ontologies")
     #print("  Load RDF file: "+fn)
     g.parse(rdffile, format=format)
@@ -30,10 +31,8 @@ def load_rdf(g, rdffile, format='turtle'):
     return g
 
 
-"""Reasoning stuff"""
-
-
 def run_inferences(g):
+    """Reasoning stuff"""
     #print('run_inferences')
     # expand deductive closure
     #owlrl.DeductiveClosure(owlrl.OWLRL_Semantics).expand(g)
@@ -69,11 +68,16 @@ def n_triples(g, n=None):
 #        if subsumedby(concept, dim, graph):
 #            nodim+=1
 #    return nodim
-"""This method takes some ontology in Turtle and returns a taxonomy (consisting only of rdfs:subClassOf statements)"""
 
 
 def cleanOWLOntology(ontologyfile='CoreConceptData_ct.ttl'
                      ):  #This takes the combined types version as input
+
+    """
+    This method takes some ontology in Turtle and returns a taxonomy
+    (consisting only of rdfs:subClassOf statements)
+    """
+
     print('Clean OWL ontology!')
     ccdontology = load_rdf(rdflib.Graph(), ontologyfile)
     print('Running inferences:')

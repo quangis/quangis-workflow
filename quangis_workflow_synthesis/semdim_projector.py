@@ -31,12 +31,14 @@ CCD = rdflib.Namespace(
     "http://geographicknowledge.de/vocab/CoreConceptData.rdf#")
 EXT = rdflib.Namespace(
     "http://geographicknowledge.de/vocab/ExtensiveMeasures.rdf#")
-"""Helper stuff"""
 
 
 def load_rdf(g, rdffile, format='turtle'):
-    #print("load_ontologies")
-    #print("  Load RDF file: "+fn)
+    """
+    Helper stuff
+    """
+    # print("load_ontologies")
+    # print("  Load RDF file: "+fn)
     g.parse(rdffile, format=format)
     n_triples(g)
     return g
@@ -51,11 +53,13 @@ def n_triples(g, n=None):
     return len(g)
 
 
-"""This method takes a taxonomy (a graph of raw subsumption relations) and an arbitrary root and generates 
-a tree with unique parent relations towards the root for each node. Uses rdflib's built in get_tree. Note: not unique!"""
-
-
 def getSubsumptionTree2(g, root, leafnodes):
+    """
+    This method takes a taxonomy (a graph of raw subsumption relations) and an
+    arbitrary root and generates a tree with unique parent relations towards
+    the root for each node. Uses rdflib's built in get_tree. Note: not unique!
+    """
+
     print("Root node: " + root)
     tuplelisttree = rdflib.util.get_tree(g, root, RDFS.subClassOf)
     distance = {}
@@ -64,7 +68,7 @@ def getSubsumptionTree2(g, root, leafnodes):
 
     count = 0
     tuple = tuplelisttree
-    #print(tuplelisttree)
+    # print(tuplelisttree)
     traverse(tuple, count, distance, parent, visitednodes)
 
     print("size of tree: " + str(len(distance.keys())))
@@ -93,10 +97,11 @@ def backtrack(parent, leaf):
         print(node)
 
 
-"""Measures the size of a taxonomy's set of nodes and determines the leafnodes"""
-
-
 def measureTaxonomy(g):
+    """
+    Measures the size of a taxonomy's set of nodes and determines the leafnodes
+    """
+
     leafnodes = set()
     nodes = list(g.subjects(predicate=RDFS.subClassOf, object=None))
     count = 0
@@ -105,16 +110,19 @@ def measureTaxonomy(g):
         if not (None, RDFS.subClassOf, node) in g:
             leafnodes.add(node)
     print("size of taxonomy without roots: " + str(count))
-    #print("leafnodes: "+str(leafnodes))
+    # print("leafnodes: "+str(leafnodes))
     return (nodes, leafnodes)
 
 
-"""This method projects given nodes to all dimensions given as a list of dimensions (as subsumption trees). 
-Any node that is subsumed by at least one tree can be projected to the closest parent in that tree which belongs to its core. 
-The index of the list indicates the dimension. If a node cannot be projected to a given dimension, then project maps to None."""
-
-
 def project2Dimensions(nodes, listoftrees):
+    """
+    This method projects given nodes to all dimensions given as a list of
+    dimensions (as subsumption trees). Any node that is subsumed by at least
+    one tree can be projected to the closest parent in that tree which belongs
+    to its core. The index of the list indicates the dimension. If a node
+    cannot be projected to a given dimension, then project maps to None.
+    """
+
     project = {}
     notcore = set()
     for n in nodes:
@@ -135,10 +143,11 @@ def project2Dimensions(nodes, listoftrees):
     return (project, notcore)
 
 
-"""Determines whether a given node is at the core of a dimension (i.e. not subsumed by any other dimension)"""
-
-
 def dimcore(n, parent, idxc, listoftrees):
+    """
+    Determines whether a given node is at the core of a dimension (i.e. not
+    subsumed by any other dimension)
+    """
     out = True
     for idx, tree in enumerate(listoftrees):
         if idx != idxc:
@@ -158,7 +167,7 @@ def shortURInames(URI):
         return os.path.basename(os.path.splitext(URI)[0])
 
 
-#To test the correctness of the class projection based on a list of examples
+# To test the correctness of the class projection based on a list of examples
 def test(project):
     testnodes = [
         CCD.ExistenceRaster, CCD.RasterA, CCD.FieldRaster, CCD.ExistenceVector,
@@ -196,10 +205,13 @@ def test(project):
             print("node not present!")
 
 
-"""This method generates a taxonomy where nodes intersecting with more than one dimension (= not core) are removed. This is needed because APE should reason only within any of the dimensions."""
-
-
 def getcoretaxonomy(g, notcore, out='CoreConceptData_tax_core.ttl'):
+    """
+    This method generates a taxonomy where nodes intersecting with more than
+    one dimension (= not core) are removed. This is needed because APE should
+    reason only within any of the dimensions.
+    """
+
     outgraph = rdflib.Graph()
     for (s, p, o) in g.triples((None, RDFS.subClassOf, None)):
         if s not in notcore:
@@ -207,22 +219,24 @@ def getcoretaxonomy(g, notcore, out='CoreConceptData_tax_core.ttl'):
     outgraph.serialize(destination=out, format='turtle')
 
 
-"""This method takes some (subsumption) taxonomy and a list of supertypes for each dimension. It constructs a tree for each dimension and
- returns a projection of all nodes that intersect with one of these dimensions into the core of the dimension. It also generates a corresponding core taxonomy (containing only core classes for each dimension)"""
-
-
 def main(taxonomy='CoreConceptData_tax.ttl',
          dimnodes=[CCD.CoreConceptQ, CCD.LayerA, CCD.NominalA],
          targetfolder='../test',
          coretax='CoreConceptData_tax_core.ttl'):
-    """Read taxonomy and generate tree."""
+    """
+    This method takes some (subsumption) taxonomy and a list of supertypes for
+    each dimension. It constructs a tree for each dimension and returns a
+    projection of all nodes that intersect with one of these dimensions into
+    the core of the dimension. It also generates a corresponding core taxonomy
+    (containing only core classes for each dimension)
+    """
     g = load_rdf(rdflib.Graph(), taxonomy)
     (nodes, leafnodes) = measureTaxonomy(g)
     listofdimtrees = []
     for dim in dimnodes:
         listofdimtrees.append(getSubsumptionTree2(g, dim, leafnodes))
     (project, notcore) = project2Dimensions(nodes, listofdimtrees)
-    #test(project)
+    # test(project)
     getcoretaxonomy(g, notcore, out=coretax)
     return project
 
