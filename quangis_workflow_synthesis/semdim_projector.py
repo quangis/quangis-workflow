@@ -4,7 +4,7 @@ These methods are used to construct semantic dimensions (subsumption trees) for
 a given list of superconcepts that identify these dimensions. It returns a
 projection function which projects any subsumed node to all given dimensions.
 None is returned if the node cannot be projected to this dimension. The method
-is used to clean  annotations such that we can represent them as a conjunction
+is used to clean annotations such that we can represent them as a conjunction
 of concepts from different semantic dimensions.
 
 Note: Internally, the method turns a subsumption DAG into a tree
@@ -199,7 +199,7 @@ def test(project):
             print("node not present!")
 
 
-def getcoretaxonomy(g, notcore, out='CoreConceptData_tax_core.ttl'):
+def getcoretaxonomy(g, notcore): # , out='CoreConceptData_tax_core.ttl'
     """
     This method generates a taxonomy where nodes intersecting with more than
     one dimension (= not core) are removed. This is needed because APE should
@@ -214,8 +214,8 @@ def getcoretaxonomy(g, notcore, out='CoreConceptData_tax_core.ttl'):
     # outgraph.serialize(destination=out, format='turtle')
 
 
-def main(taxonomy, # ='CoreConceptData_tax.ttl',
-         dimnodes=[CCD.CoreConceptQ, CCD.LayerA, CCD.NominalA]): # coretax='CoreConceptData_tax_core.ttl'):
+def main(taxonomy,  # ='CoreConceptData_tax.ttl',
+         dimnodes=[CCD.CoreConceptQ, CCD.LayerA, CCD.NominalA]):  # coretax='CoreConceptData_tax_core.ttl'):
     """
     This method takes some (subsumption) taxonomy and a list of supertypes for
     each dimension. It constructs a tree for each dimension and returns a
@@ -231,8 +231,7 @@ def main(taxonomy, # ='CoreConceptData_tax.ttl',
         listofdimtrees.append(getSubsumptionTree2(g, dim, leafnodes))
     (project, notcore) = project2Dimensions(nodes, listofdimtrees)
     # test(project)
-    getcoretaxonomy(g, notcore)
-    return project
+    return (getcoretaxonomy(g, notcore), project)
 
 
 if __name__ == '__main__':
