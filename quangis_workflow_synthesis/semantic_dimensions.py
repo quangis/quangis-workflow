@@ -20,7 +20,7 @@ set of subsumption relations.
 @license: MIT
 """
 
-from rdfnamespaces import CCD, EXT
+from rdf_namespaces import CCD, EXT
 
 import rdflib
 from rdflib.namespace import RDFS, RDF, OWL

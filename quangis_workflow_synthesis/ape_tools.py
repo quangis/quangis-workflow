@@ -9,20 +9,10 @@ turns it into an tool description in JSON according to the APE format
 @license: MIT
 """
 
-from rdfnamespaces import TOOLS, WF, CCD
+from rdf_namespaces import TOOLS, WF, CCD
 
-import rdflib
-from rdflib.namespace import RDFS, RDF, OWL
+from rdflib.namespace import RDF
 import os
-
-import json
-
-# def prettify(elem):
-#     """Return a pretty-printed XML string for the Element.
-#     """
-#     rough_string = ElementTree.tostring(elem, 'utf-8')
-#     reparsed = minidom.parseString(rough_string)
-#     return reparsed.toprettyxml(indent="  ")
 
 
 def setprefixes(g):
@@ -105,21 +95,24 @@ def getinoutypes(g,
     return out
 
 
-def getToollistasDict(trdf, project, dimnodes, mainprefix):
+def rdf2ape(trdf, project, dimnodes, mainprefix=CCD):
     """
     Read the tool annotations from the TTL file, project them to semantic
     dimensions and return a string representation in JSON format that APE
     understands.
     """
+    """
+    Read tool annotations from TTL file, project them with the projection
+    function, convert it to a dictionary that APE understands, and write it to
+    a JSON file.
+    """
 
     toollist = {'functions': []}
-    # trdf = load_rdf(rdflib.Graph(), toolsinrdf)
     trdf = setprefixes(trdf)
-    tools = [tool for tool in trdf.objects(None, TOOLS.implements)]
-    for t in tools:
+    for t in trdf.objects(None, TOOLS.implements):
         inputs = []
         for p in [WF.input1, WF.input2, WF.input3]:
-            if trdf.value(subject=t, predicate=p, default=None) != None:
+            if trdf.value(subject=t, predicate=p, default=None) is not None:
                 d = {}
                 for ix, dim in enumerate(dimnodes):
                     d[shortURInames(dim)] = getinoutypes(
@@ -127,7 +120,7 @@ def getToollistasDict(trdf, project, dimnodes, mainprefix):
                 inputs += [d]
         outputs = []
         for p in [WF.output, WF.output2, WF.output3]:
-            if trdf.value(subject=t, predicate=p, default=None) != None:
+            if trdf.value(subject=t, predicate=p, default=None) is not None:
                 d = {}
                 for ix, dim in enumerate(dimnodes):
                     d[shortURInames(dim)] = getinoutypes(
@@ -168,28 +161,3 @@ def downcast(node):
 
 
 shortenURIs = True  # Parameter should be set to true
-
-
-def main(tools_ontology,
-         project,
-         dimnodes,
-         mainprefix=CCD,
-         targetpath='../test'):
-    """
-    Read tool annotations from TTL file, project them with the projection
-    function, convert it to a dictionary that APE understands, and write it to
-    a JSON file.
-    """
-
-    dict_form = getToollistasDict(tools_ontology, project, dimnodes, mainprefix)
-    outpath = targetpath
-    #os.path.join(
-    #    targetfolder,
-    #    os.path.splitext(os.path.basename(toolsinrdf))[0] + ".json")
-    # outpath = os.path.splitext(toolsinrdf)[0]+".json"
-    with open(outpath, 'w') as f:
-        json.dump(dict_form, f, sort_keys=True, indent=2)
-
-
-if __name__ == '__main__':
-    main()

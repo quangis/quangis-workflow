@@ -9,7 +9,7 @@ inferences. Removes other triples. Used as input for workflow reasoning.
 @license: MIT
 """
 
-from rdfnamespaces import TOOLS, ADA, CCD
+from rdf_namespaces import TOOLS, ADA, CCD
 
 import rdflib
 from rdflib.namespace import RDFS, RDF, OWL
