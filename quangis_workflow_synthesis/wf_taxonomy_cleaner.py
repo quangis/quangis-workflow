@@ -65,16 +65,16 @@ def n_triples(g, n=None):
 #    return nodim
 
 
-def cleanOWLOntology(ontologyfile='CoreConceptData_ct.ttl'
-                     ):  #This takes the combined types version as input
+def cleanOWLOntology(ccdontology): # ontologyfile='CoreConceptData_ct.ttl'
+                     # ):  #This takes the combined types version as input
 
     """
     This method takes some ontology in Turtle and returns a taxonomy
     (consisting only of rdfs:subClassOf statements)
     """
 
-    print('Clean OWL ontology!')
-    ccdontology = load_rdf(rdflib.Graph(), ontologyfile)
+    # print('Clean OWL ontology!')
+    # ccdontology = load_rdf(rdflib.Graph(), ontologyfile)
     print('Running inferences:')
     ccdontology = run_inferences(ccdontology)
     taxonomy = rdflib.Graph()
@@ -107,14 +107,14 @@ def cleanOWLOntology(ontologyfile='CoreConceptData_ct.ttl'
 
 
 
-def extractToolOntology(tooldesc='ToolDescription_ct.ttl'):
+def extractToolOntology(tools): # tooldesc='ToolDescription_ct.ttl'):
     """
     Extracts a taxonomy of toolnames from the tool description.
     """
 
     print('Extract Tool ontology!')
     output = rdflib.Graph()
-    tools = load_rdf(rdflib.Graph(), tooldesc)
+    # tools = load_rdf(rdflib.Graph(), tooldesc)
     for (s, p, o) in tools.triples((None, TOOLS.implements, None)):
         output.add((o, RDFS.subClassOf, s))
         output.add((s, RDF.type, OWL.Class))

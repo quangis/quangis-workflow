@@ -41,10 +41,8 @@ def setprefixes(g):
     return g
 
 
-"""Helper stuff"""
-
-
 def load_rdf(g, rdffile, format='turtle'):
+    """Helper stuff"""
     # print("load_ontologies")
     # print("  Load RDF file: "+fn)
     g.parse(rdffile, format=format)
@@ -107,7 +105,7 @@ def getinoutypes(g,
     return out
 
 
-def getToollistasDict(toolsinrdf, project, dimnodes, mainprefix):
+def getToollistasDict(trdf, project, dimnodes, mainprefix):
     """
     Read the tool annotations from the TTL file, project them to semantic
     dimensions and return a string representation in JSON format that APE
@@ -115,7 +113,7 @@ def getToollistasDict(toolsinrdf, project, dimnodes, mainprefix):
     """
 
     toollist = {'functions': []}
-    trdf = load_rdf(rdflib.Graph(), toolsinrdf)
+    # trdf = load_rdf(rdflib.Graph(), toolsinrdf)
     trdf = setprefixes(trdf)
     tools = [tool for tool in trdf.objects(None, TOOLS.implements)]
     for t in tools:
@@ -172,21 +170,22 @@ def downcast(node):
 shortenURIs = True  # Parameter should be set to true
 
 
-def main(toolsinrdf,
+def main(tools_ontology,
          project,
          dimnodes,
          mainprefix=CCD,
-         targetfolder='../test'):
+         targetpath='../test'):
     """
     Read tool annotations from TTL file, project them with the projection
     function, convert it to a dictionary that APE understands, and write it to
     a JSON file.
     """
 
-    dict_form = getToollistasDict(toolsinrdf, project, dimnodes, mainprefix)
-    outpath = os.path.join(
-        targetfolder,
-        os.path.splitext(os.path.basename(toolsinrdf))[0] + ".json")
+    dict_form = getToollistasDict(tools_ontology, project, dimnodes, mainprefix)
+    outpath = targetpath
+    #os.path.join(
+    #    targetfolder,
+    #    os.path.splitext(os.path.basename(toolsinrdf))[0] + ".json")
     # outpath = os.path.splitext(toolsinrdf)[0]+".json"
     with open(outpath, 'w') as f:
         json.dump(dict_form, f, sort_keys=True, indent=2)
