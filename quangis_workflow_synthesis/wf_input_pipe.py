@@ -13,7 +13,7 @@ dimensions.
 from rdfnamespaces import CCD
 import wf_taxonomy_cleaner
 import tool_annotator
-import semdim_projector
+import semantic_dimensions
 
 import rdflib
 import os
@@ -40,36 +40,30 @@ def main():
     tax_types = wf_taxonomy_cleaner.cleanOWLOntology(ont_types)
     tax_tools = wf_taxonomy_cleaner.extractToolOntology(ont_tools)
 
-    # For comparison with old output
-    tax_types.serialize(destination="build/CoreConceptData_tax.ttl", format="turtle")
-    tax_tools.serialize(destination="build/FlowmapDescription_tax.ttl", format="turtle")
-
     # Computes a projection of classes to any of a given set of dimensions
     # given by superconcepts in the type taxonomy file. Generates a file
     # 'CoreConceptData_tax_core.ttl' which contains the ontology cleaned from
     # non-core nodes (=not belonging to the core of a dimension)
 
-    # dimnodes = [CCD.CoreConceptQ, CCD.LayerA, CCD.NominalA]
-    # dimnodes_fl = [CCD.DType]
-    dimnodes_flgraph = [CCD.CoreConceptQ, CCD.LayerA]
-    (tax_types_core_fl, project) = semdim_projector.main(taxonomy=tax_types, dimnodes=dimnodes_flgraph)
+    dimensions = semantic_dimensions.FLATGRAPH
 
-    # For comparison with old output
-    tax_types_core_fl.serialize(destination="build/CoreConceptData_tax_core_flgraph.ttl", format="turtle")
+    (tax_types_core_fl, projection) = semantic_dimensions.project(taxonomy=tax_types, dimnodes=dimensions)
 
     # Combine tool & type taxonomies
-    final = rdflib.Graph()
-    final += tax_tools
-    final += tax_types_core_fl
-    final.serialize(destination="build/GISTaxonomy_flgraph.rdf", format="application/rdf+xml")
+    (tax_tools + tax_types_core_fl).serialize(destination="build/GISTaxonomy_flgraph.rdf", format="application/rdf+xml")
 
     # Generate JSON version of the tool annotations with the projected classes,
     # to be used as APE input with the full taxonomy
     tool_annotator.main(tooldesc_flgraph,
-                        project,
-                        dimnodes_flgraph,
+                        projection,
+                        dimensions,
                         mainprefix=CCD,
                         targetpath="build/FlowmapDescription_flgraph.json")
+
+    # For comparison with old output
+    # tax_types.serialize(destination="build/CoreConceptData_tax.ttl", format="turtle")
+    # tax_tools.serialize(destination="build/FlowmapDescription_tax.ttl", format="turtle")
+    # tax_types_core_fl.serialize(destination="build/CoreConceptData_tax_core_flgraph.ttl", format="turtle")
 
 
 if __name__ == '__main__':

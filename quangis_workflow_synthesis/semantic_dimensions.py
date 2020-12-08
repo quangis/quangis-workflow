@@ -26,6 +26,10 @@ import rdflib
 from rdflib.namespace import RDFS, RDF, OWL
 import os
 
+CORE = [CCD.CoreConceptQ, CCD.LayerA, CCD.NominalA]
+FLAT = [CCD.DType]
+FLATGRAPH = [CCD.CoreConceptQ, CCD.LayerA]
+
 
 def load_rdf(g, rdffile, format='turtle'):
     """
@@ -214,8 +218,8 @@ def getcoretaxonomy(g, notcore): # , out='CoreConceptData_tax_core.ttl'
     # outgraph.serialize(destination=out, format='turtle')
 
 
-def main(taxonomy,  # ='CoreConceptData_tax.ttl',
-         dimnodes=[CCD.CoreConceptQ, CCD.LayerA, CCD.NominalA]):  # coretax='CoreConceptData_tax_core.ttl'):
+def project(taxonomy,
+            dimnodes=[CCD.CoreConceptQ, CCD.LayerA, CCD.NominalA]):
     """
     This method takes some (subsumption) taxonomy and a list of supertypes for
     each dimension. It constructs a tree for each dimension and returns a
@@ -223,16 +227,11 @@ def main(taxonomy,  # ='CoreConceptData_tax.ttl',
     the core of the dimension. It also generates a corresponding core taxonomy
     (containing only core classes for each dimension)
     """
-    # g = load_rdf(rdflib.Graph(), taxonomy)
-    g = taxonomy
-    (nodes, leafnodes) = measureTaxonomy(g)
+    (nodes, leafnodes) = measureTaxonomy(taxonomy)
     listofdimtrees = []
     for dim in dimnodes:
-        listofdimtrees.append(getSubsumptionTree2(g, dim, leafnodes))
-    (project, notcore) = project2Dimensions(nodes, listofdimtrees)
-    # test(project)
-    return (getcoretaxonomy(g, notcore), project)
+        listofdimtrees.append(getSubsumptionTree2(taxonomy, dim, leafnodes))
+    (projection, notcore) = project2Dimensions(nodes, listofdimtrees)
+    # test(projection)
+    return (getcoretaxonomy(taxonomy, notcore), projection)
 
-
-if __name__ == '__main__':
-    main()
