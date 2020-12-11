@@ -31,13 +31,13 @@ def ape_config(outdir, ontology_file, tools_file):
     """
 
     return {
+      "solutions_dir_path": outdir,
+      "ontology_path": ontology_file,
+      "tool_annotations_path": tools_file,
       "ontologyPrexifIRI": "http://geographicknowledge.de/vocab/"
                            "CoreConceptData.rdf#",
       "toolsTaxonomyRoot": "http://geographicknowledge.de/vocab/"
                            "GISTools.rdf#Tool",
-      "solutions_dir_path": outdir,
-      "ontology_path": ontology_file,
-      "tool_annotations_path": tools_file,
       "dataDimensionsTaxonomyRoots": [
         "CoreConceptQ",
         "LayerA",
@@ -86,13 +86,13 @@ def wfsyn(types,
     # Generates a taxonomy version of the ontology as well as of the given tool
     # hierarchy (using rdfs:subClassOf), by applying reasoning and removing all
     # other statements
-    types_tax = taxonomy.cleanOWLOntology(types)
+    types_tax = taxonomy.cleanOWLOntology(types, dimensions)
     tools_tax = taxonomy.extractToolOntology(tools)
 
     # Computes a projection of classes to any of a given set of dimensions
     # given by superconcepts in the type taxonomy file, and clear the ontology
     # from non-core nodes
-    types, projection = \
+    _, projection = \
         semantic_dimensions.project(taxonomy=types_tax, dimnodes=dimensions)
 
     # Combine tool & type taxonomies

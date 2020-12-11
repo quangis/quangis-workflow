@@ -26,26 +26,27 @@ def run_inferences(g):
 
 
 # Checks if concept is subsumed by concept in graph
-# def subsumedby(concept, superconcept, graph):
-#    out = False
-#    for s in graph.objects(subject=concept, predicate=RDFS.subClassOf):
-#        if s == superconcept:
-#            out= True
-#        else:
-#            out = subsumedby(s,superconcept,graph)
-#        if out:
-#            break
-#    return out
-#
-# def testDimensionality(concept,dimnodes,graph):
-#    nodim = 0
-#    for dim in dimnodes:
-#        if subsumedby(concept, dim, graph):
-#            nodim+=1
-#    return nodim
+def subsumedby(concept, superconcept, graph):
+    out = False
+    for s in graph.objects(subject=concept, predicate=RDFS.subClassOf):
+        if s == superconcept:
+            out = True
+        else:
+            out = subsumedby(s, superconcept, graph)
+        if out:
+            break
+    return out
 
 
-def cleanOWLOntology(ccdontology):
+def testDimensionality(concept, dimnodes, graph):
+    nodim = 0
+    for dim in dimnodes:
+        if subsumedby(concept, dim, graph):
+            nodim += 1
+    return nodim
+
+
+def cleanOWLOntology(ccdontology, dimnodes):
     """
     This method takes some ontology in Turtle and returns a taxonomy
     (consisting only of rdfs:subClassOf statements)
@@ -59,22 +60,20 @@ def cleanOWLOntology(ccdontology):
 
     logging.info("Extracting subClassOf triples...")
     taxonomy = rdflib.Graph()
-    taxonomy += ccdontology.triples(
-        (None, RDFS.subClassOf,
-         None))  # keeping only subClassOf statements and classes
+    taxonomy += ccdontology.triples((None, RDFS.subClassOf, None))
     taxonomy += ccdontology.triples((None, RDF.type, OWL.Class))
     logging.debug("Number of triples: {}".format(len(taxonomy)))
 
     logging.debug("Cleaning blank node triples, loops, and nodes"
                   "intersecting more than one dimension")
     taxonomyclean = rdflib.Graph()
-    for (
-            s, p, o
-    ) in taxonomy:  # removing triples that stem from blanknodes and loops
-        if type(s) != BNode and type(o) != BNode:
-            if s != o and s != OWL.Nothing:
-                # if p==RDFS.subClassOf: #Removing nodes intersecting with more or less than one of the given dimensions
-                #   if testDimensionality(s,dimnodes,taxonomy)==1:
+    for (s, p, o) in taxonomy:
+        if type(s) != BNode and type(o) != BNode \
+                and s != o and s != OWL.Nothing:
+            # Removing nodes intersecting with more or less than one of the
+            # given dimensions
+            # p == RDFS.subClassOf and
+            if testDimensionality(s, dimnodes, taxonomy) == 1:
                 taxonomyclean.add((s, p, o))
     logging.debug("Number of triples: {}".format(len(taxonomyclean)))
 
