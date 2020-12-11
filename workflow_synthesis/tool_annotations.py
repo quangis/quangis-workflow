@@ -13,6 +13,7 @@ from rdf_namespaces import TOOLS, WF, CCD
 
 from rdflib.namespace import RDF
 import os
+import logging
 
 
 def setprefixes(g):
@@ -64,12 +65,16 @@ def getinoutypes(g,
         if outputtype is not None and outputtype in project:
             if project[outputtype][dimix] is not None:
                 outputtypes.append(project[outputtype][dimix])
-    if dodowncast:  # Downcast is used to enforce leaf nodes for types. Is used to make annotations as specific as possible, used only for output nodes
+    if dodowncast:
+        # Downcast is used to enforce leaf nodes for types. Is used to make
+        # annotations as specific as possible, used only for output nodes
         outputtypes = [downcast(t) for t in outputtypes]
     out = [
         shortURInames(t) if str(mainprefix) in t else t for t in outputtypes
     ]
-    if out == []:  # In case there is no type, just use the highest level type of the corresponding dimension
+    # In case there is no type, just use the highest level type of the
+    # corresponding dimension
+    if out == []:
         if dodowncast:
             out = [shortURInames(downcast(dim))]
         else:
@@ -79,17 +84,12 @@ def getinoutypes(g,
 
 def rdf2ape(trdf, project, dimnodes, mainprefix=CCD):
     """
-    Read the tool annotations from the TTL file, project them to semantic
-    dimensions and return a string representation in JSON format that APE
-    understands.
-    """
-    """
-    Read tool annotations from TTL file, project them with the projection
-    function, convert it to a dictionary that APE understands, and write it to
-    a JSON file.
+    Project tool annotations with the projection function, convert it to a
+    dictionary that APE understands
     """
 
-    toollist = {'functions': []}
+    logging.info("Converting RDF tool annotations to APE format...")
+    toollist = []
     trdf = setprefixes(trdf)
     for t in trdf.objects(None, TOOLS.implements):
         inputs = []
@@ -117,19 +117,23 @@ def rdf2ape(trdf, project, dimnodes, mainprefix=CCD):
                     )  # Tool outputs should always be downcasted
                 outputs += [d]
 
-        name = shortURInames(t)
-        toolobj = {'id': t, 'label': name}
-        toolobj['inputs'] = inputs
-        toolobj['outputs'] = outputs
-        toolobj['taxonomyOperations'] = [t]
-        toollist['functions'].append(toolobj)
-        print(toolobj)
-    return toollist
+        toollist.append({
+            'id': t,
+            'label': shortURInames(t),
+            'inputs': inputs,
+            'outputs': outputs,
+            'taxonomyOperations': [t]
+        })
+        logging.debug("Adding tool {}".format(t))
+    return {"functions": toollist}
 
 
 def downcast(node):
-    # A function that downcasts certain nodes to identifiable leafnodes. This
-    # is good practice to prevent APE from considering too many subnodes
+    """
+    Downcast certain nodes to identifiable leafnodes. APE has a closed world
+    assumption, in that it considers the set of leaf nodes it knows about as
+    exhaustive: it will never consider parent nodes as valid answers.
+    """
     if node == CCD.NominalA:
         return CCD.PlainNominalA
     elif node == CCD.OrdinalA:

@@ -86,17 +86,17 @@ def wfsyn(types,
     # Generates a taxonomy version of the ontology as well as of the given tool
     # hierarchy (using rdfs:subClassOf), by applying reasoning and removing all
     # other statements
-    types = taxonomy.cleanOWLOntology(types)
-    tools = taxonomy.extractToolOntology(tools)
+    types_tax = taxonomy.cleanOWLOntology(types)
+    tools_tax = taxonomy.extractToolOntology(tools)
 
     # Computes a projection of classes to any of a given set of dimensions
     # given by superconcepts in the type taxonomy file, and clear the ontology
     # from non-core nodes
     types, projection = \
-        semantic_dimensions.project(taxonomy=types, dimnodes=dimensions)
+        semantic_dimensions.project(taxonomy=types_tax, dimnodes=dimensions)
 
     # Combine tool & type taxonomies
-    taxonomies = tools + types
+    taxonomies = tools_tax + types_tax
 
     # Transform tool annotations with the projected classes into APE input
     tools_ape = tool_annotations.rdf2ape(tools, projection, dimensions)
