@@ -34,6 +34,7 @@ def ape_config(outdir, ontology_file, tools_file):
       "solutions_dir_path": outdir,
       "ontology_path": ontology_file,
       "tool_annotations_path": tools_file,
+      "constraints_path": os.path.join(outdir, "..", "data", "constraints.json"),
       "ontologyPrexifIRI": "http://geographicknowledge.de/vocab/"
                            "CoreConceptData.rdf#",
       "toolsTaxonomyRoot": "http://geographicknowledge.de/vocab/"
