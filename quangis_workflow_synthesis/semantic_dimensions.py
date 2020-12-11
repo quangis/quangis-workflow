@@ -23,32 +23,13 @@ set of subsumption relations.
 from rdf_namespaces import CCD, EXT
 
 import rdflib
-from rdflib.namespace import RDFS, RDF, OWL
+from rdflib.namespace import RDFS
 import os
+import logging
 
 CORE = [CCD.CoreConceptQ, CCD.LayerA, CCD.NominalA]
 FLAT = [CCD.DType]
 FLATGRAPH = [CCD.CoreConceptQ, CCD.LayerA]
-
-
-def load_rdf(g, rdffile, format='turtle'):
-    """
-    Helper stuff
-    """
-    # print("load_ontologies")
-    # print("  Load RDF file: "+fn)
-    g.parse(rdffile, format=format)
-    n_triples(g)
-    return g
-
-
-def n_triples(g, n=None):
-    """ Prints the number of triples in graph g """
-    if n is None:
-        print(('  Triples: ' + str(len(g))))
-    else:
-        print(('  Triples: +' + str(len(g) - n)))
-    return len(g)
 
 
 def getSubsumptionTree2(g, root, leafnodes):
@@ -58,7 +39,7 @@ def getSubsumptionTree2(g, root, leafnodes):
     the root for each node. Uses rdflib's built in get_tree. Note: not unique!
     """
 
-    print("Root node: " + root)
+    logging.debug("Root node: {}".format(root))
     tuplelisttree = rdflib.util.get_tree(g, root, RDFS.subClassOf)
     distance = {}
     parent = {}
@@ -66,15 +47,13 @@ def getSubsumptionTree2(g, root, leafnodes):
 
     count = 0
     tuple = tuplelisttree
-    # print(tuplelisttree)
     traverse(tuple, count, distance, parent, visitednodes)
 
-    print("size of tree: " + str(len(distance.keys())))
-    depth = max(distance.values())
-    print("depth of tree: " + str(depth))
+    logging.debug("Size of tree: {}".format(len(distance.keys())))
+    logging.debug("Depth of tree: {}".format(max(distance.values())))
     for n in leafnodes.intersection(visitednodes):
-        print(distance[n])
-        print(n)
+        logging.debug(distance[n])
+        logging.debug(n)
         backtrack(parent, n)
     return (distance, parent)
 
@@ -92,7 +71,7 @@ def backtrack(parent, leaf):
     node = leaf
     while node in parent.keys() and node is not None:
         node = parent[node]
-        print(node)
+        logging.debug(node)
 
 
 def measureTaxonomy(g):
@@ -107,8 +86,7 @@ def measureTaxonomy(g):
         count += 1
         if not (None, RDFS.subClassOf, node) in g:
             leafnodes.add(node)
-    print("size of taxonomy without roots: " + str(count))
-    # print("leafnodes: "+str(leafnodes))
+    logging.debug("size of taxonomy without roots: {}".format(count))
     return (nodes, leafnodes)
 
 
@@ -131,12 +109,12 @@ def project2Dimensions(nodes, listoftrees):
             p = None
             if n in distance.keys():
                 p = n
-                #p needs to belong to the core of the given dimension (tree)
+                # p needs to belong to the core of the given dimension (tree)
                 while not dimcore(p, parent, idx, listoftrees):
                     notcore.add(p)
                     p = parent[p]
             project[n].append(p)
-    #remove nodes that cannot be projected in any way
+    # remove nodes that cannot be projected in any way
     project = {key: val for key, val in project.items() if set(val) != {None}}
     return (project, notcore)
 
@@ -203,7 +181,7 @@ def test(project):
             print("node not present!")
 
 
-def getcoretaxonomy(g, notcore): # , out='CoreConceptData_tax_core.ttl'
+def getcoretaxonomy(g, notcore):
     """
     This method generates a taxonomy where nodes intersecting with more than
     one dimension (= not core) are removed. This is needed because APE should

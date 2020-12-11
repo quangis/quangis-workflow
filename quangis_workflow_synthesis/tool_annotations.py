@@ -31,25 +31,7 @@ def setprefixes(g):
     return g
 
 
-def load_rdf(g, rdffile, format='turtle'):
-    """Helper stuff"""
-    # print("load_ontologies")
-    # print("  Load RDF file: "+fn)
-    g.parse(rdffile, format=format)
-    n_triples(g)
-    return g
-
-
-def n_triples(g, n=None):
-    """ Prints the number of triples in graph g """
-    if n is None:
-        print(('  Triples: ' + str(len(g))))
-    else:
-        print(('  Triples: +' + str(len(g) - n)))
-    return len(g)
-
-
-def shortURInames(URI):
+def shortURInames(URI, shortenURIs=True):
     if shortenURIs:
         if "#" in URI:
             return URI.split('#')[1]
@@ -158,6 +140,3 @@ def downcast(node):
         return CCD.PlainRatioA
     else:
         return node
-
-
-shortenURIs = True  # Parameter should be set to true

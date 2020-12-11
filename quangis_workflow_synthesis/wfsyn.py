@@ -22,6 +22,7 @@ import os.path
 import subprocess
 import argparse
 import json
+import logging
 
 
 def ape_config(outdir, ontology_file, tools_file):
@@ -115,7 +116,7 @@ if __name__ == '__main__':
                         help="path to APE .jar executable")
 
     parser.add_argument('-o', '--output',
-                        default="build",
+                        default=os.path.join(ROOT_DIR, "build"),
                         help="output directory")
 
     parser.add_argument('--types',
@@ -124,7 +125,15 @@ if __name__ == '__main__':
     parser.add_argument('--tools',
                         help="tool annotations in RDF")
 
+    parser.add_argument('--logging',
+                        choices=['debug', 'info', 'warning', 'error',
+                                 'critical'],
+                        default='info',
+                        help="Level of information logged to the terminal")
+   
     args = parser.parse_args()
+
+    logging.basicConfig(level=getattr(logging, args.logging.upper()))
 
     if not args.ape:
         args.ape = download_if_missing(
@@ -133,10 +142,10 @@ if __name__ == '__main__':
                 "APE-1.0.2-executable.jar")
 
     if not args.types:
-        #args.types = download_if_missing(
+        # args.types = download_if_missing(
         #    path=os.path.join(args.output, "CoreConceptData.rdf"),
         #    url="http://geographicknowledge.de/vocab/CoreConceptData.rdf"
-        #)
+        # )
         args.types = download_if_missing(
             path=os.path.join(args.output, "CoreConceptData.ttl"),
             url="https://raw.githubusercontent.com/simonscheider/QuAnGIS/"
