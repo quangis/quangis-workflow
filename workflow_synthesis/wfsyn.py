@@ -81,7 +81,7 @@ def ape_config(outdir, ontology_file, tools_file):
 
 def wfsyn(types,
           tools,
-          dimensions=semantic_dimensions.FLATGRAPH):
+          dimensions=semantic_dimensions.CORE):
 
     # Generates a taxonomy version of the ontology as well as of the given tool
     # hierarchy (using rdfs:subClassOf), by applying reasoning and removing all

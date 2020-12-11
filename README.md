@@ -10,15 +10,16 @@ added. Tool annotations contain CCD types for the input and output, as well as
 a description of the functionality by means of a CCT algebra expression in 
 which those input/output types occur as variables.
 
-The program takes as input a [CCD 
+The program takes as input the [CCD 
 ontology](https://github.com/simonscheider/QuAnGIS/tree/master/Ontology/CoreConceptData.ttl) 
-and suitable [tool 
-annotations](https://github.com/simonscheider/QuAnGIS/tree/master/ToolRepository/ToolDescription.ttl). 
-It translates them to a format APE understands.
+and [annotated 
+tools](https://github.com/simonscheider/QuAnGIS/tree/master/ToolRepository/ToolDescription.ttl). 
+It translates them to a format APE understands and then runs APE on them.
 
 Example run:
 
     wfsyn.py \
+        --logging=debug \
         --ape APE-executable-1.0.2.jar \
         --tools ToolDescription.rdf \
         --types CoreConceptData.rdf
