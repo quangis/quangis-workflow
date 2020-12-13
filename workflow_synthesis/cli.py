@@ -16,6 +16,7 @@ When run on its own, this is a command-line interface to the APE wrapper.
 import taxonomy
 import semantic_dimensions
 import ape
+from rdf_namespaces import CCD
 from utils import load_rdf, download_if_missing
 
 import os.path
@@ -112,11 +113,17 @@ if __name__ == '__main__':
                 "master/ToolRepository/ToolDescription.ttl"
         )
 
+    dimensions = semantic_dimensions.CORE
+
     # Prepare data files needed by APE
     taxonomy_file = os.path.join(args.output, "GISTaxonomy.rdf")
     tools_file = os.path.join(args.output, "ToolDescription.json")
 
-    tax, tools = wfsyn(types=load_rdf(args.types), tools=load_rdf(args.tools))
+    tax, tools = wfsyn(
+        types=load_rdf(args.types),
+        tools=load_rdf(args.tools),
+        dimensions=dimensions)
+
     tax.serialize(destination=taxonomy_file, format='xml')
     with open(tools_file, 'w') as f:
         json.dump(tools, f, sort_keys=True, indent=2)
@@ -127,7 +134,32 @@ if __name__ == '__main__':
         configuration=ape.configuration(
             output_directory=args.output,
             ontology_path=taxonomy_file,
-            tool_annotations_path=tools_file
+            tool_annotations_path=tools_file,
+            dimensions=dimensions,
+            inputs=[
+                {
+                    CCD.CoreConceptQ: CCD.ObjectQ,
+                    CCD.LayerA: CCD.VectorTessellationA,
+                    CCD.NominalA: CCD.PlainNominalA
+                },
+                {
+                    CCD.CoreConceptQ: CCD.ObjectQ,
+                    CCD.LayerA: CCD.VectorTessellationA,
+                    CCD.NominalA: CCD.PlainNominalA
+                },
+                {
+                    CCD.CoreConceptQ: CCD.ObjectQ,
+                    CCD.LayerA: CCD.PointA,
+                    CCD.NominalA: CCD.PlainNominalA
+                }
+            ],
+            outputs=[
+                {
+                    CCD.CoreConceptQ: CCD.ObjectQ,
+                    CCD.LayerA: [CCD.VectorA, CCD.TessellationA],
+                    CCD.NominalA: CCD.CountA
+                }
+            ]
         )
     )
 

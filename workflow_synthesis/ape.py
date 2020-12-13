@@ -20,6 +20,7 @@ import logging
 import subprocess
 import tempfile
 import json
+from six.moves.urllib.parse import urldefrag
 
 
 def shortURInames(URI, shortenURIs=True):
@@ -136,60 +137,59 @@ def downcast(node):
         return node
 
 
+def frag(node):
+    return urldefrag(node).fragment
+
+
+def prepare_io(entries):
+    """
+    Transform input and outputs specifications to the format expected by APE.
+    """
+
+    return [
+            {
+                frag(dimension):
+                    [frag(c) for c in ontology_class]
+                    if type(ontology_class) == list else
+                    [frag(ontology_class)]
+                for dimension, ontology_class in entry.items()
+            }
+            for entry in entries
+        ]
+
+
 def configuration(
-        output_directory, ontology_path, tool_annotations_path):
-    # , dimensions, inputs, outputs):
+        output_directory,
+        ontology_path,
+        tool_annotations_path,
+        dimensions,
+        inputs,
+        outputs):
     """
     Prepare a dictionary containing APE configuration.
     """
 
     return {
-      "solutions_dir_path": output_directory,
-      "ontology_path": ontology_path,
-      "tool_annotations_path": tool_annotations_path,
-      "constraints_path": os.path.join(output_directory, "..", "data", "constraints.json"),
-      "ontologyPrexifIRI": "http://geographicknowledge.de/vocab/"
-                           "CoreConceptData.rdf#",
-      "toolsTaxonomyRoot": "http://geographicknowledge.de/vocab/"
-                           "GISTools.rdf#Tool",
-      "dataDimensionsTaxonomyRoots": [
-        "CoreConceptQ",
-        "LayerA",
-        "NominalA"
-      ],
-      "shared_memory": "true",
-      "solution_length": {"min": 1, "max": 10},
-      "max_solutions": "5",
-      "number_of_execution_scripts": "0",
-      "number_of_generated_graphs": "5",
-      "inputs": [
-        {
-            "CoreConceptQ": ["ObjectQ"],
-            "LayerA": ["VectorTessellationA"],
-            "NominalA": ["PlainNominalA"]
-        },
-        {
-            "CoreConceptQ": ["ObjectQ"],
-            "LayerA": ["VectorTessellationA"],
-            "NominalA": ["PlainNominalA"]
-        },
-        {
-            "CoreConceptQ": ["ObjectQ"],
-            "LayerA": ["PointA"],
-            "NominalA": ["PlainNominalA"]
-        }
-      ],
-      "outputs": [
-        {
-            "CoreConceptQ": ["ObjectQ"],
-            "LayerA": ["VectorA", "TessellationA"],
-            "NominalA": ["CountA"]
-        }
-      ],
-      "debug_mode": "true",
-      "use_workflow_input": "all",
-      "use_all_generated_data": "all",
-      "tool_seq_repeat": "false"
+        "solutions_dir_path": output_directory,
+        "ontology_path": ontology_path,
+        "tool_annotations_path": tool_annotations_path,
+        "constraints_path": os.path.join(output_directory, "..", "data", "constraints.json"),
+        "ontologyPrexifIRI": "http://geographicknowledge.de/vocab/"
+                             "CoreConceptData.rdf#",
+        "toolsTaxonomyRoot": "http://geographicknowledge.de/vocab/"
+                             "GISTools.rdf#Tool",
+        "dataDimensionsTaxonomyRoots": [frag(iri) for iri in dimensions],
+        "shared_memory": "true",
+        "solution_length": {"min": 1, "max": 10},
+        "max_solutions": "5",
+        "number_of_execution_scripts": "0",
+        "number_of_generated_graphs": "5",
+        "inputs": prepare_io(inputs),
+        "outputs": prepare_io(outputs),
+        "debug_mode": "true",
+        "use_workflow_input": "all",
+        "use_all_generated_data": "all",
+        "tool_seq_repeat": "false"
     }
 
 
