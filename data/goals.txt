@@ -5,11 +5,11 @@ ccd:FieldQ, ccd:RasterA, ccd:IntervalA
 ccd:FieldQ, ccd:RasterA, ccd:RatioA
 
 ccd:ObjectQ, ccd:VectorTessellationA, ccd:IntervalA
-ccd:ObjectQ, ccd:VectorTessellationA, exm:ERA
-ccd:ObjectQ, ccd:VectorTessellationA, exm:IRA
+ccd:ObjectQ, ccd:VectorTessellationA, em:ERA
+ccd:ObjectQ, ccd:VectorTessellationA, em:IRA
 ccd:ObjectQ, ccd:VectorTessellationA, ccd:CountA
 
 ccd:ObjectQ, ccd:PlainVectorRegionA, ccd:IntervalA
-ccd:ObjectQ, ccd:PlainVectorRegionA, exm:ERA
-ccd:ObjectQ, ccd:PlainVectorRegionA, exm:IRA
+ccd:ObjectQ, ccd:PlainVectorRegionA, em:ERA
+ccd:ObjectQ, ccd:PlainVectorRegionA, em:IRA
 ccd:ObjectQ, ccd:PlainVectorRegionA, ccd:CountA

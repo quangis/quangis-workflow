@@ -10,7 +10,7 @@ TEST = rdflib.Namespace("http://www.semanticweb.org/test#")
 CCD = rdflib.Namespace(_gk+"CoreConceptData.rdf#")
 TOOLS = rdflib.Namespace(_gk+"GISTools.rdf#")
 ADA = rdflib.Namespace(_gk+"AnalysisData.rdf#")
-EXT = rdflib.Namespace(_gk+"ExtensiveMeasures.rdf#")
+EM = rdflib.Namespace(_gk+"ExtensiveMeasures.rdf#")
 WF = rdflib.Namespace(_gk+"Workflow.rdf#")
 
 

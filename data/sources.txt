@@ -15,23 +15,23 @@ ccd:AmountQ, ccd:PointA, ccd:CountA, 				#Count Vector
 ccd:ObjectQ, ccd:VectorTessellationA, ccd:PlainNominalA, 	#Lattice
 ccd:ObjectQ, ccd:VectorTessellationA, ccd:PlainOrdinalA, 	#Lattice
 ccd:ObjectQ, ccd:VectorTessellationA, ccd:PlainIntervalA, 	#Lattice
-ccd:ObjectQ, ccd:VectorTessellationA, exm:ERA,			#Lattice
-ccd:ObjectQ, ccd:VectorTessellationA, exm:IRA,			#Lattice
+ccd:ObjectQ, ccd:VectorTessellationA, em:ERA,			#Lattice
+ccd:ObjectQ, ccd:VectorTessellationA, em:IRA,			#Lattice
 ccd:ObjectQ, ccd:VectorTessellationA, ccd:PlainRatioA,		#Lattice
 ccd:ObjectQ, ccd:VectorTessellationA, ccd:CountA,		#Lattice
 
 ccd:ObjectQ, ccd:PlainVectorRegionA, ccd:PlainNominalA, 	#ObjectRegion
 ccd:ObjectQ, ccd:PlainVectorRegionA, ccd:PlainOrdinalA, 	#ObjectRegion
 ccd:ObjectQ, ccd:PlainVectorRegionA, ccd:PlainIntervalA, 	#ObjectRegion
-ccd:ObjectQ, ccd:PlainVectorRegionA, exm:ERA,			#ObjectRegion
-ccd:ObjectQ, ccd:PlainVectorRegionA, exm:IRA,			#ObjectRegion
+ccd:ObjectQ, ccd:PlainVectorRegionA, em:ERA,			#ObjectRegion
+ccd:ObjectQ, ccd:PlainVectorRegionA, em:IRA,			#ObjectRegion
 ccd:ObjectQ, ccd:PlainVectorRegionA, ccd:PlainRatioA,		#ObjectRegion
 ccd:ObjectQ, ccd:PlainVectorRegionA, ccd:CountA,		#ObjectRegion
 
 ccd:ObjectQ, ccd:PointA, ccd:PlainNominalA, 			#ObjectPoint
 ccd:ObjectQ, ccd:PointA, ccd:PlainOrdinalA, 			#ObjectPoint
 ccd:ObjectQ, ccd:PointA, ccd:PlainIntervalA, 			#ObjectPoint
-ccd:ObjectQ, ccd:PointA, exm:ERA,				#ObjectPoint
-ccd:ObjectQ, ccd:PointA, exm:IRA,				#ObjectPoint
+ccd:ObjectQ, ccd:PointA, em:ERA,				#ObjectPoint
+ccd:ObjectQ, ccd:PointA, em:IRA,				#ObjectPoint
 ccd:ObjectQ, ccd:PointA, ccd:PlainRatioA,			#ObjectPoint
 ccd:ObjectQ, ccd:PointA, ccd:CountA				#ObjectPoint

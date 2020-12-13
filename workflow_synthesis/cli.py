@@ -16,7 +16,7 @@ When run on its own, this is a command-line interface to the APE wrapper.
 import taxonomy
 import semantic_dimensions
 import ape
-from rdf_namespaces import CCD
+import rdf_namespaces
 from utils import load_rdf, download_if_missing
 
 import os.path
@@ -50,6 +50,19 @@ def wfsyn(types,
     return taxonomies, tools_ape
 
 
+def ns(n):
+    """
+    Quick way to convert strings to namespaces
+    """
+    n = n.strip()
+    if n == "ccd":
+        return rdf_namespaces.CCD
+    elif n == "em":
+        return rdf_namespaces.EM
+    else:
+        print(n)
+
+
 def test(path, dimensions):
     """
     Quick testing function with the provided data.
@@ -61,7 +74,7 @@ def test(path, dimensions):
             cs = line.split(",")
             if len(cs) >= 3:
                 cur.append({
-                    dimensions[i]: CCD[cs[i].strip()[4:]]
+                    dimensions[i]: ns(cs[i].split(":")[0])[cs[i].split(":")[1].strip()]
                     for i in range(0, 3)
                 })
             else:
