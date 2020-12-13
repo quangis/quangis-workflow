@@ -38,7 +38,7 @@ def subsumedby(concept, superconcept, graph):
     return out
 
 
-def testDimensionality(concept, dimnodes, graph):
+def dimensionality(concept, dimnodes, graph):
     nodim = 0
     for dim in dimnodes:
         if subsumedby(concept, dim, graph):
@@ -46,7 +46,7 @@ def testDimensionality(concept, dimnodes, graph):
     return nodim
 
 
-def cleanOWLOntology(ccdontology, dimnodes):
+def clean_owl_ontology(ccdontology, dimnodes):
     """
     This method takes some ontology in Turtle and returns a taxonomy
     (consisting only of rdfs:subClassOf statements)
@@ -73,7 +73,7 @@ def cleanOWLOntology(ccdontology, dimnodes):
             # Removing nodes intersecting with more or less than one of the
             # given dimensions
             # p == RDFS.subClassOf and
-            if testDimensionality(s, dimnodes, taxonomy) == 1:
+            if dimensionality(s, dimnodes, taxonomy) == 1:
                 taxonomyclean.add((s, p, o))
     logging.debug("Number of triples: {}".format(len(taxonomyclean)))
 
@@ -85,7 +85,7 @@ def cleanOWLOntology(ccdontology, dimnodes):
     return taxonomyclean
 
 
-def extractToolOntology(tools):
+def extract_tool_ontology(tools):
     """
     Extracts a taxonomy of toolnames from the tool description.
     """

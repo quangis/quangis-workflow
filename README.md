@@ -18,7 +18,7 @@ It translates them to a format APE understands and then runs APE on them.
 
 Example run:
 
-    wfsyn.py \
+    python3 workflow_synthesis/cli.py \
         --logging=debug \
         --ape APE-executable-1.0.2.jar \
         --tools ToolDescription.rdf \

@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 """
+Python wrapper for APE.
+
 Takes an RDF based specification of tools with typed inputs and outputs and
 turns it into an tool description in JSON according to the APE format
 
@@ -9,27 +11,15 @@ turns it into an tool description in JSON according to the APE format
 @license: MIT
 """
 
+import rdf_namespaces
 from rdf_namespaces import TOOLS, WF, CCD
 
 from rdflib.namespace import RDF
 import os
 import logging
-
-
-def setprefixes(g):
-    g.bind('foaf', 'http://xmlns.com/foaf/0.1/')
-    g.bind('ccd', 'http://geographicknowledge.de/vocab/CoreConceptData.rdf#')
-    g.bind('owl', 'http://www.w3.org/2002/07/owl#')
-    g.bind('rdf', 'http://www.w3.org/1999/02/22-rdf-syntax-ns#')
-    g.bind('xml', 'http://www.w3.org/XML/1998/namespace')
-    g.bind('xsd', 'http://www.w3.org/2001/XMLSchema#')
-    g.bind('rdfs', 'http://www.w3.org/2000/01/rdf-schema#')
-    g.bind('em', 'http://geographicknowledge.de/vocab/ExtensiveMeasures.rdf#')
-    g.bind('ada', 'http://geographicknowledge.de/vocab/AnalysisData.rdf#')
-    g.bind('wf', 'http://geographicknowledge.de/vocab/Workflow.rdf#')
-    g.bind('gis', 'http://geographicknowledge.de/vocab/GISConcepts.rdf#')
-    g.bind('tools', 'http://geographicknowledge.de/vocab/GISTools.rdf#')
-    return g
+import subprocess
+import tempfile
+import json
 
 
 def shortURInames(URI, shortenURIs=True):
@@ -82,7 +72,7 @@ def getinoutypes(g,
     return out
 
 
-def rdf2ape(trdf, project, dimnodes, mainprefix=CCD):
+def tool_annotations(trdf, project, dimnodes, mainprefix=CCD):
     """
     Project tool annotations with the projection function, convert it to a
     dictionary that APE understands
@@ -90,7 +80,7 @@ def rdf2ape(trdf, project, dimnodes, mainprefix=CCD):
 
     logging.info("Converting RDF tool annotations to APE format...")
     toollist = []
-    trdf = setprefixes(trdf)
+    trdf = rdf_namespaces.setprefixes(trdf)
     for t in trdf.objects(None, TOOLS.implements):
         inputs = []
         for p in [WF.input1, WF.input2, WF.input3]:
@@ -144,3 +134,78 @@ def downcast(node):
         return CCD.PlainRatioA
     else:
         return node
+
+
+def configuration(
+        output_directory, ontology_path, tool_annotations_path):
+    # , dimensions, inputs, outputs):
+    """
+    Prepare a dictionary containing APE configuration.
+    """
+
+    return {
+      "solutions_dir_path": output_directory,
+      "ontology_path": ontology_path,
+      "tool_annotations_path": tool_annotations_path,
+      "constraints_path": os.path.join(output_directory, "..", "data", "constraints.json"),
+      "ontologyPrexifIRI": "http://geographicknowledge.de/vocab/"
+                           "CoreConceptData.rdf#",
+      "toolsTaxonomyRoot": "http://geographicknowledge.de/vocab/"
+                           "GISTools.rdf#Tool",
+      "dataDimensionsTaxonomyRoots": [
+        "CoreConceptQ",
+        "LayerA",
+        "NominalA"
+      ],
+      "shared_memory": "true",
+      "solution_length": {"min": 1, "max": 10},
+      "max_solutions": "5",
+      "number_of_execution_scripts": "0",
+      "number_of_generated_graphs": "5",
+      "inputs": [
+        {
+            "CoreConceptQ": ["ObjectQ"],
+            "LayerA": ["VectorTessellationA"],
+            "NominalA": ["PlainNominalA"]
+        },
+        {
+            "CoreConceptQ": ["ObjectQ"],
+            "LayerA": ["VectorTessellationA"],
+            "NominalA": ["PlainNominalA"]
+        },
+        {
+            "CoreConceptQ": ["ObjectQ"],
+            "LayerA": ["PointA"],
+            "NominalA": ["PlainNominalA"]
+        }
+      ],
+      "outputs": [
+        {
+            "CoreConceptQ": ["ObjectQ"],
+            "LayerA": ["VectorA", "TessellationA"],
+            "NominalA": ["CountA"]
+        }
+      ],
+      "debug_mode": "true",
+      "use_workflow_input": "all",
+      "use_all_generated_data": "all",
+      "tool_seq_repeat": "false"
+    }
+
+
+def run(executable, configuration):
+    """
+    Run APE.
+
+    @param executable: Path to APE jar-file.
+    @param configuration: Dictionary representing APE configuration object.
+    """
+
+    tmp = tempfile.mkdtemp(prefix="ape-")
+    config_path = os.path.join(tmp, "ape.config")
+    with open(config_path, 'w') as f:
+        json.dump(configuration, f)
+    subprocess.call(["java", "-jar", executable, config_path])
+    os.remove(config_path)
+    os.rmdir(tmp)
+
