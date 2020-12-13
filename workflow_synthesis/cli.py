@@ -50,6 +50,28 @@ def wfsyn(types,
     return taxonomies, tools_ape
 
 
+def test(path, dimensions):
+    """
+    Quick testing function with the provided data.
+    """
+    sets = []
+    cur = []
+    with open(path) as f:
+        for line in f.readlines():
+            cs = line.split(",")
+            if len(cs) >= 3:
+                cur.append({
+                    dimensions[i]: CCD[cs[i].strip()[4:]]
+                    for i in range(0, 3)
+                })
+            else:
+                sets.append(cur)
+                cur = []
+    if cur:
+        sets.append(cur)
+    return sets
+
+
 if __name__ == '__main__':
 
     ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -128,38 +150,23 @@ if __name__ == '__main__':
     with open(tools_file, 'w') as f:
         json.dump(tools, f, sort_keys=True, indent=2)
 
+    # Quick
+    input_sets = test("data/sources.txt", dimensions)
+    output_sets = test("data/goals.txt", dimensions)
+
     # Run APE
-    ape.run(
-        executable=args.ape,
-        configuration=ape.configuration(
-            output_directory=args.output,
-            ontology_path=taxonomy_file,
-            tool_annotations_path=tools_file,
-            dimensions=dimensions,
-            inputs=[
-                {
-                    CCD.CoreConceptQ: CCD.ObjectQ,
-                    CCD.LayerA: CCD.VectorTessellationA,
-                    CCD.NominalA: CCD.PlainNominalA
-                },
-                {
-                    CCD.CoreConceptQ: CCD.ObjectQ,
-                    CCD.LayerA: CCD.VectorTessellationA,
-                    CCD.NominalA: CCD.PlainNominalA
-                },
-                {
-                    CCD.CoreConceptQ: CCD.ObjectQ,
-                    CCD.LayerA: CCD.PointA,
-                    CCD.NominalA: CCD.PlainNominalA
-                }
-            ],
-            outputs=[
-                {
-                    CCD.CoreConceptQ: CCD.ObjectQ,
-                    CCD.LayerA: [CCD.VectorA, CCD.TessellationA],
-                    CCD.NominalA: CCD.CountA
-                }
-            ]
-        )
-    )
+    for inputs in input_sets:
+        for outputs in output_sets:
+            logging.info("Running APE...")
+            ape.run(
+                executable=args.ape,
+                configuration=ape.configuration(
+                    output_directory=args.output,
+                    ontology_path=taxonomy_file,
+                    tool_annotations_path=tools_file,
+                    dimensions=dimensions,
+                    inputs=inputs,
+                    outputs=outputs
+                )
+            )
 

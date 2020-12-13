@@ -183,10 +183,10 @@ def configuration(
         "solution_length": {"min": 1, "max": 10},
         "max_solutions": "5",
         "number_of_execution_scripts": "0",
-        "number_of_generated_graphs": "5",
+        "number_of_generated_graphs": "0",
         "inputs": prepare_io(inputs),
         "outputs": prepare_io(outputs),
-        "debug_mode": "true",
+        "debug_mode": "false",
         "use_workflow_input": "all",
         "use_all_generated_data": "all",
         "tool_seq_repeat": "false"
