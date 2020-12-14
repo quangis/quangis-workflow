@@ -163,32 +163,35 @@ def configuration(
         tool_annotations_path,
         dimensions,
         inputs,
-        outputs):
+        outputs,
+        prefix=CCD,
+        tools_taxonomy_root=TOOLS.Tool,
+        solution_length=(1, 10),
+        max_solutions=5):
     """
     Prepare a dictionary containing APE configuration.
     """
 
     return {
         "solutions_dir_path": None,  # Will be overwritten
+        "constraints_path": None,  # Will be overwritten
         "ontology_path": ontology_path,
         "tool_annotations_path": tool_annotations_path,
-        "constraints_path": os.path.join("data", "constraints.json"),
-        "ontologyPrexifIRI": "http://geographicknowledge.de/vocab/"
-                             "CoreConceptData.rdf#",
-        "toolsTaxonomyRoot": "http://geographicknowledge.de/vocab/"
-                             "GISTools.rdf#Tool",
+        "ontologyPrexifIRI": str(prefix),
+        "toolsTaxonomyRoot": str(tools_taxonomy_root),
         "dataDimensionsTaxonomyRoots": [frag(iri) for iri in dimensions],
-        "shared_memory": "true",
-        "solution_length": {"min": 1, "max": 10},
-        "max_solutions": "5",
-        "number_of_execution_scripts": "0",
-        "number_of_generated_graphs": "0",
+        "solution_length": {"min": solution_length[0],
+                            "max": solution_length[1]},
+        "max_solutions": max_solutions,
         "inputs": prepare_io(inputs),
         "outputs": prepare_io(outputs),
-        "debug_mode": "false",
-        "use_workflow_input": "all",
-        "use_all_generated_data": "all",
-        "tool_seq_repeat": "false"
+        "number_of_execution_scripts": 0,
+        "number_of_generated_graphs": 0,
+        "debug_mode": False,
+        "shared_memory": True,
+        "tool_seq_repeat": False,
+        "use_workflow_input": "ALL",
+        "use_all_generated_data": "ALL",
     }
 
 
@@ -196,7 +199,7 @@ def parse_solution(line):
     """
     Parse the file with APE's solutions.
     """
-    return line
+    return line.split(" ")
 
 
 def run(executable, configuration):
@@ -206,23 +209,31 @@ def run(executable, configuration):
     @param executable: Path to APE jar-file.
     @param configuration: Dictionary representing APE configuration object.
     """
-    # TODO try-finally
 
     tmp = tempfile.mkdtemp(prefix="ape-")
-    config_path = os.path.join(tmp, "ape.config")
-    solutions_path = os.path.join(tmp, "solutions.txt")
     configuration['solutions_dir_path'] = tmp
+
+    constraints_path = os.path.join(tmp, "constraints.json")
+    configuration['constraints_path'] = constraints_path
+    with open(constraints_path, 'w') as f:
+        json.dump({"constraints": []}, f)
+
+    config_path = os.path.join(tmp, "config.json")
     with open(config_path, 'w') as f:
         json.dump(configuration, f)
 
-    logging.debug("Running APE in {}...".format(tmp))
-    subprocess.run(["java", "-jar", executable, config_path], check=True)
+    try:
+        logging.debug("Running APE in {}...".format(tmp))
+        subprocess.run(["java", "-jar", executable, config_path], check=True)
 
-    with open(solutions_path, 'r') as f:
-        solutions = [parse_solution(line) for line in f.readlines()]
+        solutions_path = os.path.join(tmp, "solutions.txt")
+        with open(solutions_path, 'r') as f:
+            solutions = [parse_solution(line) for line in f.readlines()]
 
-    os.remove(config_path)
-    os.remove(solutions_path)
-    os.rmdir(tmp)
+        os.remove(solutions_path)
+    finally:
+        os.remove(constraints_path)
+        os.remove(config_path)
+        os.rmdir(tmp)
 
     return solutions

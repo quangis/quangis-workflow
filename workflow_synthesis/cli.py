@@ -170,7 +170,6 @@ if __name__ == '__main__':
     # Run APE
     for inputs in input_sets:
         for outputs in output_sets:
-            logging.info("Running APE...")
             solutions = ape.run(
                 executable=args.ape,
                 configuration=ape.configuration(
