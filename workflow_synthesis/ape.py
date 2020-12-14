@@ -147,15 +147,15 @@ def prepare_io(entries):
     """
 
     return [
-            {
-                frag(dimension):
-                    [frag(c) for c in ontology_class]
-                    if type(ontology_class) == list else
-                    [frag(ontology_class)]
-                for dimension, ontology_class in entry.items()
-            }
-            for entry in entries
-        ]
+        {
+            frag(dimension):
+                [c for c in ontology_class]
+                if type(ontology_class) == list else
+                [ontology_class]
+            for dimension, ontology_class in entry.items()
+        }
+        for entry in entries
+    ]
 
 
 def configuration(
@@ -214,6 +214,8 @@ def run(executable, configuration):
     configuration['solutions_dir_path'] = tmp
     with open(config_path, 'w') as f:
         json.dump(configuration, f)
+
+    logging.debug("Running APE in {}...".format(tmp))
     subprocess.run(["java", "-jar", executable, config_path], check=True)
 
     with open(solutions_path, 'r') as f:
