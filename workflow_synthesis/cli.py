@@ -57,8 +57,8 @@ def ns(n):
     n = n.strip()
     if n == "ccd":
         return rdf_namespaces.CCD
-    elif n == "em":
-        return rdf_namespaces.EM
+    elif n == "em" or n == "exm":
+        return rdf_namespaces.EXM
     else:
         print(n)
 
@@ -171,10 +171,9 @@ if __name__ == '__main__':
     for inputs in input_sets:
         for outputs in output_sets:
             logging.info("Running APE...")
-            ape.run(
+            solutions = ape.run(
                 executable=args.ape,
                 configuration=ape.configuration(
-                    output_directory=args.output,
                     ontology_path=taxonomy_file,
                     tool_annotations_path=tools_file,
                     dimensions=dimensions,
@@ -182,4 +181,6 @@ if __name__ == '__main__':
                     outputs=outputs
                 )
             )
+            for solution in solutions:
+                logging.critical(solution)
 

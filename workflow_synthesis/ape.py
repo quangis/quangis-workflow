@@ -159,7 +159,6 @@ def prepare_io(entries):
 
 
 def configuration(
-        output_directory,
         ontology_path,
         tool_annotations_path,
         dimensions,
@@ -170,10 +169,10 @@ def configuration(
     """
 
     return {
-        "solutions_dir_path": output_directory,
+        "solutions_dir_path": None,  # Will be overwritten
         "ontology_path": ontology_path,
         "tool_annotations_path": tool_annotations_path,
-        "constraints_path": os.path.join(output_directory, "..", "data", "constraints.json"),
+        "constraints_path": os.path.join("data", "constraints.json"),
         "ontologyPrexifIRI": "http://geographicknowledge.de/vocab/"
                              "CoreConceptData.rdf#",
         "toolsTaxonomyRoot": "http://geographicknowledge.de/vocab/"
@@ -193,6 +192,13 @@ def configuration(
     }
 
 
+def parse_solution(line):
+    """
+    Parse the file with APE's solutions.
+    """
+    return line
+
+
 def run(executable, configuration):
     """
     Run APE.
@@ -200,12 +206,21 @@ def run(executable, configuration):
     @param executable: Path to APE jar-file.
     @param configuration: Dictionary representing APE configuration object.
     """
+    # TODO try-finally
 
     tmp = tempfile.mkdtemp(prefix="ape-")
     config_path = os.path.join(tmp, "ape.config")
+    solutions_path = os.path.join(tmp, "solutions.txt")
+    configuration['solutions_dir_path'] = tmp
     with open(config_path, 'w') as f:
         json.dump(configuration, f)
-    subprocess.call(["java", "-jar", executable, config_path])
+    subprocess.run(["java", "-jar", executable, config_path], check=True)
+
+    with open(solutions_path, 'r') as f:
+        solutions = [parse_solution(line) for line in f.readlines()]
+
     os.remove(config_path)
+    os.remove(solutions_path)
     os.rmdir(tmp)
 
+    return solutions

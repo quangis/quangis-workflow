@@ -20,7 +20,7 @@ set of subsumption relations.
 @license: MIT
 """
 
-from rdf_namespaces import CCD, EM
+from rdf_namespaces import CCD, EXM
 
 import rdflib
 from rdflib.namespace import RDFS
@@ -164,7 +164,7 @@ def test(project):
     ]
     correctNominalA = [
         CCD.BooleanA, None, None, CCD.BooleanA, None, None, CCD.OrdinalA, None,
-        None, None, None, None, None, EM.ERA
+        None, None, None, None, None, EXM.ERA
     ]
     for ix, n in enumerate(testnodes):
         print("Test:")
