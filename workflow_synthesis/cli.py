@@ -59,13 +59,13 @@ def test(path, dimensions):
         for line in f.readlines():
             cs = line.split(",")
             if len(cs) >= 3:
-                entry = {}
+                t = {}
                 for i in range(0, 3):
                     prefix, suffix = cs[i].split(":")
                     ns = rdf_namespaces.NAMESPACES[prefix.strip()]
                     ob = suffix.strip()
-                    entry[dimensions[i]] = ns[ob]
-                entries.append(ape.WorkflowIO(entry))
+                    t[dimensions[i]] = ns[ob]
+                entries.append(ape.WorkflowType(t))
     return entries
 
 

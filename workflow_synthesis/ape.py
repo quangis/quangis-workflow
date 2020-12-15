@@ -13,6 +13,8 @@ turns it into an tool description in JSON according to the APE format
 
 import rdf_namespaces
 from rdf_namespaces import TOOLS, WF, CCD, shorten
+import semantic_dimensions
+import errors
 
 from rdflib.namespace import RDF
 import os
@@ -141,58 +143,68 @@ def frag(node):
     return urldefrag(node).fragment
 
 
-def prepare_io(entries):
+class WorkflowType:
     """
-    Transform input and outputs specifications to the format expected by APE.
+    Ontological classes of input or output types across different semantic
+    dimensions.
     """
 
-    return [
-        {
-            frag(dimension):
-                [c for c in ontology_class]
+    def __init__(self, types):
+        """
+        @param types: A dictionary mapping dimensions to one or more classes.
+        """
+
+        self._type = {
+            dimension:
+                ontology_class
                 if type(ontology_class) == list else
                 [ontology_class]
-            for dimension, ontology_class in entry.items()
+            for dimension, ontology_class in types.items()
         }
-        for entry in entries
-    ]
-
-
-class WorkflowIO():
-    """
-    Sets of inputs or outputs for APE.
-    """
-
-    def __init__(self, *entries):
-        self.dimensions = list(set(k for e in entries for k in e.keys()))
-        self.entries = [
-            {
-                dimension:
-                    [c for c in ontology_class]
-                    if type(ontology_class) == list else
-                    [ontology_class]
-                for dimension, ontology_class in entry.items()
-            }
-            for entry in entries
-        ]
-
-    def as_ape(self):
-        """
-        Dictionary as expected by APE.
-        """
-        return self.entries
 
     def __str__(self):
         return \
-            " ; ".join(
-                ",".join(
-                    "&".join(
-                        shorten(c) for c in entry.get(d, ["*"])
-                    )
-                    for d in self.dimensions
+            ",".join(
+                "&".join(
+                    shorten(c) for c in cs
                 )
-                for entry in self.entries
+                for d, cs in self._type.items()
             )
+
+    def as_ape(self):
+        return self._type
+
+    def check_dimensions(self, dimensions=semantic_dimensions.CORE):
+        """
+        Check if all dimensions of our classes correspond to the ones under
+        consideration.
+        """
+        for dimension in self._type.keys():
+            if dimension not in dimensions:
+                raise errors.WrongDimensionError(dimension, dimensions)
+
+
+class WorkflowIO:
+    """
+    Sets of inputs or output types. For APE.
+    """
+
+    def __init__(self, dimensions=semantic_dimensions.CORE, *elements):
+        self.dimensions = dimensions
+        self.elements = elements
+
+        for e in elements:
+            e.check_dimensions(dimensions)
+
+    def as_ape(self):
+        """
+        List of dictionaries, as expected by APE.
+        """
+        return [e.as_ape() for e in self.elements]
+
+    def __str__(self):
+        return \
+            " ; ".join(str(e) for e in self.elements)
 
 
 def configuration(
@@ -264,8 +276,11 @@ def run(executable, configuration):
         subprocess.run(["java", "-jar", executable, config_path], check=True)
 
         solutions_path = os.path.join(tmp, "solutions.txt")
-        with open(solutions_path, 'r') as f:
-            solutions = [parse_solution(line) for line in f.readlines()]
+        if os.path.exists(solutions_path):
+            with open(solutions_path, 'r') as f:
+                solutions = [parse_solution(line) for line in f.readlines()]
+        else:
+            solutions = []
 
         os.remove(solutions_path)
     finally:
