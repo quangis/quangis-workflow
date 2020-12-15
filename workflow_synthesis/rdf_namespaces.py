@@ -30,7 +30,23 @@ for k, v in NAMESPACES.items():
 
 
 def setprefixes(g):
+    """
+    Set all known prefixes for an RDF graph.
+    """
     for k, v in NAMESPACES.items():
         g.bind(k, str(v))
     return g
 
+
+def shorten(uriref):
+    """
+    Return URI as string, possibly shortened.
+    """
+    # TODO Probably a better way
+
+    uri = str(uriref)
+    for shortprefix, fullprefix in NAMESPACES.items():
+        f = str(fullprefix)
+        if uri.startswith(f):
+            return "{}:{}".format(shortprefix, uri[len(f):])
+    return str(uri)

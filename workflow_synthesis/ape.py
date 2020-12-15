@@ -12,7 +12,7 @@ turns it into an tool description in JSON according to the APE format
 """
 
 import rdf_namespaces
-from rdf_namespaces import TOOLS, WF, CCD
+from rdf_namespaces import TOOLS, WF, CCD, shorten
 
 from rdflib.namespace import RDF
 import os
@@ -158,6 +158,43 @@ def prepare_io(entries):
     ]
 
 
+class WorkflowIO():
+    """
+    Sets of inputs or outputs for APE.
+    """
+
+    def __init__(self, *entries):
+        self.dimensions = list(set(k for e in entries for k in e.keys()))
+        self.entries = [
+            {
+                dimension:
+                    [c for c in ontology_class]
+                    if type(ontology_class) == list else
+                    [ontology_class]
+                for dimension, ontology_class in entry.items()
+            }
+            for entry in entries
+        ]
+
+    def as_ape(self):
+        """
+        Dictionary as expected by APE.
+        """
+        return self.entries
+
+    def __str__(self):
+        return \
+            " ; ".join(
+                ",".join(
+                    "&".join(
+                        shorten(c) for c in entry.get(d, ["*"])
+                    )
+                    for d in self.dimensions
+                )
+                for entry in self.entries
+            )
+
+
 def configuration(
         ontology_path,
         tool_annotations_path,
@@ -183,8 +220,8 @@ def configuration(
         "solution_length": {"min": solution_length[0],
                             "max": solution_length[1]},
         "max_solutions": max_solutions,
-        "inputs": prepare_io(inputs),
-        "outputs": prepare_io(outputs),
+        "inputs": inputs.as_ape(),
+        "outputs": outputs.as_ape(),
         "number_of_execution_scripts": 0,
         "number_of_generated_graphs": 0,
         "debug_mode": False,

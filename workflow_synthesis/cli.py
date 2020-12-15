@@ -50,39 +50,23 @@ def wfsyn(types,
     return taxonomies, tools_ape
 
 
-def ns(n):
-    """
-    Quick way to convert strings to namespaces
-    """
-    n = n.strip()
-    if n == "ccd":
-        return rdf_namespaces.CCD
-    elif n == "em" or n == "exm":
-        return rdf_namespaces.EXM
-    else:
-        print(n)
-
-
 def test(path, dimensions):
     """
     Quick testing function with the provided data.
     """
-    sets = []
-    cur = []
+    entries = []
     with open(path) as f:
         for line in f.readlines():
             cs = line.split(",")
             if len(cs) >= 3:
-                cur.append({
-                    dimensions[i]: ns(cs[i].split(":")[0])[cs[i].split(":")[1].strip()]
-                    for i in range(0, 3)
-                })
-            else:
-                sets.append(cur)
-                cur = []
-    if cur:
-        sets.append(cur)
-    return sets
+                entry = {}
+                for i in range(0, 3):
+                    prefix, suffix = cs[i].split(":")
+                    ns = rdf_namespaces.NAMESPACES[prefix.strip()]
+                    ob = suffix.strip()
+                    entry[dimensions[i]] = ns[ob]
+                entries.append(ape.WorkflowIO(entry))
+    return entries
 
 
 if __name__ == '__main__':
@@ -111,14 +95,14 @@ if __name__ == '__main__':
         help="tool annotations in RDF")
 
     parser.add_argument(
-        '--logging',
+        '--log',
         choices=['debug', 'info', 'warning', 'error', 'critical'],
-        default='info',
+        default='warning',
         help="Level of information logged to the terminal")
 
     args = parser.parse_args()
 
-    logging.basicConfig(level=getattr(logging, args.logging.upper()))
+    logging.basicConfig(level=getattr(logging, args.log.upper()))
 
     if not args.ape:
         args.ape = download_if_missing(
@@ -170,6 +154,7 @@ if __name__ == '__main__':
     # Run APE
     for inputs in input_sets:
         for outputs in output_sets:
+            logging.info("Finding workflows for {} -> {}".format(str(inputs), str(outputs)))
             solutions = ape.run(
                 executable=args.ape,
                 configuration=ape.configuration(
@@ -180,6 +165,6 @@ if __name__ == '__main__':
                     outputs=outputs
                 )
             )
-            for solution in solutions:
-                logging.critical(solution)
+            #for solution in solutions:
+            #    logging.critical(solution)
 
