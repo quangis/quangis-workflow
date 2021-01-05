@@ -42,8 +42,7 @@ class APE2:
             True
         )
         self.ape = APE(self.config)
-        self.setup = APEDomainSetup(self.config)
-
+        self.setup = self.ape.getDomainSetup()
 
         #debug
 
@@ -90,12 +89,10 @@ class APE2:
 ape = APE2()
 ape.run(
     inputs=[
-        {"CoreConceptQ": ["FieldQ"]}
-        #{"LayerA": ["VectorTessellationA"]}
-    #    {"CoreConceptQ": ["FieldQ"], "LayerA": ["PointA"], "NominalA": ["PlainIntervalA"]},
-    #    {"CoreConceptQ": ["ObjectQ"], "LayerA": ["VectorTessellationA"], "NominalA": ["PlainNominalA"]}
+        {"CoreConceptQ": ["FieldQ"], "LayerA": ["PointA"], "NominalA": ["PlainIntervalA"]},
+        {"CoreConceptQ": ["ObjectQ"], "LayerA": ["VectorTessellationA"], "NominalA": ["PlainNominalA"]}
     ],
     outputs=[
-    #    {"CoreConceptQ": ["ObjectQ"], "LayerA": ["VectorTessellationA"], "NominalA": ["IntervalA"]}
+        {"CoreConceptQ": ["ObjectQ"], "LayerA": ["VectorTessellationA"], "NominalA": ["IntervalA"]}
     ]
 )
