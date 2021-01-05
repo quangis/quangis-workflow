@@ -26,3 +26,12 @@ Example run:
 
 A suitable APE executable, CCD ontology and tool annotation will be downloaded 
 automatically if they are not provided on the command line.
+
+
+More information
+-------------------------------------------------------------------------------
+
+-   [APE](https://ape-framework.readthedocs.io/) documentation, for the core 
+    of the workflow synthesis.
+-   [Jpype](https://jpype.readthedocs.io/) documentation, for the Python-Java 
+    interface.
