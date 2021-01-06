@@ -19,13 +19,12 @@ It translates them to a format APE understands and then runs APE on them.
 Example run:
 
     python3 workflow_synthesis/cli.py \
-        --log=debug \
-        --ape APE-executable-1.0.2.jar \
         --tools ToolDescription.rdf \
         --types CoreConceptData.rdf
 
-A suitable APE executable, CCD ontology and tool annotation will be downloaded 
-automatically if they are not provided on the command line.
+Make sure that `APE-1.1.2-executable.jar` exists in the `lib/` directory. A 
+suitable CCD ontology and tool annotation will be downloaded automatically if 
+they are not provided on the command line.
 
 
 More information
