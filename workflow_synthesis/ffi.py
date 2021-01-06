@@ -17,23 +17,24 @@ synthesis. It interfaces with a JVM.
 from rdf_namespaces import CCD, WF, TOOLS, setprefixes
 
 import rdflib
-from rdflib import BNode, URIRef, Graph
+from rdflib import Graph, BNode, URIRef
+from rdflib.term import Node
 from rdflib.namespace import RDF, Namespace
 import jpype
 import jpype.imports
-from typing import Iterable, Tuple, Mapping
+from typing import Iterable, Tuple, Mapping, Dict
 
 # We need version 1.1.2's API; lower versions won't work
 jpype.startJVM(classpath=['lib/APE-1.1.2-executable.jar'])
 
-from java.io import File
-from java.util import Arrays
-from org.json import JSONObject, JSONArray
+import java.io
+import java.util
+import org.json
 import nl.uu.cs.ape.sat
 import nl.uu.cs.ape.sat.configuration
 import nl.uu.cs.ape.sat.models
 import nl.uu.cs.ape.sat.utils
-from nl.uu.cs.ape.sat.core.solutionStructure import SolutionWorkflow
+import nl.uu.cs.ape.sat.core.solutionStructure
 
 
 class Datatype:
@@ -52,9 +53,9 @@ class Datatype:
                 setup: nl.uu.cs.ape.sat.utils.APEDomainSetup,
                 is_output: bool = False) -> nl.uu.cs.ape.sat.models.Type:
 
-        obj = JSONObject()
+        obj = org.json.JSONObject()
         for dimension, subclasses in self._mapping.items():
-            a = JSONArray()
+            a = org.json.JSONArray()
             for c in subclasses:
                 a.put(str(c))
             obj.put(str(dimension), a)
@@ -63,22 +64,78 @@ class Datatype:
             obj, setup, is_output)
 
 
+def _fix_typeid(typeid):
+    typeid = str(typeid)
+    if typeid.endswith("_plain"):
+        return typeid[:-6]
+    else:
+        return typeid
+
+
+def _fix_toolid(toolid):
+    return str(toolid).strip("\"").split("[tool]")[0]
+
+
 class Workflow:
     """
     A single workflow.
     """
 
-    def __init__(self, wf: SolutionWorkflow):
-        """
-        Internally, we just store APE's SolutionWorkflow.
-        """
-        self._wf = wf
+    def __init__(self,
+                 wf: nl.uu.cs.ape.sat.core.solutionStructure.SolutionWorkflow):
 
-    def to_rdf(self):
+        self._wf: Node = BNode()
+        self._graph: Graph = Graph()
+        self._resources: Dict[str, Node] = {}
+        setprefixes(self._graph)
+
+        self._graph.add((self._wf, RDF.type, WF.Workflow))
+
+        for src in wf.getWorkflowInputTypeStates():
+            node = self.add_resource(src)
+            self._graph.add((self._wf, WF.source, node))
+
+        for mod in wf.getModuleNodes():
+            self.add_module(mod)
+
+    def add_module(self, mod: nl.uu.cs.ape.sat.core.solutionStructure.ModuleNode) -> Node:
+        mod_node = BNode()
+        tool_node = URIRef(_fix_toolid(mod.getNodeID()))
+
+        self._graph.add((self._wf, WF.edge, mod_node))
+        self._graph.add((mod_node, WF.applicationOf, tool_node))
+
+        for src in mod.getInputTypes():
+            node = self.add_resource(src)
+            self._graph.add((mod_node, WF.input, node))
+
+        for dst in mod.getOutputTypes():
+            node = self.add_resource(dst)
+            self._graph.add((mod_node, WF.output, node))
+
+    def add_resource(self, type_node: nl.uu.cs.ape.sat.models.Type) -> Node:
         """
-        Represent as an RDF graph.
+        Make sure a resource node exists and has the proper types. Return said
+        node.
         """
-        pass
+
+        name = type_node.getShortNodeID()
+        node = self._resources.get(name)
+        if not node:
+            node = self._resources[name] = BNode(name)
+
+            for t in type_node.getTypes():
+                type_node = URIRef(_fix_typeid(t.getPredicateID()))
+                self._graph.add((node, RDF.type, type_node))
+
+        return node
+
+    def to_rdf(self) -> Graph:
+        return self._graph
+
+    @property
+    def root(self) -> Node:
+        return self._wf
 
 
 class APE:
@@ -94,11 +151,11 @@ class APE:
                  dimensions: Iterable[URIRef]):
 
         self.config = nl.uu.cs.ape.sat.configuration.APECoreConfig(
-            File(taxonomy),
+            java.io.File(taxonomy),
             str(namespace),
             str(tool_root),
-            Arrays.asList(*map(str, dimensions)),
-            File(tools),
+            java.util.Arrays.asList(*map(str, dimensions)),
+            java.io.File(tools),
             True
         )
         self.ape = nl.uu.cs.ape.sat.APE(self.config)
@@ -108,107 +165,31 @@ class APE:
             inputs: Iterable[Datatype],
             outputs: Iterable[Datatype],
             solution_length: Tuple[int, int] = (1, 10),
-            max_solutions: int = 100) -> Iterable[Graph]:
+            solutions: int = 10) -> Iterable[Workflow]:
 
-        inp = Arrays.asList(*(i.to_java(self.setup, False) for i in inputs))
-        out = Arrays.asList(*(o.to_java(self.setup, True) for o in outputs))
+        inp = java.util.Arrays.asList(*(i.to_java(self.setup, False)
+                                        for i in inputs))
+        out = java.util.Arrays.asList(*(o.to_java(self.setup, True)
+                                        for o in outputs))
 
         config = nl.uu.cs.ape.sat.configuration.APERunConfig\
             .builder()\
             .withSolutionDirPath(".")\
-            .withConstraintsJSON(JSONObject())\
+            .withConstraintsJSON(org.json.JSONObject())\
             .withSolutionMinLength(solution_length[0])\
             .withSolutionMaxLength(solution_length[1])\
-            .withMaxNoSolutions(max_solutions)\
+            .withMaxNoSolutions(solutions)\
             .withProgramInputs(inp)\
             .withProgramOutputs(out)\
             .withApeDomainSetup(self.setup)\
             .build()
 
-        solutions = self.ape.runSynthesis(config)
+        result = self.ape.runSynthesis(config)
 
         return [
-            workflow_as_rdf(solutions.get(i))
-            for i in range(0, solutions.getNumberOfSolutions())
+            Workflow(result.get(i))
+            for i in range(0, result.getNumberOfSolutions())
         ]
-
-
-def resource_node(t, g, resources):
-    """
-    Make sure a resource node exists and has the proper types.
-
-    @param t: The Java TypeNode provided by APE.
-    @param g: The RDF graph in which to assigne the resource
-    @param resources: A mapping keeping track of which resources we have seen
-        before.
-    """
-
-    name = t.getShortNodeID()
-    node = resources.get(name)
-    if not node:
-        node = resources[name] = BNode(name)
-
-        for datatype in t.getTypes():
-            type_uri = fix_typeid(datatype.getPredicateID())
-            type_node = URIRef(type_uri)
-            g.add((node, RDF.type, type_node))
-
-    return node
-
-
-def workflow_as_rdf(workflow):
-    """
-    Transform APE's SolutionWorkFlow into a workflow in the RDF format we
-    expect.
-    """
-
-    g = rdflib.Graph()
-    setprefixes(g)
-
-    # Workflow itself
-    wf = BNode()
-    g.add((wf, RDF.type, WF.Workflow))
-
-    # Mapping of data instances to input/output nodes
-    resources = {}
-
-    # Assign all source nodes
-    for src in workflow.getWorkflowInputTypeStates():
-        node = resource_node(src, g, resources)
-        g.add((wf, WF.source, node))
-
-    # Assign all tool nodes
-    for mod in workflow.getModuleNodes():
-        mod_node = BNode()
-        tool_id = mod.getNodeID()
-        tool_node = URIRef(fix_toolid(tool_id))
-
-        g.add((wf, WF.edge, mod_node))
-        g.add((mod_node, WF.applicationOf, tool_node))
-
-        for src in mod.getInputTypes():
-            node = resource_node(src, g, resources)
-            g.add((mod_node, WF.input, node))
-
-        for dst in mod.getOutputTypes():
-            node = resource_node(dst, g, resources)
-            g.add((mod_node, WF.output, node))
-
-    print(g.serialize(format="turtle").decode("utf-8"))
-
-    return g
-
-
-def fix_typeid(typeid):
-    typeid = str(typeid)
-    if typeid.endswith("_plain"):
-        return typeid[:-6]
-    else:
-        return typeid
-
-
-def fix_toolid(toolid):
-    return str(toolid).strip("\"").split("[tool]")[0]
 
 
 ape = APE(
@@ -218,7 +199,8 @@ ape = APE(
     namespace=CCD,
     dimensions=(CCD.CoreConceptQ, CCD.LayerA, CCD.NominalA)
 )
-ape.run(
+solutions = ape.run(
+    solutions=10,
     inputs=[
         Datatype({
             CCD.CoreConceptQ: [CCD.CoreConceptQ],
@@ -234,4 +216,6 @@ ape.run(
         })
     ]
 )
-
+for s in solutions:
+    print("Solution:")
+    print(s.to_rdf().serialize(format="turtle").decode("utf-8"))
