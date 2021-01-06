@@ -34,7 +34,8 @@ import nl.uu.cs.ape.sat
 import nl.uu.cs.ape.sat.configuration
 import nl.uu.cs.ape.sat.models
 import nl.uu.cs.ape.sat.utils
-import nl.uu.cs.ape.sat.core.solutionStructure
+from nl.uu.cs.ape.sat.core.solutionStructure import \
+    SolutionWorkflow, ModuleNode
 
 
 class Datatype:
@@ -64,26 +65,12 @@ class Datatype:
             obj, setup, is_output)
 
 
-def _fix_typeid(typeid):
-    typeid = str(typeid)
-    if typeid.endswith("_plain"):
-        return typeid[:-6]
-    else:
-        return typeid
-
-
-def _fix_toolid(toolid):
-    return str(toolid).strip("\"").split("[tool]")[0]
-
-
 class Workflow:
     """
     A single workflow.
     """
 
-    def __init__(self,
-                 wf: nl.uu.cs.ape.sat.core.solutionStructure.SolutionWorkflow):
-
+    def __init__(self, wf: SolutionWorkflow):
         self._wf: Node = BNode()
         self._graph: Graph = Graph()
         self._resources: Dict[str, Node] = {}
@@ -98,9 +85,9 @@ class Workflow:
         for mod in wf.getModuleNodes():
             self.add_module(mod)
 
-    def add_module(self, mod: nl.uu.cs.ape.sat.core.solutionStructure.ModuleNode) -> Node:
+    def add_module(self, mod: ModuleNode) -> Node:
         mod_node = BNode()
-        tool_node = URIRef(_fix_toolid(mod.getNodeID()))
+        tool_node = Workflow.tool_node(mod.getNodeID())
 
         self._graph.add((self._wf, WF.edge, mod_node))
         self._graph.add((mod_node, WF.applicationOf, tool_node))
@@ -114,21 +101,29 @@ class Workflow:
             self._graph.add((mod_node, WF.output, node))
 
     def add_resource(self, type_node: nl.uu.cs.ape.sat.models.Type) -> Node:
-        """
-        Make sure a resource node exists and has the proper types. Return said
-        node.
-        """
-
         name = type_node.getShortNodeID()
         node = self._resources.get(name)
         if not node:
-            node = self._resources[name] = BNode(name)
+            node = self._resources[name] = BNode()
 
             for t in type_node.getTypes():
-                type_node = URIRef(_fix_typeid(t.getPredicateID()))
+                type_node = Workflow.type_node(t.getPredicateID())
                 self._graph.add((node, RDF.type, type_node))
 
         return node
+
+    @staticmethod
+    def type_node(typeid: str) -> Node:
+        # TODO figure out why type IDs do not correspond exactly to RDF nodes
+        typeid = str(typeid)
+        if typeid.endswith("_plain"):
+            typeid = typeid[:-6]
+        return URIRef(typeid)
+
+    @staticmethod
+    def tool_node(toolid: str) -> Node:
+        # TODO figure out why tool IDs do not correspond exactly to RDF nodes
+        return URIRef(str(toolid).strip("\"").split("[tool]")[0])
 
     def to_rdf(self) -> Graph:
         return self._graph
