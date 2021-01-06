@@ -17,9 +17,8 @@ synthesis.
 from rdf_namespaces import CCD, WF, TOOLS, setprefixes
 
 import rdflib
-from rdflib import BNode, URIRef, Literal
-from rdflib.namespace import RDFS, RDF, OWL
-import logging
+from rdflib import BNode, URIRef
+from rdflib.namespace import RDF
 import jpype
 import jpype.imports
 from jpype.types import JString
@@ -30,41 +29,31 @@ jpype.startJVM(classpath=['lib/APE-1.1.2-executable.jar'])
 from java.io import File
 from java.util import Arrays
 from org.json import JSONObject, JSONArray
-from nl.uu.cs.ape.sat import APE
-from nl.uu.cs.ape.sat.configuration import APECoreConfig, APERunConfig
-from nl.uu.cs.ape.sat.utils import APEDomainSetup
+import nl.uu.cs.ape.sat
+import nl.uu.cs.ape.sat.configuration
 from nl.uu.cs.ape.sat.models import Type
 
 
-class APE2:
+class APE:
 
     def __init__(self):
-        self.config = APECoreConfig(
+        self.config = nl.uu.cs.ape.sat.configuration.APECoreConfig(
             File("build/GISTaxonomy.rdf"),
-            JString("http://geographicknowledge.de/vocab/CoreConceptData.rdf#"),
-            JString("http://geographicknowledge.de/vocab/GISTools.rdf#Tool"),
-            Arrays.asList(*map(JString, ["CoreConceptQ", "LayerA", "NominalA"])),
+            "http://geographicknowledge.de/vocab/CoreConceptData.rdf#",
+            "http://geographicknowledge.de/vocab/GISTools.rdf#Tool",
+            Arrays.asList("CoreConceptQ", "LayerA", "NominalA"),
             File("build/ToolDescription.json"),
             True
         )
-        self.ape = APE(self.config)
+        self.ape = nl.uu.cs.ape.sat.APE(self.config)
         self.setup = self.ape.getDomainSetup()
-
-        #debug
-
-        types = self.setup.getAllTypes()
-        print(types.getDataTaxonomyDimensionIDs())
-        print(types.getDataTaxonomyDimensions())
-        print(types.getRootPredicates())
-        print(types.size())
-
 
     def run(self, inputs, outputs):
 
         inputs_ = Arrays.asList(*map(self.as_type, inputs))
         outputs_ = Arrays.asList(*map(self.as_type, outputs))
 
-        config = APERunConfig\
+        config = nl.uu.cs.ape.sat.configuration.APERunConfig\
             .builder()\
             .withSolutionDirPath("build/")\
             .withConstraintsJSON(JSONObject())\
@@ -96,35 +85,49 @@ class APE2:
         return Type.taxonomyInstanceFromJson(obj, self.setup, False)
 
 
+def resource_node(t, g, resources):
+    """
+    Make sure a resource node exists and has the proper types.
+
+    @param t: The Java TypeNode provided by APE.
+    @param g: The RDF graph in which to assigne the resource
+    @param resources: A mapping keeping track of which resources we have seen
+        before.
+    """
+
+    name = t.getShortNodeID()
+    node = resources.get(name)
+    if not node:
+        node = resources[name] = BNode(name)
+
+        for datatype in t.getTypes():
+            type_uri = fix_typeid(datatype.getPredicateID())
+            type_node = URIRef(type_uri)
+            g.add((node, RDF.type, type_node))
+
+    return node
+
+
 def workflow_as_rdf(workflow):
     """
     Transform APE's SolutionWorkFlow into a workflow in the RDF format we
     expect.
     """
 
-    rdf = rdflib.Graph()
-    setprefixes(rdf)
+    g = rdflib.Graph()
+    setprefixes(g)
 
     # Workflow itself
     wf = BNode()
-    rdf.add((wf, RDF.type, WF.Workflow))
+    g.add((wf, RDF.type, WF.Workflow))
 
     # Mapping of data instances to input/output nodes
-    data = {}
+    resources = {}
 
     # Assign all source nodes
     for src in workflow.getWorkflowInputTypeStates():
-        src_id = src.getShortNodeID()
-        src_node = BNode(src_id)
-        data[src_id] = src_node
-
-        rdf.add((wf, WF.source, src_node))
-
-        for datatype in src.getTypes():
-            type_uri = fix_typeid(datatype.getPredicateID())
-            type_node = URIRef(type_uri)
-            rdf.add((src_node, RDF.type, type_node))
-            rdf.add((src_node, RDF.type, WF.Resource))
+        node = resource_node(src, g, resources)
+        g.add((wf, WF.source, node))
 
     # Assign all tool nodes
     for mod in workflow.getModuleNodes():
@@ -132,36 +135,20 @@ def workflow_as_rdf(workflow):
         tool_id = mod.getNodeID()
         tool_node = URIRef(fix_toolid(tool_id))
 
-        rdf.add((wf, WF.edge, mod_node))
-        rdf.add((mod_node, WF.applicationOf, tool_node))
+        g.add((wf, WF.edge, mod_node))
+        g.add((mod_node, WF.applicationOf, tool_node))
 
         for src in mod.getInputTypes():
-            src_id = src.getShortNodeID()
-            src_node = data.get(src_id)
-            if not src_node:
-                src_node = data[src_id] = BNode(src_id)
-            rdf.add((mod_node, WF.input, src_node))
-
-            for datatype in src.getTypes():
-                type_uri = fix_typeid(datatype.getPredicateID())
-                type_node = URIRef(type_uri)
-                rdf.add((src_node, RDF.type, type_node))
+            node = resource_node(src, g, resources)
+            g.add((mod_node, WF.input, node))
 
         for dst in mod.getOutputTypes():
-            dst_id = dst.getShortNodeID()
-            dst_node = data.get(dst_id)
-            if not dst_node:
-                dst_node = data[dst_id] = BNode(dst_id)
-            rdf.add((mod_node, WF.output, dst_node))
+            node = resource_node(dst, g, resources)
+            g.add((mod_node, WF.output, node))
 
-            for datatype in dst.getTypes():
-                type_uri = fix_typeid(datatype.getPredicateID())
-                type_node = URIRef(type_uri)
-                rdf.add((dst_node, RDF.type, type_node))
+    print(g.serialize(format="turtle").decode("utf-8"))
 
-    print(rdf.serialize(format="turtle").decode("utf-8"))
-
-    return rdf
+    return g
 
 
 def fix_typeid(typeid):
@@ -176,23 +163,22 @@ def fix_toolid(toolid):
     return str(toolid).strip("\"").split("[tool]")[0]
 
 
-ape = APE2()
+ape = APE()
 ape.run(
     inputs=[
-        {"CoreConceptQ": ["CoreConceptQ"], "LayerA": ["LayerA"], "NominalA":
-            ["RatioA"]},
+        {
+            "CoreConceptQ": ["CoreConceptQ"],
+            "LayerA": ["LayerA"],
+            "NominalA": ["RatioA"]
+        },
     ],
     outputs=[
-        {"CoreConceptQ": ["CoreConceptQ"], "LayerA": ["LayerA"], "NominalA":
-            ["PlainRatioA"]}
+        {
+            "CoreConceptQ": ["CoreConceptQ"],
+            "LayerA": ["LayerA"],
+            "NominalA": ["PlainRatioA"]
+        }
     ]
 )
 
 
-#    inputs=[
-#        {"CoreConceptQ": ["FieldQ"], "LayerA": ["PointA"], "NominalA": ["PlainIntervalA"]},
-#        {"CoreConceptQ": ["ObjectQ"], "LayerA": ["VectorTessellationA"], "NominalA": ["PlainNominalA"]}
-#    ],
-#    outputs=[
-#        {"CoreConceptQ": ["ObjectQ"], "LayerA": ["VectorTessellationA"], "NominalA": ["IntervalA"]}
-#    ]
