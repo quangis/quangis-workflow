@@ -26,77 +26,83 @@ import rdflib
 from rdflib.namespace import RDFS
 import os
 import logging
+from rdflib import Graph, URIRef
+from rdflib.term import Node
+from typing import Iterable, List, Mapping
+
+from taxonomy import Taxonomy
 
 CORE = [CCD.CoreConceptQ, CCD.LayerA, CCD.NominalA]
 FLAT = [CCD.DType]
 FLATGRAPH = [CCD.CoreConceptQ, CCD.LayerA]
 
 
-def getSubsumptionTree2(g, root, leafnodes):
+class SubsumptionTree(Taxonomy):
+    def __init__(self, root, *args, **kwargs):
+        self.root = root
+        super(*args, **kwargs)
+
+
+def subsumption_tree(g: Taxonomy, root: Node) -> SubsumptionTree:
     """
     This method takes a taxonomy (a graph of raw subsumption relations) and an
     arbitrary root and generates a tree with unique parent relations towards
-    the root for each node. Uses rdflib's built in get_tree. Note: not unique!
+    the root for each node.
     """
 
-    logging.debug("Root node: {}".format(root))
-    tuplelisttree = rdflib.util.get_tree(g, root, RDFS.subClassOf)
-    distance = {}
-    parent = {}
-    visitednodes = set()
+    # Get a (root, [(child1, [...])]) structure
+    tree = rdflib.util.get_tree(g, root, RDFS.subClassOf)
 
-    count = 0
-    tuple = tuplelisttree
-    traverse(tuple, count, distance, parent, visitednodes)
+    t = SubsumptionTree(root)
 
-    logging.debug("Size of tree: {}".format(len(distance.keys())))
-    logging.debug("Depth of tree: {}".format(max(distance.values())))
-    for n in leafnodes.intersection(visitednodes):
-        logging.debug(distance[n])
-        logging.debug(n)
-        backtrack(parent, n)
-    return (distance, parent)
+    def f(r, *nodes):
+        for n in nodes:
+            t.add((n, RDFS.subClassOf, r))
+
+    return f(root, tree)
 
 
-def traverse(tuple, count, distance, parent, visitednodes):
-    current = tuple[0]
-    distance[current] = count
-    visitednodes.add(current)
-    for child in tuple[1]:
-        parent[child[0]] = current
-        traverse(child, count + 1, distance, parent, visitednodes)
 
-
-def backtrack(parent, leaf):
-    node = leaf
-    while node in parent.keys() and node is not None:
-        node = parent[node]
-        logging.debug(node)
-
-
-def measureTaxonomy(g):
+def dimcore(n, parent, idxc, listoftrees):
     """
-    Measures the size of a taxonomy's set of nodes and determines the leafnodes
+    Determines whether a given node is at the core of a dimension, that is, not
+    subsumed by any other dimension.
+    """
+    out = True
+    for idx, tree in enumerate(listoftrees):
+        if idx != idxc:
+            distance = tree[0]
+            if n in distance.keys():
+                out = False
+                break
+    return out
+
+
+def project(taxonomy: Taxonomy, dimensions: List[URIRef]):
+    """
+    This method takes some (subsumption) taxonomy and a list of supertypes for
+    each dimension. It constructs a tree for each dimension and returns a
+    projection of all nodes that intersect with one of these dimensions into
+    the core of the dimension. It also generates a corresponding core taxonomy
+    (containing only core classes for each dimension).
     """
 
-    leafnodes = set()
-    nodes = list(g.subjects(predicate=RDFS.subClassOf, object=None))
-    count = 0
-    for node in nodes:
-        count += 1
-        if not (None, RDFS.subClassOf, node) in g:
-            leafnodes.add(node)
-    logging.debug("size of taxonomy without roots: {}".format(count))
-    return (nodes, leafnodes)
+    leaves = taxonomy.leaves()
+    subsumptions = [subsumption_tree(taxonomy, d) for d in dimensions]
+
+    (projection, notcore) = project2Dimensions(nodes, subsumptions)
+    return (core_taxonomy(taxonomy, notcore), projection)
 
 
-def project2Dimensions(nodes, listoftrees):
+def project2Dimensions(
+        nodes: Iterable[Node],
+        subsumptions: Iterable[SubsumptionTree]) -> Mapping[Node, Node]:
     """
     This method projects given nodes to all dimensions given as a list of
     dimensions (as subsumption trees). Any node that is subsumed by at least
     one tree can be projected to the closest parent in that tree which belongs
-    to its core. The index of the list indicates the dimension. If a node
-    cannot be projected to a given dimension, then project maps to None.
+    to its core. If a node cannot be projected to a given dimension, then
+    project maps to None.
     """
 
     project = {}
@@ -114,102 +120,11 @@ def project2Dimensions(nodes, listoftrees):
                     notcore.add(p)
                     p = parent[p]
             project[n].append(p)
+
     # remove nodes that cannot be projected in any way
-    project = {key: val for key, val in project.items() if set(val) != {None}}
-    return (project, notcore)
+    project = {k: v for k, v in project.items() if v}
+
+    return project
 
 
-def dimcore(n, parent, idxc, listoftrees):
-    """
-    Determines whether a given node is at the core of a dimension (i.e. not
-    subsumed by any other dimension)
-    """
-    out = True
-    for idx, tree in enumerate(listoftrees):
-        if idx != idxc:
-            distance = tree[0]
-            if n in distance.keys():
-                out = False
-                break
-    return out
-
-
-def shortURInames(URI):
-    if URI is None:
-        return None
-    elif "#" in URI:
-        return URI.split('#')[1]
-    else:
-        return os.path.basename(os.path.splitext(URI)[0])
-
-
-# To test the correctness of the class projection based on a list of examples
-def test(project):
-    testnodes = [
-        CCD.ExistenceRaster, CCD.RasterA, CCD.FieldRaster, CCD.ExistenceVector,
-        CCD.PointMeasures, CCD.LineMeasures, CCD.Contour, CCD.Coverage,
-        CCD.ObjectVector, CCD.ObjectPoint, CCD.ObjectLine, CCD.ObjectRegion,
-        CCD.Lattice, CCD.ExtLattice
-    ]
-    correctCC = [
-        CCD.FieldQ, None, CCD.FieldQ, CCD.FieldQ, CCD.FieldQ, CCD.FieldQ,
-        CCD.FieldQ, CCD.FieldQ, CCD.ObjectQ, CCD.ObjectQ, CCD.ObjectQ,
-        CCD.ObjectQ, CCD.ObjectQ, CCD.ObjectQ
-    ]
-    correctLayerA = [
-        CCD.RasterA, CCD.RasterA, CCD.RasterA, CCD.VectorA, CCD.PointA,
-        CCD.LineA, CCD.TessellationA, CCD.TessellationA, CCD.VectorA,
-        CCD.PointA, CCD.LineA, CCD.RegionA, CCD.TessellationA,
-        CCD.TessellationA
-    ]
-    correctNominalA = [
-        CCD.BooleanA, None, None, CCD.BooleanA, None, None, CCD.OrdinalA, None,
-        None, None, None, None, None, EXM.ERA
-    ]
-    for ix, n in enumerate(testnodes):
-        print("Test:")
-        print(shortURInames(n))
-        if n in project.keys():
-            pr = project[n]
-            print("CC: " + str(shortURInames(pr[0])) + " should be: " +
-                  str(shortURInames(correctCC[ix])))
-            print("LayerA: " + str(shortURInames(pr[1])) + " should be: " +
-                  str(shortURInames(correctLayerA[ix])))
-            print("NominalA: " + str(shortURInames(pr[2])) + " should be: " +
-                  str(shortURInames(correctNominalA[ix])))
-        else:
-            print("node not present!")
-
-
-def getcoretaxonomy(g, notcore):
-    """
-    This method generates a taxonomy where nodes intersecting with more than
-    one dimension (= not core) are removed. This is needed because APE should
-    reason only within any of the dimensions.
-    """
-
-    outgraph = rdflib.Graph()
-    for (s, p, o) in g.triples((None, RDFS.subClassOf, None)):
-        if s not in notcore:
-            outgraph.add((s, p, o))
-    return outgraph
-    # outgraph.serialize(destination=out, format='turtle')
-
-
-def project(taxonomy,
-            dimnodes=[CCD.CoreConceptQ, CCD.LayerA, CCD.NominalA]):
-    """
-    This method takes some (subsumption) taxonomy and a list of supertypes for
-    each dimension. It constructs a tree for each dimension and returns a
-    projection of all nodes that intersect with one of these dimensions into
-    the core of the dimension. It also generates a corresponding core taxonomy
-    (containing only core classes for each dimension)
-    """
-    (nodes, leafnodes) = measureTaxonomy(taxonomy)
-    listofdimtrees = []
-    for dim in dimnodes:
-        listofdimtrees.append(getSubsumptionTree2(taxonomy, dim, leafnodes))
-    (projection, notcore) = project2Dimensions(nodes, listofdimtrees)
-    # test(projection)
-    return (getcoretaxonomy(taxonomy, notcore), projection)
 

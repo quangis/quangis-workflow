@@ -1,291 +1,226 @@
-# -*- coding: utf-8 -*-
 """
-Python wrapper for APE.
-
-Takes an RDF based specification of tools with typed inputs and outputs and
-turns it into an tool description in JSON according to the APE format
-
-@author: Schei008
-@date: 2019-03-22
-@copyright: (c) Schei008 2019
-@license: MIT
+This is a wrapper to APE, the Java application that is used for workflow
+synthesis. It interfaces with a JVM.
 """
+# This approach was chosen because we need to:
+# -  run multiple solutions one after another
+# -  get output workflows in RDF format
+#
+# APE's Java API forces us to either:
+# -  switch to Java ourselves, which introduces cognitive load and extra tools
+# in our pipeline;
+# -  use its CLI, which limits our freedom, wastes resources on every run,
+# makes us lose error handling, and requires us to make sure that RDF output
+# capabilities are developed upstream or in our own fork;
+# -  run a JVM bridge, as we have done --- it allows for the most flexibility
 
-import rdf_namespaces
-from rdf_namespaces import TOOLS, WF, CCD, shorten
-import semantic_dimensions
-import errors
+from rdf_namespaces import CCD, WF, TOOLS, setprefixes
 
-from rdflib.namespace import RDF
-import os
-import logging
-import subprocess
-import tempfile
-import json
-from six.moves.urllib.parse import urldefrag
+import rdflib
+from rdflib import Graph, BNode, URIRef
+from rdflib.term import Node
+from rdflib.namespace import RDF, Namespace
+import jpype
+import jpype.imports
+from typing import Iterable, Tuple, Mapping, Dict
+
+# We need version 1.1.2's API; lower versions won't work
+jpype.startJVM(classpath=['lib/APE-1.1.2-executable.jar'])
+
+import java.io
+import java.util
+import org.json
+import nl.uu.cs.ape.sat
+import nl.uu.cs.ape.sat.configuration
+import nl.uu.cs.ape.sat.models
+import nl.uu.cs.ape.sat.utils
+from nl.uu.cs.ape.sat.core.solutionStructure import \
+    SolutionWorkflow, ModuleNode
 
 
-def shortURInames(URI, shortenURIs=True):
-    if shortenURIs:
-        if "#" in URI:
-            return URI.split('#')[1]
-        else:
-            return os.path.basename(os.path.splitext(URI)[0])
-    else:
-        return URI
-
-
-def getinoutypes(g,
-                 predicate,
-                 subject,
-                 project,
-                 dimix,
-                 dim,
-                 mainprefix,
-                 dodowncast=False):
+class Datatype:
     """
-    Returns a list of types of some tool input/output which are all projected
-    to given semantic dimension
-    """
-
-    inoutput = g.value(predicate=predicate, subject=subject, any=False)
-    if not inoutput:
-        raise Exception(
-            f'Could not find object with subject {subject} and predicate {predicate}!'
-        )
-    outputtypes = []
-    for outputtype in g.objects(inoutput, RDF.type):
-        if outputtype is not None and outputtype in project:
-            if project[outputtype][dimix] is not None:
-                outputtypes.append(project[outputtype][dimix])
-    if dodowncast:
-        # Downcast is used to enforce leaf nodes for types. Is used to make
-        # annotations as specific as possible, used only for output nodes
-        outputtypes = [downcast(t) for t in outputtypes]
-    out = [
-        shortURInames(t) if str(mainprefix) in t else t for t in outputtypes
-    ]
-    # In case there is no type, just use the highest level type of the
-    # corresponding dimension
-    if out == []:
-        if dodowncast:
-            out = [shortURInames(downcast(dim))]
-        else:
-            out = [shortURInames(dim)]
-    return out
-
-
-def tool_annotations(trdf, project, dimnodes, mainprefix=CCD):
-    """
-    Project tool annotations with the projection function, convert it to a
-    dictionary that APE understands
-    """
-
-    logging.info("Converting RDF tool annotations to APE format...")
-    toollist = []
-    trdf = rdf_namespaces.setprefixes(trdf)
-    for t in trdf.objects(None, TOOLS.implements):
-        inputs = []
-        for p in [WF.input1, WF.input2, WF.input3]:
-            if trdf.value(subject=t, predicate=p, default=None) is not None:
-                d = {}
-                for ix, dim in enumerate(dimnodes):
-                    d[shortURInames(dim)] = getinoutypes(
-                        trdf, p, t, project, ix, dim, mainprefix)
-                inputs += [d]
-        outputs = []
-        for p in [WF.output, WF.output2, WF.output3]:
-            if trdf.value(subject=t, predicate=p, default=None) is not None:
-                d = {}
-                for ix, dim in enumerate(dimnodes):
-                    d[shortURInames(dim)] = getinoutypes(
-                        trdf,
-                        p,
-                        t,
-                        project,
-                        ix,
-                        dim,
-                        mainprefix,
-                        dodowncast=True
-                    )  # Tool outputs should always be downcasted
-                outputs += [d]
-
-        toollist.append({
-            'id': t,
-            'label': shortURInames(t),
-            'inputs': inputs,
-            'outputs': outputs,
-            'taxonomyOperations': [t]
-        })
-        logging.debug("Adding tool {}".format(t))
-    return {"functions": toollist}
-
-
-def downcast(node):
-    """
-    Downcast certain nodes to identifiable leafnodes. APE has a closed world
-    assumption, in that it considers the set of leaf nodes it knows about as
-    exhaustive: it will never consider parent nodes as valid answers.
-    """
-    if node == CCD.NominalA:
-        return CCD.PlainNominalA
-    elif node == CCD.OrdinalA:
-        return CCD.PlainOrdinalA
-    elif node == CCD.IntervalA:
-        return CCD.PlainIntervalA
-    elif node == CCD.RatioA:
-        return CCD.PlainRatioA
-    else:
-        return node
-
-
-def frag(node):
-    return urldefrag(node).fragment
-
-
-class WorkflowType:
-    """
-    Ontological classes of input or output types across different semantic
+    Ontological classes of input or output datatypes across different semantic
     dimensions.
     """
 
-    def __init__(self, types):
+    def __init__(self, mapping: Mapping[URIRef, Iterable[URIRef]]):
         """
-        @param types: A dictionary mapping dimensions to one or more classes.
+        We represent a datatype as a mapping from RDF dimension nodes to one or
+        more of its subclasses.
         """
+        self._mapping = mapping
 
-        self._type = {
-            dimension:
-                ontology_class
-                if type(ontology_class) == list else
-                [ontology_class]
-            for dimension, ontology_class in types.items()
-        }
+    def to_java(self,
+                setup: nl.uu.cs.ape.sat.utils.APEDomainSetup,
+                is_output: bool = False) -> nl.uu.cs.ape.sat.models.Type:
 
-    def __str__(self):
+        obj = org.json.JSONObject()
+        for dimension, subclasses in self._mapping.items():
+            a = org.json.JSONArray()
+            for c in subclasses:
+                a.put(str(c))
+            obj.put(str(dimension), a)
+
+        return nl.uu.cs.ape.sat.models.Type.taxonomyInstanceFromJson(
+            obj, setup, is_output)
+
+    def __str__(self) -> str:
         return \
             ",".join(
                 "&".join(
-                    shorten(c) for c in cs
+                    c for c in subclasses
                 )
-                for d, cs in self._type.items()
+                for dimension, subclasses in self._mapping.items()
             )
 
-    def as_ape(self):
-        return self._type
 
-    def check_dimensions(self, dimensions=semantic_dimensions.CORE):
-        """
-        Check if all dimensions of our classes correspond to the ones under
-        consideration.
-        """
-        for dimension in self._type.keys():
-            if dimension not in dimensions:
-                raise errors.WrongDimensionError(dimension, dimensions)
-
-
-class WorkflowIO:
+class Workflow:
     """
-    Sets of inputs or output types. For APE.
+    A single workflow.
     """
 
-    def __init__(self, dimensions=semantic_dimensions.CORE, *elements):
-        self.dimensions = dimensions
-        self.elements = elements
+    def __init__(self, wf: SolutionWorkflow):
+        self._wf: Node = BNode()
+        self._graph: Graph = Graph()
+        self._resources: Dict[str, Node] = {}
+        setprefixes(self._graph)
 
-        for e in elements:
-            e.check_dimensions(dimensions)
+        self._graph.add((self._wf, RDF.type, WF.Workflow))
 
-    def as_ape(self):
-        """
-        List of dictionaries, as expected by APE.
-        """
-        return [e.as_ape() for e in self.elements]
+        for src in wf.getWorkflowInputTypeStates():
+            node = self.add_resource(src)
+            self._graph.add((self._wf, WF.source, node))
 
-    def __str__(self):
-        return \
-            " ; ".join(str(e) for e in self.elements)
+        for mod in wf.getModuleNodes():
+            self.add_module(mod)
+
+    def add_module(self, mod: ModuleNode) -> Node:
+        mod_node = BNode()
+        tool_node = Workflow.tool_node(mod.getNodeID())
+
+        self._graph.add((self._wf, WF.edge, mod_node))
+        self._graph.add((mod_node, WF.applicationOf, tool_node))
+
+        for src in mod.getInputTypes():
+            node = self.add_resource(src)
+            self._graph.add((mod_node, WF.input, node))
+
+        for dst in mod.getOutputTypes():
+            node = self.add_resource(dst)
+            self._graph.add((mod_node, WF.output, node))
+
+    def add_resource(self, type_node: nl.uu.cs.ape.sat.models.Type) -> Node:
+        name = type_node.getShortNodeID()
+        node = self._resources.get(name)
+        if not node:
+            node = self._resources[name] = BNode()
+
+            for t in type_node.getTypes():
+                type_node = Workflow.type_node(t.getPredicateID())
+                self._graph.add((node, RDF.type, type_node))
+
+        return node
+
+    @staticmethod
+    def type_node(typeid: str) -> Node:
+        # TODO figure out why type IDs do not correspond exactly to RDF nodes
+        typeid = str(typeid)
+        if typeid.endswith("_plain"):
+            typeid = typeid[:-6]
+        return URIRef(typeid)
+
+    @staticmethod
+    def tool_node(toolid: str) -> Node:
+        # TODO figure out why tool IDs do not correspond exactly to RDF nodes
+        return URIRef(str(toolid).strip("\"").split("[tool]")[0])
+
+    def to_rdf(self) -> Graph:
+        return self._graph
+
+    @property
+    def root(self) -> Node:
+        return self._wf
 
 
-def configuration(
-        ontology_path,
-        tool_annotations_path,
-        dimensions,
-        inputs,
-        outputs,
-        prefix=CCD,
-        tools_taxonomy_root=TOOLS.Tool,
-        solution_length=(1, 10),
-        max_solutions=5):
+class APE:
     """
-    Prepare a dictionary containing APE configuration.
-    """
-
-    return {
-        "solutions_dir_path": None,  # Will be overwritten
-        "constraints_path": None,  # Will be overwritten
-        "ontology_path": ontology_path,
-        "tool_annotations_path": tool_annotations_path,
-        "ontologyPrexifIRI": str(prefix),
-        "toolsTaxonomyRoot": str(tools_taxonomy_root),
-        "dataDimensionsTaxonomyRoots": [frag(iri) for iri in dimensions],
-        "solution_length": {"min": solution_length[0],
-                            "max": solution_length[1]},
-        "max_solutions": max_solutions,
-        "inputs": inputs.as_ape(),
-        "outputs": outputs.as_ape(),
-        "number_of_execution_scripts": 0,
-        "number_of_generated_graphs": 0,
-        "debug_mode": False,
-        "shared_memory": True,
-        "tool_seq_repeat": False,
-        "use_workflow_input": "ALL",
-        "use_all_generated_data": "ALL",
-    }
-
-
-def parse_solution(line):
-    """
-    Parse the file with APE's solutions.
-    """
-    return line.split(" ")
-
-
-def run(executable, configuration):
-    """
-    Run APE.
-
-    @param executable: Path to APE jar-file.
-    @param configuration: Dictionary representing APE configuration object.
+    Wrapper class for APE.
     """
 
-    tmp = tempfile.mkdtemp(prefix="ape-")
-    configuration['solutions_dir_path'] = tmp
+    def __init__(self,
+                 taxonomy: str,
+                 tools: str,
+                 namespace: Namespace,
+                 tool_root: URIRef,
+                 dimensions: Iterable[URIRef]):
 
-    constraints_path = os.path.join(tmp, "constraints.json")
-    configuration['constraints_path'] = constraints_path
-    with open(constraints_path, 'w') as f:
-        json.dump({"constraints": []}, f)
+        self.config = nl.uu.cs.ape.sat.configuration.APECoreConfig(
+            java.io.File(taxonomy),
+            str(namespace),
+            str(tool_root),
+            java.util.Arrays.asList(*map(str, dimensions)),
+            java.io.File(tools),
+            True
+        )
+        self.ape = nl.uu.cs.ape.sat.APE(self.config)
+        self.setup = self.ape.getDomainSetup()
 
-    config_path = os.path.join(tmp, "config.json")
-    with open(config_path, 'w') as f:
-        json.dump(configuration, f)
+    def run(self,
+            inputs: Iterable[Datatype],
+            outputs: Iterable[Datatype],
+            solution_length: Tuple[int, int] = (1, 10),
+            solutions: int = 10) -> Iterable[Workflow]:
 
-    try:
-        logging.debug("Running APE in {}...".format(tmp))
-        subprocess.run(["java", "-jar", executable, config_path], check=True)
+        inp = java.util.Arrays.asList(*(i.to_java(self.setup, False)
+                                        for i in inputs))
+        out = java.util.Arrays.asList(*(o.to_java(self.setup, True)
+                                        for o in outputs))
 
-        solutions_path = os.path.join(tmp, "solutions.txt")
-        if os.path.exists(solutions_path):
-            with open(solutions_path, 'r') as f:
-                solutions = [parse_solution(line) for line in f.readlines()]
-        else:
-            solutions = []
+        config = nl.uu.cs.ape.sat.configuration.APERunConfig\
+            .builder()\
+            .withSolutionDirPath(".")\
+            .withConstraintsJSON(org.json.JSONObject())\
+            .withSolutionMinLength(solution_length[0])\
+            .withSolutionMaxLength(solution_length[1])\
+            .withMaxNoSolutions(solutions)\
+            .withProgramInputs(inp)\
+            .withProgramOutputs(out)\
+            .withApeDomainSetup(self.setup)\
+            .build()
 
-        os.remove(solutions_path)
-    finally:
-        os.remove(constraints_path)
-        os.remove(config_path)
-        os.rmdir(tmp)
+        result = self.ape.runSynthesis(config)
 
-    return solutions
+        return [
+            Workflow(result.get(i))
+            for i in range(0, result.getNumberOfSolutions())
+        ]
+
+
+ape = APE(
+    taxonomy="build/GISTaxonomy.rdf",
+    tools="build/ToolDescription.json",
+    tool_root=TOOLS.Tool,
+    namespace=CCD,
+    dimensions=(CCD.CoreConceptQ, CCD.LayerA, CCD.NominalA)
+)
+solutions = ape.run(
+    solutions=10,
+    inputs=[
+        Datatype({
+            CCD.CoreConceptQ: [CCD.CoreConceptQ],
+            CCD.LayerA: [CCD.LayerA],
+            CCD.NominalA: [CCD.RatioA]
+        }),
+    ],
+    outputs=[
+        Datatype({
+            CCD.CoreConceptQ: [CCD.CoreConceptQ],
+            CCD.LayerA: [CCD.LayerA],
+            CCD.NominalA: [CCD.PlainRatioA]
+        })
+    ]
+)
+for s in solutions:
+    print("Solution:")
+    print(s.to_rdf().serialize(format="turtle").decode("utf-8"))

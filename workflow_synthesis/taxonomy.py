@@ -9,97 +9,118 @@ inferences. Removes other triples. Used as input for workflow reasoning.
 @license: MIT
 """
 
+from __future__ import annotations
+
 from rdf_namespaces import TOOLS, ADA, CCD
 
 import rdflib
 from rdflib.namespace import RDFS, RDF, OWL
-from rdflib import BNode
+from rdflib import Graph, URIRef, BNode
+from rdflib.term import Node
 import logging
 
+import owlrl
 
-def run_inferences(g):
-    """Reasoning stuff"""
-    # expand deductive closure
-    # owlrl.DeductiveClosure(owlrl.OWLRL_Semantics).expand(g)
-    # owlrl.DeductiveClosure(owlrl.RDFS_Semantics).expand(g)
-    return g
+from typing import Iterable, List
 
 
-# Checks if concept is subsumed by concept in graph
-def subsumedby(concept, superconcept, graph):
-    out = False
-    for s in graph.objects(subject=concept, predicate=RDFS.subClassOf):
-        if s == superconcept:
-            out = True
-        else:
-            out = subsumedby(s, superconcept, graph)
-        if out:
-            break
-    return out
-
-
-def dimensionality(concept, dimnodes, graph):
-    nodim = 0
-    for dim in dimnodes:
-        if subsumedby(concept, dim, graph):
-            nodim += 1
-    return nodim
-
-
-def clean_owl_ontology(ccdontology, dimnodes):
+class Ontology(Graph):
     """
-    This method takes some ontology in Turtle and returns a taxonomy
-    (consisting only of rdfs:subClassOf statements)
+    An ontology is simply an RDF graph.
     """
 
-    logging.info("Cleaning OWL ontology...")
+    def __init__(self, *args, **kwargs):
+        super(*args, **kwargs)
 
-    logging.info("Running inferences...")
-    ccdontology = run_inferences(ccdontology)
-    logging.debug("Number of triples: {}".format(len(ccdontology)))
 
-    logging.info("Extracting subClassOf triples...")
-    taxonomy = rdflib.Graph()
-    taxonomy += ccdontology.triples((None, RDFS.subClassOf, None))
-    taxonomy += ccdontology.triples((None, RDF.type, OWL.Class))
-    logging.debug("Number of triples: {}".format(len(taxonomy)))
+class Taxonomy(Ontology):
+    """
+    A taxonomy is an RDF graph consisting of rdfs:subClassOf statements.
+    """
 
-    logging.debug("Cleaning blank node triples, loops, and nodes"
-                  "intersecting more than one dimension")
-    taxonomyclean = rdflib.Graph()
-    for (s, p, o) in taxonomy:
+    def __init__(self, *args, **kwargs):
+        super(*args, **kwargs)
+
+    def dimensionality(self, concept: URIRef,
+                       dimensions: Iterable[URIRef]) -> int:
+        """
+        How many dimensions is the given concept subsumed by?
+        """
+        return sum(1 for d in dimensions if self.subsumed_by(concept, d))
+
+    def expand(self) -> None:
+        """
+        Expand deductive closure under RDFS semantics.
+        """
+        owlrl.DeductiveClosure(owlrl.RDFS_Semantics).expand(self)
+
+    def subsumed_by(self, concept: URIRef, superconcept: URIRef) -> bool:
+        """
+        Is a concept subsumed by a superconcept in this taxonomy?
+        """
+        return any(
+            s == superconcept or self.subsumed_by(s, superconcept)
+            for s in self.objects(subject=concept, predicate=RDFS.subClassOf))
+
+    def core(self, dimensions: List[URIRef]) -> Taxonomy:
+        """
+        This method generates a taxonomy where nodes intersecting with more
+        than one dimension (= not core) are removed. This is needed because APE
+        should reason only within any of the dimensions.
+        """
+
+        result = Taxonomy()
+        for (s, p, o) in self.triples((None, RDFS.subClassOf, None)):
+            if self.dimensionality(s, dimensions) == 1:
+                result.add((s, p, o))
+        return result
+
+    def leaves(self) -> List[Node]:
+        """
+        Determine the exterior nodes of a taxonomy.
+        """
+        return [
+            n for n in self.subjects(predicate=RDFS.subClassOf, object=None)
+            if not (None, RDFS.subClassOf, n) in self]
+
+
+def clean_owl_ontology(ontology: Graph, dimensions: Iterable[URIRef]):
+    """
+    This method takes some ontology and returns a taxonomy (consisting only of
+    rdfs:subClassOf statements)
+    """
+
+    taxonomy = Taxonomy()
+
+    # Turn ontology into taxonomy by keeping only subclass relations
+    relevant = Taxonomy()
+    relevant += ontology.triples((None, RDFS.subClassOf, None))
+    relevant += ontology.triples((None, RDF.type, OWL.Class))
+
+    # Only keep nodes intersecting with exactly one dimension
+    for (s, p, o) in relevant:
         if type(s) != BNode and type(o) != BNode \
-                and s != o and s != OWL.Nothing:
-            # Removing nodes intersecting with more or less than one of the
-            # given dimensions
-            # p == RDFS.subClassOf and
-            if dimensionality(s, dimnodes, taxonomy) == 1:
-                taxonomyclean.add((s, p, o))
-    logging.debug("Number of triples: {}".format(len(taxonomyclean)))
+                and s != o and s != OWL.Nothing and \
+                taxonomy.dimensionality(s, dimensions) == 1:
+            taxonomy.add((s, p, o))
 
-    # add common upper class for all data types, including spatial attributes
-    # and spatial data sets. They are not needed otherwise
-    taxonomyclean.add((CCD.Attribute, RDFS.subClassOf, CCD.DType))
-    taxonomyclean.add((ADA.SpatialDataSet, RDFS.subClassOf, CCD.DType))
-    taxonomyclean.add((ADA.Quality, RDFS.subClassOf, CCD.DType))
-    return taxonomyclean
+    # Add common upper class for all data types
+    taxonomy.add((CCD.Attribute, RDFS.subClassOf, CCD.DType))
+    taxonomy.add((ADA.SpatialDataSet, RDFS.subClassOf, CCD.DType))
+    taxonomy.add((ADA.Quality, RDFS.subClassOf, CCD.DType))
+
+    return taxonomy
 
 
-def extract_tool_ontology(tools):
+def extract_tool_ontology(tools: Graph):
     """
     Extracts a taxonomy of toolnames from the tool description.
     """
 
-    logging.info("Extracting tool ontology...")
-
-    output = rdflib.Graph()
+    taxonomy = Taxonomy()
     for (s, p, o) in tools.triples((None, TOOLS.implements, None)):
-        output.add((o, RDFS.subClassOf, s))
-        output.add((s, RDF.type, OWL.Class))
-        output.add((o, RDF.type, OWL.Class))
-        # add common upper class for all tool types
-        output.add((s, RDFS.subClassOf, TOOLS.Tool))
-
-    logging.debug("Number of triples: {}".format(len(output)))
-    return output
-
+        taxonomy.add((o, RDFS.subClassOf, s))
+        taxonomy.add((s, RDF.type, OWL.Class))
+        taxonomy.add((o, RDF.type, OWL.Class))
+        taxonomy.add((s, RDFS.subClassOf, TOOLS.Tool))
+    return taxonomy

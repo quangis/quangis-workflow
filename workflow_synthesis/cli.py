@@ -16,6 +16,7 @@ When run on its own, this is a command-line interface to the APE wrapper.
 import taxonomy
 import semantic_dimensions
 import ape
+import ffi
 import rdf_namespaces
 from utils import load_rdf, download_if_missing
 
@@ -78,10 +79,6 @@ if __name__ == '__main__':
     )
 
     parser.add_argument(
-        '--ape',
-        help="path to APE .jar executable")
-
-    parser.add_argument(
         '-o', '--output',
         default=os.path.join(ROOT_DIR, "build"),
         help="output directory")
@@ -103,12 +100,6 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     logging.basicConfig(level=getattr(logging, args.log.upper()))
-
-    if not args.ape:
-        args.ape = download_if_missing(
-            path=os.path.join(args.output, "APE-1.0.2-executable.jar"),
-            url="https://github.com/sanctuuary/APE/releases/download/v1.0.2/"
-                "APE-1.0.2-executable.jar")
 
     if not args.types:
         # args.types = download_if_missing(
