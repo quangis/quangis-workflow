@@ -7,11 +7,6 @@ ontology dimensions.
 When run on its own, this is a command-line interface to the APE wrapper.
 """
 
-import os.path
-import argparse
-import json
-import logging
-
 import ape
 import ontology
 import semantic_dimensions
@@ -19,7 +14,12 @@ import tool_description
 from ontology import Ontology
 from namespace import CCD, TOOLS
 from utils import download_if_missing
+from semantic_dimensions import TypeNode
 
+import os.path
+import argparse
+import json
+import logging
 
 # def test(path, dimensions):
 #    """
@@ -64,12 +64,18 @@ if __name__ == '__main__':
     parser.add_argument(
         '--log',
         choices=['debug', 'info', 'warning', 'error', 'critical'],
-        default='warning',
+        default='info',
         help="Level of information logged to the terminal")
 
     args = parser.parse_args()
 
-    logging.basicConfig(level=getattr(logging, args.log.upper()))
+    # To force logging on this package; TODO prettier solution
+    from importlib import reload
+    reload(logging)
+    logging.basicConfig(
+        level=getattr(logging, args.log.upper()),
+        format="\033[1m%(asctime)s \033[0m%(message)s",
+    )
 
     if not args.types:
         # args.types = download_if_missing(
@@ -101,32 +107,34 @@ if __name__ == '__main__':
     taxonomy_file = os.path.join(args.output, "GISTaxonomy.rdf")
     tools_file = os.path.join(args.output, "ToolDescription.json")
 
-    logging.debug("Loading ontologies...")
+    logging.critical("Loading ontologies...")
     types = Ontology.from_rdf(args.types)
     tools = Ontology.from_rdf(args.tools)
 
     # Generates a taxonomy version of the ontology as well as of the given tool
     # hierarchy (using rdfs:subClassOf), by applying reasoning and removing all
     # other statements
-    logging.debug("Compute taxonomies...")
+    logging.critical("Compute taxonomies...")
     types_tax = ontology.clean_owl_ontology(types, dimensions)
     tools_tax = ontology.extract_tool_ontology(tools)
 
     types_tax.debug()
 
+    tools_tax.debug()
+
     # Computes a projection of classes to any of a given set of dimensions
     # given by superconcepts in the type taxonomy file, and clear the ontology
     # from non-core nodes --> not actually done!
-    logging.debug("Compute projected classes...")
+    logging.critical("Compute projected classes...")
     projection = \
         semantic_dimensions.project(taxonomy=types_tax, dimensions=dimensions)
 
     # Combine tool & type taxonomies
-    logging.debug("Combine taxonomies...")
+    logging.critical("Combine taxonomies...")
     taxonomies = tools_tax + types_tax.core(dimensions)
 
     # Transform tool annotations with the projected classes into APE input
-    logging.debug("Transform tool annotations...")
+    logging.critical("Transform tool annotations...")
     tools_ape = tool_description.ontology_to_json(tools, projection, dimensions)
 
     # Serialize both
@@ -152,21 +160,21 @@ if __name__ == '__main__':
     #    for outputs in output_sets:
 
     inputs = [
-        ape.Datatype({
+        TypeNode({
             CCD.CoreConceptQ: [CCD.CoreConceptQ],
             CCD.LayerA: [CCD.LayerA],
             CCD.NominalA: [CCD.RatioA]
-        }),
-    ],
+        })
+    ]
     outputs = [
-        ape.Datatype({
+        TypeNode({
             CCD.CoreConceptQ: [CCD.CoreConceptQ],
             CCD.LayerA: [CCD.LayerA],
             CCD.NominalA: [CCD.PlainRatioA]
         })
     ]
 
-    logging.info("Finding workflows for {} -> {}".format(str(inputs), str(outputs)))
+    logging.info("Finding workflows for {} -> {}".format(str(inputs[0]), str(outputs[0])))
     solutions = jvm.run(
         inputs=inputs,
         outputs=outputs,

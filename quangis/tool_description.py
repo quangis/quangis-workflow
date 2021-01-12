@@ -2,6 +2,10 @@
 This module contains functions to work with tool annotations.
 """
 
+from ontology import Ontology
+from namespace import TOOLS, WF, CCD, shorten
+from semantic_dimensions import TypeNodeDict
+
 
 from rdflib import Graph, URIRef, Namespace, BNode
 from rdflib.term import Node
@@ -13,16 +17,11 @@ from six.moves.urllib.parse import urldefrag
 
 import logging
 
-from ontology import Ontology
-from namespace import TOOLS, WF, CCD, shorten
-
-TypeNode = Dict[URIRef, List[URIRef]]
-
 ToolJSON = TypedDict('ToolJSON', {
     'id': str,
     'label': str,
-    'inputs': List[TypeNode],
-    'outputs': List[TypeNode],
+    'inputs': List[TypeNodeDict],
+    'outputs': List[TypeNodeDict],
     'taxonomyOperations': List[URIRef]
 })
 
@@ -71,7 +70,7 @@ def getinoutypes(
 
 def ontology_to_json(
         tools: Ontology,
-        projection: Mapping[Node, TypeNode],
+        projection: Mapping[Node, TypeNodeDict],
         dimensions: List[URIRef]) -> ToolsJSON:
     """
     Project tool annotations with the projection function, convert it to a

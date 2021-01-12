@@ -14,6 +14,9 @@ synthesis. It interfaces with a JVM.
 # capabilities are developed upstream or in our own fork;
 # -  run a JVM bridge, as we have done --- it allows for the most flexibility
 
+from namespace import CCD, WF, TOOLS, setprefixes, shorten
+from semantic_dimensions import TypeNode, TypeNodeDict
+
 from rdflib import Graph, BNode, URIRef
 from rdflib.term import Node
 from rdflib.namespace import RDF, Namespace
@@ -38,44 +41,6 @@ import nl.uu.cs.ape.sat.models
 import nl.uu.cs.ape.sat.utils
 from nl.uu.cs.ape.sat.core.solutionStructure import \
     SolutionWorkflow, ModuleNode
-
-from namespace import CCD, WF, TOOLS, setprefixes
-
-class Datatype:
-    """
-    Ontological classes of input or output datatypes across different semantic
-    dimensions.
-    """
-
-    def __init__(self, mapping: Mapping[URIRef, List[URIRef]]):
-        """
-        We represent a datatype as a mapping from RDF dimension nodes to one or
-        more of its subclasses.
-        """
-        self._mapping = mapping
-
-    def to_java(self,
-                setup: nl.uu.cs.ape.sat.utils.APEDomainSetup,
-                is_output: bool = False) -> nl.uu.cs.ape.sat.models.Type:
-
-        obj = org.json.JSONObject()
-        for dimension, subclasses in self._mapping.items():
-            a = org.json.JSONArray()
-            for c in subclasses:
-                a.put(str(c))
-            obj.put(str(dimension), a)
-
-        return nl.uu.cs.ape.sat.models.Type.taxonomyInstanceFromJson(
-            obj, setup, is_output)
-
-    def __str__(self) -> str:
-        return \
-            ",".join(
-                "&".join(
-                    c for c in subclasses
-                )
-                for dimension, subclasses in self._mapping.items()
-            )
 
 
 class Workflow:
@@ -170,14 +135,14 @@ class APE:
         self.setup = self.ape.getDomainSetup()
 
     def run(self,
-            inputs: Iterable[Datatype],
-            outputs: Iterable[Datatype],
+            inputs: Iterable[TypeNode],
+            outputs: Iterable[TypeNode],
             solution_length: Tuple[int, int] = (1, 10),
-            solutions: int = 10) -> Iterable[Workflow]:
+            solutions: int = 10) -> List[Workflow]:
 
-        inp = java.util.Arrays.asList(*(i.to_java(self.setup, False)
+        inp = java.util.Arrays.asList(*(APE.type_node(i, self.setup, False)
                                         for i in inputs))
-        out = java.util.Arrays.asList(*(o.to_java(self.setup, True)
+        out = java.util.Arrays.asList(*(APE.type_node(o, self.setup, True)
                                         for o in outputs))
 
         config = nl.uu.cs.ape.sat.configuration.APERunConfig\
@@ -199,6 +164,21 @@ class APE:
             for i in range(0, result.getNumberOfSolutions())
         ]
 
+    @staticmethod
+    def type_node(node: TypeNode,
+                  setup: nl.uu.cs.ape.sat.utils.APEDomainSetup,
+                  is_output: bool = False) -> nl.uu.cs.ape.sat.models.Type:
+
+        obj = org.json.JSONObject()
+        for dimension, subclasses in node._mapping.items():
+            a = org.json.JSONArray()
+            for c in subclasses:
+                a.put(str(c))
+            obj.put(str(dimension), a)
+
+        return nl.uu.cs.ape.sat.models.Type.taxonomyInstanceFromJson(
+            obj, setup, is_output)
+
 
 if __name__ == "__main__":
     ape = APE(
@@ -211,14 +191,14 @@ if __name__ == "__main__":
     solutions = ape.run(
         solutions=10,
         inputs=[
-            Datatype({
+            TypeNode({
                 CCD.CoreConceptQ: [CCD.CoreConceptQ],
                 CCD.LayerA: [CCD.LayerA],
                 CCD.NominalA: [CCD.RatioA]
             }),
         ],
         outputs=[
-            Datatype({
+            TypeNode({
                 CCD.CoreConceptQ: [CCD.CoreConceptQ],
                 CCD.LayerA: [CCD.LayerA],
                 CCD.NominalA: [CCD.PlainRatioA]

@@ -4,6 +4,8 @@ Methods and datatypes to manipulate ontologies and taxonomies.
 
 from __future__ import annotations
 
+from namespace import TOOLS, ADA, CCD, shorten
+
 import rdflib
 from rdflib.namespace import RDFS, RDF, OWL
 from rdflib import Graph, URIRef, BNode
@@ -12,8 +14,6 @@ import itertools
 import logging
 import owlrl
 from typing import Iterable, List
-
-from namespace import TOOLS, ADA, CCD, shorten
 
 
 class Ontology(Graph):

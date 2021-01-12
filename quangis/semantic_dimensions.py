@@ -13,6 +13,9 @@ tree). It should not be used on subsumption graphs that were closed with
 reasoning. The graph needs to contain a minimal set of subsumption relations.
 """
 
+from ontology import Taxonomy
+from namespace import CCD, EXM, shorten
+
 import rdflib
 from rdflib.namespace import RDFS
 from rdflib import Graph, URIRef
@@ -21,8 +24,33 @@ from collections import defaultdict
 from typing import Iterable, List, Mapping, Dict
 import logging
 
-from ontology import Taxonomy
-from namespace import CCD, EXM
+
+TypeNodeDict = Dict[URIRef, List[URIRef]]
+
+
+class TypeNode:
+    """
+    Ontological classes of input or output datatypes across different semantic
+    dimensions.
+    """
+
+    def __init__(self, mapping: TypeNodeDict):
+        """
+        We represent a datatype as a mapping from RDF dimension nodes to one or
+        more of its subclasses.
+        """
+        self._mapping = mapping
+
+    def __str__(self) -> str:
+        return "{{{}}}".format(
+            "; ".join(
+                "{} = {}".format(
+                    shorten(dimension),
+                    ", ".join(shorten(c) for c in classes)
+                )
+                for dimension, classes in self._mapping.items()
+            )
+        )
 
 
 def project(
@@ -50,14 +78,12 @@ def project(
             # If a node is not core (it is also subsumed by other trees), then
             # we project to the closest parent that *is* core
             p = node
-            while any(s.contains(p) for t in subsumptions if t is not s):
+            while p is not None and any(s.contains(p) for t in subsumptions if t is not s):
                 parent = s.value(object=p, predicate=RDFS.subClassOf)
                 p = parent
             n[d] = p
 
         projection[node] = n
-
-    print(projection)
 
     return projection
 
