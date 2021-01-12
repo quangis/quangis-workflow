@@ -14,15 +14,14 @@ synthesis. It interfaces with a JVM.
 # capabilities are developed upstream or in our own fork;
 # -  run a JVM bridge, as we have done --- it allows for the most flexibility
 
-from rdf_namespaces import CCD, WF, TOOLS, setprefixes
+from namespace import CCD, WF, TOOLS, setprefixes
 
-import rdflib
 from rdflib import Graph, BNode, URIRef
 from rdflib.term import Node
 from rdflib.namespace import RDF, Namespace
 import jpype
 import jpype.imports
-from typing import Iterable, Tuple, Mapping, Dict
+from typing import Iterable, Tuple, Mapping, Dict, List
 
 # We need version 1.1.2's API; lower versions won't work
 jpype.startJVM(classpath=['lib/APE-1.1.2-executable.jar'])
@@ -44,7 +43,7 @@ class Datatype:
     dimensions.
     """
 
-    def __init__(self, mapping: Mapping[URIRef, Iterable[URIRef]]):
+    def __init__(self, mapping: Mapping[URIRef, List[URIRef]]):
         """
         We represent a datatype as a mapping from RDF dimension nodes to one or
         more of its subclasses.
@@ -197,30 +196,31 @@ class APE:
         ]
 
 
-ape = APE(
-    taxonomy="build/GISTaxonomy.rdf",
-    tools="build/ToolDescription.json",
-    tool_root=TOOLS.Tool,
-    namespace=CCD,
-    dimensions=(CCD.CoreConceptQ, CCD.LayerA, CCD.NominalA)
-)
-solutions = ape.run(
-    solutions=10,
-    inputs=[
-        Datatype({
-            CCD.CoreConceptQ: [CCD.CoreConceptQ],
-            CCD.LayerA: [CCD.LayerA],
-            CCD.NominalA: [CCD.RatioA]
-        }),
-    ],
-    outputs=[
-        Datatype({
-            CCD.CoreConceptQ: [CCD.CoreConceptQ],
-            CCD.LayerA: [CCD.LayerA],
-            CCD.NominalA: [CCD.PlainRatioA]
-        })
-    ]
-)
-for s in solutions:
-    print("Solution:")
-    print(s.to_rdf().serialize(format="turtle").decode("utf-8"))
+if __name__ == "__main__":
+    ape = APE(
+        taxonomy="build/GISTaxonomy.rdf",
+        tools="build/ToolDescription.json",
+        tool_root=TOOLS.Tool,
+        namespace=CCD,
+        dimensions=(CCD.CoreConceptQ, CCD.LayerA, CCD.NominalA)
+    )
+    solutions = ape.run(
+        solutions=10,
+        inputs=[
+            Datatype({
+                CCD.CoreConceptQ: [CCD.CoreConceptQ],
+                CCD.LayerA: [CCD.LayerA],
+                CCD.NominalA: [CCD.RatioA]
+            }),
+        ],
+        outputs=[
+            Datatype({
+                CCD.CoreConceptQ: [CCD.CoreConceptQ],
+                CCD.LayerA: [CCD.LayerA],
+                CCD.NominalA: [CCD.PlainRatioA]
+            })
+        ]
+    )
+    for s in solutions:
+        print("Solution:")
+        print(s.to_rdf().serialize(format="turtle").decode("utf-8"))

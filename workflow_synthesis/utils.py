@@ -4,19 +4,8 @@ Various utility functions.
 
 import os
 import os.path
-import rdflib
 import urllib.request
 import logging
-
-
-def load_rdf(path, format=None):
-    """
-    Load an RDF graph from a file.
-    """
-
-    g = rdflib.Graph()
-    g.parse(path, format=format or rdflib.util.guess_format(path))
-    return g
 
 
 def download_if_missing(path, url):

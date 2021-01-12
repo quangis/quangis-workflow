@@ -1,54 +1,24 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 A workflow generator: a wrapper for APE that generates input data from a given
 OWL data ontology and a given tool annotation file, by projecting classes to
 ontology dimensions.
 
 When run on its own, this is a command-line interface to the APE wrapper.
-
-@author: Schei008
-@date: 2020-04-08
-@copyright: (c) Schei008 2020
-@license: MIT
 """
 
-import taxonomy
-import semantic_dimensions
 import ape
-import ffi
-import rdf_namespaces
-from utils import load_rdf, download_if_missing
+import ontology
+from ontology import Ontology
+import semantic_dimensions
+import tool_description
+from namespace import CCD, TOOLS
+from utils import download_if_missing
 
 import os.path
 import argparse
 import json
 import logging
-
-
-def wfsyn(types,
-          tools,
-          dimensions=semantic_dimensions.CORE):
-
-    # Generates a taxonomy version of the ontology as well as of the given tool
-    # hierarchy (using rdfs:subClassOf), by applying reasoning and removing all
-    # other statements
-    types_tax = taxonomy.clean_owl_ontology(types, dimensions)
-    tools_tax = taxonomy.extract_tool_ontology(tools)
-
-    # Computes a projection of classes to any of a given set of dimensions
-    # given by superconcepts in the type taxonomy file, and clear the ontology
-    # from non-core nodes
-    _, projection = \
-        semantic_dimensions.project(taxonomy=types_tax, dimnodes=dimensions)
-
-    # Combine tool & type taxonomies
-    taxonomies = tools_tax + types_tax
-
-    # Transform tool annotations with the projected classes into APE input
-    tools_ape = ape.tool_annotations(tools, projection, dimensions)
-
-    return taxonomies, tools_ape
 
 
 def test(path, dimensions):
@@ -63,9 +33,9 @@ def test(path, dimensions):
                 t = {}
                 for i in range(0, 3):
                     prefix, suffix = cs[i].split(":")
-                    ns = rdf_namespaces.NAMESPACES[prefix.strip()]
-                    ob = suffix.strip()
-                    t[dimensions[i]] = ns[ob]
+                    #ns = namespace.NAMESPACES[prefix.strip()]
+                    #ob = suffix.strip()
+                    #t[dimensions[i]] = ns[ob]
                 entries.append(ape.WorkflowType(t))
     return entries
 
@@ -123,39 +93,81 @@ if __name__ == '__main__':
                 "master/ToolRepository/ToolDescription.ttl"
         )
 
-    dimensions = semantic_dimensions.CORE
+    dimensions = [CCD.CoreConceptQ, CCD.LayerA, CCD.NominalA]
+    # dimensions = [CCD.DType]
+    # dimensions = [CCD.CoreConceptQ, CCD.LayerA]
 
     # Prepare data files needed by APE
     taxonomy_file = os.path.join(args.output, "GISTaxonomy.rdf")
     tools_file = os.path.join(args.output, "ToolDescription.json")
 
-    tax, tools = wfsyn(
-        types=load_rdf(args.types),
-        tools=load_rdf(args.tools),
-        dimensions=dimensions)
+    logging.debug("Loading ontologies...")
+    types = Ontology.from_rdf(args.types)
+    tools = Ontology.from_rdf(args.tools)
 
-    tax.serialize(destination=taxonomy_file, format='xml')
+    # Generates a taxonomy version of the ontology as well as of the given tool
+    # hierarchy (using rdfs:subClassOf), by applying reasoning and removing all
+    # other statements
+    logging.debug("Compute taxonomies...")
+    types_tax = ontology.clean_owl_ontology(types, dimensions)
+    tools_tax = ontology.extract_tool_ontology(tools)
+
+    types_tax.debug()
+
+    # Computes a projection of classes to any of a given set of dimensions
+    # given by superconcepts in the type taxonomy file, and clear the ontology
+    # from non-core nodes --> not actually done!
+    logging.debug("Compute projected classes...")
+    projection = \
+        semantic_dimensions.project(taxonomy=types_tax, dimensions=dimensions)
+
+    # Combine tool & type taxonomies
+    logging.debug("Combine taxonomies...")
+    taxonomies = tools_tax + types_tax.core(dimensions)
+
+    # Transform tool annotations with the projected classes into APE input
+    logging.debug("Transform tool annotations...")
+    tools_ape = tool_description.tool_annotations(tools, projection, dimensions)
+
+    # Serialize both
+    taxonomies.serialize(destination=taxonomy_file, format='xml')
     with open(tools_file, 'w') as f:
-        json.dump(tools, f, sort_keys=True, indent=2)
+        json.dump(tools_ape, f, sort_keys=True, indent=2)
 
     # Quick
-    input_sets = test("data/sources.txt", dimensions)
-    output_sets = test("data/goals.txt", dimensions)
+    # input_sets = test("data/sources.txt", dimensions)
+    # output_sets = test("data/goals.txt", dimensions)
+
+    logging.debug("Running APE...")
 
     # Run APE
-    for inputs in input_sets:
-        for outputs in output_sets:
-            logging.info("Finding workflows for {} -> {}".format(str(inputs), str(outputs)))
-            solutions = ape.run(
-                executable=args.ape,
-                configuration=ape.configuration(
-                    ontology_path=taxonomy_file,
-                    tool_annotations_path=tools_file,
-                    dimensions=dimensions,
-                    inputs=inputs,
-                    outputs=outputs
-                )
-            )
-            #for solution in solutions:
-            #    logging.critical(solution)
+    jvm = ape.APE(
+        taxonomy=taxonomy_file,
+        tools=tools_file,
+        tool_root=TOOLS.Tool,
+        namespace=CCD,
+        dimensions=dimensions)
 
+    # for inputs in input_sets:
+    #    for outputs in output_sets:
+
+    inputs = [
+        ape.Datatype({
+            CCD.CoreConceptQ: [CCD.CoreConceptQ],
+            CCD.LayerA: [CCD.LayerA],
+            CCD.NominalA: [CCD.RatioA]
+        }),
+    ],
+    outputs = [
+        ape.Datatype({
+            CCD.CoreConceptQ: [CCD.CoreConceptQ],
+            CCD.LayerA: [CCD.LayerA],
+            CCD.NominalA: [CCD.PlainRatioA]
+        })
+    ]
+
+    logging.info("Finding workflows for {} -> {}".format(str(inputs), str(outputs)))
+    solutions = jvm.run(
+        inputs=inputs,
+        outputs=outputs,
+        solutions=10)

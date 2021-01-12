@@ -1,22 +1,17 @@
-# -*- coding: utf-8 -*-
 """
 Takes an OWL 2 ontology and adds subClassOf triples by materializing OWL 2 RL
 inferences. Removes other triples. Used as input for workflow reasoning.
-
-@author: Schei008
-@date: 2019-03-22
-@copyright: (c) Schei008 2019
-@license: MIT
 """
 
 from __future__ import annotations
 
-from rdf_namespaces import TOOLS, ADA, CCD
+from namespace import TOOLS, ADA, CCD, shorten
 
 import rdflib
 from rdflib.namespace import RDFS, RDF, OWL
 from rdflib import Graph, URIRef, BNode
 from rdflib.term import Node
+import itertools
 import logging
 
 import owlrl
@@ -30,21 +25,12 @@ class Ontology(Graph):
     """
 
     def __init__(self, *args, **kwargs):
-        super(*args, **kwargs)
-
-
-class Taxonomy(Ontology):
-    """
-    A taxonomy is an RDF graph consisting of rdfs:subClassOf statements.
-    """
-
-    def __init__(self, *args, **kwargs):
-        super(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def dimensionality(self, concept: URIRef,
                        dimensions: Iterable[URIRef]) -> int:
         """
-        How many dimensions is the given concept subsumed by?
+        By how many dimensions is the given concept subsumed?
         """
         return sum(1 for d in dimensions if self.subsumed_by(concept, d))
 
@@ -62,6 +48,45 @@ class Taxonomy(Ontology):
             s == superconcept or self.subsumed_by(s, superconcept)
             for s in self.objects(subject=concept, predicate=RDFS.subClassOf))
 
+    def contains(self, node: Node) -> bool:
+        """
+        Does this graph contain some node?
+        """
+        return (node, None, None) in self or (None, None, node) in self
+
+    def leaves(self) -> List[Node]:
+        """
+        Determine the exterior nodes of a taxonomy.
+        """
+        return [
+            n for n in self.subjects(predicate=RDFS.subClassOf, object=None)
+            if not (None, RDFS.subClassOf, n) in self]
+
+    def debug(self) -> None:
+        """
+        Log this ontology to the console to debug.
+        """
+        result = [""] + [
+            "    {} {} {}".format(shorten(o), shorten(p), shorten(s))
+            for (o, p, s) in self.triples((None, None, None))]
+        logging.debug("\n".join(result))
+
+    @staticmethod
+    def from_rdf(path: str, format: str = None):
+        g = Ontology()
+        g.parse(path, format=format or rdflib.util.guess_format(path))
+        return g
+
+
+class Taxonomy(Ontology):
+    """
+    A taxonomy is an RDF graph consisting of raw subsumption relations ---
+    rdfs:subClassOf statements.
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
     def core(self, dimensions: List[URIRef]) -> Taxonomy:
         """
         This method generates a taxonomy where nodes intersecting with more
@@ -75,34 +100,41 @@ class Taxonomy(Ontology):
                 result.add((s, p, o))
         return result
 
-    def leaves(self) -> List[Node]:
+    def subsumptions(self, root: URIRef) -> Taxonomy:
         """
-        Determine the exterior nodes of a taxonomy.
+        Take an arbitrary root and generate a new tree with only parent
+        relations toward the root. Note that the relations might not be unique.
         """
-        return [
-            n for n in self.subjects(predicate=RDFS.subClassOf, object=None)
-            if not (None, RDFS.subClassOf, n) in self]
+
+        result = Taxonomy()
+
+        def f(node, children):
+            for child, grandchildren in children:
+                result.add((child, RDFS.subClassOf, node))
+                f(child, grandchildren)
+
+        f(*rdflib.util.get_tree(self, root, RDFS.subClassOf))
+        return result
 
 
-def clean_owl_ontology(ontology: Graph, dimensions: Iterable[URIRef]):
+def clean_owl_ontology(ontology: Ontology,
+                       dimensions: List[URIRef]) -> Taxonomy:
     """
-    This method takes some ontology and returns a taxonomy (consisting only of
-    rdfs:subClassOf statements)
+    This method takes some ontology and returns an OWL taxonomy. (consisting
+    only of rdfs:subClassOf statements)
     """
 
     taxonomy = Taxonomy()
 
-    # Turn ontology into taxonomy by keeping only subclass relations
-    relevant = Taxonomy()
-    relevant += ontology.triples((None, RDFS.subClassOf, None))
-    relevant += ontology.triples((None, RDF.type, OWL.Class))
-
-    # Only keep nodes intersecting with exactly one dimension
-    for (s, p, o) in relevant:
+    # Only keep subclass nodes intersecting with exactly one dimension
+    for (o, p, s) in itertools.chain(
+            ontology.triples((None, RDFS.subClassOf, None)),
+            ontology.triples((None, RDF.type, OWL.Class))
+            ):
         if type(s) != BNode and type(o) != BNode \
                 and s != o and s != OWL.Nothing and \
-                taxonomy.dimensionality(s, dimensions) == 1:
-            taxonomy.add((s, p, o))
+                ontology.dimensionality(o, dimensions) == 1:
+            taxonomy.add((o, p, s))
 
     # Add common upper class for all data types
     taxonomy.add((CCD.Attribute, RDFS.subClassOf, CCD.DType))
@@ -112,7 +144,7 @@ def clean_owl_ontology(ontology: Graph, dimensions: Iterable[URIRef]):
     return taxonomy
 
 
-def extract_tool_ontology(tools: Graph):
+def extract_tool_ontology(tools: Ontology) -> Taxonomy:
     """
     Extracts a taxonomy of toolnames from the tool description.
     """

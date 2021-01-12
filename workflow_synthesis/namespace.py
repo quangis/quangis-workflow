@@ -5,6 +5,8 @@ This module holds the RDF namespaces that we use frequently.
 import rdflib
 import sys
 
+from rdflib import URIRef, BNode, Literal
+
 NAMESPACES = {
     k: rdflib.Namespace(v) for k, v in {
         "test": "http://www.semanticweb.org/test#",
@@ -24,7 +26,7 @@ NAMESPACES = {
     }.items()
 }
 
-# Programmatically set namespaces as constants of this module
+# Programmatically set namespaces as uppercased constants of this module
 for k, v in NAMESPACES.items():
     setattr(sys.modules[__name__], k.upper(), v)
 
@@ -38,15 +40,20 @@ def setprefixes(g):
     return g
 
 
-def shorten(uriref):
+def shorten(node: rdflib.term.Identifier) -> str:
     """
-    Return URI as string, possibly shortened.
+    Return RDF node as string, possibly shortened.
     """
-    # TODO Probably a better way
 
-    uri = str(uriref)
-    for shortprefix, fullprefix in NAMESPACES.items():
-        f = str(fullprefix)
-        if uri.startswith(f):
-            return "{}:{}".format(shortprefix, uri[len(f):])
-    return str(uri)
+    if type(node) == URIRef:
+        uri = str(node)
+        for short, full in NAMESPACES.items():
+            full = str(full)
+            if uri.startswith(full):
+                return "{}:{}".format(short, uri[len(full):])
+        return uri
+    elif type(node) == BNode:
+        return "(blank)"
+    elif type(node) == Literal:
+        return "\"{}\"".format(node)
+    return str(node)
