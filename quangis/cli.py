@@ -7,37 +7,37 @@ ontology dimensions.
 When run on its own, this is a command-line interface to the APE wrapper.
 """
 
-import ape
-import ontology
-from ontology import Ontology
-import semantic_dimensions
-import tool_description
-from namespace import CCD, TOOLS
-from utils import download_if_missing
-
 import os.path
 import argparse
 import json
 import logging
 
+import ape
+import ontology
+import semantic_dimensions
+import tool_description
+from ontology import Ontology
+from namespace import CCD, TOOLS
+from utils import download_if_missing
 
-def test(path, dimensions):
-    """
-    Quick testing function with the provided data.
-    """
-    entries = []
-    with open(path) as f:
-        for line in f.readlines():
-            cs = line.split(",")
-            if len(cs) >= 3:
-                t = {}
-                for i in range(0, 3):
-                    prefix, suffix = cs[i].split(":")
-                    #ns = namespace.NAMESPACES[prefix.strip()]
-                    #ob = suffix.strip()
-                    #t[dimensions[i]] = ns[ob]
-                entries.append(ape.WorkflowType(t))
-    return entries
+
+# def test(path, dimensions):
+#    """
+#    Quick testing function with the provided data.
+#    """
+#    entries = []
+#    with open(path) as f:
+#        for line in f.readlines():
+#            cs = line.split(",")
+#            if len(cs) >= 3:
+#                t = {}
+#                for i in range(0, 3):
+#                    prefix, suffix = cs[i].split(":")
+#                    #ns = namespace.NAMESPACES[prefix.strip()]
+#                    #ob = suffix.strip()
+#                    #t[dimensions[i]] = ns[ob]
+#                entries.append(ape.WorkflowType(t))
+#    return entries
 
 
 if __name__ == '__main__':
@@ -127,7 +127,7 @@ if __name__ == '__main__':
 
     # Transform tool annotations with the projected classes into APE input
     logging.debug("Transform tool annotations...")
-    tools_ape = tool_description.tool_annotations(tools, projection, dimensions)
+    tools_ape = tool_description.ontology_to_json(tools, projection, dimensions)
 
     # Serialize both
     taxonomies.serialize(destination=taxonomy_file, format='xml')

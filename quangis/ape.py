@@ -14,17 +14,20 @@ synthesis. It interfaces with a JVM.
 # capabilities are developed upstream or in our own fork;
 # -  run a JVM bridge, as we have done --- it allows for the most flexibility
 
-from namespace import CCD, WF, TOOLS, setprefixes
-
 from rdflib import Graph, BNode, URIRef
 from rdflib.term import Node
 from rdflib.namespace import RDF, Namespace
 import jpype
 import jpype.imports
 from typing import Iterable, Tuple, Mapping, Dict, List
+import os.path
+import logging
 
 # We need version 1.1.2's API; lower versions won't work
-jpype.startJVM(classpath=['lib/APE-1.1.2-executable.jar'])
+CLASS_PATH = os.path.join(
+    os.path.dirname(__file__), '..', 'lib', 'APE-1.1.2-executable.jar')
+logging.debug(CLASS_PATH)
+jpype.startJVM(classpath=[CLASS_PATH])
 
 import java.io
 import java.util
@@ -36,6 +39,7 @@ import nl.uu.cs.ape.sat.utils
 from nl.uu.cs.ape.sat.core.solutionStructure import \
     SolutionWorkflow, ModuleNode
 
+from namespace import CCD, WF, TOOLS, setprefixes
 
 class Datatype:
     """

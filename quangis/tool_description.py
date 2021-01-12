@@ -13,7 +13,7 @@ from six.moves.urllib.parse import urldefrag
 
 import logging
 
-from ontology import Taxonomy
+from ontology import Ontology
 from namespace import TOOLS, WF, CCD, shorten
 
 TypeNode = Dict[URIRef, List[URIRef]]
@@ -69,8 +69,8 @@ def getinoutypes(
     return types or [dimension]
 
 
-def taxonomy_to_json(
-        tools: Taxonomy,
+def ontology_to_json(
+        tools: Ontology,
         projection: Mapping[Node, TypeNode],
         dimensions: List[URIRef]) -> ToolsJSON:
     """
