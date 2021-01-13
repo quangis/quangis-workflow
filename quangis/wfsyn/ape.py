@@ -14,16 +14,16 @@ synthesis. It interfaces with a JVM.
 # capabilities are developed upstream or in our own fork;
 # -  run a JVM bridge, as we have done --- it allows for the most flexibility
 
+import os
+import os.path
+import logging
+import tempfile
+import json
+import jpype
+import jpype.imports
 from rdflib import Graph, BNode, URIRef
 from rdflib.term import Node
 from rdflib.namespace import RDF, Namespace
-import jpype
-import jpype.imports
-import tempfile
-import os.path
-import json
-import os
-import logging
 from typing import Iterable, Tuple, Dict, List, Union
 
 from quangis.namespace import CCD, WF, TOOLS
@@ -209,33 +209,3 @@ class APE:
 
         return nl.uu.cs.ape.sat.models.Type.taxonomyInstanceFromJson(
             obj, setup, is_output)
-
-
-if __name__ == "__main__":
-    ape = APE(
-        taxonomy="build/GISTaxonomy.rdf",
-        tools="build/ToolDescription.json",
-        tool_root=TOOLS.Tool,
-        namespace=CCD,
-        dimensions=(CCD.CoreConceptQ, CCD.LayerA, CCD.NominalA)
-    )
-    solutions = ape.run(
-        solutions=10,
-        inputs=[
-            SemType({
-                CCD.CoreConceptQ: [CCD.CoreConceptQ],
-                CCD.LayerA: [CCD.LayerA],
-                CCD.NominalA: [CCD.RatioA]
-            }),
-        ],
-        outputs=[
-            SemType({
-                CCD.CoreConceptQ: [CCD.CoreConceptQ],
-                CCD.LayerA: [CCD.LayerA],
-                CCD.NominalA: [CCD.PlainRatioA]
-            })
-        ]
-    )
-    for s in solutions:
-        print("Solution:")
-        print(s.to_rdf().serialize(format="turtle").decode("utf-8"))
