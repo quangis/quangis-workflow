@@ -2,30 +2,20 @@
 This module contains functions to work with tool annotations.
 """
 
-from ontology import Ontology
-from namespace import TOOLS, WF, CCD, shorten
-from semantic_dimensions import SemTypeDict, SemType
-
-
-from rdflib import Graph, URIRef, Namespace, BNode
-from rdflib.term import Node
+from rdflib import URIRef, BNode
 from rdflib.namespace import RDF
-from typing import Mapping, List, Dict, NewType
+from typing import Mapping, List, Dict
 from typing_extensions import TypedDict
 
-# from six.moves.urllib.parse import urldefrag
-# 
-# def frag(node):
-#     return urldefrag(node).fragment
-
-
-import logging
+from ontology import Ontology
+from namespace import TOOLS, WF, CCD, shorten
+from semtype import SemType
 
 ToolJSON = TypedDict('ToolJSON', {
     'id': str,
     'label': str,
-    'inputs': List[SemTypeDict],
-    'outputs': List[SemTypeDict],
+    'inputs': List[Dict[URIRef, List[URIRef]]],
+    'outputs': List[Dict[URIRef, List[URIRef]]],
     'taxonomyOperations': List[URIRef]
 })
 
@@ -51,7 +41,7 @@ def downcast(node: URIRef) -> URIRef:
 def getinoutypes(
         g,
         tool_resource_node: BNode,
-        projection: Mapping[Node, SemType],
+        projection: Mapping[URIRef, SemType],
         dimension: URIRef) -> List[URIRef]:
     """
     Returns a list of types of some tool input/output which are all projected
@@ -70,7 +60,7 @@ def getinoutypes(
 
 def ontology_to_json(
         tools: Ontology,
-        projection: Mapping[Node, SemType],
+        projection: Mapping[URIRef, SemType],
         dimensions: List[URIRef]) -> ToolsJSON:
     """
     Project tool annotations with the projection function, convert it to a

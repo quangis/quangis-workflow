@@ -7,38 +7,19 @@ ontology dimensions.
 When run on its own, this is a command-line interface to the APE wrapper.
 """
 
-import ape
-import ontology
-import semantic_dimensions
-import tool_description
-from ontology import Ontology
-from namespace import CCD, TOOLS
-from utils import download_if_missing
-from semantic_dimensions import SemType
-
 import os.path
 import argparse
 import json
 import logging
 
-# def test(path, dimensions):
-#    """
-#    Quick testing function with the provided data.
-#    """
-#    entries = []
-#    with open(path) as f:
-#        for line in f.readlines():
-#            cs = line.split(",")
-#            if len(cs) >= 3:
-#                t = {}
-#                for i in range(0, 3):
-#                    prefix, suffix = cs[i].split(":")
-#                    #ns = namespace.NAMESPACES[prefix.strip()]
-#                    #ob = suffix.strip()
-#                    #t[dimensions[i]] = ns[ob]
-#                entries.append(ape.WorkflowType(t))
-#    return entries
-
+import ape
+import ontology
+import semtype
+import tool_description
+from ontology import Ontology
+from namespace import CCD, TOOLS
+from semtype import SemType
+from utils import download_if_missing
 
 if __name__ == '__main__':
 
@@ -127,7 +108,7 @@ if __name__ == '__main__':
     # from non-core nodes --> not actually done!
     logging.critical("Compute projected classes...")
     projection = \
-        semantic_dimensions.project(taxonomy=types_tax, dimensions=dimensions)
+        semtype.project(taxonomy=types_tax, dimensions=dimensions)
 
     # Combine tool & type taxonomies
     logging.critical("Combine taxonomies...")

@@ -25,16 +25,13 @@ from typing import Iterable, List, Mapping, Dict, Optional
 import logging
 
 
-SemTypeDict = Dict[URIRef, List[URIRef]]
-
-
 class SemType:
     """
     Ontological classes of semantic types for input and output data across
     different semantic dimensions.
     """
 
-    def __init__(self, mapping: Optional[SemTypeDict] = None):
+    def __init__(self, mapping: Optional[Dict[URIRef, List[URIRef]]] = None):
         """
         We represent a datatype as a mapping from RDF dimension nodes to one or
         more of its subclasses.
@@ -67,7 +64,7 @@ class SemType:
         )
 
     @property
-    def mapping(self) -> SemTypeDict:
+    def mapping(self) -> Dict[URIRef, List[URIRef]]:
         return {
             d: subclasses
             for d, subclasses in self._mapping.items() if subclasses
@@ -101,6 +98,8 @@ def project(
             while n is not None \
                     and any(t.contains(n) for t in subsumptions.values() if t is not s):
                 n = s.value(object=n, predicate=RDFS.subClassOf)
+                # TODO cyclical subClassOf relations aren't very sensical, but
+                # will probably crash this
             if n:
                 semtype[d].append(n)
         projection[node] = semtype
