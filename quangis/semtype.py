@@ -27,6 +27,7 @@ from ontology import Taxonomy
 from namespace import CCD, EXM
 from utils import shorten
 
+
 class SemType:
     """
     Ontological classes of semantic types for input and output data across
@@ -93,7 +94,7 @@ class SemType:
 
 
 def project(
-        taxonomy: Taxonomy,
+        type_taxonomy: Taxonomy,
         dimensions: List[URIRef]) -> Dict[URIRef, SemType]:
     """
     This method projects given nodes to all dimensions given as a list of
@@ -108,9 +109,9 @@ def project(
     """
 
     projection: Dict[URIRef, SemType] = {}
-    subsumptions = {d: taxonomy.subsumptions(d) for d in dimensions}
+    subsumptions = {d: type_taxonomy.subsumptions(d) for d in dimensions}
 
-    for node in taxonomy.objects():
+    for node in type_taxonomy.objects():
         semtype = SemType()
         for d, s in subsumptions.items():
             # If a node is not core (it is also subsumed by other trees), then

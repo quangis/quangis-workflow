@@ -15,8 +15,8 @@ import logging
 import ape
 import ontology
 import semtype
-import tool_description
 from ontology import Ontology
+from ontology.tool import ontology_to_json
 from namespace import CCD, TOOLS
 from semtype import SemType
 from utils import download_if_missing
@@ -105,10 +105,6 @@ if __name__ == '__main__':
     types_tax = ontology.clean_owl_ontology(types, dimensions)
     tools_tax = ontology.extract_tool_ontology(tools)
 
-    types_tax.debug()
-
-    tools_tax.debug()
-
     # Computes a projection of classes to any of a given set of dimensions
     # given by superconcepts in the type taxonomy file, and clear the ontology
     # from non-core nodes --> not actually done!
@@ -122,7 +118,7 @@ if __name__ == '__main__':
 
     # Transform tool annotations with the projected classes into APE input
     logging.critical("Transform tool annotations...")
-    tools_ape = tool_description.ontology_to_json(tools, projection, dimensions)
+    tools_ape = ontology_to_json(tools, projection, dimensions)
 
     # Serialize both
     taxonomies.serialize(destination=taxonomy_file, format='xml')
