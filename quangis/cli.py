@@ -10,29 +10,38 @@ When run on its own, this is a command-line interface to the APE wrapper.
 import os.path
 import argparse
 import logging
+import urllib.request
 
-import ape
-import ontology
-import semtype
 from wfsyn import wfsyn
 from ontology import Ontology
-from ontology.tool import ontology_to_json
-from namespace import CCD, TOOLS
+from namespace import CCD
 from semtype import SemType
-from utils import download_if_missing
+from utils import uri, shorten
+
+
+def download_if_missing(path: str, url: str) -> str:
+    """
+    Make sure that a file exists by downloading it if it doesn't exist. Return
+    filename.
+    """
+
+    directory = os.path.dirname(path)
+    if directory and not os.path.isdir(directory):
+        os.mkdir(directory)
+
+    if not os.path.isfile(path):
+        logging.warning(
+            "{} not found; now downloading from {}".format(path, url))
+        urllib.request.urlretrieve(url, filename=path)
+
+    return path
+
 
 if __name__ == '__main__':
-
-    ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
     parser = argparse.ArgumentParser(
         description="Wrapper for APE that synthesises CCD workflows"
     )
-
-    parser.add_argument(
-        '-o', '--output',
-        default=os.path.join(ROOT_DIR, "build"),
-        help="output directory")
 
     parser.add_argument(
         '--types',
@@ -41,6 +50,13 @@ if __name__ == '__main__':
     parser.add_argument(
         '--tools',
         help="tool annotation ontology in RDF")
+
+    parser.add_argument(
+        '-d', '--dimension',
+        nargs='+',
+        type=uri,
+        default=[CCD.CoreConceptQ, CCD.LayerA, CCD.NominalA],
+        help="semantic dimensions")
 
     parser.add_argument(
         '-n', '--solutions',
@@ -65,26 +81,21 @@ if __name__ == '__main__':
     )
 
     if not args.types:
-        # args.types = download_if_missing(
-        #    path=os.path.join(args.output, "CoreConceptData.rdf"),
-        #    url="http://geographicknowledge.de/vocab/CoreConceptData.rdf"
-        # )
         args.types = download_if_missing(
-            path=os.path.join(args.output, "CoreConceptData.ttl"),
-            url="https://raw.githubusercontent.com/simonscheider/QuAnGIS/"
-                "master/Ontology/CoreConceptData.ttl"
+           path="CoreConceptData.rdf",
+           url="http://geographicknowledge.de/vocab/CoreConceptData.rdf"
         )
 
     if not args.tools:
-        # args.tools = download_if_missing(
-        #    path=os.path.join(args.output, "GISTools.rdf"),
-        #    url="http://geographicknowledge.de/vocab/GISTools.rdf"
-        # )
         args.tools = download_if_missing(
-            path=os.path.join(args.output, "ToolDescription.ttl"),
-            url="https://raw.githubusercontent.com/simonscheider/QuAnGIS/"
-                "master/ToolRepository/ToolDescription.ttl"
+            path="ToolDescription.ttl",
+            url="https://raw.githubusercontent.com/simonscheider/"
+                "QuAnGIS/master/ToolRepository/ToolDescription.ttl"
         )
+
+    logging.info("Dimensions: {}".format(", ".join(
+        map(shorten, args.dimension)
+    )))
 
     data = [
         (
@@ -110,7 +121,7 @@ if __name__ == '__main__':
         solutions=args.solutions,
         types=Ontology.from_rdf(args.types),
         tools=Ontology.from_rdf(args.tools),
-        dimensions=[CCD.CoreConceptQ, CCD.LayerA, CCD.NominalA],
+        dimensions=args.dimension,
     )
 
     for g in solutions:
