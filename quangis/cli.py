@@ -9,7 +9,6 @@ When run on its own, this is a command-line interface to the APE wrapper.
 
 import os.path
 import argparse
-import json
 import logging
 
 import ape
@@ -87,41 +86,34 @@ if __name__ == '__main__':
                 "master/ToolRepository/ToolDescription.ttl"
         )
 
-    dimensions = [CCD.CoreConceptQ, CCD.LayerA, CCD.NominalA]
-    types = Ontology.from_rdf(args.types)
-    tools = Ontology.from_rdf(args.tools)
-
-    tax, tools_ape = wfsyn(types, tools, dimensions)
-
-    logging.debug("Running APE...")
-    jvm = ape.APE(
-        taxonomy=tax,
-        tools=tools_ape,
-        tool_root=TOOLS.Tool,
-        namespace=CCD,
-        dimensions=dimensions)
-
-    inputs = [
-        SemType({
-            CCD.CoreConceptQ: [CCD.CoreConceptQ],
-            CCD.LayerA: [CCD.LayerA],
-            CCD.NominalA: [CCD.RatioA]
-        })
-    ]
-    outputs = [
-        SemType({
-            CCD.CoreConceptQ: [CCD.CoreConceptQ],
-            CCD.LayerA: [CCD.LayerA],
-            CCD.NominalA: [CCD.PlainRatioA]
-        })
+    data = [
+        (
+            [
+                SemType({
+                    CCD.CoreConceptQ: [CCD.CoreConceptQ],
+                    CCD.LayerA: [CCD.LayerA],
+                    CCD.NominalA: [CCD.RatioA]
+                })
+            ],
+            [
+                SemType({
+                    CCD.CoreConceptQ: [CCD.CoreConceptQ],
+                    CCD.LayerA: [CCD.LayerA],
+                    CCD.NominalA: [CCD.PlainRatioA]
+                })
+            ]
+        )
     ]
 
-    logging.info("Finding workflows for {} -> {}".format(str(inputs[0]), str(outputs[0])))
-    solutions = jvm.run(
-        inputs=inputs,
-        outputs=outputs,
-        solutions=args.solutions)
+    solutions = wfsyn(
+        io=data,
+        solutions=args.solutions,
+        types=Ontology.from_rdf(args.types),
+        tools=Ontology.from_rdf(args.tools),
+        dimensions=[CCD.CoreConceptQ, CCD.LayerA, CCD.NominalA],
+    )
 
-    for s in solutions:
-        print("Solution:")
-        print(s.to_rdf().serialize(format="turtle").decode("utf-8"))
+    for g in solutions:
+        for s in g:
+            print("Solution:")
+            print(s.to_rdf().serialize(format="turtle").decode("utf-8"))
