@@ -15,6 +15,7 @@ import logging
 import ape
 import ontology
 import semtype
+from wfsyn import wfsyn
 from ontology import Ontology
 from ontology.tool import ontology_to_json
 from namespace import CCD, TOOLS
@@ -40,7 +41,7 @@ if __name__ == '__main__':
 
     parser.add_argument(
         '--tools',
-        help="tool annotations in RDF")
+        help="tool annotation ontology in RDF")
 
     parser.add_argument(
         '-n', '--solutions',
@@ -87,47 +88,18 @@ if __name__ == '__main__':
         )
 
     dimensions = [CCD.CoreConceptQ, CCD.LayerA, CCD.NominalA]
-    # dimensions = [CCD.DType]
-    # dimensions = [CCD.CoreConceptQ, CCD.LayerA]
-
-    # Prepare data files needed by APE
-    taxonomy_file = os.path.join(args.output, "GISTaxonomy.rdf")
-    tools_file = os.path.join(args.output, "ToolDescription.json")
-
-    logging.critical("Loading ontologies...")
     types = Ontology.from_rdf(args.types)
     tools = Ontology.from_rdf(args.tools)
 
-    # Generates a taxonomy version of the ontology as well as of the given tool
-    # hierarchy (using rdfs:subClassOf), by applying reasoning and removing all
-    # other statements
-    logging.critical("Compute taxonomies...")
-    types_tax = ontology.clean_owl_ontology(types, dimensions)
-    tools_tax = ontology.extract_tool_ontology(tools)
-
-    # Computes a projection of classes to any of a given set of dimensions
-    # given by superconcepts in the type taxonomy file, and clear the ontology
-    # from non-core nodes --> not actually done!
-    logging.critical("Compute projected classes...")
-    projection = \
-        semtype.project(taxonomy=types_tax, dimensions=dimensions)
-
-    # Combine tool & type taxonomies
-    logging.critical("Combine taxonomies...")
-    taxonomies = tools_tax + types_tax.core(dimensions)
-
-    # Transform tool annotations with the projected classes into APE input
-    logging.critical("Transform tool annotations...")
-    tools_ape = ontology_to_json(tools, projection, dimensions)
+    tax, tools_ape = wfsyn(types, tools, dimensions)
 
     # Serialize both
-    taxonomies.serialize(destination=taxonomy_file, format='xml')
+    # Prepare data files needed by APE
+    taxonomy_file = os.path.join(args.output, "GISTaxonomy.rdf")
+    tools_file = os.path.join(args.output, "ToolDescription.json")
+    tax.serialize(destination=taxonomy_file, format='xml')
     with open(tools_file, 'w') as f:
         json.dump(tools_ape, f, sort_keys=True, indent=2)
-
-    # Quick
-    # input_sets = test("data/sources.txt", dimensions)
-    # output_sets = test("data/goals.txt", dimensions)
 
     logging.debug("Running APE...")
 
@@ -138,9 +110,6 @@ if __name__ == '__main__':
         tool_root=TOOLS.Tool,
         namespace=CCD,
         dimensions=dimensions)
-
-    # for inputs in input_sets:
-    #    for outputs in output_sets:
 
     inputs = [
         SemType({

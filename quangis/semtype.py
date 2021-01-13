@@ -94,7 +94,7 @@ class SemType:
 
 
 def project(
-        type_taxonomy: Taxonomy,
+        taxonomy: Taxonomy,
         dimensions: List[URIRef]) -> Dict[URIRef, SemType]:
     """
     This method projects given nodes to all dimensions given as a list of
@@ -109,9 +109,9 @@ def project(
     """
 
     projection: Dict[URIRef, SemType] = {}
-    subsumptions = {d: type_taxonomy.subsumptions(d) for d in dimensions}
+    subsumptions = {d: taxonomy.subsumptions(d) for d in dimensions}
 
-    for node in type_taxonomy.objects():
+    for node in taxonomy.objects():
         semtype = SemType()
         for d, s in subsumptions.items():
             # If a node is not core (it is also subsumed by other trees), then
