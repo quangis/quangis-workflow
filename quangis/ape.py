@@ -15,7 +15,7 @@ synthesis. It interfaces with a JVM.
 # -  run a JVM bridge, as we have done --- it allows for the most flexibility
 
 from namespace import CCD, WF, TOOLS, setprefixes, shorten
-from semantic_dimensions import TypeNode, TypeNodeDict
+from semantic_dimensions import SemType, SemTypeDict
 
 from rdflib import Graph, BNode, URIRef
 from rdflib.term import Node
@@ -29,7 +29,6 @@ import logging
 # We need version 1.1.2's API; lower versions won't work
 CLASS_PATH = os.path.join(
     os.path.dirname(__file__), '..', 'lib', 'APE-1.1.2-executable.jar')
-logging.debug(CLASS_PATH)
 jpype.startJVM(classpath=[CLASS_PATH])
 
 import java.io
@@ -135,8 +134,8 @@ class APE:
         self.setup = self.ape.getDomainSetup()
 
     def run(self,
-            inputs: Iterable[TypeNode],
-            outputs: Iterable[TypeNode],
+            inputs: Iterable[SemType],
+            outputs: Iterable[SemType],
             solution_length: Tuple[int, int] = (1, 10),
             solutions: int = 10) -> List[Workflow]:
 
@@ -165,12 +164,12 @@ class APE:
         ]
 
     @staticmethod
-    def type_node(node: TypeNode,
+    def type_node(t: SemType,
                   setup: nl.uu.cs.ape.sat.utils.APEDomainSetup,
                   is_output: bool = False) -> nl.uu.cs.ape.sat.models.Type:
 
         obj = org.json.JSONObject()
-        for dimension, subclasses in node._mapping.items():
+        for dimension, subclasses in t._mapping.items():
             a = org.json.JSONArray()
             for c in subclasses:
                 a.put(str(c))
@@ -191,14 +190,14 @@ if __name__ == "__main__":
     solutions = ape.run(
         solutions=10,
         inputs=[
-            TypeNode({
+            SemType({
                 CCD.CoreConceptQ: [CCD.CoreConceptQ],
                 CCD.LayerA: [CCD.LayerA],
                 CCD.NominalA: [CCD.RatioA]
             }),
         ],
         outputs=[
-            TypeNode({
+            SemType({
                 CCD.CoreConceptQ: [CCD.CoreConceptQ],
                 CCD.LayerA: [CCD.LayerA],
                 CCD.NominalA: [CCD.PlainRatioA]

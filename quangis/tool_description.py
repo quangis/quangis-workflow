@@ -4,7 +4,7 @@ This module contains functions to work with tool annotations.
 
 from ontology import Ontology
 from namespace import TOOLS, WF, CCD, shorten
-from semantic_dimensions import TypeNodeDict
+from semantic_dimensions import SemTypeDict
 
 
 from rdflib import Graph, URIRef, Namespace, BNode
@@ -20,8 +20,8 @@ import logging
 ToolJSON = TypedDict('ToolJSON', {
     'id': str,
     'label': str,
-    'inputs': List[TypeNodeDict],
-    'outputs': List[TypeNodeDict],
+    'inputs': List[SemTypeDict],
+    'outputs': List[SemTypeDict],
     'taxonomyOperations': List[URIRef]
 })
 
@@ -70,7 +70,7 @@ def getinoutypes(
 
 def ontology_to_json(
         tools: Ontology,
-        projection: Mapping[Node, TypeNodeDict],
+        projection: Mapping[Node, SemTypeDict],
         dimensions: List[URIRef]) -> ToolsJSON:
     """
     Project tool annotations with the projection function, convert it to a

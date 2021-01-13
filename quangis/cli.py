@@ -14,7 +14,7 @@ import tool_description
 from ontology import Ontology
 from namespace import CCD, TOOLS
 from utils import download_if_missing
-from semantic_dimensions import TypeNode
+from semantic_dimensions import SemType
 
 import os.path
 import argparse
@@ -160,14 +160,14 @@ if __name__ == '__main__':
     #    for outputs in output_sets:
 
     inputs = [
-        TypeNode({
+        SemType({
             CCD.CoreConceptQ: [CCD.CoreConceptQ],
             CCD.LayerA: [CCD.LayerA],
             CCD.NominalA: [CCD.RatioA]
         })
     ]
     outputs = [
-        TypeNode({
+        SemType({
             CCD.CoreConceptQ: [CCD.CoreConceptQ],
             CCD.LayerA: [CCD.LayerA],
             CCD.NominalA: [CCD.PlainRatioA]

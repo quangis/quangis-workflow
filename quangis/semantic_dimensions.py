@@ -25,16 +25,16 @@ from typing import Iterable, List, Mapping, Dict
 import logging
 
 
-TypeNodeDict = Dict[URIRef, List[URIRef]]
+SemTypeDict = Dict[URIRef, List[URIRef]]
 
 
-class TypeNode:
+class SemType:
     """
     Ontological classes of input or output datatypes across different semantic
     dimensions.
     """
 
-    def __init__(self, mapping: TypeNodeDict):
+    def __init__(self, mapping: SemTypeDict):
         """
         We represent a datatype as a mapping from RDF dimension nodes to one or
         more of its subclasses.
@@ -78,7 +78,8 @@ def project(
             # If a node is not core (it is also subsumed by other trees), then
             # we project to the closest parent that *is* core
             p = node
-            while p is not None and any(s.contains(p) for t in subsumptions if t is not s):
+            while p is not None \
+                    and any(s.contains(p) for t in subsumptions if t is not s):
                 parent = s.value(object=p, predicate=RDFS.subClassOf)
                 p = parent
             n[d] = p
