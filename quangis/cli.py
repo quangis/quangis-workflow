@@ -43,6 +43,12 @@ if __name__ == '__main__':
         help="tool annotations in RDF")
 
     parser.add_argument(
+        '-n', '--solutions',
+        type=int,
+        default=5,
+        help="number of solution workflows attempted of find")
+
+    parser.add_argument(
         '--log',
         choices=['debug', 'info', 'warning', 'error', 'critical'],
         default='info',
@@ -159,7 +165,7 @@ if __name__ == '__main__':
     solutions = jvm.run(
         inputs=inputs,
         outputs=outputs,
-        solutions=10)
+        solutions=args.solutions)
 
     for s in solutions:
         print("Solution:")
