@@ -33,7 +33,7 @@ from quangis.ontology.tool import ToolsJSON
 
 # We need version 1.1.2's API; lower versions won't work
 CLASS_PATH = os.path.join(
-    os.path.dirname(__file__), '..', '..', 'lib', 'APE-1.1.2-executable.jar')
+    os.path.dirname(__file__), '..', '..', 'lib', 'APE-1.1.4-executable.jar')
 jpype.startJVM(classpath=[CLASS_PATH])
 
 import java.io
@@ -68,7 +68,7 @@ class Workflow:
 
     def add_module(self, mod: ModuleNode) -> Node:
         mod_node = BNode()
-        tool_node = Workflow.tool_node(mod.getNodeID())
+        tool_node = URIRef(mod.getNodeFullLabel())
 
         self._graph.add((self._wf, WF.edge, mod_node))
         self._graph.add((mod_node, WF.applicationOf, tool_node))
@@ -88,23 +88,10 @@ class Workflow:
             node = self._resources[name] = BNode()
 
             for t in type_node.getTypes():
-                type_node = Workflow.type_node(t.getPredicateID())
+                type_node = URIRef(t.getPredicateID())
                 self._graph.add((node, RDF.type, type_node))
 
         return node
-
-    @staticmethod
-    def type_node(typeid: str) -> Node:
-        # TODO figure out why type IDs do not correspond exactly to RDF nodes
-        typeid = str(typeid)
-        if typeid.endswith("_plain"):
-            typeid = typeid[:-6]
-        return URIRef(typeid)
-
-    @staticmethod
-    def tool_node(toolid: str) -> Node:
-        # TODO figure out why tool IDs do not correspond exactly to RDF nodes
-        return URIRef(str(toolid).strip("\"").split("[tool]")[0])
 
     def to_rdf(self) -> Graph:
         return self._graph
@@ -169,7 +156,8 @@ class APE:
             inputs: Iterable[SemType],
             outputs: Iterable[SemType],
             solution_length: Tuple[int, int] = (1, 10),
-            solutions: int = 10) -> List[Workflow]:
+            solutions: int = 10,
+            timeout: int = 600) -> List[Workflow]:
 
         inp = java.util.Arrays.asList(*(self.type_node(i, False)
                                         for i in inputs))
@@ -183,6 +171,7 @@ class APE:
             .withSolutionMinLength(solution_length[0])\
             .withSolutionMaxLength(solution_length[1])\
             .withMaxNoSolutions(solutions)\
+            .withTimeoutSec(timeout)\
             .withProgramInputs(inp)\
             .withProgramOutputs(out)\
             .withApeDomainSetup(self.setup)\
