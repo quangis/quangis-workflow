@@ -93,20 +93,10 @@ if __name__ == '__main__':
 
     tax, tools_ape = wfsyn(types, tools, dimensions)
 
-    # Serialize both
-    # Prepare data files needed by APE
-    taxonomy_file = os.path.join(args.output, "GISTaxonomy.rdf")
-    tools_file = os.path.join(args.output, "ToolDescription.json")
-    tax.serialize(destination=taxonomy_file, format='xml')
-    with open(tools_file, 'w') as f:
-        json.dump(tools_ape, f, sort_keys=True, indent=2)
-
     logging.debug("Running APE...")
-
-    # Run APE
     jvm = ape.APE(
-        taxonomy=taxonomy_file,
-        tools=tools_file,
+        taxonomy=tax,
+        tools=tools_ape,
         tool_root=TOOLS.Tool,
         namespace=CCD,
         dimensions=dimensions)

@@ -19,12 +19,17 @@ from rdflib.term import Node
 from rdflib.namespace import RDF, Namespace
 import jpype
 import jpype.imports
+import tempfile
 import os.path
-from typing import Iterable, Tuple, Dict, List
+import json
+import os
+import logging
+from typing import Iterable, Tuple, Dict, List, Union
 
 from namespace import CCD, WF, TOOLS
 from semtype import SemType
 from ontology import Ontology
+from ontology.tool import ToolsJSON
 
 # We need version 1.1.2's API; lower versions won't work
 CLASS_PATH = os.path.join(
@@ -115,22 +120,50 @@ class APE:
     """
 
     def __init__(self,
-                 taxonomy: str,
-                 tools: str,
+                 taxonomy: Union[str, Ontology],
+                 tools: Union[str, ToolsJSON],
                  namespace: Namespace,
                  tool_root: URIRef,
                  dimensions: List[URIRef]):
 
+        # If we weren't given a filepath but a Python object, first serialize
+        if isinstance(taxonomy, Graph):
+            fd, taxonomy_file = tempfile.mkstemp(prefix='ape-', suffix='.rdf')
+            logging.debug("Creating taxonomy at {}".format(taxonomy_file))
+            with open(fd, 'wb') as f:
+                taxonomy.serialize(destination=f, format='xml')
+        else:
+            taxonomy_file = taxonomy
+
+        # If we weren't given a filepath but a Python object, first serialize
+        if isinstance(tools, dict):
+            fd, tools_file = tempfile.mkstemp(prefix='ape-', suffix='.json')
+            logging.debug("Creating tool description at {}".format(tools_file))
+            with open(fd, 'w') as f:
+                json.dump(tools, f)
+        else:
+            tools_file = tools
+
+        # Set up APE in JVM
         self.config = nl.uu.cs.ape.sat.configuration.APECoreConfig(
-            java.io.File(taxonomy),
+            java.io.File(taxonomy_file),
             str(namespace),
             str(tool_root),
             java.util.Arrays.asList(*map(str, dimensions)),
-            java.io.File(tools),
+            java.io.File(tools_file),
             True
         )
         self.ape = nl.uu.cs.ape.sat.APE(self.config)
         self.setup = self.ape.getDomainSetup()
+
+        # Since APE has presumably already read the files, it's safe to delete
+        # them now if necessary
+        if taxonomy is not taxonomy_file:
+            logging.debug("Removing {}".format(taxonomy_file))
+            os.remove(taxonomy_file)
+        if tools is not tools_file:
+            logging.debug("Removing {}".format(tools_file))
+            os.remove(tools_file)
 
     def run(self,
             inputs: Iterable[SemType],
