@@ -23,10 +23,10 @@ import jpype
 import jpype.imports
 from rdflib import Graph, BNode, URIRef
 from rdflib.term import Node
-from rdflib.namespace import RDF, Namespace
+from rdflib.namespace import Namespace
 from typing import Iterable, Tuple, Dict, List, Union
 
-from quangis.namespace import CCD, WF, TOOLS
+from quangis.namespace import WF, RDF
 from quangis.semtype import SemType
 from quangis.ontology import Ontology
 from quangis.ontology.tool import ToolsJSON

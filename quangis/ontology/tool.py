@@ -3,11 +3,10 @@ This module contains functions to work with tool annotations.
 """
 
 from rdflib import URIRef, BNode
-from rdflib.namespace import RDF
 from typing import Mapping, List, Dict
 from typing_extensions import TypedDict
 
-from quangis.namespace import TOOLS, WF
+from quangis.namespace import TOOLS, WF, RDF
 from quangis.ontology import Ontology
 from quangis.semtype import SemType
 from quangis.utils import shorten
