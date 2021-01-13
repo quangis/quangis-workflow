@@ -33,7 +33,7 @@ from quangis.ontology.tool import ToolsJSON
 
 # We need version 1.1.2's API; lower versions won't work
 CLASS_PATH = os.path.join(
-    os.path.dirname(__file__), '..', 'lib', 'APE-1.1.2-executable.jar')
+    os.path.dirname(__file__), '..', '..', 'lib', 'APE-1.1.2-executable.jar')
 jpype.startJVM(classpath=[CLASS_PATH])
 
 import java.io

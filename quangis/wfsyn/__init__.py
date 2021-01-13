@@ -6,13 +6,13 @@ import logging
 from rdflib import URIRef
 from typing import List, Tuple, Iterable
 
-from quangis import ape
 from quangis import semtype
 from quangis import ontology
 from quangis.semtype import SemType
 from quangis.namespace import CCD, TOOLS
 from quangis.ontology import Ontology
 from quangis.ontology.tool import ontology_to_json
+from quangis.wfsyn import ape
 
 
 def wfsyn(types: Ontology,

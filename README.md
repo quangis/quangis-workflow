@@ -18,7 +18,7 @@ It translates them to a format APE understands and then runs APE on them.
 
 Example run:
 
-    python3 workflow_synthesis/cli.py \
+    python3 -m quangis.wfsyn \
         --tools ToolDescription.rdf \
         --types CoreConceptData.rdf
 
