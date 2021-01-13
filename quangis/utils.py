@@ -5,7 +5,7 @@ Various utility functions.
 from rdflib import URIRef, BNode, Literal
 from rdflib.term import Identifier
 
-import namespace
+from quangis import namespace
 
 
 def shorten(node: Identifier) -> str:

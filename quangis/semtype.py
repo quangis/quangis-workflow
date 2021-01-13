@@ -15,17 +15,13 @@ reasoning. The graph needs to contain a minimal set of subsumption relations.
 
 from __future__ import annotations
 
-import rdflib
 from rdflib.namespace import RDFS
-from rdflib import Graph, URIRef
-from rdflib.term import Node
-from collections import defaultdict
-from typing import Iterable, List, Mapping, Dict, Optional
-import logging
+from rdflib import URIRef
+from typing import List, Dict, Optional
 
-from ontology import Taxonomy
-from namespace import CCD, EXM
-from utils import shorten
+from quangis.ontology import Taxonomy
+from quangis.namespace import CCD
+from quangis.utils import shorten
 
 
 class SemType:

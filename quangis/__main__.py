@@ -12,11 +12,11 @@ import argparse
 import logging
 import urllib.request
 
-from wfsyn import wfsyn
-from ontology import Ontology
-from namespace import CCD
-from semtype import SemType
-from utils import uri, shorten
+from quangis.wfsyn import wfsyn
+from quangis.ontology import Ontology
+from quangis.namespace import CCD
+from quangis.semtype import SemType
+from quangis.utils import uri, shorten
 
 
 def download_if_missing(path: str, url: str) -> str:

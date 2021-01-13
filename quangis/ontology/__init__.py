@@ -13,9 +13,9 @@ import logging
 import owlrl
 from typing import Iterable, List
 
-import namespace
-from namespace import TOOLS, ADA, CCD
-from utils import shorten
+from quangis import namespace
+from quangis.namespace import TOOLS, ADA, CCD
+from quangis.utils import shorten
 
 
 class Ontology(Graph):

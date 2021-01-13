@@ -26,10 +26,10 @@ import os
 import logging
 from typing import Iterable, Tuple, Dict, List, Union
 
-from namespace import CCD, WF, TOOLS
-from semtype import SemType
-from ontology import Ontology
-from ontology.tool import ToolsJSON
+from quangis.namespace import CCD, WF, TOOLS
+from quangis.semtype import SemType
+from quangis.ontology import Ontology
+from quangis.ontology.tool import ToolsJSON
 
 # We need version 1.1.2's API; lower versions won't work
 CLASS_PATH = os.path.join(
