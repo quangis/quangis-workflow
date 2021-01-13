@@ -13,8 +13,7 @@ tree). It should not be used on subsumption graphs that were closed with
 reasoning. The graph needs to contain a minimal set of subsumption relations.
 """
 
-from ontology import Taxonomy
-from namespace import CCD, EXM, shorten
+from __future__ import annotations
 
 import rdflib
 from rdflib.namespace import RDFS
@@ -24,6 +23,9 @@ from collections import defaultdict
 from typing import Iterable, List, Mapping, Dict, Optional
 import logging
 
+from ontology import Taxonomy
+from namespace import CCD, EXM
+from utils import shorten
 
 class SemType:
     """
@@ -69,6 +71,25 @@ class SemType:
             d: subclasses
             for d, subclasses in self._mapping.items() if subclasses
         }
+
+    def downcast(self) -> SemType:
+        """
+        Return a new SemType in which certain nodes are downcast to
+        identifiable leaf nodes. APE has a closed world assumption, in that it
+        considers the set of leaf nodes it knows about as exhaustive: it will
+        never consider branch nodes as valid answers.
+        """
+        cast = {
+            CCD.NominalA: CCD.PlainNominalA,
+            CCD.OrdinalA: CCD.PlainOrdinalA,
+            CCD.IntervalA: CCD.PlainIntervalA,
+            CCD.RatioA: CCD.PlainRatioA
+        }
+
+        return SemType({
+            dimension: [cast.get(n, n) for n in classes]
+            for dimension, classes in self._mapping.items()
+        })
 
 
 def project(

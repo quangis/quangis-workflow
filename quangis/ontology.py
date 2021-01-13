@@ -4,8 +4,6 @@ Methods and datatypes to manipulate ontologies and taxonomies.
 
 from __future__ import annotations
 
-from namespace import TOOLS, ADA, CCD, shorten
-
 import rdflib
 from rdflib.namespace import RDFS, RDF, OWL
 from rdflib import Graph, URIRef, BNode
@@ -15,6 +13,10 @@ import logging
 import owlrl
 from typing import Iterable, List
 
+import namespace
+from namespace import TOOLS, ADA, CCD
+from utils import shorten
+
 
 class Ontology(Graph):
     """
@@ -23,6 +25,9 @@ class Ontology(Graph):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+        for prefix, ns in namespace.mapping.items():
+            self.bind(prefix, str(ns))
 
     def dimensionality(self, concept: URIRef,
                        dimensions: Iterable[URIRef]) -> int:

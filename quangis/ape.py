@@ -22,8 +22,9 @@ import jpype.imports
 import os.path
 from typing import Iterable, Tuple, Dict, List
 
-from namespace import CCD, WF, TOOLS, setprefixes, shorten
+from namespace import CCD, WF, TOOLS
 from semtype import SemType
+from ontology import Ontology
 
 # We need version 1.1.2's API; lower versions won't work
 CLASS_PATH = os.path.join(
@@ -48,9 +49,8 @@ class Workflow:
 
     def __init__(self, wf: SolutionWorkflow):
         self._wf: Node = BNode()
-        self._graph: Graph = Graph()
+        self._graph: Graph = Ontology()
         self._resources: Dict[str, Node] = {}
-        setprefixes(self._graph)
 
         self._graph.add((self._wf, RDF.type, WF.Workflow))
 

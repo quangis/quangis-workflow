@@ -7,9 +7,10 @@ from rdflib.namespace import RDF
 from typing import Mapping, List, Dict
 from typing_extensions import TypedDict
 
+from namespace import TOOLS, WF, CCD
 from ontology import Ontology
-from namespace import TOOLS, WF, CCD, shorten
 from semtype import SemType
+from utils import shorten
 
 ToolJSON = TypedDict('ToolJSON', {
     'id': str,
@@ -24,38 +25,43 @@ ToolsJSON = TypedDict('ToolsJSON', {
 })
 
 
-def downcast(node: URIRef) -> URIRef:
+def get_resources(
+        ontology: Ontology,
+        tool: URIRef,
+        *predicates: List[URIRef]) -> List[BNode]:
     """
-    Downcast certain nodes to identifiable leaf nodes. APE has a closed world
-    assumption, in that it considers the set of leaf nodes it knows about as
-    exhaustive: it will never consider branch nodes as valid answers.
+    Get the resources input/output associated with a tool, with predicates like
+    output1/input2... etcetera.
     """
-    return {
-        CCD.NominalA: CCD.PlainNominalA,
-        CCD.OrdinalA: CCD.PlainOrdinalA,
-        CCD.IntervalA: CCD.PlainIntervalA,
-        CCD.RatioA: CCD.PlainRatioA
-    }.get(node, node)
+    resources = []
+    for p in predicates:
+        resource = ontology.value(predicate=p, subject=tool, any=False)
+        if resource:
+            resources.append(resource)
+    return resources
 
 
-def getinoutypes(
-        g,
-        tool_resource_node: BNode,
+def get_type(
+        ontology: Ontology,
+        resource: BNode,
         projection: Mapping[URIRef, SemType],
-        dimension: URIRef) -> List[URIRef]:
+        dimensions: List[URIRef]) -> SemType:
     """
     Returns a list of types of some tool input/output which are all projected
     to given semantic dimension
     """
 
-    types = []
-    for t in g.objects(tool_resource_node, RDF.type):
-        if t in projection and projection[t][dimension]:
-            types.extend(projection[t][dimension])
-
-    # In case there is no type, just use the highest level type of the
-    # corresponding dimension
-    return types or [dimension]
+    # Construct the type of this resource node
+    result = SemType()
+    for d in dimensions:
+        types = []
+        for t in ontology.objects(resource, RDF.type):
+            if t in projection and projection[t][d]:
+                types.extend(projection[t][d])
+        # If there is no type, just use the highest type of the corresponding
+        # dimension
+        result[d].extend(types or [d])
+    return result
 
 
 def ontology_to_json(
@@ -67,34 +73,24 @@ def ontology_to_json(
     dictionary that APE understands
     """
 
-    result: List[ToolJSON] = []
-
-    for tool in tools.objects(None, TOOLS.implements):
-
-        inputs = []
-        for input_pred in (WF.input1, WF.input2, WF.input3):
-            node = tools.value(predicate=input_pred, subject=tool, any=False)
-            if node:
-                inputs.append({
-                    d: getinoutypes(tools, node, projection, d)
-                    for d in dimensions
-                })
-
-        outputs = []
-        for output_pred in (WF.output, WF.output2, WF.output3):
-            node = tools.value(predicate=output_pred, subject=tool, any=False)
-            if node:
-                # Tool outputs should always be downcast
-                outputs.append({
-                    d: [downcast(c) for c in getinoutypes(tools, node, projection, d)]
-                    for d in dimensions
-                })
-
-        result.append({
-            'id': str(tool),
-            'label': shorten(tool),
-            'inputs': inputs,
-            'outputs': outputs,
-            'taxonomyOperations': [tool]
-        })
-    return ToolsJSON({"functions": result})
+    return {
+        'functions': [
+            {
+                'id': str(tool),
+                'label': shorten(tool),
+                'taxonomyOperations': [tool],
+                'inputs': [
+                    get_type(tools, resource, projection, dimensions).mapping
+                    for resource in get_resources(
+                        tools, tool, WF.input1, WF.input2, WF.input3)
+                ],
+                'outputs': [
+                    o for o in (
+                        get_type(tools, resource, projection, dimensions).downcast().mapping
+                        for resource in get_resources(
+                            tools, tool, WF.output, WF.output2, WF.output3)
+                    ) if o is not None]
+            }
+            for tool in tools.objects(None, TOOLS.implements)
+        ]
+    }

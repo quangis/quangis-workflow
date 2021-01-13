@@ -3,12 +3,11 @@ This module holds the RDF namespaces that we use frequently.
 """
 
 import sys
-from rdflib import Namespace, URIRef, BNode, Literal
-from rdflib.term import Identifier
+import rdflib
 
 
-NAMESPACES = {
-    k: Namespace(v) for k, v in {
+mapping = {
+    k: rdflib.Namespace(v) for k, v in {
         "test": "http://www.semanticweb.org/test#",
         "foaf": "http://xmlns.com/foaf/0.1/",
         "ccd": "http://geographicknowledge.de/vocab/CoreConceptData.rdf#",
@@ -27,34 +26,6 @@ NAMESPACES = {
 }
 
 
-def setprefixes(g):
-    """
-    Set all known prefixes for an RDF graph.
-    """
-    for k, v in NAMESPACES.items():
-        g.bind(k, str(v))
-    return g
-
-
-def shorten(node: Identifier) -> str:
-    """
-    Return RDF node as string, possibly shortened.
-    """
-
-    if type(node) == URIRef:
-        uri = str(node)
-        for short, full in NAMESPACES.items():
-            full = str(full)
-            if uri.startswith(full):
-                return "{}:{}".format(short, uri[len(full):])
-        return uri
-    elif type(node) == BNode:
-        return "(blank)"
-    elif type(node) == Literal:
-        return "\"{}\"".format(node)
-    return str(node)
-
-
 # Programmatically set namespaces as uppercased constants of this module
-for k, v in NAMESPACES.items():
+for k, v in mapping.items():
     setattr(sys.modules[__name__], k.upper(), v)
