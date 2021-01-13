@@ -5,7 +5,6 @@ Methods and datatypes to manipulate ontologies and taxonomies.
 from __future__ import annotations
 
 import rdflib
-from rdflib.namespace import RDFS, RDF, OWL
 from rdflib import Graph, URIRef, BNode
 from rdflib.term import Node
 import itertools
@@ -14,7 +13,7 @@ import owlrl
 from typing import Iterable, List
 
 from quangis import namespace
-from quangis.namespace import TOOLS, ADA, CCD
+from quangis.namespace import TOOLS, ADA, CCD, RDFS, OWL, RDF
 from quangis.utils import shorten
 
 
