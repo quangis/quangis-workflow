@@ -4,7 +4,7 @@ This module contains functions to work with tool annotations.
 
 from ontology import Ontology
 from namespace import TOOLS, WF, CCD, shorten
-from semantic_dimensions import SemTypeDict
+from semantic_dimensions import SemTypeDict, SemType
 
 
 from rdflib import Graph, URIRef, Namespace, BNode
@@ -13,7 +13,11 @@ from rdflib.namespace import RDF
 from typing import Mapping, List, Dict, NewType
 from typing_extensions import TypedDict
 
-from six.moves.urllib.parse import urldefrag
+# from six.moves.urllib.parse import urldefrag
+# 
+# def frag(node):
+#     return urldefrag(node).fragment
+
 
 import logging
 
@@ -44,14 +48,10 @@ def downcast(node: URIRef) -> URIRef:
     }.get(node, node)
 
 
-def frag(node):
-    return urldefrag(node).fragment
-
-
 def getinoutypes(
         g,
         tool_resource_node: BNode,
-        projection,
+        projection: Mapping[Node, SemType],
         dimension: URIRef) -> List[URIRef]:
     """
     Returns a list of types of some tool input/output which are all projected
@@ -60,8 +60,8 @@ def getinoutypes(
 
     types = []
     for t in g.objects(tool_resource_node, RDF.type):
-        if t in projection and projection[t].get(dimension):
-            types.append(projection[t][dimension])
+        if t in projection and projection[t][dimension]:
+            types.extend(projection[t][dimension])
 
     # In case there is no type, just use the highest level type of the
     # corresponding dimension
@@ -70,7 +70,7 @@ def getinoutypes(
 
 def ontology_to_json(
         tools: Ontology,
-        projection: Mapping[Node, SemTypeDict],
+        projection: Mapping[Node, SemType],
         dimensions: List[URIRef]) -> ToolsJSON:
     """
     Project tool annotations with the projection function, convert it to a

@@ -179,3 +179,7 @@ if __name__ == '__main__':
         inputs=inputs,
         outputs=outputs,
         solutions=10)
+
+    for s in solutions:
+        print("Solution:")
+        print(s.to_rdf().serialize(format="turtle").decode("utf-8"))

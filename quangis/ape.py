@@ -120,7 +120,7 @@ class APE:
                  tools: str,
                  namespace: Namespace,
                  tool_root: URIRef,
-                 dimensions: Iterable[URIRef]):
+                 dimensions: List[URIRef]):
 
         self.config = nl.uu.cs.ape.sat.configuration.APECoreConfig(
             java.io.File(taxonomy),
@@ -139,9 +139,9 @@ class APE:
             solution_length: Tuple[int, int] = (1, 10),
             solutions: int = 10) -> List[Workflow]:
 
-        inp = java.util.Arrays.asList(*(APE.type_node(i, self.setup, False)
+        inp = java.util.Arrays.asList(*(self.type_node(i, False)
                                         for i in inputs))
-        out = java.util.Arrays.asList(*(APE.type_node(o, self.setup, True)
+        out = java.util.Arrays.asList(*(self.type_node(o, True)
                                         for o in outputs))
 
         config = nl.uu.cs.ape.sat.configuration.APERunConfig\
@@ -163,17 +163,17 @@ class APE:
             for i in range(0, result.getNumberOfSolutions())
         ]
 
-    @staticmethod
-    def type_node(t: SemType,
-                  setup: nl.uu.cs.ape.sat.utils.APEDomainSetup,
+    def type_node(self,
+                  t: SemType,
                   is_output: bool = False) -> nl.uu.cs.ape.sat.models.Type:
 
+        setup: nl.uu.cs.ape.sat.utils.APEDomainSetup = self.setup
         obj = org.json.JSONObject()
-        for dimension, subclasses in t._mapping.items():
-            a = org.json.JSONArray()
+        for dimension, subclasses in t.mapping.items():
+            arr = org.json.JSONArray()
             for c in subclasses:
-                a.put(str(c))
-            obj.put(str(dimension), a)
+                arr.put(str(c))
+            obj.put(str(dimension), arr)
 
         return nl.uu.cs.ape.sat.models.Type.taxonomyInstanceFromJson(
             obj, setup, is_output)
