@@ -74,7 +74,7 @@ class Ontology(Graph):
         logging.debug("\n".join(result))
 
     @staticmethod
-    def from_rdf(path: str, format: str = None):
+    def from_rdf(path: str, format: str = None) -> Ontology:
         g = Ontology()
         g.parse(path, format=format or rdflib.util.guess_format(path))
         return g
