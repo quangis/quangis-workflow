@@ -1,8 +1,8 @@
 import unittest
 
-from quangis.namespace import EXM, CCD
+from quangis.namespace import EM, CCD
 from quangis.semtype import project
-from quangis.ontology import Ontology, Taxonomy
+from quangis.ontology import Ontology
 
 
 class TestProjection(unittest.TestCase):
@@ -15,8 +15,7 @@ class TestProjection(unittest.TestCase):
 
         dimensions = [CCD.CoreConceptQ, CCD.LayerA, CCD.NominalA]
 
-        taxonomy = Taxonomy()
-        taxonomy += Ontology.from_rdf('CoreConceptData.rdf')
+        taxonomy = Ontology.from_rdf('CoreConceptData.rdf')
 
         testnodes = [
             CCD.ExistenceRaster, CCD.RasterA, CCD.FieldRaster,
@@ -37,7 +36,7 @@ class TestProjection(unittest.TestCase):
         ]
         correctNominalA = [
             CCD.BooleanA, None, None, CCD.BooleanA, None, None, CCD.OrdinalA,
-            None, None, None, None, None, None, EXM.ERA
+            None, None, None, None, None, None, EM.ERA
         ]
         projection = project(taxonomy, dimensions)
 
