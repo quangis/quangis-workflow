@@ -10,11 +10,47 @@ from rdflib.term import Node
 import itertools
 import logging
 import owlrl
-from typing import Iterable, List
+from typing import Iterable, List, Any, Tuple, Optional
 
 from quangis import namespace
 from quangis.namespace import TOOLS, ADA, CCD, RDFS, OWL, RDF
 from quangis.utils import shorten
+
+
+class SubsumptionTree(object):
+    """
+    A subsumption tree is a taxonomy: subclass relations to a single root.
+    """
+
+    def __init__(
+            self,
+            root: URIRef,
+            children: List[Tuple[URIRef, Any]],
+            parent: Optional[SubsumptionTree] = None):
+        self.parent = parent
+        self.node = root
+        self.children = [SubsumptionTree(*c, parent=root) for c in children]
+
+    def __str__(self, level=0) -> str:
+        ret = "\t"*level + "`- " + shorten(self.node) + "\n"
+        for child in self.children:
+            ret += child.__str__(level+1)
+        return ret
+
+    @property
+    def root(self) -> SubsumptionTree:
+        root = self
+        while root.parent:
+            root = root.parent
+        return root
+
+    @staticmethod
+    def from_ontology(ontology: Ontology, root: URIRef) -> SubsumptionTree:
+        return SubsumptionTree(
+            *rdflib.util.get_tree(ontology, root, RDFS.subClassOf))
+
+    def to_ontology(self) -> Ontology:
+        pass
 
 
 class Ontology(Graph):
