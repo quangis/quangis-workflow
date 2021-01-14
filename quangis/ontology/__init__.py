@@ -78,36 +78,34 @@ class Ontology(Graph):
         g.parse(path, format=format or rdflib.util.guess_format(path))
         return g
 
+    def is_taxonomy(self) -> bool:
+        """
+        A taxonomy is an RDF graph consisting of raw subsumption relations ---
+        rdfs:subClassOf statements.
+        """
+        return all(p == RDFS.subClassOf for p in self.predicates())
+        # TODO also, no loops
 
-class Taxonomy(Ontology):
-    """
-    A taxonomy is an RDF graph consisting of raw subsumption relations ---
-    rdfs:subClassOf statements.
-    """
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-    def core(self, dimensions: List[URIRef]) -> Taxonomy:
+    def core(self, dimensions: List[URIRef]) -> Ontology:
         """
         This method generates a taxonomy where nodes intersecting with more
         than one dimension (= not core) are removed. This is needed because APE
         should reason only within any of the dimensions.
         """
 
-        result = Taxonomy()
+        result = Ontology()
         for (s, p, o) in self.triples((None, RDFS.subClassOf, None)):
             if self.dimensionality(s, dimensions) == 1:
                 result.add((s, p, o))
         return result
 
-    def subsumptions(self, root: URIRef) -> Taxonomy:
+    def subsumptions(self, root: URIRef) -> Ontology:
         """
         Take an arbitrary root and generate a new tree with only parent
         relations toward the root. Note that the relations might not be unique.
         """
 
-        result = Taxonomy()
+        result = Ontology()
 
         def f(node, children):
             for child, grandchildren in children:
@@ -119,13 +117,13 @@ class Taxonomy(Ontology):
 
 
 def clean_owl_ontology(ontology: Ontology,
-                       dimensions: List[URIRef]) -> Taxonomy:
+                       dimensions: List[URIRef]) -> Ontology:
     """
     This method takes some ontology and returns an OWL taxonomy. (consisting
     only of rdfs:subClassOf statements)
     """
 
-    taxonomy = Taxonomy()
+    taxonomy = Ontology()
 
     # Only keep subclass nodes intersecting with exactly one dimension
     for (o, p, s) in itertools.chain(
@@ -145,12 +143,12 @@ def clean_owl_ontology(ontology: Ontology,
     return taxonomy
 
 
-def extract_tool_ontology(tools: Ontology) -> Taxonomy:
+def extract_tool_ontology(tools: Ontology) -> Ontology:
     """
     Extracts a taxonomy of toolnames from the tool description.
     """
 
-    taxonomy = Taxonomy()
+    taxonomy = Ontology()
     for (s, p, o) in tools.triples((None, TOOLS.implements, None)):
         taxonomy.add((o, RDFS.subClassOf, s))
         taxonomy.add((s, RDF.type, OWL.Class))

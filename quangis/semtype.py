@@ -18,7 +18,7 @@ from __future__ import annotations
 from rdflib import URIRef
 from typing import List, Dict, Optional
 
-from quangis.ontology import Taxonomy
+from quangis.ontology import Ontology
 from quangis.namespace import CCD, RDFS
 from quangis.utils import shorten
 
@@ -89,7 +89,7 @@ class SemType:
 
 
 def project(
-        taxonomy: Taxonomy,
+        taxonomy: Ontology,
         dimensions: List[URIRef]) -> Dict[URIRef, SemType]:
     """
     This method projects given nodes to all dimensions given as a list of
