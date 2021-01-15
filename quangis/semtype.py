@@ -75,17 +75,18 @@ class SemType:
         considers the set of leaf nodes it knows about as exhaustive: it will
         never consider branch nodes as valid answers.
         """
-        cast = {
-            CCD.NominalA: CCD.PlainNominalA,
-            CCD.OrdinalA: CCD.PlainOrdinalA,
-            CCD.IntervalA: CCD.PlainIntervalA,
-            CCD.RatioA: CCD.PlainRatioA
-        }
 
         return SemType({
-            dimension: [cast.get(n, n) for n in classes]
+            dimension: [self._downcast.get(n, n) for n in classes]
             for dimension, classes in self._mapping.items()
         })
+
+    _downcast = {
+        CCD.NominalA: CCD.PlainNominalA,
+        CCD.OrdinalA: CCD.PlainOrdinalA,
+        CCD.IntervalA: CCD.PlainIntervalA,
+        CCD.RatioA: CCD.PlainRatioA
+    }
 
 
 def project(
