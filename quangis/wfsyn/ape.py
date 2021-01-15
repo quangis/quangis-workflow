@@ -33,7 +33,7 @@ from quangis.wfsyn.tool import ToolsJSON
 
 # We need version 1.1.2's API; lower versions won't work
 CLASS_PATH = os.path.join(
-    os.path.dirname(__file__), '..', '..', 'lib', 'APE-1.1.4-executable.jar')
+    os.path.dirname(__file__), '..', '..', 'lib', 'APE-1.1.5-executable.jar')
 jpype.startJVM(classpath=[CLASS_PATH])
 
 import java.io
@@ -68,7 +68,7 @@ class Workflow:
 
     def add_module(self, mod: ModuleNode) -> Node:
         mod_node = BNode()
-        tool_node = URIRef(mod.getNodeFullLabel())
+        tool_node = URIRef(mod.getNodeLongLabel())
 
         self._graph.add((self._wf, WF.edge, mod_node))
         self._graph.add((mod_node, WF.applicationOf, tool_node))
@@ -88,7 +88,7 @@ class Workflow:
             node = self._resources[name] = BNode()
 
             for t in type_node.getTypes():
-                type_node = URIRef(t.getPredicateID())
+                type_node = URIRef(t.getPredicateLongLabel())
                 self._graph.add((node, RDF.type, type_node))
 
         return node

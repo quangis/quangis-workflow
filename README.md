@@ -85,9 +85,9 @@ Example run:
         --tools ToolDescription.rdf \
         --types CoreConceptData.rdf
 
-Make sure that `APE-1.1.4-executable.jar` exists in the `lib/` directory; it 
+Make sure that `APE-1.1.5-executable.jar` exists in the `lib/` directory; it 
 can be downloaded 
-[here](https://github.com/sanctuuary/APE/releases/download/v1.1.4/APE-1.1.4-executable.jar). 
+[here](https://github.com/sanctuuary/APE/releases/download/v1.1.5/APE-1.1.5-executable.jar). 
 Suitable CCD ontology and tool annotation files will be downloaded 
 automatically if they are not provided on the command line.
 
