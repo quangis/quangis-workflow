@@ -47,12 +47,18 @@ class TestTaxonomy(unittest.TestCase):
 
     def test_cycle_to_root(self):
         t = Taxonomy(TEST.a)
-        self.assertRaises(error.Cycle, t.add, TEST.a, TEST.a)
+        t.add(TEST.a, TEST.b)
+        self.assertRaises(error.Cycle, t.add, TEST.b, TEST.a)
 
     def test_1st_order_cycle(self):
+        """
+        Reflexivity is like transitivity: we can just ignore it. Any concept in
+        a taxonomy is trivially a subclass of itself.
+        """
         t = Taxonomy(TEST.a)
         t.add(TEST.a, TEST.b)
-        self.assertRaises(error.Cycle, t.add, TEST.b, TEST.b)
+        t.add(TEST.b, TEST.b)
+        self.assertEqual(t.children(TEST.a), [TEST.b])
 
     def test_2nd_order_cycle(self):
         t = Taxonomy(TEST.a)

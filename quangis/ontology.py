@@ -71,7 +71,7 @@ class Taxonomy(object):
             bool(parent and self.subsumed(parent, superconcept))
 
     def add(self, parent: URIRef, child: URIRef):
-        if parent == child or child == self.root:
+        if child == self.root:
             raise error.Cycle()
 
         parent_depth = self._depth.get(parent, 0)
@@ -81,7 +81,7 @@ class Taxonomy(object):
         if not self.contains(child):
             self._parents[child] = parent
             self._depth[child] = parent_depth + 1
-        else:
+        elif parent != child:
             # If the child already exists, things get hairy. We can overwrite
             # the current parent relation, but ONLY if the new depth is deeper
             # AND the new parent is subsumed by the old parent anyway AND we
@@ -90,7 +90,7 @@ class Taxonomy(object):
             old_depth = self._depth[child]
             old_parent = self._parents[child]
             new_parent = parent
-            new_depth = parent_depth +1
+            new_depth = parent_depth + 1
 
             if new_depth >= old_depth:
 
@@ -148,7 +148,7 @@ class Ontology(Graph):
         """
         Is a concept subsumed by a superconcept in this taxonomy?
         """
-        return any(
+        return concept == superconcept or any(
             s == superconcept or self.subsumed_by(s, superconcept)
             for s in self.objects(subject=concept, predicate=RDFS.subClassOf))
 
