@@ -18,9 +18,9 @@ from quangis.namespace import TOOLS, ADA, CCD, RDFS, OWL, RDF
 from quangis.utils import shorten
 
 
-class SubsumptionTree(object):
+class Taxonomy(object):
     """
-    A subsumption tree is a taxonomy: unique subclass relations to a single
+    A taxonomy is a subsumption tree: unique subclass relations to a single
     root. Since in general, a directed acyclic graph cannot be turned into a
     tree (see Topological ordering of a DAG), this will raise an error if there
     is a cycle or if something is a subclass of two classes that are not
@@ -107,9 +107,9 @@ class SubsumptionTree(object):
     def from_ontology(
             ontology: Ontology,
             root: URIRef,
-            predicate: URIRef = RDFS.subClassOf) -> SubsumptionTree:
+            predicate: URIRef = RDFS.subClassOf) -> Taxonomy:
 
-        result = SubsumptionTree(root)
+        result = Taxonomy(root)
 
         def f(node):
             for child in ontology.subjects(predicate, node):
