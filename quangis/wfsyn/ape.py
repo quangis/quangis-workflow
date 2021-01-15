@@ -29,7 +29,7 @@ from typing import Iterable, Tuple, Dict, List, Union
 from quangis.namespace import WF, RDF
 from quangis.semtype import SemType
 from quangis.ontology import Ontology
-from quangis.ontology.tool import ToolsJSON
+from quangis.wfsyn.tool import ToolsJSON
 
 # We need version 1.1.2's API; lower versions won't work
 CLASS_PATH = os.path.join(

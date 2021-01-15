@@ -11,8 +11,8 @@ from quangis import ontology
 from quangis.semtype import SemType
 from quangis.namespace import CCD, TOOLS
 from quangis.ontology import Ontology
-from quangis.ontology.tool import ontology_to_json
 from quangis.wfsyn import ape
+from quangis.wfsyn.tool import ontology_to_json
 
 
 def wfsyn(types: Ontology,
