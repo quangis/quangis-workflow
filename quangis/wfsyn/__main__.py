@@ -17,7 +17,7 @@ from quangis.wfsyn import wfsyn
 from quangis.ontology import Ontology
 from quangis.namespace import CCD
 from quangis.semtype import SemType
-from quangis.utils import uri, shorten
+from quangis.util import uri, shorten
 
 
 def download_if_missing(path: str, url: str) -> str:

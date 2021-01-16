@@ -9,7 +9,7 @@ from typing_extensions import TypedDict
 from quangis.namespace import TOOLS, WF, RDF
 from quangis.ontology import Ontology
 from quangis.semtype import SemType
-from quangis.utils import shorten
+from quangis.util import shorten
 
 ToolJSON = TypedDict('ToolJSON', {
     'id': str,

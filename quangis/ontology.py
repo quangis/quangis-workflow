@@ -15,7 +15,7 @@ from typing import Iterable, List, Optional, Dict
 from quangis import error
 from quangis import namespace
 from quangis.namespace import TOOLS, ADA, CCD, RDFS, OWL, RDF
-from quangis.utils import shorten
+from quangis.util import shorten
 
 
 class Taxonomy(object):

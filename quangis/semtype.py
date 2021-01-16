@@ -15,8 +15,8 @@ from rdflib import URIRef
 from typing import List, Dict, Optional
 
 from quangis.ontology import Ontology, Taxonomy
-from quangis.namespace import CCD, RDFS
-from quangis.utils import shorten
+from quangis.namespace import CCD
+from quangis.util import shorten
 
 
 class SemType:
