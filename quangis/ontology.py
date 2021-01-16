@@ -157,17 +157,12 @@ class Ontology(Graph):
 
     def subsumed_by(self, concept: URIRef, superconcept: URIRef) -> bool:
         """
-        Is a concept subsumed by a superconcept in this taxonomy?
+        Is a concept subsumed by a superconcept in this ontology?
         """
+        # TODO assumes that RDFS.subClassOf graph is not cyclical
         return concept == superconcept or any(
             s == superconcept or self.subsumed_by(s, superconcept)
             for s in self.objects(subject=concept, predicate=RDFS.subClassOf))
-
-    def contains(self, node: Node) -> bool:
-        """
-        Does this graph contain some node?
-        """
-        return (node, None, None) in self or (None, None, node) in self
 
     def leaves(self) -> List[Node]:
         """
@@ -177,54 +172,9 @@ class Ontology(Graph):
             n for n in self.subjects(predicate=RDFS.subClassOf, object=None)
             if not (None, RDFS.subClassOf, n) in self]
 
-    def debug(self) -> None:
-        """
-        Log this ontology to the console to debug.
-        """
-        result = [""] + [
-            "    {} {} {}".format(shorten(o), shorten(p), shorten(s))
-            for (o, p, s) in self.triples((None, None, None))]
-        logging.debug("\n".join(result))
-
     @staticmethod
     def from_rdf(path: str, format: str = None) -> Ontology:
         g = Ontology()
         g.parse(path, format=format or rdflib.util.guess_format(path))
         return g
 
-    def is_taxonomy(self) -> bool:
-        """
-        A taxonomy is an RDF graph consisting of raw subsumption relations ---
-        rdfs:subClassOf statements.
-        """
-        return all(p == RDFS.subClassOf for p in self.predicates())
-        # TODO also, no loops
-
-    def core(self, dimensions: List[URIRef]) -> Ontology:
-        """
-        This method generates a taxonomy where nodes intersecting with more
-        than one dimension (= not core) are removed. This is needed because APE
-        should reason only within any of the dimensions.
-        """
-
-        result = Ontology()
-        for (s, p, o) in self.triples((None, RDFS.subClassOf, None)):
-            if self.dimensionality(s, dimensions) == 1:
-                result.add((s, p, o))
-        return result
-
-    def subsumptions(self, root: URIRef) -> Ontology:
-        """
-        Take an arbitrary root and generate a new tree with only parent
-        relations toward the root. Note that the relations might not be unique.
-        """
-
-        result = Ontology()
-
-        def f(node, children):
-            for child, grandchildren in children:
-                result.add((child, RDFS.subClassOf, node))
-                f(child, grandchildren)
-
-        f(*rdflib.util.get_tree(self, root, RDFS.subClassOf))
-        return result

@@ -32,7 +32,7 @@ def extract_tool_ontology(tools: Ontology) -> Ontology:
 def clean_owl_ontology(ontology: Ontology,
                        dimensions: List[URIRef]) -> Ontology:
     """
-    This method takes some ontology and returns an OWL taxonomy.
+    This method takes some ontology and returns a core OWL taxonomy.
     """
 
     taxonomy = Ontology()
@@ -65,7 +65,7 @@ def wfsyn(types: Ontology,
     logging.info("Compute taxonomies...")
     types_tax = clean_owl_ontology(types, dimensions)
     tools_tax = extract_tool_ontology(tools)
-    taxonomy = tools_tax + types_tax.core(dimensions)
+    taxonomy = tools_tax + types_tax
 
     logging.info("Compute projected classes...")
     projection = semtype.project(ontology=types, dimensions=dimensions)
