@@ -5,16 +5,15 @@ Methods and datatypes to manipulate ontologies and taxonomies.
 from __future__ import annotations
 
 import rdflib
-from rdflib import Graph, URIRef, BNode
+from rdflib import Graph, URIRef
 from rdflib.term import Node
-import itertools
 import logging
 import owlrl
 from typing import Iterable, List, Optional, Dict
 
 from quangis import error
 from quangis import namespace
-from quangis.namespace import TOOLS, ADA, CCD, RDFS, OWL, RDF
+from quangis.namespace import RDFS
 from quangis.util import shorten
 
 
@@ -229,44 +228,3 @@ class Ontology(Graph):
 
         f(*rdflib.util.get_tree(self, root, RDFS.subClassOf))
         return result
-
-
-def clean_owl_ontology(ontology: Ontology,
-                       dimensions: List[URIRef]) -> Ontology:
-    """
-    This method takes some ontology and returns an OWL taxonomy. (consisting
-    only of rdfs:subClassOf statements)
-    """
-
-    taxonomy = Ontology()
-
-    # Only keep subclass nodes intersecting with exactly one dimension
-    for (o, p, s) in itertools.chain(
-            ontology.triples((None, RDFS.subClassOf, None)),
-            ontology.triples((None, RDF.type, OWL.Class))
-            ):
-        if type(s) != BNode and type(o) != BNode \
-                and s != o and s != OWL.Nothing and \
-                ontology.dimensionality(o, dimensions) == 1:
-            taxonomy.add((o, p, s))
-
-    # Add common upper class for all data types
-    taxonomy.add((CCD.Attribute, RDFS.subClassOf, CCD.DType))
-    taxonomy.add((ADA.SpatialDataSet, RDFS.subClassOf, CCD.DType))
-    taxonomy.add((ADA.Quality, RDFS.subClassOf, CCD.DType))
-
-    return taxonomy
-
-
-def extract_tool_ontology(tools: Ontology) -> Ontology:
-    """
-    Extracts a taxonomy of toolnames from the tool description.
-    """
-
-    taxonomy = Ontology()
-    for (s, p, o) in tools.triples((None, TOOLS.implements, None)):
-        taxonomy.add((o, RDFS.subClassOf, s))
-        taxonomy.add((s, RDF.type, OWL.Class))
-        taxonomy.add((o, RDF.type, OWL.Class))
-        taxonomy.add((s, RDFS.subClassOf, TOOLS.Tool))
-    return taxonomy

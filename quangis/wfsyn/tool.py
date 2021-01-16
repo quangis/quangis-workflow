@@ -93,3 +93,4 @@ def ontology_to_json(
             for tool in tools.objects(None, TOOLS.implements)
         ]
     }
+
