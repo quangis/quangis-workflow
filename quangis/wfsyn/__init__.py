@@ -27,7 +27,7 @@ def wfsyn(types: Ontology,
     tools_tax = ontology.extract_tool_ontology(tools)
 
     logging.info("Compute projected classes...")
-    projection = semtype.project(taxonomy=types_tax, dimensions=dimensions)
+    projection = semtype.project(ontology=types_tax, dimensions=dimensions)
 
     logging.info("Combine taxonomies...")
     taxonomy = tools_tax + types_tax.core(dimensions)

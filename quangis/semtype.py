@@ -14,7 +14,7 @@ from __future__ import annotations
 from rdflib import URIRef
 from typing import List, Dict, Optional
 
-from quangis.ontology import Ontology
+from quangis.ontology import Ontology, Taxonomy
 from quangis.namespace import CCD, RDFS
 from quangis.utils import shorten
 
@@ -86,7 +86,7 @@ class SemType:
 
 
 def project(
-        taxonomy: Ontology,
+        ontology: Ontology,
         dimensions: List[URIRef]) -> Dict[URIRef, SemType]:
     """
     This method projects given nodes to all dimensions given as a list of
@@ -101,9 +101,9 @@ def project(
     """
 
     projection: Dict[URIRef, SemType] = {}
-    subsumptions = {d: taxonomy.subsumptions(d) for d in dimensions}
+    subsumptions = {d: Taxonomy.from_ontology(ontology, d) for d in dimensions}
 
-    for node in taxonomy.objects():
+    for node in ontology.objects():
         semtype = SemType()
         for d, s in subsumptions.items():
             # If a node is not core (it is also subsumed by other trees), then
@@ -111,9 +111,7 @@ def project(
             n = node
             while n is not None \
                     and any(t.contains(n) for t in subsumptions.values() if t is not s):
-                n = s.value(object=n, predicate=RDFS.subClassOf)
-                # TODO cyclical subClassOf relations aren't very sensical, but
-                # will probably crash this
+                n = s.parent(n)
             if n:
                 semtype[d].append(n)
         projection[node] = semtype
