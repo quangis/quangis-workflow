@@ -95,7 +95,7 @@ class Taxonomy(object):
             if new_depth >= old_depth:
 
                 if not (self.subsumed(new_parent, old_parent)):
-                    raise error.NonUniqueParents()
+                    raise error.NonUniqueParents(child, new_parent, old_parent)
 
                 if self.subsumed(new_parent, child):
                     raise error.Cycle()
@@ -113,8 +113,19 @@ class Taxonomy(object):
 
         def f(node):
             for child in ontology.subjects(predicate, node):
-                result.add(node, child)
-                f(child)
+                try:
+                    result.add(node, child)
+                    f(child)
+                except error.NonUniqueParents as e:
+                    logging.error(
+                        "Skipping relating child {child} to parent {new}; "
+                        "the existing parent {old} is not subsumed by the new "
+                        "parent".format(
+                            new=shorten(e.new),
+                            old=shorten(e.old),
+                            child=shorten(e.child)
+                        )
+                    )
 
         f(root)
         return result
