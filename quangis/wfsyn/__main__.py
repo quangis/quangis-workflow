@@ -75,7 +75,7 @@ args = parser.parse_args()
 reload(logging)
 logging.basicConfig(
     level=getattr(logging, args.log.upper()),
-    format="\033[1m%(asctime)s \033[0m%(message)s",
+    format="\033[1m%(levelname)s \033[0m%(message)s",
 )
 
 if not args.types:

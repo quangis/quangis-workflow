@@ -117,13 +117,14 @@ class Taxonomy(object):
                     result.add(node, child)
                     f(child)
                 except error.NonUniqueParents as e:
-                    logging.error(
-                        "Skipping relating child {child} to parent {new}; "
-                        "the existing parent {old} is not subsumed by the new "
-                        "parent".format(
+                    logging.warning(
+                        "{new} will not be a superclass of {child} in the "
+                        "taxonomy tree of {dim}; no subsumption with the "
+                        "existing superclass {old}".format(
                             new=shorten(e.new),
                             old=shorten(e.old),
-                            child=shorten(e.child)
+                            child=shorten(e.child),
+                            dim=shorten(root)
                         )
                     )
 
