@@ -5,10 +5,10 @@ Methods and datatypes to manipulate ontologies and taxonomies.
 from __future__ import annotations
 
 import rdflib
-from rdflib import Graph, URIRef
-from rdflib.term import Node
 import logging
 import owlrl
+from rdflib import Graph, URIRef
+from rdflib.term import Node
 from typing import Iterable, List, Optional, Dict
 
 from quangis import error
