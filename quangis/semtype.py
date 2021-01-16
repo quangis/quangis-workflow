@@ -101,20 +101,26 @@ def project(
     """
 
     projection: Dict[URIRef, SemType] = {}
-    subsumptions = {d: Taxonomy.from_ontology(ontology, d) for d in dimensions}
 
-    for node in ontology.objects():
-        semtype = SemType()
-        for d, s in subsumptions.items():
+    subsumptions = [Taxonomy.from_ontology(ontology, d) for d in dimensions]
+
+    for node in ontology.subjects():
+        result = SemType()
+        for tree in subsumptions:
             # If a node is not core (it is also subsumed by other trees), then
             # we project to the closest parent that *is* core
-            n = node
-            while n is not None \
-                    and any(t.contains(n) for t in subsumptions.values() if t is not s):
-                n = s.parent(n)
-            if n:
-                semtype[d].append(n)
-        projection[node] = semtype
+
+            projected_node = node
+            while projected_node and \
+                    any(other_tree.contains(projected_node) for other_tree in
+                        subsumptions if other_tree is not tree):
+                projected_node = tree.parent(projected_node)
+
+            if projected_node:
+                dimension = tree.root
+                result[dimension].append(projected_node)
+
+        projection[node] = result
 
     return projection
 

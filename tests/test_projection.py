@@ -24,27 +24,33 @@ class TestProjection(unittest.TestCase):
             CCD.ObjectLine, CCD.ObjectRegion, CCD.Lattice, CCD.ExtLattice
         ]
         correctCC = [
-            CCD.FieldQ, None, CCD.FieldQ, CCD.FieldQ, CCD.FieldQ, CCD.FieldQ,
-            CCD.FieldQ, CCD.FieldQ, CCD.ObjectQ, CCD.ObjectQ, CCD.ObjectQ,
-            CCD.ObjectQ, CCD.ObjectQ, CCD.ObjectQ
+            [CCD.FieldQ], [], [CCD.FieldQ], [CCD.FieldQ], [CCD.FieldQ],
+            [CCD.FieldQ], [CCD.FieldQ], [CCD.FieldQ], [CCD.ObjectQ],
+            [CCD.ObjectQ], [CCD.ObjectQ], [CCD.ObjectQ], [CCD.ObjectQ],
+            [CCD.ObjectQ]
         ]
         correctLayerA = [
-            CCD.RasterA, CCD.RasterA, CCD.RasterA, CCD.VectorA, CCD.PointA,
-            CCD.LineA, CCD.TessellationA, CCD.TessellationA, CCD.VectorA,
-            CCD.PointA, CCD.LineA, CCD.RegionA, CCD.TessellationA,
-            CCD.TessellationA
+            [CCD.RasterA], [CCD.RasterA], [CCD.RasterA], [CCD.VectorA],
+            [CCD.PointA], [CCD.LineA], [CCD.TessellationA],
+            [CCD.TessellationA], [CCD.VectorA], [CCD.PointA], [CCD.LineA],
+            [CCD.RegionA], [CCD.TessellationA], [CCD.TessellationA]
         ]
         correctNominalA = [
-            CCD.BooleanA, None, None, CCD.BooleanA, None, None, CCD.OrdinalA,
-            None, None, None, None, None, None, EM.ERA
+            [CCD.BooleanA], [], [], [CCD.BooleanA], [], [], [CCD.OrdinalA],
+            [], [], [], [], [], [], [EM.ERA]
         ]
         projection = project(taxonomy, dimensions)
 
         for ix, node in enumerate(testnodes):
             p = projection.get(node)
-            self.assertEqual(p[CCD.CoreConceptQ], correctCC[ix])
-            self.assertEqual(p[CCD.LayerA], correctLayerA[ix])
-            self.assertEqual(p[CCD.NominalA], correctNominalA[ix])
+            if p:
+                self.assertEqual(p[CCD.CoreConceptQ], correctCC[ix])
+                self.assertEqual(p[CCD.LayerA], correctLayerA[ix])
+                self.assertEqual(p[CCD.NominalA], correctNominalA[ix])
+            else:
+                self.assertEqual([], correctCC[ix])
+                self.assertEqual([], correctLayerA[ix])
+                self.assertEqual([], correctNominalA[ix])
 
 
 if __name__ == '__main__':
