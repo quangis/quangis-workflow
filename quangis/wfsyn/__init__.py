@@ -12,10 +12,10 @@ from quangis.semtype import SemType
 from quangis.namespace import CCD, TOOLS, OWL, RDF, RDFS, ADA
 from quangis.ontology import Ontology
 from quangis.wfsyn import ape
-from quangis.wfsyn.tool import ontology_to_json
+from quangis.wfsyn.tool import tool_annotations_ape
 
 
-def extract_tool_ontology(tools: Ontology) -> Ontology:
+def tools_taxonomy(tools: Ontology) -> Ontology:
     """
     Extracts a taxonomy of toolnames from the tool description.
     """
@@ -29,8 +29,8 @@ def extract_tool_ontology(tools: Ontology) -> Ontology:
     return taxonomy
 
 
-def clean_owl_ontology(ontology: Ontology,
-                       dimensions: List[URIRef]) -> Ontology:
+def types_taxonomy(types: Ontology,
+                   dimensions: List[URIRef]) -> Ontology:
     """
     This method takes some ontology and returns a core OWL taxonomy.
     """
@@ -39,12 +39,12 @@ def clean_owl_ontology(ontology: Ontology,
 
     # Only keep subclass nodes intersecting with exactly one dimension
     for (o, p, s) in itertools.chain(
-            ontology.triples((None, RDFS.subClassOf, None)),
-            ontology.triples((None, RDF.type, OWL.Class))
+            types.triples((None, RDFS.subClassOf, None)),
+            types.triples((None, RDF.type, OWL.Class))
             ):
         if type(s) != BNode and type(o) != BNode \
                 and s != o and s != OWL.Nothing and \
-                ontology.dimensionality(o, dimensions) == 1:
+                types.dimensionality(o, dimensions) == 1:
             taxonomy.add((o, p, s))
 
     # Add common upper class for all data types
@@ -63,15 +63,13 @@ def wfsyn(types: Ontology,
           -> Iterable[List[ape.Workflow]]:
 
     logging.info("Compute taxonomies...")
-    types_tax = clean_owl_ontology(types, dimensions)
-    tools_tax = extract_tool_ontology(tools)
-    taxonomy = tools_tax + types_tax
+    taxonomy = tools_taxonomy(tools) + types_taxonomy(types, dimensions)
 
     logging.info("Compute projected classes...")
     projection = semtype.project(ontology=types, dimensions=dimensions)
 
     logging.info("Transform tool annotations...")
-    tools_ape = ontology_to_json(tools, projection, dimensions)
+    tools_ape = tool_annotations_ape(tools, projection, dimensions)
 
     logging.info("Running APE...")
     jvm = ape.APE(

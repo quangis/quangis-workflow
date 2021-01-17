@@ -53,15 +53,15 @@ class SemType:
                     shorten(dimension),
                     ", ".join(shorten(c) for c in classes)
                 )
-                for dimension, classes in self.mapping.items()
+                for dimension, classes in self._mapping.items()
             )
         )
 
-    @property
-    def mapping(self) -> Dict[URIRef, List[URIRef]]:
+    def as_dictionary(self) -> Dict[URIRef, List[URIRef]]:
         return {
             d: subclasses
-            for d, subclasses in self._mapping.items() if subclasses
+            for d, subclasses in self._mapping.items()
+            if subclasses
         }
 
     def downcast(self) -> SemType:

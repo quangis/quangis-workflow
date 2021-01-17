@@ -29,7 +29,7 @@ from typing import Iterable, Tuple, Dict, List, Union
 from quangis.namespace import WF, RDF
 from quangis.semtype import SemType
 from quangis.ontology import Ontology
-from quangis.wfsyn.tool import ToolsJSON
+from quangis.wfsyn.tool import ToolsDict
 
 # We need version 1.1.2's API; lower versions won't work
 CLASS_PATH = os.path.join(
@@ -108,7 +108,7 @@ class APE:
 
     def __init__(self,
                  taxonomy: Union[str, Ontology],
-                 tools: Union[str, ToolsJSON],
+                 tools: Union[str, ToolsDict],
                  namespace: Namespace,
                  tool_root: URIRef,
                  dimensions: List[URIRef]):
@@ -190,7 +190,7 @@ class APE:
 
         setup: nl.uu.cs.ape.sat.utils.APEDomainSetup = self.setup
         obj = org.json.JSONObject()
-        for dimension, subclasses in t.mapping.items():
+        for dimension, subclasses in t.as_dictionary().items():
             arr = org.json.JSONArray()
             for c in subclasses:
                 arr.put(str(c))

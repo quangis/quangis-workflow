@@ -11,7 +11,7 @@ from quangis.ontology import Ontology
 from quangis.semtype import SemType
 from quangis.util import shorten
 
-ToolJSON = TypedDict('ToolJSON', {
+ToolDict = TypedDict('ToolDict', {
     'id': str,
     'label': str,
     'inputs': List[Dict[URIRef, List[URIRef]]],
@@ -19,29 +19,33 @@ ToolJSON = TypedDict('ToolJSON', {
     'taxonomyOperations': List[URIRef]
 })
 
-ToolsJSON = TypedDict('ToolsJSON', {
-    'functions': List[ToolJSON]
+ToolsDict = TypedDict('ToolsDict', {
+    'functions': List[ToolDict]
 })
 
 
 def get_resources(
-        ontology: Ontology,
+        tools: Ontology,
         tool: URIRef,
-        *predicates: List[URIRef]) -> List[BNode]:
+        is_output: bool) -> List[BNode]:
     """
-    Get the resources input/output associated with a tool, with predicates like
-    output1/input2... etcetera.
+    Get the input/output resource nodes associated with a tool.
     """
+    if is_output:
+        predicates = (WF.output, WF.output2, WF.output3)
+    else:
+        predicates = (WF.input1, WF.input2, WF.input3)
+
     resources = []
     for p in predicates:
-        resource = ontology.value(predicate=p, subject=tool, any=False)
+        resource = tools.value(predicate=p, subject=tool, any=False)
         if resource:
             resources.append(resource)
     return resources
 
 
 def get_type(
-        ontology: Ontology,
+        tools: Ontology,
         resource: BNode,
         projection: Mapping[URIRef, SemType],
         dimensions: List[URIRef]) -> SemType:
@@ -54,7 +58,7 @@ def get_type(
     result = SemType()
     for d in dimensions:
         types = []
-        for t in ontology.objects(resource, RDF.type):
+        for t in tools.objects(resource, RDF.type):
             if t in projection and projection[t][d]:
                 types.extend(projection[t][d])
         # If there is no type, just use the highest type of the corresponding
@@ -63,10 +67,10 @@ def get_type(
     return result
 
 
-def ontology_to_json(
+def tool_annotations_ape(
         tools: Ontology,
         projection: Mapping[URIRef, SemType],
-        dimensions: List[URIRef]) -> ToolsJSON:
+        dimensions: List[URIRef]) -> ToolsDict:
     """
     Project tool annotations with the projection function, convert it to a
     dictionary that APE understands
@@ -79,18 +83,19 @@ def ontology_to_json(
                 'label': shorten(tool),
                 'taxonomyOperations': [tool],
                 'inputs': [
-                    get_type(tools, resource, projection, dimensions).mapping
-                    for resource in get_resources(
-                        tools, tool, WF.input1, WF.input2, WF.input3)
+                    get_type(
+                        tools, resource, projection, dimensions
+                    ).as_dictionary()
+                    for resource in get_resources(tools, tool, is_output=False)
                 ],
                 'outputs': [
-                    o for o in (
-                        get_type(tools, resource, projection, dimensions).downcast().mapping
-                        for resource in get_resources(
-                            tools, tool, WF.output, WF.output2, WF.output3)
-                    ) if o is not None]
+                    get_type(
+                        tools, resource, projection, dimensions
+                    ).downcast().as_dictionary()
+                    for resource in get_resources(tools, tool, is_output=True)
+                ]
             }
-            for tool in tools.objects(None, TOOLS.implements)
+            for tool in tools.objects(predicate=TOOLS.implements)
         ]
     }
 
