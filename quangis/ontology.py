@@ -64,10 +64,10 @@ class Taxonomy(object):
     def contains(self, node: URIRef):
         return node == self.root or node in self._parents
 
-    def subsumed(self, concept: URIRef, superconcept: URIRef) -> bool:
+    def subsumes(self, superconcept: URIRef, concept: URIRef) -> bool:
         parent = self.parent(concept)
         return concept == superconcept or \
-            bool(parent and self.subsumed(parent, superconcept))
+            bool(parent and self.subsumes(superconcept, parent))
 
     def add(self, parent: URIRef, child: URIRef):
         if child == self.root:
@@ -93,10 +93,10 @@ class Taxonomy(object):
 
             if new_depth >= old_depth:
 
-                if not (self.subsumed(new_parent, old_parent)):
+                if not self.subsumes(old_parent, new_parent):
                     raise error.NonUniqueParents(child, new_parent, old_parent)
 
-                if self.subsumed(new_parent, child):
+                if self.subsumes(child, new_parent):
                     raise error.Cycle()
 
                 self._parents[child] = new_parent
