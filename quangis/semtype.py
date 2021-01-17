@@ -14,7 +14,7 @@ from __future__ import annotations
 from rdflib import URIRef
 from typing import List, Dict, Optional, Set, Iterable
 
-from quangis.ontology import Taxonomy
+from quangis.taxonomy import Taxonomy
 from quangis.namespace import CCD
 from quangis.util import shorten
 

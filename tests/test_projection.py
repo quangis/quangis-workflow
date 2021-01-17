@@ -2,7 +2,8 @@ import unittest
 
 from quangis.namespace import EM, CCD
 from quangis.semtype import SemType
-from quangis.ontology import Ontology, Taxonomy
+from quangis.ontology import Ontology
+from quangis.taxonomy import Taxonomy
 
 
 class TestProjection(unittest.TestCase):

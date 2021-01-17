@@ -2,7 +2,7 @@ import unittest
 
 from quangis import error
 from quangis.namespace import TEST
-from quangis.ontology import Taxonomy
+from quangis.taxonomy import Taxonomy
 
 
 class TestTaxonomy(unittest.TestCase):

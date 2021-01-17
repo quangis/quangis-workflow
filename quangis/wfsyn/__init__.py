@@ -9,7 +9,8 @@ from typing import List, Tuple, Iterable
 
 from quangis.semtype import SemType
 from quangis.namespace import CCD, TOOLS, OWL, RDF, RDFS, ADA
-from quangis.ontology import Ontology, Taxonomy
+from quangis.ontology import Ontology
+from quangis.taxonomy import Taxonomy
 from quangis.wfsyn import ape
 from quangis.wfsyn.tool import tool_annotations_ape
 

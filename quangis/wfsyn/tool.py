@@ -7,7 +7,8 @@ from typing import List, Dict
 from typing_extensions import TypedDict
 
 from quangis.namespace import TOOLS, WF, RDF
-from quangis.ontology import Ontology, Taxonomy
+from quangis.taxonomy import Taxonomy
+from quangis.ontology import Ontology
 from quangis.semtype import SemType
 from quangis.util import shorten
 
