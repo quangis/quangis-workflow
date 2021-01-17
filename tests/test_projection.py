@@ -44,9 +44,9 @@ class TestProjection(unittest.TestCase):
 
         for ix, node in enumerate(testnodes):
             p = SemType.project(dimensions, [node], fallback_to_root=False)
-            self.assertEqual(p[CCD.CoreConceptQ], correctCC[ix])
-            self.assertEqual(p[CCD.LayerA], correctLayerA[ix])
-            self.assertEqual(p[CCD.NominalA], correctNominalA[ix])
+            self.assertEqual(p[CCD.CoreConceptQ], set(correctCC[ix]))
+            self.assertEqual(p[CCD.LayerA], set(correctLayerA[ix]))
+            self.assertEqual(p[CCD.NominalA], set(correctNominalA[ix]))
 
 
 if __name__ == '__main__':

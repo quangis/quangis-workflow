@@ -12,7 +12,7 @@ of concepts from different semantic dimensions.
 from __future__ import annotations
 
 from rdflib import URIRef
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Set, Iterable
 
 from quangis.ontology import Taxonomy
 from quangis.namespace import CCD
@@ -27,7 +27,7 @@ class SemType:
 
     def __init__(
             self,
-            mapping: Optional[Dict[URIRef, List[URIRef]]] = None):
+            mapping: Optional[Dict[URIRef, Set[URIRef]]] = None):
         """
         We represent a datatype as a mapping from RDF dimension nodes to one or
         more of its subclasses.
@@ -38,15 +38,15 @@ class SemType:
         else:
             self._mapping = {}
 
-    def __getitem__(self, dimension: URIRef) -> List[URIRef]:
+    def __getitem__(self, dimension: URIRef) -> Set[URIRef]:
         if dimension in self._mapping:
             return self._mapping[dimension]
         else:
-            x: List[URIRef] = []
+            x: Set[URIRef] = set()
             self._mapping[dimension] = x
             return x
 
-    def __setitem__(self, dimension: URIRef, value: List[URIRef]) -> None:
+    def __setitem__(self, dimension: URIRef, value: Set[URIRef]) -> None:
         self._mapping[dimension] = value
 
     def __str__(self) -> str:
@@ -62,7 +62,7 @@ class SemType:
 
     def to_dict(self) -> Dict[URIRef, List[URIRef]]:
         return {
-            d: subclasses
+            d: list(subclasses)
             for d, subclasses in self._mapping.items()
             if subclasses
         }
@@ -76,7 +76,7 @@ class SemType:
         """
 
         return SemType({
-            dimension: [self._downcast.get(n, n) for n in classes]
+            dimension: set(self._downcast.get(n, n) for n in classes)
             for dimension, classes in self._mapping.items()
         })
 
@@ -90,7 +90,7 @@ class SemType:
     @staticmethod
     def project(
             dimensions: List[Taxonomy],
-            types: List[URIRef],
+            types: Iterable[URIRef],
             fallback_to_root: bool = True) -> SemType:
         """
         This method projects given nodes to all dimensions given as a list of
@@ -119,10 +119,10 @@ class SemType:
                             if other_dimension is not dimension):
                     projected_node = dimension.parent(projected_node)
                 if projected_node:
-                    result[dim].append(projected_node)
+                    result[dim].add(projected_node)
 
             # If there is no suitable node, just project to the root of the
             # dimension
             if fallback_to_root and not result[dim]:
-                result[dim] = [dim]
+                result[dim] = {dim}
         return result
