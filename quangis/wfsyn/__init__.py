@@ -7,10 +7,9 @@ import itertools
 from rdflib import URIRef, BNode
 from typing import List, Tuple, Iterable
 
-from quangis import semtype
 from quangis.semtype import SemType
 from quangis.namespace import CCD, TOOLS, OWL, RDF, RDFS, ADA
-from quangis.ontology import Ontology
+from quangis.ontology import Ontology, Taxonomy
 from quangis.wfsyn import ape
 from quangis.wfsyn.tool import tool_annotations_ape
 
@@ -62,14 +61,18 @@ def wfsyn(types: Ontology,
           io: List[Tuple[List[SemType], List[SemType]]]) \
           -> Iterable[List[ape.Workflow]]:
 
-    logging.info("Compute taxonomies...")
-    taxonomy = tools_taxonomy(tools) + types_taxonomy(types, dimensions)
+    logging.info("Compute subsumption trees...")
+    dimension_trees = [
+        Taxonomy.from_ontology(types, dimension)
+        for dimension in dimensions
+    ]
 
-    logging.info("Compute projected classes...")
-    projection = semtype.project(ontology=types, dimensions=dimensions)
+    logging.info("Create taxonomies for APE...")
+    taxonomy = tools_taxonomy(tools)
+    taxonomy += types_taxonomy(types, dimensions)
 
-    logging.info("Transform tool annotations...")
-    tools_ape = tool_annotations_ape(tools, projection, dimensions)
+    logging.info("Create tool annotations for APE...")
+    tools_ape = tool_annotations_ape(tools, dimension_trees)
 
     logging.info("Running APE...")
     jvm = ape.APE(

@@ -14,7 +14,7 @@ from __future__ import annotations
 from rdflib import URIRef
 from typing import List, Dict, Optional
 
-from quangis.ontology import Ontology, Taxonomy
+from quangis.ontology import Taxonomy
 from quangis.namespace import CCD
 from quangis.util import shorten
 
@@ -25,11 +25,14 @@ class SemType:
     different semantic dimensions.
     """
 
-    def __init__(self, mapping: Optional[Dict[URIRef, List[URIRef]]] = None):
+    def __init__(
+            self,
+            mapping: Optional[Dict[URIRef, List[URIRef]]] = None):
         """
         We represent a datatype as a mapping from RDF dimension nodes to one or
         more of its subclasses.
         """
+
         if mapping:
             self._mapping = mapping
         else:
@@ -57,7 +60,7 @@ class SemType:
             )
         )
 
-    def as_dictionary(self) -> Dict[URIRef, List[URIRef]]:
+    def to_dict(self) -> Dict[URIRef, List[URIRef]]:
         return {
             d: subclasses
             for d, subclasses in self._mapping.items()
@@ -84,43 +87,42 @@ class SemType:
         CCD.RatioA: CCD.PlainRatioA
     }
 
+    @staticmethod
+    def project(
+            dimensions: List[Taxonomy],
+            types: List[URIRef],
+            fallback_to_root: bool = True) -> SemType:
+        """
+        This method projects given nodes to all dimensions given as a list of
+        dimensions. Any node that is subsumed by at least one tree can be
+        projected to the closest parent in that tree which belongs to its core.
+        If a node cannot be projected to a given dimension, then project maps
+        to None. This method takes some (subsumption) taxonomy and a list of
+        supertypes for each dimension. It constructs a tree for each dimension
+        and returns a projection of all nodes that intersect with one of these
+        dimensions into the core of the dimension.
+        """
 
-def project(
-        ontology: Ontology,
-        dimensions: List[URIRef]) -> Dict[URIRef, SemType]:
-    """
-    This method projects given nodes to all dimensions given as a list of
-    dimensions. Any node that is subsumed by at least one tree can be projected
-    to the closest parent in that tree which belongs to its core. If a node
-    cannot be projected to a given dimension, then project maps to None.
-    This method takes some (subsumption) taxonomy and a list of supertypes for
-    each dimension. It constructs a tree for each dimension and returns a
-    projection of all nodes that intersect with one of these dimensions into
-    the core of the dimension. It also generates a corresponding core taxonomy
-    (containing only core classes for each dimension).
-    """
-
-    projection: Dict[URIRef, SemType] = {}
-
-    subsumptions = [Taxonomy.from_ontology(ontology, d) for d in dimensions]
-
-    for node in ontology.subjects():
         result = SemType()
-        for tree in subsumptions:
-            # If a node is not core (it is also subsumed by other trees), then
-            # we project to the closest parent that *is* core
 
-            projected_node = node
-            while projected_node and \
-                    any(other_tree.contains(projected_node) for other_tree in
-                        subsumptions if other_tree is not tree):
-                projected_node = tree.parent(projected_node)
+        for dimension in dimensions:
+            dim = dimension.root
+            for node in types:
+                # If a node is not core (it is subsumed by other dimensions),
+                # then we project to the closest parent that *is* core
 
-            if projected_node:
-                dimension = tree.root
-                result[dimension].append(projected_node)
+                projected_node = node
 
-        projection[node] = result
+                while projected_node and \
+                        any(other_dimension.contains(projected_node)
+                            for other_dimension in dimensions
+                            if other_dimension is not dimension):
+                    projected_node = dimension.parent(projected_node)
+                if projected_node:
+                    result[dim].append(projected_node)
 
-    return projection
-
+            # If there is no suitable node, just project to the root of the
+            # dimension
+            if fallback_to_root and not result[dim]:
+                result[dim] = [dim]
+        return result

@@ -190,7 +190,7 @@ class APE:
 
         setup: nl.uu.cs.ape.sat.utils.APEDomainSetup = self.setup
         obj = org.json.JSONObject()
-        for dimension, subclasses in t.as_dictionary().items():
+        for dimension, subclasses in t.to_dict().items():
             arr = org.json.JSONArray()
             for c in subclasses:
                 arr.put(str(c))

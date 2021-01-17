@@ -1,8 +1,8 @@
 import unittest
 
 from quangis.namespace import EM, CCD
-from quangis.semtype import project
-from quangis.ontology import Ontology
+from quangis.semtype import SemType
+from quangis.ontology import Ontology, Taxonomy
 
 
 class TestProjection(unittest.TestCase):
@@ -13,9 +13,11 @@ class TestProjection(unittest.TestCase):
         examples. More of an integration test, I suppose.
         """
 
-        dimensions = [CCD.CoreConceptQ, CCD.LayerA, CCD.NominalA]
-
-        taxonomy = Ontology.from_rdf('CoreConceptData.rdf')
+        ccd = Ontology.from_rdf('CoreConceptData.rdf')
+        dimensions = [
+            Taxonomy.from_ontology(ccd, dimension)
+            for dimension in [CCD.CoreConceptQ, CCD.LayerA, CCD.NominalA]
+        ]
 
         testnodes = [
             CCD.ExistenceRaster, CCD.RasterA, CCD.FieldRaster,
@@ -39,18 +41,12 @@ class TestProjection(unittest.TestCase):
             [CCD.BooleanA], [], [], [CCD.BooleanA], [], [], [CCD.OrdinalA],
             [], [], [], [], [], [], [EM.ERA]
         ]
-        projection = project(taxonomy, dimensions)
 
         for ix, node in enumerate(testnodes):
-            p = projection.get(node)
-            if p:
-                self.assertEqual(p[CCD.CoreConceptQ], correctCC[ix])
-                self.assertEqual(p[CCD.LayerA], correctLayerA[ix])
-                self.assertEqual(p[CCD.NominalA], correctNominalA[ix])
-            else:
-                self.assertEqual([], correctCC[ix])
-                self.assertEqual([], correctLayerA[ix])
-                self.assertEqual([], correctNominalA[ix])
+            p = SemType.project(dimensions, [node], fallback_to_root=False)
+            self.assertEqual(p[CCD.CoreConceptQ], correctCC[ix])
+            self.assertEqual(p[CCD.LayerA], correctLayerA[ix])
+            self.assertEqual(p[CCD.NominalA], correctNominalA[ix])
 
 
 if __name__ == '__main__':
