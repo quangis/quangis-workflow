@@ -1,10 +1,8 @@
 #!/usr/bin/env python3
 """
-A workflow generator: a wrapper for APE that generates input data from a given
-OWL data ontology and a given tool annotation file, by projecting classes to
-ontology dimensions.
-
-When run on its own, this is a command-line interface to the APE wrapper.
+A workflow generator: command-line interface to APE that generates input data
+from a given OWL data ontology and a given tool annotation file, by projecting
+classes to ontology dimensions.
 """
 
 import os.path
@@ -13,10 +11,11 @@ import logging
 import urllib.request
 from importlib import reload
 
-from quangis.wfsyn import wfsyn
-from quangis.ontology import Ontology
 from quangis.namespace import CCD
 from quangis.semtype import SemType
+from quangis.ontology import Ontology
+from quangis.taxonomy import Taxonomy
+from quangis.wfsyn import WorkflowSynthesis
 from quangis.util import uri, shorten
 
 
@@ -95,34 +94,44 @@ logging.info("Dimensions: {}".format(", ".join(
     map(shorten, args.dimension)
 )))
 
+logging.info("Reading RDF...")
+types = Ontology.from_rdf(args.types)
+tools = Ontology.from_rdf(args.tools)
+
+logging.info("Compute subsumption trees for the dimensions...")
+dimensions = [Taxonomy.from_ontology(types, d) for d in args.dimension]
+
+logging.info("Starting APE...")
+wfsyn = WorkflowSynthesis(
+    types=types,
+    tools=tools,
+    dimensions=dimensions
+)
+
 data = [
     (
         [
             SemType({
-                CCD.CoreConceptQ: [CCD.CoreConceptQ],
-                CCD.LayerA: [CCD.LayerA],
-                CCD.NominalA: [CCD.RatioA]
+                CCD.CoreConceptQ: {CCD.CoreConceptQ},
+                CCD.LayerA: {CCD.LayerA},
+                CCD.NominalA: {CCD.RatioA}
             })
         ],
         [
             SemType({
-                CCD.CoreConceptQ: [CCD.CoreConceptQ],
-                CCD.LayerA: [CCD.LayerA],
-                CCD.NominalA: [CCD.PlainRatioA]
+                CCD.CoreConceptQ: {CCD.CoreConceptQ},
+                CCD.LayerA: {CCD.LayerA},
+                CCD.NominalA: {CCD.PlainRatioA}
             })
         ]
     )
 ]
 
-solutions = wfsyn(
-    io=data,
-    solutions=args.solutions,
-    types=Ontology.from_rdf(args.types),
-    tools=Ontology.from_rdf(args.tools),
-    dimensions=args.dimension,
-)
-
-for g in solutions:
-    for s in g:
+for i, o in data:
+    solutions = wfsyn.run(
+        inputs=i,
+        outputs=o,
+        solutions=args.solutions)
+    for s in solutions:
         print("Solution:")
         print(s.to_rdf().serialize(format="turtle").decode("utf-8"))

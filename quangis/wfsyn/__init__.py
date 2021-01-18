@@ -1,11 +1,11 @@
 """
-Workflow synthesis.
+Higher-level APE wrapper that takes input and produces output in the RDF form
+we want it to.
 """
 
-import logging
 import itertools
 from rdflib import URIRef, BNode
-from typing import List, Tuple, Iterable
+from typing import List
 
 from quangis.semtype import SemType
 from quangis.namespace import CCD, TOOLS, OWL, RDF, RDFS, ADA, WF
@@ -42,7 +42,7 @@ def get_types(tools: Ontology, resource: BNode) -> List[URIRef]:
     return list(tools.objects(resource, RDF.type))
 
 
-def tool_annotations_ape(
+def ape_tools(
         tools: Ontology, dimensions: List[Taxonomy]) -> ape.ToolsDict:
     """
     Project tool annotations with the projection function, convert it to a
@@ -73,27 +73,22 @@ def tool_annotations_ape(
     }
 
 
-def tools_taxonomy(tools: Ontology) -> Ontology:
+def ape_taxonomy(
+        types: Ontology,
+        tools: Ontology,
+        dimensions: List[Taxonomy]) -> Ontology:
     """
-    Extracts a taxonomy of toolnames from the tool description.
+    Extracts a taxonomy of toolnames from the tool description combined with a
+    core OWL taxonomy of types.
     """
 
     taxonomy = Ontology()
+
     for (s, p, o) in tools.triples((None, TOOLS.implements, None)):
         taxonomy.add((o, RDFS.subClassOf, s))
         taxonomy.add((s, RDF.type, OWL.Class))
         taxonomy.add((o, RDF.type, OWL.Class))
         taxonomy.add((s, RDFS.subClassOf, TOOLS.Tool))
-    return taxonomy
-
-
-def types_taxonomy(types: Ontology,
-                   dimensions: List[URIRef]) -> Ontology:
-    """
-    This method takes some ontology and returns a core OWL taxonomy.
-    """
-
-    taxonomy = Ontology()
 
     # Only keep subclass nodes intersecting with exactly one dimension
     for (o, p, s) in itertools.chain(
@@ -102,7 +97,7 @@ def types_taxonomy(types: Ontology,
             ):
         if type(s) != BNode and type(o) != BNode \
                 and s != o and s != OWL.Nothing and \
-                types.dimensionality(o, dimensions) == 1:
+                types.dimensionality(o, [d.root for d in dimensions]) == 1:
             taxonomy.add((o, p, s))
 
     # Add common upper class for all data types
@@ -113,36 +108,24 @@ def types_taxonomy(types: Ontology,
     return taxonomy
 
 
-def wfsyn(types: Ontology,
-          tools: Ontology,
-          solutions: int,
-          dimensions: List[URIRef],
-          io: List[Tuple[List[SemType], List[SemType]]]) \
-          -> Iterable[List[ape.Workflow]]:
+class WorkflowSynthesis(ape.APE):
+    """
+    A wrapper around the lower-level APE wrapper that takes input and output in
+    the form we want it to.
+    """
 
-    logging.info("Compute subsumption trees...")
-    dimension_trees = [
-        Taxonomy.from_ontology(types, dimension)
-        for dimension in dimensions
-    ]
+    def __init__(
+            self,
+            types: Ontology,
+            tools: Ontology,
+            dimensions: List[Taxonomy]):
+        super().__init__(
+            taxonomy=ape_taxonomy(types, tools, dimensions),
+            tools=ape_tools(tools, dimensions),
+            tool_root=TOOLS.Tool,
+            namespace=CCD,
+            dimensions=[d.root for d in dimensions]
+        )
 
-    logging.info("Create taxonomies for APE...")
-    taxonomy = tools_taxonomy(tools)
-    taxonomy += types_taxonomy(types, dimensions)
-
-    logging.info("Create tool annotations for APE...")
-    tools_ape = tool_annotations_ape(tools, dimension_trees)
-
-    logging.info("Running APE...")
-    jvm = ape.APE(
-        taxonomy=taxonomy,
-        tools=tools_ape,
-        tool_root=TOOLS.Tool,
-        namespace=CCD,
-        dimensions=dimensions)
-
-    for i, o in io:
-        yield jvm.run(
-            inputs=i,
-            outputs=o,
-            solutions=solutions)
+    def run(self, *nargs, **kwargs) -> List[ape.Workflow]:
+        return super().run(*nargs, **kwargs)
