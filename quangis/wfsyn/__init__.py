@@ -8,11 +8,69 @@ from rdflib import URIRef, BNode
 from typing import List, Tuple, Iterable
 
 from quangis.semtype import SemType
-from quangis.namespace import CCD, TOOLS, OWL, RDF, RDFS, ADA
+from quangis.namespace import CCD, TOOLS, OWL, RDF, RDFS, ADA, WF
 from quangis.ontology import Ontology
 from quangis.taxonomy import Taxonomy
+from quangis.util import shorten
 from quangis.wfsyn import ape
-from quangis.wfsyn.tool import tool_annotations_ape
+
+
+def get_resources(
+        tools: Ontology,
+        tool: URIRef,
+        is_output: bool) -> List[BNode]:
+    """
+    Get the input/output resource nodes associated with a tool.
+    """
+    if is_output:
+        predicates = (WF.output, WF.output2, WF.output3)
+    else:
+        predicates = (WF.input1, WF.input2, WF.input3)
+
+    resources = []
+    for p in predicates:
+        resource = tools.value(predicate=p, subject=tool, any=False)
+        if resource:
+            resources.append(resource)
+    return resources
+
+
+def get_types(tools: Ontology, resource: BNode) -> List[URIRef]:
+    """
+    Returns a list of types of some tool input/output resource.
+    """
+    return list(tools.objects(resource, RDF.type))
+
+
+def tool_annotations_ape(
+        tools: Ontology, dimensions: List[Taxonomy]) -> ape.ToolsDict:
+    """
+    Project tool annotations with the projection function, convert it to a
+    dictionary that APE understands
+    """
+
+    return {
+        'functions': [
+            {
+                'id': str(tool),
+                'label': shorten(tool),
+                'taxonomyOperations': [tool],
+                'inputs': [
+                    SemType.project(
+                        dimensions, get_types(tools, resource)
+                    ).to_dict()
+                    for resource in get_resources(tools, tool, is_output=False)
+                ],
+                'outputs': [
+                    SemType.project(
+                        dimensions, get_types(tools, resource)
+                    ).downcast().to_dict()
+                    for resource in get_resources(tools, tool, is_output=True)
+                ]
+            }
+            for tool in tools.objects(predicate=TOOLS.implements)
+        ]
+    }
 
 
 def tools_taxonomy(tools: Ontology) -> Ontology:

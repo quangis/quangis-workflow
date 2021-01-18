@@ -25,13 +25,13 @@ from rdflib import Graph, BNode, URIRef
 from rdflib.term import Node
 from rdflib.namespace import Namespace
 from typing import Iterable, Tuple, Dict, List, Union
+from typing_extensions import TypedDict
 
 from quangis.namespace import WF, RDF
 from quangis.semtype import SemType
 from quangis.ontology import Ontology
-from quangis.wfsyn.tool import ToolsDict
 
-# We need version 1.1.2's API; lower versions won't work
+# We need version 1.1.5's API; lower versions won't work
 CLASS_PATH = os.path.join(
     os.path.dirname(__file__), '..', '..', 'lib', 'APE-1.1.5-executable.jar')
 jpype.startJVM(classpath=[CLASS_PATH])
@@ -45,6 +45,19 @@ import nl.uu.cs.ape.sat.models
 import nl.uu.cs.ape.sat.utils
 from nl.uu.cs.ape.sat.core.solutionStructure import \
     SolutionWorkflow, ModuleNode
+
+
+ToolDict = TypedDict('ToolDict', {
+    'id': str,
+    'label': str,
+    'inputs': List[Dict[URIRef, List[URIRef]]],
+    'outputs': List[Dict[URIRef, List[URIRef]]],
+    'taxonomyOperations': List[URIRef]
+})
+
+ToolsDict = TypedDict('ToolsDict', {
+    'functions': List[ToolDict]
+})
 
 
 class Workflow:
