@@ -8,8 +8,10 @@ classes to ontology dimensions.
 import os.path
 import argparse
 import logging
+import itertools
 import urllib.request
 from importlib import reload
+from typing import List
 
 from quangis.namespace import CCD
 from quangis.semtype import SemType
@@ -17,6 +19,21 @@ from quangis.ontology import Ontology
 from quangis.taxonomy import Taxonomy
 from quangis.wfsyn import WorkflowSynthesis
 from quangis.util import uri, shorten
+
+
+def get_data(fn: str, dimensions: List[Taxonomy]) -> List[SemType]:
+    """
+    Read a newline-separated file of SemTypes represented by comma-separated
+    URIs.
+    """
+    result = []
+    with open(fn, 'r') as f:
+        for line in f.readlines():
+            types = (x.strip() for x in line.split("#")[0].split(","))
+            result.append(
+                SemType.project(dimensions, [uri(t) for t in types if t])
+            )
+    return result
 
 
 def download_if_missing(path: str, url: str) -> str:
@@ -40,6 +57,16 @@ def download_if_missing(path: str, url: str) -> str:
 parser = argparse.ArgumentParser(
     description="Wrapper for APE that synthesises CCD workflows"
 )
+
+parser.add_argument(
+    '--inputs',
+    default=os.path.join('data', 'sources.txt'),
+    help="file containing input types")
+
+parser.add_argument(
+    '--outputs',
+    default=os.path.join('data', 'goals.txt'),
+    help="file containing output types")
 
 parser.add_argument(
     '--types',
@@ -102,36 +129,24 @@ logging.info("Compute subsumption trees for the dimensions...")
 dimensions = [Taxonomy.from_ontology(types, d) for d in args.dimension]
 
 logging.info("Starting APE...")
-wfsyn = WorkflowSynthesis(
-    types=types,
-    tools=tools,
-    dimensions=dimensions
-)
+wfsyn = WorkflowSynthesis(types=types, tools=tools, dimensions=dimensions)
 
-data = [
-    (
-        [
-            SemType({
-                CCD.CoreConceptQ: {CCD.CoreConceptQ},
-                CCD.LayerA: {CCD.LayerA},
-                CCD.NominalA: {CCD.RatioA}
-            })
-        ],
-        [
-            SemType({
-                CCD.CoreConceptQ: {CCD.CoreConceptQ},
-                CCD.LayerA: {CCD.LayerA},
-                CCD.NominalA: {CCD.PlainRatioA}
-            })
-        ]
-    )
-]
+logging.info("Reading input data {}...".format(args.inputs))
+inputs = get_data(args.inputs, dimensions)
 
-for i, o in data:
+logging.info("Reading output data {}...".format(args.outputs))
+outputs = get_data(args.outputs, dimensions)
+
+running_total = 0
+for i, o in itertools.product(inputs, outputs):
+    logging.info("Running synthesis for {} -> {}".format(i, o))
     solutions = wfsyn.run(
-        inputs=i,
-        outputs=o,
+        inputs=[i],
+        outputs=[o],
         solutions=args.solutions)
     for s in solutions:
         print("Solution:")
         print(s.to_rdf().serialize(format="turtle").decode("utf-8"))
+
+    running_total += len(solutions)
+    logging.info("Running total: {}".format(running_total))
