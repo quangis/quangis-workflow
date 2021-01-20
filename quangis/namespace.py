@@ -20,7 +20,7 @@ GIS = Namespace("http://geographicknowledge.de/vocab/GISConcepts.rdf#")
 TOOLS = Namespace("http://geographicknowledge.de/vocab/GISTools.rdf#")
 
 # Also provide a mapping for easy programmatic access
-mapping = {
+namespaces = {
     k.lower(): v for k, v in sys.modules[__name__].__dict__.items()
     if isinstance(v, Namespace)
 }
