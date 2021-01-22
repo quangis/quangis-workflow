@@ -1,27 +1,35 @@
+"""
+Be warned: This module heavily abuses overloading of Python's standard
+operators.
+"""
+
 from __future__ import annotations
 
 from typing import Optional, TypeVar, List, Union, Type, Dict
 
 
 class TypeConstraint(object):
-    pass
+    def __init__(self, var: Var, typeclass: TypeClass):
+        self.var = var.id
+        self.typeclass = typeclass
 
 
-class CCTType(object):
+class AlgType(object):
     """
-    The class "Type" is the superclass for value types and relationship types.
+    The class "AlgType" is the superclass for value types and relationship
+    types in the transformation algebra.
     """
 
     def __init__(self):
         raise RuntimeError("Do not instantiate on its own")
 
-    def __pow__(a: CCTType, b: CCTType) -> Op:
+    def __pow__(a: AlgType, b: AlgType) -> Transformation:
         """
         See __rshift__.
         """
         return a.__rshift__(b)
 
-    def __rshift__(a: CCTType, b: CCTType) -> Op:
+    def __rshift__(a: AlgType, b: AlgType) -> Transformation:
         """
         This is an overloaded (ab)use of Python's right-shift operator. It
         allows us to use the infix operator >> for the arrow in function
@@ -32,13 +40,20 @@ class CCTType(object):
         operator) would be right-to-left associative, but is less intuitive to
         read. We provide both.
         """
-        return Op(a, b)
+        return Transformation(a, b)
 
-    def __or__(a: CCTType, b: TypeConstraint) -> Type:
-        return a.constrain(b)
+    def __or__(a: AlgType, b: Dict[Var, TypeClass]) -> AlgType:
+        """
+        """
+        for constraint in b:
+            return a.constrain(b)
+        return a
+
+    #def constrain(self, constraint: TypeConstraint):
+    #    self.
 
     @staticmethod
-    def unify(a: CCTType, b: CCTType) -> Optional[CCTType]:
+    def unify(a: AlgType, b: AlgType) -> Optional[AlgType]:
         if type(a) != type(b):
             return None
         elif isinstance(a, Val) and isinstance(b, Val):
@@ -47,12 +62,12 @@ class CCTType(object):
         return None
 
 
-class Op(CCTType):
+class Transformation(AlgType):
     """
     A function type.
     """
 
-    def __init__(self, inp: CCTType, out: CCTType):
+    def __init__(self, inp: AlgType, out: AlgType):
         self.inp = inp
         self.out = out
 
@@ -60,9 +75,9 @@ class Op(CCTType):
         return "({} >> {})".format(self.inp, self.out)
 
 
-class Val(CCTType):
+class Val(AlgType):
     """
-    A value type.
+    A type for values.
     """
 
     def __init__(self, keyword: str, parent: Optional[Val] = None):
@@ -80,12 +95,12 @@ class Val(CCTType):
                 self.subsumes(other.parent)
 
 
-class R(CCTType):
+class R(AlgType):
     """
     A relation type.
     """
 
-    def __init__(self, *types: Union[Var, Val]):
+    def __init__(self, *types: Union[Var, Val, str]):
         self.types = types
         self.arity = len(types)
 
@@ -96,19 +111,27 @@ class R(CCTType):
 T = TypeVar('T', Val, R)
 
 
-class Var(CCTType):
+class Var(AlgType):
     """
     A type variable.
     """
 
-    def __init__(self, i: int):
+    def __init__(self, i: str):
         self.id = i
 
     def __str__(self) -> str:
-        return str(self.id)
+        return self.id
+
+    def of(self, b: TypeClass) -> TypeConstraint:
+        return TypeConstraint(self, b)
 
 
-class Overloaded(CCTType):
+class TypeClass(object):
+    pass
+
+
+
+class Overloaded(AlgType):
     def __init__(self, *types):
         self._types = types
 
@@ -140,19 +163,32 @@ BooleanField = R(L, Bool)
 NominalInvertedField = R(Nom, S)
 BooleanInvertedField = R(Bool, S)
 
+# Convenience variables
+x, y, z = Var("x"), Var("y"), Var("z")
 
-constructors: Dict[str, CCTType] = {
+
+class HasColumn(TypeClass):
+    def __init__(self, domain: AlgType):
+        self.domain = domain
+
+
+class Value(TypeClass):
+    def __init__(self, *superclasses):
+        pass
+
+
+constructors: Dict[str, AlgType] = {
     "pointmeasures": R(S, Itv),
     "amountpatches": R(S, Nom),
     "contour": R(Ord, S),
     "objects": R(O, Ratio),
     "objectregions": R(O, S),
-    "object": O,
     "contourline": R(Itv, S),
     "objectcounts": R(O, Count),
     "field": R(L, Ratio),
-    "in": Nom,
+    "object": O,
     "region": S,
+    "in": Nom,
     "count": Count,
     "ratioV": Ratio,
     "interval": Itv,
@@ -160,25 +196,33 @@ constructors: Dict[str, CCTType] = {
     "nominal": Nom
 }
 
+
+def t(x):
+    return Var(str(x))
+
+
 functions = {
     "ratio":
-        Ratio ** Ratio ** Ratio,
+        Ratio >> (Ratio >> Ratio),
     "avg":
-        R(Var(1), Itv) ** Itv,  #  | 1 in Domains
+        R(x, Itv) >> Itv | {x: Value()},
     "count":
-        R(O) ** Ratio,
+        R(O) >> Ratio,
+    "sigma_eq":
+        x >> (y >> x) | {x: Value(Q), y: HasColumn(x)},
     "groupby_L":
-        (R(Var(1)) ** Q) ** R(Var(1), Q, Var(2)) ** R(Var(2)),
+        (R(x) >> Q) >> (R(x, Q, y) >> R(y)) | {x: Value(), y: Value()},
     "join":
-        Var(1) ** R(Var(2)) ** Var(1),
-    "invert": Overloaded(
-        R(L, Ord) ** R(Ord, S),
-        R(L, Nom) ** R(S, Nom)
+        x >> (R(y) >> x) | {y: Value(), x: HasColumn(y)},
+    "invert":
+        Overloaded(
+            R(L, Ord) >> R(Ord, S),
+            R(L, Nom) >> R(S, Nom)
         )
 }
 
 
 if __name__ == '__main__':
-    for k, v in function_types.items():
+    for k, v in functions.items():
         print(k, ':',  v)
 
