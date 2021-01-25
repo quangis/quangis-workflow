@@ -7,8 +7,10 @@ x, y, z = TypeVar.new(), TypeVar.new(), TypeVar.new()
 Int = TypeOperator("int")
 Str = TypeOperator("str")
 T = partial(TypeOperator, "T")
-compose = ((y ** z) ** (x ** y) ** (x ** z)).fresh()
 
+
+def compose():
+    return ((y ** z) ** (x ** y) ** (x ** z)).fresh()
 
 class TestType(unittest.TestCase):
 
@@ -35,13 +37,10 @@ class TestType(unittest.TestCase):
         self.assertRaises(RuntimeError, ((x ** x) ** Int).apply, x)
 
     def test_compose_concrete(self):
-        self.assertEqual(compose.apply(Int ** Str).apply(Str ** Int), Str ** Str)
+        self.assertEqual(compose().apply(Int ** Str).apply(Str ** Int), Str ** Str)
 
     def test_compose_variable(self):
-        print()
-        print(compose)
-        print(compose.apply(x ** Str))
-        self.assertEqual(compose.apply(x ** Str).apply(Int ** x), Int ** Str)
+        self.assertEqual(compose().apply(x ** Str).apply(Int ** x), Int ** Str)
 
 
 if __name__ == '__main__':
