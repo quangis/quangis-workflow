@@ -6,7 +6,7 @@ interface that is as close as possible to its formal type system counterpart.
 """
 from __future__ import annotations
 
-from typing import Optional, TypeVar, List, Union, Type, Dict, Tuple
+from typing import Optional, List, Union, Type, Dict, Tuple
 
 
 class AlgType(object):
@@ -18,20 +18,20 @@ class AlgType(object):
     def __init__(self):
         raise RuntimeError("Do not instantiate on its own")
 
-    def __rshift__(a: AlgType, b: AlgType) -> Transformation:
+    def __pow__(self: AlgType, other: AlgType) -> Transformation:
         """
-        This is an overloaded (ab)use of Python's right-shift operator. It
-        allows us to use the infix operator >> for the arrow in function
+        This is an overloaded (ab)use of Python's exponentiation operator. It
+        allows us to use the infix operator ** for the arrow in function
         signatures.
 
-        Note that this operator is left-to-right associative, which is
-        non-standard behaviour for function application. __pow__ (for the **
-        operator) would be right-to-left associative, but is less intuitive to
-        read.
+        Note that this operator is one of the few that is right-to-left
+        associative, matching the conventional behaviour of the function arrow.
+        The right-bitshift operator >> (for __rshift__) would have been more
+        intuitive visually, but does not have this property.
         """
-        return Transformation(a, b)
+        return Transformation(self, other)
 
-    def __or__(a: AlgType, b: Dict[TypeVariable, TypeClass]) -> AlgType:
+    def __or__(a: AlgType, b: Dict[TypeVar, TypeClass]) -> AlgType:
         """
         """
         #for constraint in b:
@@ -41,8 +41,28 @@ class AlgType(object):
     #def constrain(self, constraint: TypeConstraint):
     #    self.
 
-    def substitute(self, substitution) -> AlgType:
+    def __repr__(self):
+        return self.__str__()
+
+    def substitute(self, subst: Dict[TypeVar, AlgType]) -> AlgType:
+        if isinstance(self, TypeOperator):
+            self.types = [t.substitute(subst) for t in self.types]
+        elif isinstance(self, TypeVar):
+            if self in subst:
+                return subst[self]
         return self
+
+    # Also implement __contains__
+
+    def _fresh(self, ctx: Dict[TypeVar, TypeVar]):
+        raise NotImplementedError()
+
+    def fresh(self) -> AlgType:
+        """
+        Create a fresh copy of this type, with new variables.
+        """
+
+        return self._fresh({})
 
 
 class TypeOperator(AlgType):
@@ -57,8 +77,9 @@ class TypeOperator(AlgType):
     def __str__(self) -> str:
         return "( {} {})".format(self.name, " ".join(map(str, self.types)))
 
-    def __repr__(self):
-        return self.__str__()
+    def _fresh(self, ctx: Dict[TypeVar, TypeVar]) -> TypeOperator:
+        cls = type(self)
+        return cls(self.name, *(t._fresh(ctx) for t in self.types))
 
     @property
     def arity(self) -> int:
@@ -71,17 +92,17 @@ class Transformation(TypeOperator):
 
 
 class RelationType(TypeOperator):
-    def __init__(self, *types: Union[EntityType, TypeVariable]):
+    def __init__(self, *types: AlgType):
         super().__init__("rel", *types)
 
-    def subsumes(self, other: RelationType) -> bool:
+    def is_subtype(self, other: RelationType) -> bool:
         return self.arity == other.arity and \
-            all(s.subsumes(t) for s, t in zip(self.types, other.types))
+            all(s.is_subtype(t) for s, t in zip(self.types, other.types))
 
 
 class EntityType(TypeOperator):
     """
-    A type for entity values. Note that entity types are implicitly
+    A type for basic entity values. Note that entity types are implicitly
     polymorphic: subtypes are also acceptable.
     """
 
@@ -89,15 +110,18 @@ class EntityType(TypeOperator):
         self.supertype = supertype
         super().__init__(name)
 
-    def subsumes(self, other: Optional[EntityType]) -> bool:
+    def is_subtype(self, other: Optional[EntityType]) -> bool:
         if other is None:
             return False
         else:
             return self.name == other.name or \
-                self.subsumes(other.supertype)
+                self.is_subtype(other.supertype)
 
 
-class TypeVariable(AlgType):
+class TypeVar(AlgType):
+
+    counter = 0
+
     def __init__(self, i: int):
         self.id = i
 
@@ -107,15 +131,15 @@ class TypeVariable(AlgType):
     def __repr__(self):
         return self.__str__()
 
-class TypeConstraint(object):
-    def __init__(self, var: TypeVariable, typeclass: TypeClass):
-        self.var = var.id
-        self.typeclass = typeclass
-
-
-class TypeClass(object):
-    pass
-
+    def _fresh(self, ctx: Dict[TypeVar, TypeVar]) -> TypeVar:
+        if self in ctx:
+            return ctx[self]
+        else:
+            cls = type(self)
+            new = TypeVar(cls.counter)
+            cls.counter += 1
+            ctx[self] = new
+            return new
 
 # Value types
 E = EntityType
@@ -144,7 +168,11 @@ NominalInvertedField = R(Nom, S)
 BooleanInvertedField = R(Bool, S)
 
 # Convenience variables
-x, y, z = map(TypeVariable, range(1, 4))
+x, y, z = map(TypeVar, range(1, 4))
+
+
+class TypeClass(object):
+    pass
 
 
 class Contains(TypeClass):
@@ -157,12 +185,12 @@ class Contains(TypeClass):
         self.domain = domain
 
 
-class Sub(TypeClass):
+class Subtype(TypeClass):
     """
     Typeclass for value types that are subsumed by the given superclass.
     """
 
-    def __init__(self, *superclasses):
+    def __init__(self, supertype: EntityType):
         pass
 
 
@@ -188,26 +216,26 @@ constructors: Dict[str, AlgType] = {
 
 functions = {
     "ratio":
-        Ratio >> (Ratio >> Ratio),
+        Ratio ** Ratio ** Ratio,
     "avg":
-        R(x, Itv) >> Itv | {x: Sub(V)},
+        R(x, Itv) ** Itv | {x: Subtype(V)},
     "count":
-        R(O) >> Ratio,
+        R(O) ** Ratio,
     "sigma_eq":
-        x >> (y >> x) | {x: Sub(V), y: Contains(x)},
+        x ** y ** x | {x: Subtype(Q), y: Contains(x)},
     "groupby_L":
-        (R(x) >> Q) >> (R(x, Q, y) >> R(y)) | {x: Sub(), y: Sub()},
+        (R(x) ** Q) ** R(x, Q, y) ** R(y) | {x: Subtype(V), y: Subtype(V)},
     "join":
-        x >> (R(y) >> x) | {y: Sub(V), x: Contains(y)},
+        x ** R(y) ** x | {y: Subtype(V), x: Contains(y)},
     "invert":
  #       Overloaded(
-        R(L, Ord) >> R(Ord, S)
- #           R(L, Nom) >> R(S, Nom)
+        R(L, Ord) ** R(Ord, S)
+ #           R(L, Nom) ** R(S, Nom)
  #       )
 }
 
 
-Substitution = Dict[TypeVariable, AlgType]
+Substitution = Dict[TypeVar, AlgType]
 
 
 def unify(subst: Substitution, a: AlgType, b: AlgType) -> Substitution:
@@ -217,23 +245,25 @@ def unify(subst: Substitution, a: AlgType, b: AlgType) -> Substitution:
         else:
             for s, t in zip(a.types, b.types):
                 unify(subst, s, t)
-    elif isinstance(a, TypeVariable):
+    elif isinstance(a, TypeVar):
         subst[a] = b
-    elif isinstance(b, TypeVariable):
+    elif isinstance(b, TypeVar):
         subst[b] = a
     return subst
 
 
-#def apply(f: AlgType, x: AlgType) -> Tuple[AlgType, Substitution]:
-#    if isinstance(f, Transformation):
-#        inference = unify(f.input_type, x)
-#        f.output_type.substitute(inference)
-#    else:
-#        raise RuntimeError("typecheck")
+def app(f: AlgType, x: AlgType) -> Tuple[AlgType, Substitution]:
+    if isinstance(f, Transformation):
+        inference = unify({}, f.types[0], x)
+        return f.types[1].substitute(inference)
+    else:
+        raise RuntimeError("cannot apply type {} to argument {}".format(f, x))
 
 
 
 if __name__ == '__main__':
+
+    print(app(x >> (Q >> x), O))
 
     print(unify({}, R(x), R(y)))
 
