@@ -1,24 +1,25 @@
 """
-Be warned: This module heavily abuses overloading of Python's standard
-operators. It also deviates from Python's convention of using capitalized names
-for classes and lowercase for values. These decisions were made to get an
-interface that is as close as possible to its formal type system counterpart.
+Generic type system. Inspired loosely by Hindley-Milner type inference in
+programming languages.
+
+Be warned: This module abuses overloading of Python's standard operators. It
+also deviates from Python's convention of using capitalized names for classes
+and lowercase for values. These decisions were made to get an interface that is
+as close as possible to its formal type system counterpart.
 """
 from __future__ import annotations
 
+from abc import ABC, abstractmethod
 from typing import Optional, List, Union, Type, Dict, Tuple
 
 
-class AlgType(object):
+class AlgebraType(ABC):
     """
-    The class "AlgType" is the superclass for value types and relationship
+    The class "AlgebraType" is the superclass for value types and relationship
     types in the transformation algebra.
     """
 
-    def __init__(self):
-        raise RuntimeError("Do not instantiate on its own")
-
-    def __pow__(self: AlgType, other: AlgType) -> Transformation:
+    def __pow__(self: AlgebraType, other: AlgebraType) -> Transformation:
         """
         This is an overloaded (ab)use of Python's exponentiation operator. It
         allows us to use the infix operator ** for the arrow in function
@@ -31,7 +32,7 @@ class AlgType(object):
         """
         return Transformation(self, other)
 
-    def __or__(a: AlgType, b: Dict[TypeVar, TypeClass]) -> AlgType:
+    def __or__(a: AlgebraType, b: Dict[TypeVar, TypeClass]) -> AlgebraType:
         """
         """
         #for constraint in b:
@@ -44,7 +45,7 @@ class AlgType(object):
     def __repr__(self):
         return self.__str__()
 
-    def substitute(self, subst: Dict[TypeVar, AlgType]) -> AlgType:
+    def substitute(self, subst: Dict[TypeVar, AlgebraType]) -> AlgebraType:
         if isinstance(self, TypeOperator):
             self.types = [t.substitute(subst) for t in self.types]
         elif isinstance(self, TypeVar):
@@ -52,34 +53,51 @@ class AlgType(object):
                 return subst[self]
         return self
 
-    # Also implement __contains__
+    @abstractmethod
+    def __contains__(self, value: AlgebraType) -> bool:
+        return NotImplemented
 
-    def _fresh(self, ctx: Dict[TypeVar, TypeVar]):
-        raise NotImplementedError()
+    @abstractmethod
+    def _fresh(self, ctx: Dict[TypeVar, TypeVar]) -> AlgebraType:
+        return NotImplemented
 
-    def fresh(self) -> AlgType:
+    def fresh(self) -> AlgebraType:
         """
-        Create a fresh copy of this type, with new variables.
+        Create a fresh copy of this type, with unique new variables.
         """
 
         return self._fresh({})
 
+    def apply(self, arg: AlgebraType) -> AlgebraType:
+        raise RuntimeError("Cannot apply an argument to non-function type")
 
-class TypeOperator(AlgType):
+
+class TypeOperator(AlgebraType):
     """
     n-ary type constructor.
     """
 
-    def __init__(self, name: str, *types: AlgType):
+    def __init__(self, name: str, *types: AlgebraType):
         self.name = name
         self.types = list(types)
 
+    def __eq__(self, other: object):
+        if isinstance(other, TypeOperator):
+            return self.name == other.name and \
+               self.arity == other.arity and \
+               all(self.types[i] == other.types[i]
+                   for i in range(0, self.arity))
+        else:
+            return False
+
+    def __contains__(self, value: AlgebraType) -> bool:
+        return value == self or any(value in t for t in self.types)
+
     def __str__(self) -> str:
-        return "( {} {})".format(self.name, " ".join(map(str, self.types)))
+        return "{}({})".format(self.name, ", ".join(map(str, self.types)))
 
     def _fresh(self, ctx: Dict[TypeVar, TypeVar]) -> TypeOperator:
-        cls = type(self)
-        return cls(self.name, *(t._fresh(ctx) for t in self.types))
+        return TypeOperator(self.name, *(t._fresh(ctx) for t in self.types))
 
     @property
     def arity(self) -> int:
@@ -87,13 +105,27 @@ class TypeOperator(AlgType):
 
 
 class Transformation(TypeOperator):
-    def __init__(self, input_type: AlgType, output_type: AlgType):
+    def __init__(self, input_type: AlgebraType, output_type: AlgebraType):
         super().__init__("op", input_type, output_type)
+
+    def _fresh(self, ctx: Dict[TypeVar, TypeVar]) -> Transformation:
+        return Transformation(*(t._fresh(ctx) for t in self.types))
+
+    def apply(self, arg: AlgebraType) -> AlgebraType:
+        """
+        Apply an argument to a function type to get its output type.
+        """
+        input_type, output_type = self.types
+        env = unify(input_type, arg, {})
+        return output_type.substitute(env)
 
 
 class RelationType(TypeOperator):
-    def __init__(self, *types: AlgType):
+    def __init__(self, *types: AlgebraType):
         super().__init__("rel", *types)
+
+    def _fresh(self, ctx: Dict[TypeVar, TypeVar]) -> RelationType:
+        return RelationType(*(t._fresh(ctx) for t in self.types))
 
     def is_subtype(self, other: RelationType) -> bool:
         return self.arity == other.arity and \
@@ -110,6 +142,9 @@ class EntityType(TypeOperator):
         self.supertype = supertype
         super().__init__(name)
 
+    def _fresh(self, ctx: Dict[TypeVar, TypeVar]) -> EntityType:
+        return EntityType(self.name, self.supertype)
+
     def is_subtype(self, other: Optional[EntityType]) -> bool:
         if other is None:
             return False
@@ -118,7 +153,7 @@ class EntityType(TypeOperator):
                 self.is_subtype(other.supertype)
 
 
-class TypeVar(AlgType):
+class TypeVar(AlgebraType):
 
     counter = 0
 
@@ -126,10 +161,10 @@ class TypeVar(AlgType):
         self.id = i
 
     def __str__(self) -> str:
-        return "t"+str(self.id)
+        return "Var"+str(self.id)
 
-    def __repr__(self):
-        return self.__str__()
+    def __contains__(self, value: AlgebraType) -> bool:
+        return self == value
 
     def _fresh(self, ctx: Dict[TypeVar, TypeVar]) -> TypeVar:
         if self in ctx:
@@ -181,7 +216,7 @@ class Contains(TypeClass):
     their columns.
     """
 
-    def __init__(self, domain: AlgType):
+    def __init__(self, domain: AlgebraType):
         self.domain = domain
 
 
@@ -194,7 +229,7 @@ class Subtype(TypeClass):
         pass
 
 
-constructors: Dict[str, AlgType] = {
+constructors: Dict[str, AlgebraType] = {
     "pointmeasures": R(S, Itv),
     "amountpatches": R(S, Nom),
     "contour": R(Ord, S),
@@ -213,8 +248,9 @@ constructors: Dict[str, AlgType] = {
     "nominal": Nom
 }
 
-
 functions = {
+    "compose":
+        (y ** z) ** (x ** y) ** (x ** z),
     "ratio":
         Ratio ** Ratio ** Ratio,
     "avg":
@@ -235,38 +271,21 @@ functions = {
 }
 
 
-Substitution = Dict[TypeVar, AlgType]
+Substitution = Dict[TypeVar, AlgebraType]
 
 
-def unify(subst: Substitution, a: AlgType, b: AlgType) -> Substitution:
+def unify(a: AlgebraType, b: AlgebraType, ctx: Substitution) -> Substitution:
     if isinstance(a, TypeOperator) and isinstance(b, TypeOperator):
         if a.name != b.name or a.arity != b.arity:
             raise RuntimeError("type mismatch")
         else:
             for s, t in zip(a.types, b.types):
-                unify(subst, s, t)
+                unify(s, t, ctx)
     elif isinstance(a, TypeVar):
-        subst[a] = b
+        if a != b and a in b:
+            raise RuntimeError("recursive type")
+        else:
+            ctx[a] = b
     elif isinstance(b, TypeVar):
-        subst[b] = a
-    return subst
-
-
-def app(f: AlgType, x: AlgType) -> Tuple[AlgType, Substitution]:
-    if isinstance(f, Transformation):
-        inference = unify({}, f.types[0], x)
-        return f.types[1].substitute(inference)
-    else:
-        raise RuntimeError("cannot apply type {} to argument {}".format(f, x))
-
-
-
-if __name__ == '__main__':
-
-    print(app(x >> (Q >> x), O))
-
-    print(unify({}, R(x), R(y)))
-
-    for k, v in functions.items():
-        print(k, ':',  v)
-
+        unify(b, a, ctx)
+    return ctx
