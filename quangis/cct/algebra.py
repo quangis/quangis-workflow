@@ -27,19 +27,19 @@ x, y, z = (TypeVar.new() for _ in range(0, 3))
 # Entity value types
 Entity = partial(TypeOperator)
 V = Entity("entity")
-O = Entity("object")  # type: ignore
-S = Entity("region")
-L = Entity("location")
-Q = Entity("quality")
-Nom = Entity("nominal")
-Bool = Entity("boolean")
-Ord = Entity("ordinal")
-Count = Entity("count")
-Ratio = Entity("ratio")
-Itv = Entity("interval")
+O = Entity("object", supertype=V)  # type: ignore
+S = Entity("region", supertype=V)
+L = Entity("location", supertype=V)
+Q = Entity("quality", supertype=V)
+Nom = Entity("nominal", supertype=Q)
+Bool = Entity("boolean", supertype=Nom)
+Ord = Entity("ordinal", supertype=Nom)
+Count = Entity("count", supertype=Ord)
+Ratio = Entity("ratio", supertype=Count)
+Itv = Entity("interval", supertype=Ratio)
 
 # Relation types and type synonyms
-R = partial(TypeOperator, "rel")
+R = partial(TypeOperator, "R")
 SpatialField = R(L, Q)
 InvertedField = R(Q, S)
 FieldSample = R(S, Q)
@@ -60,14 +60,14 @@ constructors: Dict[str, AlgebraType] = {
     "contourline": R(Itv, S),
     "objectcounts": R(O, Count),
     "field": R(L, Ratio),
-    "object": O,
-    "region": S,
-    "in": Nom,
-    "count": Count,
-    "ratioV": Ratio,
-    "interval": Itv,
-    "ordinal": Ord,
-    "nominal": Nom
+    "object": R(O),
+    "region": R(S),
+    "in": R(Nom),
+    "count": R(Count),
+    "ratioV": R(Ratio),
+    "interval": R(Itv),
+    "ordinal": R(Ord),
+    "nominal": R(Nom)
 }
 
 # Functions are type transformations in the algebra, without any particular

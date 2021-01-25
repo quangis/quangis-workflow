@@ -10,7 +10,7 @@ as close as possible to its formal type system counterpart.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Dict, Callable, Optional
+from typing import Dict, Callable, Optional, Tuple
 
 
 class AlgebraType(ABC):
@@ -91,22 +91,29 @@ class AlgebraType(ABC):
         return self
 
     def unify(
-            a: AlgebraType,
-            b: AlgebraType,
+            self: AlgebraType,
+            other: AlgebraType,
             ctx: Dict[TypeVar, AlgebraType]) -> Dict[TypeVar, AlgebraType]:
-        if isinstance(a, TypeOperator) and isinstance(b, TypeOperator):
-            if not a.equal_pred(b):
+        """
+        Obtain a substitution that would make these two types the same, if
+        possible. Note that subtypes on the "self" side are tolerated.
+        """
+        if isinstance(self, TypeOperator) and isinstance(other, TypeOperator):
+
+            if self.arity == 0 and other.arity == 0 and self.subtype(other):
+                pass
+            elif self.signature != other.signature:
                 raise RuntimeError("type mismatch")
             else:
-                for s, t in zip(a.types, b.types):
-                    s.unify(t, ctx)
-        elif isinstance(a, TypeVar):
-            if a != b and a in b:
+                for x, y in zip(self.types, other.types):
+                    x.unify(y, ctx)
+        elif isinstance(self, TypeVar):
+            if self != other and self in other:
                 raise RuntimeError("recursive type")
             else:
-                ctx[a] = b
-        elif isinstance(b, TypeVar):
-            b.unify(a, ctx)
+                ctx[self] = other
+        elif isinstance(other, TypeVar):
+            other.unify(self, ctx)
         return ctx
 
 
@@ -127,23 +134,20 @@ class TypeOperator(AlgebraType):
         if self.types and self.supertype:
             raise RuntimeError("only nullary types may have supertypes")
 
-    def equal_pred(self, other: TypeOperator) -> bool:
+    def subtype(self, other: TypeOperator) -> bool:
         """
-        Is this type the same as another at its root?
+        Is this type a subtype of another?
         """
-        return self.name == other.name and self.arity == other.arity
-
-    def is_subtype_of(self, other: TypeOperator) -> bool:
         if self.arity == 0:
             up = self.supertype
-            return self == other or bool(up and up.is_subtype_of(other))
+            return self == other or bool(up and up.subtype(other))
         else:
-            return self.equal_pred(other) and \
-                all(t.is_subtype_of(s) for s, t in zip(self.types, other.types))
+            return self.signature == other.signature and \
+                all(s.subtype(t) for s, t in zip(self.types, other.types))
 
     def __eq__(self, other: object):
         if isinstance(other, TypeOperator):
-            return self.equal_pred(other) and \
+            return self.signature == other.signature and \
                all(s == t for s, t in zip(self.types, other.types))
         else:
             return False
@@ -167,11 +171,12 @@ class TypeOperator(AlgebraType):
     def arity(self) -> int:
         return len(self.types)
 
+    @property
+    def signature(self) -> Tuple[str, int]:
+        return self.name, self.arity
+
 
 class Transformation(TypeOperator):
-
-    def is_subtype_of(self, other: TypeOperator) -> bool:
-        return self == other
 
     def __init__(self, input_type: AlgebraType, output_type: AlgebraType):
         super().__init__("transformation", input_type, output_type)
@@ -190,7 +195,7 @@ class Transformation(TypeOperator):
         Apply an argument to a function type to get its output type.
         """
         input_type, output_type = self.types
-        env = input_type.unify(arg, {})
+        env = arg.unify(input_type, {})
         return output_type.substitute(env)
 
 
@@ -215,6 +220,12 @@ class TypeVar(AlgebraType):
 
     def __contains__(self, value: AlgebraType) -> bool:
         return self == value
+
+    # def subtype(self, other: AlgebraType) -> bool:
+    #    """
+    #    As long as it remains unbound, a variable can always be a subtype.
+    #    """
+    #    return True
 
     @classmethod
     def new(cls) -> TypeVar:
