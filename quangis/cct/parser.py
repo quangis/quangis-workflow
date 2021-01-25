@@ -1,59 +1,52 @@
+"""
+Functions and data structures for parsing.
+"""
+
 from __future__ import annotations
 
-from functools import reduce
 import pyparsing as pp
+from functools import reduce
+from typing import List, Dict, Union
 
-from type import constructors, functions, CCTType
+from quangis.cct.type import AlgebraType
 
 
 class Expr(object):
-    pass
-
-
-class Atom(Expr):
-    """
-    Functions or values.
-    """
-
-    def __init__(self, name: str, type: CCTType):
-        self.name = name
+    def __init__(self, tokens: List[Union[str, Expr]], type: AlgebraType):
+        self.tokens = tokens
         self.type = type
 
     def __str__(self) -> str:
-        return "atom({} : {})".format(self.name, self.type)
+        return "({})".format(" ".join(map(str, self.tokens)))
+
+    @staticmethod
+    def apply(fn: Expr, arg: Expr) -> Expr:
+        return Expr([fn, arg], fn.type.apply(arg.type))
 
 
-class App(Expr):
-    """
-    Function application.
-    """
+def make_parser(
+        constructors: Dict[str, AlgebraType],
+        functions: Dict[str, AlgebraType]) -> pp.Parser:
 
-    def __init__(self, f: Expr, x: Expr):
-        self.f = f
-        self.x = x
+    cons_keywords = [pp.Keyword(t) for t in sorted(constructors.keys())]
 
-    def __str__(self):
-        return "({} {})".format(self.f, self.x)
+    func_keywords = [pp.Keyword(t) for t in sorted(functions.keys())]
 
+    identifier = pp.Word(pp.alphas, pp.alphanums)
 
-constructor = (
-    pp.MatchFirst([pp.Keyword(t) for t in constructors.keys()]) + \
-    pp.Word(pp.alphas, pp.alphanums)
-).setParseAction(
-    lambda s, l, t: Atom(t[1], constructors[t[0]])
-)
+    constructor = (
+        pp.MatchFirst(cons_keywords) + identifier
+    ).setParseAction(
+        lambda s, l, t: Expr(t, constructors[t[0]].fresh())
+    )
 
-function = (
-    pp.MatchFirst([pp.Keyword(t) for t in functions.keys()])
-).setParseAction(
-    lambda s, l, t: Atom(t[0], functions[t[0]])
-)
+    function = (
+        pp.MatchFirst(func_keywords)
+    ).setParseAction(
+        lambda s, l, t: Expr(t, functions[t[0]].fresh())
+    )
 
-expr = pp.infixNotation(
-    constructor | function,
-    [(
-        None, 2, pp.opAssoc.LEFT,
-        lambda s, l, t: reduce(App, t[0])
-    )])
-
-print(expr.parseString("ratio (ratioV a) (ratioV b)")[0])
+    return pp.infixNotation(
+        constructor | function,
+        [(None, 2, pp.opAssoc.LEFT, lambda s, l, t: reduce(Expr.apply, t[0]))]
+    )

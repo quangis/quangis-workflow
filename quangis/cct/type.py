@@ -1,6 +1,6 @@
 """
 Generic type system. Inspired loosely by Hindley-Milner type inference in
-programming languages.
+functional programming languages.
 
 Be warned: This module abuses overloading of Python's standard operators. It
 also deviates from Python's convention of using capitalized names for classes
@@ -10,14 +10,13 @@ as close as possible to its formal type system counterpart.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Optional, List, Union, Type, Dict, Tuple
-
+from typing import Dict
 
 
 class AlgebraType(ABC):
     """
-    The class "AlgebraType" is the superclass for value types and relationship
-    types in the transformation algebra.
+    Abstract base class for type operators and type variables. Note that basic
+    types are just 0-ary type operators.
     """
 
     def __pow__(self: AlgebraType, other: AlgebraType) -> Transformation:
@@ -137,39 +136,6 @@ class Transformation(TypeOperator):
         return output_type.substitute(env)
 
 
-class RelationType(TypeOperator):
-    def __init__(self, *types: AlgebraType):
-        super().__init__("rel", *types)
-
-    def _fresh(self, ctx: Dict[TypeVar, TypeVar]) -> RelationType:
-        return RelationType(*(t._fresh(ctx) for t in self.types))
-
-    def is_subtype(self, other: RelationType) -> bool:
-        return self.arity == other.arity and \
-            all(s.is_subtype(t) for s, t in zip(self.types, other.types))
-
-
-class EntityType(TypeOperator):
-    """
-    A type for basic entity values. Note that entity types are implicitly
-    polymorphic: subtypes are also acceptable.
-    """
-
-    def __init__(self, name: str, supertype: Optional[EntityType] = None):
-        self.supertype = supertype
-        super().__init__(name)
-
-    def _fresh(self, ctx: Dict[TypeVar, TypeVar]) -> EntityType:
-        return EntityType(self.name, self.supertype)
-
-    def is_subtype(self, other: Optional[EntityType]) -> bool:
-        if other is None:
-            return False
-        else:
-            return self.name == other.name or \
-                self.is_subtype(other.supertype)
-
-
 class TypeVar(AlgebraType):
 
     counter = 0
@@ -178,7 +144,7 @@ class TypeVar(AlgebraType):
         self.id = i
 
     def __str__(self) -> str:
-        return "Var"+str(self.id)
+        return "Var" + str(self.id)
 
     def __hash__(self):
         return self.id.__hash__()
@@ -206,36 +172,8 @@ class TypeVar(AlgebraType):
             ctx[self] = new
             return new
 
+
 Substitution = Dict[TypeVar, AlgebraType]
-
-# Value types
-E = EntityType
-V = E("entity")
-O = E("object", V)  # type: ignore
-S = E("region", V)
-L = E("location", V)
-Q = E("quality", V)
-Nom = E("nominal", Q)
-Bool = E("boolean", Nom)
-Ord = E("ordinal", Nom)
-Count = E("count", Ord)
-Ratio = E("ratio", Count)
-Itv = E("interval", Ratio)
-
-# Type synonyms for relation types
-R = RelationType
-SpatialField = R(L, Q)
-InvertedField = R(Q, S)
-FieldSample = R(S, Q)
-ObjectExtent = R(O, S)
-ObjectQuality = R(O, Q)
-NominalField = R(L, Nom)
-BooleanField = R(L, Bool)
-NominalInvertedField = R(Nom, S)
-BooleanInvertedField = R(Bool, S)
-
-# Convenience variables
-x, y, z = map(TypeVar, range(1, 4))
 
 
 class TypeClass(object):
@@ -257,51 +195,6 @@ class Subtype(TypeClass):
     Typeclass for value types that are subsumed by the given superclass.
     """
 
-    def __init__(self, supertype: EntityType):
+    def __init__(self, supertype: TypeOperator):
         pass
-
-
-constructors: Dict[str, AlgebraType] = {
-    "pointmeasures": R(S, Itv),
-    "amountpatches": R(S, Nom),
-    "contour": R(Ord, S),
-    "objects": R(O, Ratio),
-    "objectregions": R(O, S),
-    "contourline": R(Itv, S),
-    "objectcounts": R(O, Count),
-    "field": R(L, Ratio),
-    "object": O,
-    "region": S,
-    "in": Nom,
-    "count": Count,
-    "ratioV": Ratio,
-    "interval": Itv,
-    "ordinal": Ord,
-    "nominal": Nom
-}
-
-functions = {
-    "compose":
-        (y ** z) ** (x ** y) ** (x ** z),
-    "ratio":
-        Ratio ** Ratio ** Ratio,
-    "avg":
-        R(x, Itv) ** Itv | {x: Subtype(V)},
-    "count":
-        R(O) ** Ratio,
-    "sigma_eq":
-        x ** y ** x | {x: Subtype(Q), y: Contains(x)},
-    "groupby_L":
-        (R(x) ** Q) ** R(x, Q, y) ** R(y) | {x: Subtype(V), y: Subtype(V)},
-    "join":
-        x ** R(y) ** x | {y: Subtype(V), x: Contains(y)},
-    "invert":
- #       Overloaded(
-        R(L, Ord) ** R(Ord, S)
- #           R(L, Nom) ** R(S, Nom)
- #       )
-}
-
-
-
 
