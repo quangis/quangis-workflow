@@ -8,7 +8,7 @@ import pyparsing as pp
 from functools import reduce
 from typing import List, Dict, Union
 
-from quangis.cct.type import AlgebraType
+from quangis.cct.type import AlgebraType, Transformation
 
 
 class Expr(object):
@@ -17,7 +17,13 @@ class Expr(object):
         self.type = type
 
     def __str__(self) -> str:
-        return "({})".format(" ".join(map(str, self.tokens)))
+        if isinstance(self.type, Transformation):
+            return "{}".format(" ".join(map(str, self.tokens)))
+        else:
+            return "({tokens} : \033[1m{type}\033[0m)".format(
+                tokens=" ".join(map(str, self.tokens)),
+                type=str(self.type)
+            )
 
     @staticmethod
     def apply(fn: Expr, arg: Expr) -> Expr:

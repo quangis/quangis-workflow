@@ -110,7 +110,10 @@ class TypeOperator(AlgebraType):
         return value == self or any(value in t for t in self.types)
 
     def __str__(self) -> str:
-        return "{}({})".format(self.name, ", ".join(map(str, self.types)))
+        if self.types:
+            return "{}({})".format(self.name, ", ".join(map(str, self.types)))
+        else:
+            return self.name
 
     def _fresh(self, ctx: Dict[TypeVar, TypeVar]) -> TypeOperator:
         return TypeOperator(self.name, *(t._fresh(ctx) for t in self.types))
@@ -126,6 +129,9 @@ class Transformation(TypeOperator):
 
     def _fresh(self, ctx: Dict[TypeVar, TypeVar]) -> Transformation:
         return Transformation(*(t._fresh(ctx) for t in self.types))
+
+    def __str__(self) -> str:
+        return "({0} -> {1})".format(*self.types)
 
     def apply(self, arg: AlgebraType) -> AlgebraType:
         """
