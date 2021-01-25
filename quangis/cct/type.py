@@ -90,9 +90,12 @@ class AlgebraType(ABC):
             raise RuntimeError("non-exhaustive pattern")
         return self
 
-    def unify(a: AlgebraType, b: AlgebraType, ctx: Substitution) -> Substitution:
+    def unify(
+            a: AlgebraType,
+            b: AlgebraType,
+            ctx: Dict[TypeVar, AlgebraType]) -> Dict[TypeVar, AlgebraType]:
         if isinstance(a, TypeOperator) and isinstance(b, TypeOperator):
-            if a.name != b.name or a.arity != b.arity:
+            if not a.equal_pred(b):
                 raise RuntimeError("type mismatch")
             else:
                 for s, t in zip(a.types, b.types):
@@ -112,16 +115,36 @@ class TypeOperator(AlgebraType):
     n-ary type constructor.
     """
 
-    def __init__(self, name: str, *types: AlgebraType):
+    def __init__(
+            self,
+            name: str,
+            *types: AlgebraType,
+            supertype: Optional[TypeOperator] = None):
         self.name = name
         self.types = list(types)
+        self.supertype = supertype
+
+        if self.types and self.supertype:
+            raise RuntimeError("only nullary types may have supertypes")
+
+    def equal_pred(self, other: TypeOperator) -> bool:
+        """
+        Is this type the same as another at its root?
+        """
+        return self.name == other.name and self.arity == other.arity
+
+    def is_subtype_of(self, other: TypeOperator) -> bool:
+        if self.arity == 0:
+            up = self.supertype
+            return self == other or bool(up and up.is_subtype_of(other))
+        else:
+            return self.equal_pred(other) and \
+                all(t.is_subtype_of(s) for s, t in zip(self.types, other.types))
 
     def __eq__(self, other: object):
         if isinstance(other, TypeOperator):
-            return self.name == other.name and \
-               self.arity == other.arity and \
-               all(self.types[i] == other.types[i]
-                   for i in range(0, self.arity))
+            return self.equal_pred(other) and \
+               all(s == t for s, t in zip(self.types, other.types))
         else:
             return False
 
@@ -146,8 +169,12 @@ class TypeOperator(AlgebraType):
 
 
 class Transformation(TypeOperator):
+
+    def is_subtype_of(self, other: TypeOperator) -> bool:
+        return self == other
+
     def __init__(self, input_type: AlgebraType, output_type: AlgebraType):
-        super().__init__("op", input_type, output_type)
+        super().__init__("transformation", input_type, output_type)
 
     def map(self, fn: Callable[[AlgebraType], AlgebraType]) -> AlgebraType:
         return Transformation(*map(fn, self.types))
@@ -205,9 +232,6 @@ class TypeVar(AlgebraType):
             new = type(self).new()
             ctx[self] = new
             return new
-
-
-Substitution = Dict[TypeVar, AlgebraType]
 
 
 class TypeClass(object):
