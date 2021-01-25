@@ -13,6 +13,7 @@ from abc import ABC, abstractmethod
 from typing import Optional, List, Union, Type, Dict, Tuple
 
 
+
 class AlgebraType(ABC):
     """
     The class "AlgebraType" is the superclass for value types and relationship
@@ -45,14 +46,6 @@ class AlgebraType(ABC):
     def __repr__(self):
         return self.__str__()
 
-    def substitute(self, subst: Dict[TypeVar, AlgebraType]) -> AlgebraType:
-        if isinstance(self, TypeOperator):
-            self.types = [t.substitute(subst) for t in self.types]
-        elif isinstance(self, TypeVar):
-            if self in subst:
-                return subst[self]
-        return self
-
     @abstractmethod
     def __contains__(self, value: AlgebraType) -> bool:
         return NotImplemented
@@ -70,6 +63,30 @@ class AlgebraType(ABC):
 
     def apply(self, arg: AlgebraType) -> AlgebraType:
         raise RuntimeError("Cannot apply an argument to non-function type")
+
+    def substitute(self, subst: Dict[TypeVar, AlgebraType]) -> AlgebraType:
+        if isinstance(self, TypeOperator):
+            self.types = [t.substitute(subst) for t in self.types]
+        elif isinstance(self, TypeVar):
+            if self in subst:
+                return subst[self]
+        return self
+
+    def unify(a: AlgebraType, b: AlgebraType, ctx: Substitution) -> Substitution:
+        if isinstance(a, TypeOperator) and isinstance(b, TypeOperator):
+            if a.name != b.name or a.arity != b.arity:
+                raise RuntimeError("type mismatch")
+            else:
+                for s, t in zip(a.types, b.types):
+                    s.unify(t, ctx)
+        elif isinstance(a, TypeVar):
+            if a != b and a in b:
+                raise RuntimeError("recursive type")
+            else:
+                ctx[a] = b
+        elif isinstance(b, TypeVar):
+            b.unify(a, ctx)
+        return ctx
 
 
 class TypeOperator(AlgebraType):
@@ -116,7 +133,7 @@ class Transformation(TypeOperator):
         Apply an argument to a function type to get its output type.
         """
         input_type, output_type = self.types
-        env = unify(input_type, arg, {})
+        env = input_type.unify(arg, {})
         return output_type.substitute(env)
 
 
@@ -163,18 +180,33 @@ class TypeVar(AlgebraType):
     def __str__(self) -> str:
         return "Var"+str(self.id)
 
+    def __hash__(self):
+        return self.id.__hash__()
+
+    def __eq__(self, other: object):
+        if isinstance(other, TypeVar):
+            return self.id == other.id
+        else:
+            return False
+
     def __contains__(self, value: AlgebraType) -> bool:
         return self == value
+
+    @classmethod
+    def new(cls) -> TypeVar:
+        new = TypeVar(cls.counter)
+        cls.counter += 1
+        return new
 
     def _fresh(self, ctx: Dict[TypeVar, TypeVar]) -> TypeVar:
         if self in ctx:
             return ctx[self]
         else:
-            cls = type(self)
-            new = TypeVar(cls.counter)
-            cls.counter += 1
+            new = type(self).new()
             ctx[self] = new
             return new
+
+Substitution = Dict[TypeVar, AlgebraType]
 
 # Value types
 E = EntityType
@@ -271,21 +303,5 @@ functions = {
 }
 
 
-Substitution = Dict[TypeVar, AlgebraType]
 
 
-def unify(a: AlgebraType, b: AlgebraType, ctx: Substitution) -> Substitution:
-    if isinstance(a, TypeOperator) and isinstance(b, TypeOperator):
-        if a.name != b.name or a.arity != b.arity:
-            raise RuntimeError("type mismatch")
-        else:
-            for s, t in zip(a.types, b.types):
-                unify(s, t, ctx)
-    elif isinstance(a, TypeVar):
-        if a != b and a in b:
-            raise RuntimeError("recursive type")
-        else:
-            ctx[a] = b
-    elif isinstance(b, TypeVar):
-        unify(b, a, ctx)
-    return ctx

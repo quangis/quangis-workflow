@@ -3,11 +3,11 @@ from functools import partial
 
 from quangis.cct.type import TypeOperator, TypeVar
 
-x, y, z = TypeVar(0), TypeVar(1), TypeVar(2)
+x, y, z = TypeVar.new(), TypeVar.new(), TypeVar.new()
 Int = TypeOperator("int")
 Str = TypeOperator("str")
 T = partial(TypeOperator, "T")
-compose = (y ** z) ** (x ** y) ** (x ** z)
+compose = ((y ** z) ** (x ** y) ** (x ** z)).fresh()
 
 
 class TestType(unittest.TestCase):
@@ -38,6 +38,9 @@ class TestType(unittest.TestCase):
         self.assertEqual(compose.apply(Int ** Str).apply(Str ** Int), Str ** Str)
 
     def test_compose_variable(self):
+        print()
+        print(compose)
+        print(compose.apply(x ** Str))
         self.assertEqual(compose.apply(x ** Str).apply(Int ** x), Int ** Str)
 
 
