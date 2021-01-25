@@ -10,7 +10,7 @@ as close as possible to its formal type system counterpart.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Dict
+from typing import Dict, Callable, Optional
 
 
 class AlgebraType(ABC):
@@ -53,12 +53,29 @@ class AlgebraType(ABC):
     def _fresh(self, ctx: Dict[TypeVar, TypeVar]) -> AlgebraType:
         return NotImplemented
 
+    @abstractmethod
+    def map(self, fn: Callable[[AlgebraType], AlgebraType]) -> AlgebraType:
+        return NotImplemented
+
     def fresh(self) -> AlgebraType:
         """
         Create a fresh copy of this type, with unique new variables.
         """
 
         return self._fresh({})
+        #ctx: Dict[TypeVar, TypeVar] = {}
+#
+#        def f(t):
+#            if isinstance(t, TypeVar):
+#                if self in ctx:
+#                    return ctx[self]
+#                else:
+#                    new = TypeVar.new()
+#                    ctx[self] = new
+#                    return new
+#            return t
+
+#        return self.map(f)
 
     def apply(self, arg: AlgebraType) -> AlgebraType:
         raise RuntimeError("Cannot apply an argument to non-function type")
@@ -69,6 +86,8 @@ class AlgebraType(ABC):
         elif isinstance(self, TypeVar):
             if self in subst:
                 return subst[self]
+        else:
+            raise RuntimeError("non-exhaustive pattern")
         return self
 
     def unify(a: AlgebraType, b: AlgebraType, ctx: Substitution) -> Substitution:
@@ -118,6 +137,9 @@ class TypeOperator(AlgebraType):
     def _fresh(self, ctx: Dict[TypeVar, TypeVar]) -> TypeOperator:
         return TypeOperator(self.name, *(t._fresh(ctx) for t in self.types))
 
+    def map(self, fn: Callable[[AlgebraType], AlgebraType]) -> AlgebraType:
+        return TypeOperator(self.name, *map(fn, self.types))
+
     @property
     def arity(self) -> int:
         return len(self.types)
@@ -126,6 +148,9 @@ class TypeOperator(AlgebraType):
 class Transformation(TypeOperator):
     def __init__(self, input_type: AlgebraType, output_type: AlgebraType):
         super().__init__("op", input_type, output_type)
+
+    def map(self, fn: Callable[[AlgebraType], AlgebraType]) -> AlgebraType:
+        return Transformation(*map(fn, self.types))
 
     def _fresh(self, ctx: Dict[TypeVar, TypeVar]) -> Transformation:
         return Transformation(*(t._fresh(ctx) for t in self.types))
@@ -150,7 +175,7 @@ class TypeVar(AlgebraType):
         self.id = i
 
     def __str__(self) -> str:
-        return "Var" + str(self.id)
+        return "x" + str(self.id)
 
     def __hash__(self):
         return self.id.__hash__()
@@ -169,6 +194,9 @@ class TypeVar(AlgebraType):
         new = TypeVar(cls.counter)
         cls.counter += 1
         return new
+
+    def map(self, fn: Callable[[AlgebraType], AlgebraType]) -> AlgebraType:
+        return fn(self)
 
     def _fresh(self, ctx: Dict[TypeVar, TypeVar]) -> TypeVar:
         if self in ctx:
@@ -192,7 +220,7 @@ class Contains(TypeClass):
     their columns.
     """
 
-    def __init__(self, domain: AlgebraType):
+    def __init__(self, domain: AlgebraType, at: Optional[int] = None):
         self.domain = domain
 
 
