@@ -22,7 +22,7 @@ class Algebra(object):
 
 
 # Type variables for convenience
-x, y, z = (TypeVar.new() for _ in range(0, 3))
+x, y, z = (TypeVar() for _ in range(0, 3))
 
 # Entity value types
 Entity = partial(TypeOperator)

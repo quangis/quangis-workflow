@@ -3,7 +3,7 @@ from functools import partial
 
 from quangis.cct.type import TypeOperator, TypeVar
 
-x, y, z = TypeVar.new(), TypeVar.new(), TypeVar.new()
+x, y, z = TypeVar(), TypeVar(), TypeVar()
 Any = TypeOperator("any")
 Int = TypeOperator("int", supertype=Any)
 Str = TypeOperator("str", supertype=Any)

@@ -203,8 +203,10 @@ class TypeVar(AlgebraType):
 
     counter = 0
 
-    def __init__(self, i: int):
-        self.id = i
+    def __init__(self):
+        cls = type(self)
+        self.id = cls.counter
+        cls.counter += 1
 
     def __str__(self) -> str:
         return "x" + str(self.id)
@@ -221,12 +223,6 @@ class TypeVar(AlgebraType):
     def __contains__(self, value: AlgebraType) -> bool:
         return self == value
 
-    @classmethod
-    def new(cls) -> TypeVar:
-        new = TypeVar(cls.counter)
-        cls.counter += 1
-        return new
-
     def map(self, fn: Callable[[AlgebraType], AlgebraType]) -> AlgebraType:
         return fn(self)
 
@@ -234,7 +230,7 @@ class TypeVar(AlgebraType):
         if self in ctx:
             return ctx[self]
         else:
-            new = type(self).new()
+            new = TypeVar()
             ctx[self] = new
             return new
 
