@@ -8,7 +8,7 @@ import pyparsing as pp
 from functools import reduce
 from typing import List, Dict, Union
 
-from quangis.transformation.type import AlgebraType, Transformation
+from quangis.transformation.type import AlgebraType
 
 
 class Expr(object):
@@ -17,7 +17,7 @@ class Expr(object):
         self.type = type
 
     def __str__(self) -> str:
-        if isinstance(self.type, Transformation):
+        if self.type.is_function():
             return "{}".format(" ".join(map(str, self.tokens)))
         else:
             return "({tokens} : \033[1m{type}\033[0m)".format(
@@ -34,12 +34,12 @@ def make_parser(functions: Dict[str, AlgebraType]) -> pp.Parser:
 
     transformation_keywords = [
         pp.Keyword(k) for k, t in sorted(functions.items())
-        if isinstance(t, Transformation)
+        if t.is_function()
     ]
 
     data_keywords = [
         pp.Keyword(k) for k, t in sorted(functions.items())
-        if not isinstance(t, Transformation)
+        if not t.is_function()
     ]
 
     identifier = pp.Word(pp.alphas, pp.alphanums)
