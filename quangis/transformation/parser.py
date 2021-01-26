@@ -30,29 +30,33 @@ class Expr(object):
         return Expr([fn, arg], fn.type.apply(arg.type))
 
 
-def make_parser(
-        constructors: Dict[str, AlgebraType],
-        functions: Dict[str, AlgebraType]) -> pp.Parser:
+def make_parser(functions: Dict[str, AlgebraType]) -> pp.Parser:
 
-    cons_keywords = [pp.Keyword(t) for t in sorted(constructors.keys())]
+    transformation_keywords = [
+        pp.Keyword(k) for k, t in sorted(functions.items())
+        if isinstance(t, Transformation)
+    ]
 
-    func_keywords = [pp.Keyword(t) for t in sorted(functions.keys())]
+    data_keywords = [
+        pp.Keyword(k) for k, t in sorted(functions.items())
+        if not isinstance(t, Transformation)
+    ]
 
     identifier = pp.Word(pp.alphas, pp.alphanums)
 
-    constructor = (
-        pp.MatchFirst(cons_keywords) + identifier
+    data = (
+        pp.MatchFirst(data_keywords) + identifier
     ).setParseAction(
-        lambda s, l, t: Expr(t, constructors[t[0]].fresh())
+        lambda s, l, t: Expr(t, functions[t[0]].fresh())
     )
 
-    function = (
-        pp.MatchFirst(func_keywords)
+    transformation = (
+        pp.MatchFirst(transformation_keywords)
     ).setParseAction(
         lambda s, l, t: Expr(t, functions[t[0]].fresh())
     )
 
     return pp.infixNotation(
-        constructor | function,
+        data | transformation,
         [(None, 2, pp.opAssoc.LEFT, lambda s, l, t: reduce(Expr.apply, t[0]))]
     )
