@@ -221,12 +221,6 @@ class TypeVar(AlgebraType):
     def __contains__(self, value: AlgebraType) -> bool:
         return self == value
 
-    # def subtype(self, other: AlgebraType) -> bool:
-    #    """
-    #    As long as it remains unbound, a variable can always be a subtype.
-    #    """
-    #    return True
-
     @classmethod
     def new(cls) -> TypeVar:
         new = TypeVar(cls.counter)
@@ -259,7 +253,7 @@ class Contains(TypeClass):
         self.domain = domain
 
 
-class Subtype(TypeClass):
+class Sub(TypeClass):
     """
     Typeclass for value types that are subsumed by the given superclass.
     """

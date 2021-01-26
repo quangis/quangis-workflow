@@ -3,11 +3,11 @@ The core concept transformation algebra.
 """
 
 from functools import partial
-from typing import Optional, List, Union, Type, Dict, Tuple
+from typing import Dict
 
 from quangis.cct.parser import make_parser, Expr
 from quangis.cct.type import TypeOperator, TypeVar, AlgebraType, \
-    Subtype, Contains
+    Sub, Contains
 
 
 class Algebra(object):
@@ -86,14 +86,15 @@ functions = {
     "centroid": R(L) ** L,
 
     # statistical operations
-    "avg": R(x, Itv) ** Itv | {x: Subtype(V)},
-    "min": R(x, Ord) ** Ord | {x: Subtype(V)},
-    "max": R(x, Ord) ** Ord | {x: Subtype(V)},
+    "avg": R(V, Itv) ** Itv,
+    "min": R(V, Ord) ** Ord,
+    "max": R(V, Ord) ** Ord,
+    "sum": R(V, Count) ** Count,
 
     # conversions
     "reify": R(L) ** S,
     "deify": S ** R(L),
-    "get": R(x) ** x | {x: Subtype(V)},
+    "get": R(x) ** x | {x: Sub(V)},
     "invert": R(L, Ord) ** R(Ord, S),  # TODO overload R(L, Nom) ** R(S, Nom)
     "revert": R(Ord, S) ** R(L, Ord),  # TODO overload
 
@@ -112,19 +113,26 @@ functions = {
     "ocont": R(O, Ratio) ** Ratio,
 
     # relational
-    "pi1": x ** y | {y: Contains(x, at=1)},
-    "pi2": x ** y | {y: Contains(x, at=2)},
-    "pi3": x ** y | {y: Contains(x, at=3)},
-    "sigmae": x ** y ** x | {x: Subtype(Q), y: Contains(x)},
-    "sigmale": x ** y ** x | {x: Subtype(Ord), y: Contains(x)},
-    "bowtie": x ** R(y) ** x | {y: Subtype(V), x: Contains(y)},
+    "pi1":
+        x ** y | {y: Contains(x, at=1)},
+    "pi2":
+        x ** y | {y: Contains(x, at=2)},
+    "pi3":
+        x ** y | {y: Contains(x, at=3)},
+    "sigmae":
+        x ** y ** x | {x: Sub(Q), y: Contains(x)},
+    "sigmale":
+        x ** y ** x | {x: Sub(Ord), y: Contains(x)},
+    "bowtie":
+        x ** R(y) ** x | {y: Sub(V), x: Contains(y)},
     "bowtie*":
-        R(x, y, x) ** R(x, y) ** R(x, y, x) | {y: Subtype(Q), x: Subtype(V)},
-    "bowtie_": (Q ** Q ** Q) ** R(V, Q) ** R(V, Q) ** R(V, Q),
+        R(x, y, x) ** R(x, y) ** R(x, y, x) | {y: Sub(Q), x: Sub(V)},
+    "bowtie_":
+        (Q ** Q ** Q) ** R(V, Q) ** R(V, Q) ** R(V, Q),
     "groupbyL":
-        (R(y, Q) ** Q) ** R(x, Q, y) ** R(x, Q) | {x: Subtype(V), y: Subtype(V)},
+        (R(y, Q) ** Q) ** R(x, Q, y) ** R(x, Q) | {x: Sub(V), y: Sub(V)},
     "groupbyR":
-        (R(x, Q) ** Q) ** R(x, Q, y) ** R(y, Q) | {x: Subtype(V), y: Subtype(V)},
+        (R(x, Q) ** Q) ** R(x, Q, y) ** R(y, Q) | {x: Sub(V), y: Sub(V)},
 }
 
 algebra = Algebra(constructors, functions)
