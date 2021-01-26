@@ -5,8 +5,8 @@ The core concept transformation algebra.
 from functools import partial
 from typing import Dict
 
-from quangis.cct.parser import make_parser, Expr
-from quangis.cct.type import TypeOperator, TypeVar, AlgebraType, \
+from quangis.transformation.parser import make_parser, Expr
+from quangis.transformation.type import TypeOperator, TypeVar, AlgebraType, \
     Sub, Contains
 
 

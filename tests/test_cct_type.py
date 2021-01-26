@@ -1,7 +1,7 @@
 import unittest
 from functools import partial
 
-from quangis.cct.type import TypeOperator, TypeVar
+from quangis.transformation.type import TypeOperator, TypeVar
 
 x, y, z = TypeVar(), TypeVar(), TypeVar()
 Any = TypeOperator("any")

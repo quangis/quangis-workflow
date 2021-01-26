@@ -8,7 +8,7 @@ import pyparsing as pp
 from functools import reduce
 from typing import List, Dict, Union
 
-from quangis.cct.type import AlgebraType, Transformation
+from quangis.transformation.type import AlgebraType, Transformation
 
 
 class Expr(object):
