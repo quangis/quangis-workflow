@@ -8,7 +8,7 @@ import pyparsing as pp
 from functools import reduce
 from typing import List, Dict, Union
 
-from quangis.transformation.type import AlgebraType
+from quangis.transformation.type import AlgebraType, TypeOperator
 
 
 class Expr(object):
@@ -27,7 +27,13 @@ class Expr(object):
 
     @staticmethod
     def apply(fn: Expr, arg: Expr) -> Expr:
-        return Expr([fn, arg], fn.type.apply(arg.type))
+        if isinstance(fn.type, TypeOperator):
+            res = Expr([fn, arg], fn.type.apply(arg.type))
+            fn.type = fn.type.instantiate()
+            arg.type = arg.type.instantiate()
+            return res
+        else:
+            raise RuntimeError("applying to non-function value")
 
 
 def make_parser(functions: Dict[str, AlgebraType]) -> pp.Parser:
