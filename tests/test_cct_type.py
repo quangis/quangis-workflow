@@ -9,9 +9,14 @@ Int = TypeOperator("int", supertype=Any)
 Str = TypeOperator("str", supertype=Any)
 T = partial(TypeOperator, "T")
 
+def new_vars(n):
+    for i in range(0, n):
+        yield TypeVar()
+
 
 def compose():
-    return ((y ** z) ** (x ** y) ** (x ** z)).fresh()
+    x, y, z = TypeVar(), TypeVar(), TypeVar()
+    return ((y ** z) ** (x ** y) ** (x ** z))
 
 
 class TestType(unittest.TestCase):
@@ -28,11 +33,17 @@ class TestType(unittest.TestCase):
         self.assertRaises(RuntimeError, (Int ** Int).apply, T(Int))
 
     def test_apply_variable_function(self):
+        x, y = new_vars(2)
         self.assertEqual((x ** y).apply(x), y)
+        x, y = new_vars(2)
         self.assertEqual((Int ** y).apply(x), y)
+        x, y = new_vars(2)
         self.assertEqual((x ** y).apply(Int), y)
+        x, y = new_vars(2)
         self.assertEqual((x ** x).apply(Int), Int)
+        x, y = new_vars(2)
         self.assertEqual((T(x) ** x).apply(T(Int)), Int)
+        x, y = new_vars(2)
         self.assertEqual((x ** T(x)).apply(Int), T(Int))
 
     def test_apply_recursive_type(self):
@@ -42,6 +53,7 @@ class TestType(unittest.TestCase):
         self.assertEqual(compose().apply(Int ** Str).apply(Str ** Int), Str ** Str)
 
     def test_compose_variable(self):
+        x = TypeVar()
         self.assertEqual(compose().apply(x ** Str).apply(Int ** x), Int ** Str)
 
     def test_simple_subtypes(self):
