@@ -3,7 +3,6 @@ from functools import partial
 
 from quangis.transformation.type import TypeOperator, TypeVar
 
-x, y, z = TypeVar(), TypeVar(), TypeVar()
 Any = TypeOperator("any")
 Int = TypeOperator("int", supertype=Any)
 Str = TypeOperator("str", supertype=Any)
@@ -48,6 +47,7 @@ class TestType(unittest.TestCase):
         self.assertEqual((x ** T(x)).apply(Int), T(Int))
 
     def test_apply_recursive_type(self):
+        x = TypeVar()
         self.assertRaises(RuntimeError, ((x ** x) ** Int).apply, x)
 
     def test_compose_concrete(self):
@@ -66,6 +66,7 @@ class TestType(unittest.TestCase):
         self.assertRaises(RuntimeError, (T(Int) ** Any).apply, T(Any))
 
     def test_complex_variable_subtypes(self):
+        x = TypeVar()
         self.assertEqual((T(Any, x) ** x).apply(T(Int, Any)), Any)
         self.assertRaises(RuntimeError, (T(Int, x) ** x).apply, T(Any, Any))
 
@@ -118,6 +119,19 @@ class TestType(unittest.TestCase):
     def test_recursive_constraint(self):
         x = TypeVar()
         self.assertRaises(RuntimeError, x.__lshift__, [Int ** x])
+
+    def test_constraint_is_bound_on_subject_side(self):
+        x, y = TypeVar(), TypeVar()
+        func = x ** y | x << [y]
+        self.assertEqual(func.apply(Int), Int)
+
+    def test_constraint_is_bound_on_typeclass_side(self):
+        # It won't work immediately, but the constraint will hold once the
+        # other variable is bound
+        x, y = TypeVar(), TypeVar()
+        func = y ** x ** Str | x << [y]
+        self.assertEqual(func.apply(Int).apply(Int), Str)
+        self.assertRaises(RuntimeError, func.apply(Int).apply, Str)
 
 
 class TestSubtypes(unittest.TestCase):
