@@ -48,7 +48,7 @@ def make_parser(functions: Dict[str, AlgebraType]) -> pp.Parser:
         if not t.is_function()
     ]
 
-    identifier = pp.Word(pp.alphas, pp.alphanums)
+    identifier = pp.Word(pp.alphas + '_', pp.alphanums + ':_')
 
     data = (
         pp.MatchFirst(data_keywords) + identifier
