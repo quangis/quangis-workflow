@@ -39,12 +39,12 @@ class Expr(object):
 def make_parser(functions: Dict[str, AlgebraType]) -> pp.Parser:
 
     transformation_keywords = [
-        pp.Keyword(k) for k, t in sorted(functions.items())
+        pp.CaselessKeyword(k) for k, t in sorted(functions.items())
         if t.is_function()
     ]
 
     data_keywords = [
-        pp.Keyword(k) for k, t in sorted(functions.items())
+        pp.CaselessKeyword(k) for k, t in sorted(functions.items())
         if not t.is_function()
     ]
 
