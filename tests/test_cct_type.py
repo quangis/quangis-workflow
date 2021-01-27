@@ -9,6 +9,7 @@ Int = TypeOperator("int", supertype=Any)
 Str = TypeOperator("str", supertype=Any)
 T = partial(TypeOperator, "T")
 
+
 def new_vars(n):
     for i in range(0, n):
         yield TypeVar()
@@ -67,6 +68,49 @@ class TestType(unittest.TestCase):
     def test_complex_variable_subtypes(self):
         self.assertEqual((T(Any, x) ** x).apply(T(Int, Any)), Any)
         self.assertRaises(RuntimeError, (T(Int, x) ** x).apply, T(Any, Any))
+
+    def test_simple_constraints(self):
+        x = TypeVar()
+        func = x ** x | x << [Int]
+        self.assertEqual(func.apply(Int), Int)
+        self.assertRaises(RuntimeError, func.apply, Str)
+
+    def test_no_subtyping_on_constraints(self):
+        x = TypeVar()
+        func = x ** x | x << [Any]
+        self.assertRaises(RuntimeError, func.apply, Str)
+
+    def test_multiple_constraints(self):
+        x = TypeVar()
+        func = x ** x | x << [Int, Str]
+        self.assertEqual(func.apply(Str), Str)
+
+    def test_constraint_on_input_variable(self):
+        x, y = TypeVar(), TypeVar()
+        func = x ** (y ** Str)
+        self.assertEqual(func.apply(T(Int, Str)).apply(Str), Str)
+
+        x, y = TypeVar(), TypeVar()
+        func = x ** (y ** Str)
+        self.assertEqual(func.apply(T(Int, Str)).apply(Int), Str)
+
+        x, y = TypeVar(), TypeVar()
+        func = x ** (y ** Str) | x << [T(Int, y)]
+        self.assertEqual(func.apply(T(Int, Str)).apply(Str), Str)
+
+        x, y = TypeVar(), TypeVar()
+        func = x ** (y ** Str) | x << [T(Int, y)]
+        self.assertRaises(RuntimeError, func.apply(T(Int, Str)).apply, Int)
+
+    def test_complex_constraint_subject(self):
+        x, y = TypeVar(), TypeVar()
+        func = x ** y | x ** y << [Int ** Str]
+        self.assertRaises(RuntimeError, func.apply, Str)
+
+    def test_unify_constraint_if_only_one_possibility(self):
+        x, y = TypeVar(), TypeVar()
+        func = x ** y | x ** y << [Int ** Str]
+        self.assertEqual(func.apply(Int), Str)
 
 
 class TestSubtypes(unittest.TestCase):
