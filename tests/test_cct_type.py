@@ -86,6 +86,7 @@ class TestType(unittest.TestCase):
         func = x ** x | x << [Int, Str]
         self.assertEqual(func.apply(Str), Str)
 
+    @unittest.skip("should constraints unify?")
     def test_constraint_on_input_variable(self):
         x, y = TypeVar(), TypeVar()
         func = x ** (y ** Str)
@@ -108,6 +109,7 @@ class TestType(unittest.TestCase):
         func = x ** y | x ** y << [Int ** Str]
         self.assertRaises(RuntimeError, func.apply, Str)
 
+    @unittest.skip("should constraints unify?")
     def test_unify_constraint_if_only_one_possibility(self):
         x, y = TypeVar(), TypeVar()
         func = x ** y | x ** y << [Int ** Str]
@@ -120,11 +122,13 @@ class TestType(unittest.TestCase):
         x = TypeVar()
         self.assertRaises(RuntimeError, x.__lshift__, [Int ** x])
 
+    @unittest.skip("should constraints unify?")
     def test_constraint_is_bound_on_subject_side(self):
         x, y = TypeVar(), TypeVar()
         func = x ** y | x << [y]
         self.assertEqual(func.apply(Int), Int)
 
+    @unittest.skip("should constraints unify?")
     def test_constraint_is_bound_on_typeclass_side(self):
         # It won't work immediately, but the constraint will hold once the
         # other variable is bound
