@@ -112,6 +112,13 @@ class TestType(unittest.TestCase):
         func = x ** y | x ** y << [Int ** Str]
         self.assertEqual(func.apply(Int), Str)
 
+    def test_constraint_without_variables(self):
+        self.assertRaises(RuntimeError, Int.__lshift__, [Int])
+
+    def test_recursive_constraint(self):
+        x = TypeVar()
+        self.assertRaises(RuntimeError, x.__lshift__, [Int ** x])
+
 
 class TestSubtypes(unittest.TestCase):
 
