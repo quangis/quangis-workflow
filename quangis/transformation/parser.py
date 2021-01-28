@@ -8,7 +8,7 @@ import pyparsing as pp
 from functools import reduce
 from typing import List, Dict, Union
 
-from quangis.transformation.type import AlgebraType, TypeOperator
+from quangis.transformation.type import AlgebraType, TypeOperator, Fn
 
 
 class Expr(object):
@@ -36,16 +36,16 @@ class Expr(object):
             raise RuntimeError("applying to non-function value")
 
 
-def make_parser(functions: Dict[str, AlgebraType]) -> pp.Parser:
+def make_parser(functions: Dict[str, Fn]) -> pp.Parser:
 
     transformation_keywords = [
         pp.CaselessKeyword(k) for k, t in sorted(functions.items())
-        if t.is_function()
+        if t.type.is_function()
     ]
 
     data_keywords = [
         pp.CaselessKeyword(k) for k, t in sorted(functions.items())
-        if not t.is_function()
+        if not t.type.is_function()
     ]
 
     identifier = pp.Word(pp.alphas + '_', pp.alphanums + ':_')
@@ -53,13 +53,13 @@ def make_parser(functions: Dict[str, AlgebraType]) -> pp.Parser:
     data = (
         pp.MatchFirst(data_keywords) + identifier
     ).setParseAction(
-        lambda s, l, t: Expr(t, functions[t[0]].fresh())
+        lambda s, l, t: Expr(t, functions[t[0]].instance())
     )
 
     transformation = (
         pp.MatchFirst(transformation_keywords)
     ).setParseAction(
-        lambda s, l, t: Expr(t, functions[t[0]].fresh())
+        lambda s, l, t: Expr(t, functions[t[0]].instance())
     )
 
     return pp.infixNotation(

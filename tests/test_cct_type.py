@@ -72,47 +72,47 @@ class TestType(unittest.TestCase):
 
     def test_simple_constraints(self):
         x = TypeVar()
-        func = x ** x | x << [Int]
+        func = (x ** x | x << [Int]).instance()
         self.assertEqual(func.apply(Int), Int)
         self.assertRaises(RuntimeError, func.apply, Str)
 
     def test_no_subtyping_on_constraints(self):
         x = TypeVar()
-        func = x ** x | x << [Any]
+        func = (x ** x | x << [Any]).instance()
         self.assertRaises(RuntimeError, func.apply, Str)
 
     def test_multiple_constraints(self):
         x = TypeVar()
-        func = x ** x | x << [Int, Str]
+        func = (x ** x | x << [Int, Str]).instance()
         self.assertEqual(func.apply(Str), Str)
 
     @unittest.skip("should constraints unify?")
     def test_constraint_on_input_variable(self):
         x, y = TypeVar(), TypeVar()
-        func = x ** (y ** Str)
+        func = (x ** (y ** Str)).instance()
         self.assertEqual(func.apply(T(Int, Str)).apply(Str), Str)
 
         x, y = TypeVar(), TypeVar()
-        func = x ** (y ** Str)
+        func = (x ** (y ** Str)).instance()
         self.assertEqual(func.apply(T(Int, Str)).apply(Int), Str)
 
         x, y = TypeVar(), TypeVar()
-        func = x ** (y ** Str) | x << [T(Int, y)]
+        func = (x ** (y ** Str) | x << [T(Int, y)]).instance()
         self.assertEqual(func.apply(T(Int, Str)).apply(Str), Str)
 
         x, y = TypeVar(), TypeVar()
-        func = x ** (y ** Str) | x << [T(Int, y)]
+        func = (x ** (y ** Str) | x << [T(Int, y)]).instance()
         self.assertRaises(RuntimeError, func.apply(T(Int, Str)).apply, Int)
 
     def test_complex_constraint_subject(self):
         x, y = TypeVar(), TypeVar()
-        func = x ** y | x ** y << [Int ** Str]
+        func = (x ** y | x ** y << [Int ** Str]).instance()
         self.assertRaises(RuntimeError, func.apply, Str)
 
     @unittest.skip("should constraints unify?")
     def test_unify_constraint_if_only_one_possibility(self):
         x, y = TypeVar(), TypeVar()
-        func = x ** y | x ** y << [Int ** Str]
+        func = (x ** y | x ** y << [Int ** Str]).instance()
         self.assertEqual(func.apply(Int), Str)
 
     def test_constraint_without_variables(self):
@@ -125,7 +125,7 @@ class TestType(unittest.TestCase):
     @unittest.skip("should constraints unify?")
     def test_constraint_is_bound_on_subject_side(self):
         x, y = TypeVar(), TypeVar()
-        func = x ** y | x << [y]
+        func = (x ** y | x << [y]).instance()
         self.assertEqual(func.apply(Int), Int)
 
     @unittest.skip("should constraints unify?")
@@ -133,7 +133,7 @@ class TestType(unittest.TestCase):
         # It won't work immediately, but the constraint will hold once the
         # other variable is bound
         x, y = TypeVar(), TypeVar()
-        func = y ** x ** Str | x << [y]
+        func = (y ** x ** Str | x << [y]).instance()
         self.assertEqual(func.apply(Int).apply(Int), Str)
         self.assertRaises(RuntimeError, func.apply(Int).apply, Str)
 
