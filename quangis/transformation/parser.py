@@ -8,7 +8,7 @@ import pyparsing as pp
 from functools import reduce
 from typing import List, Dict, Union
 
-from quangis.transformation.type import AlgebraType, TypeOperator, Fn
+from quangis.transformation.type import AlgebraType, TypeOperator, Definition
 
 
 class Expr(object):
@@ -36,33 +36,18 @@ class Expr(object):
             raise RuntimeError("applying to non-function value")
 
 
-def make_parser(functions: Dict[str, Fn]) -> pp.Parser:
+def make_parser(defs: Dict[str, Definition]) -> pp.Parser:
 
-    transformation_keywords = [
-        pp.CaselessKeyword(k) for k, t in sorted(functions.items())
-        if t.type.is_function()
-    ]
+    identifier = pp.Word(pp.alphas + '_', pp.alphanums + ':_').setName('identifier')
 
-    data_keywords = [
-        pp.CaselessKeyword(k) for k, t in sorted(functions.items())
-        if not t.type.is_function()
-    ]
-
-    identifier = pp.Word(pp.alphas + '_', pp.alphanums + ':_')
-
-    data = (
-        pp.MatchFirst(data_keywords) + identifier
-    ).setParseAction(
-        lambda s, l, t: Expr(t, functions[t[0]].instance())
-    )
-
-    transformation = (
-        pp.MatchFirst(transformation_keywords)
-    ).setParseAction(
-        lambda s, l, t: Expr(t, functions[t[0]].instance())
-    )
+    fn = pp.MatchFirst(
+        pp.CaselessKeyword(k) + t.data * identifier
+        if t.data else
+        pp.CaselessKeyword(k)
+        for k, t in sorted(defs.items())
+    ).setParseAction(lambda s, l, t: Expr(t, defs[t[0]].instance()))
 
     return pp.infixNotation(
-        data | transformation,
+        fn,
         [(None, 2, pp.opAssoc.LEFT, lambda s, l, t: reduce(Expr.apply, t[0]))]
     )
