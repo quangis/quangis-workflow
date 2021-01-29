@@ -2,26 +2,8 @@
 Module containing the core concept transformation algebra.
 """
 
-from itertools import chain
-from typing import List
-
-from quangis.transformation.type import TypeOperator, TypeVar, \
-        AlgebraType, Constraint
+from quangis.transformation.type import TypeOperator, TypeVar, Constraint
 from quangis.transformation.algebra import TransformationAlgebra
-
-
-def has(t: AlgebraType, at=None) -> List[AlgebraType]:
-    """
-    Typeclass for relationship types that contain another type somewhere.
-    """
-    R = TypeOperator.R
-    if at == 1:
-        return [R(t), R(t, TypeVar()), R(t, TypeVar(), TypeVar())]
-    elif at == 2:
-        return [R(TypeVar(), t), R(TypeVar(), t, TypeVar())]
-    elif at == 3:
-        return [R(TypeVar(), TypeVar(), t)]
-    return list(chain(*(has(t, at=i) for i in range(1, 4))))
 
 
 class CCT(TransformationAlgebra):
@@ -112,11 +94,13 @@ class CCT(TransformationAlgebra):
     reify = R(Loc) ** Reg
     deify = Reg ** R(Loc)
     get = R(x) ** x, \
-        x.constrain(Ent)
-    invert = x ** y, (x ** y).constrain(
+        Constraint(x, Ent)
+    invert = x ** y, Constraint(
+        x ** y,
         R(Loc, Ord) ** R(Ord, Reg),
         R(Loc, Nom) ** R(Reg, Nom))
-    revert = x ** y, (x ** y).constrain(
+    revert = x ** y, Constraint(
+        x ** y,
         R(Ord, Reg) ** R(Loc, Ord),
         R(Reg, Nom) ** R(Loc, Nom))
 
@@ -138,26 +122,26 @@ class CCT(TransformationAlgebra):
     # Relational transformations
 
     # projection
-    pi1 = x ** y, x.constrain(*has(y, at=1))
-    pi2 = x ** y, x.constrain(*has(y, at=2))
-    pi3 = x ** y, x.constrain(*has(y, at=3))
+    pi1 = x ** y, Constraint.has(x, R, y, at=1)
+    pi2 = x ** y, Constraint.has(x, R, y, at=2)
+    pi3 = x ** y, Constraint.has(x, R, y, at=3)
 
     # selection operations
     sigmae = x ** y ** x, \
-        x.constrain(Qlt), y.constrain(*has(x))
+        Constraint(x, Qlt), Constraint.has(y, R, x)
     sigmale = x ** y ** x, \
-        x.constrain(Ord), y.constrain(*has(x))
+        Constraint(x, Ord), Constraint.has(y, R, x)
 
     # join and set operations
     bowtie = x ** R(y) ** x, \
-        y.constrain(Ent), y.constrain(*has(x))
+        Constraint(y, Ent), Constraint.has(y, R, x)
     bowtiestar = R(x, y, x) ** R(x, y) ** R(x, y, x), \
-        y.constrain(Qlt), x.constrain(Ent)
+        Constraint(y, Qlt), Constraint.has(y, R, x)
     bowtie_ = (Qlt ** Qlt ** Qlt) ** R(Ent, Qlt) ** R(Ent, Qlt) ** R(Ent, Qlt)
 
     # group by
     groupbyL = (R(y, Qlt) ** Qlt) ** R(x, Qlt, y) ** R(x, Qlt), \
-        x.constrain(Ent), y.constrain(Ent)
+        Constraint(x, Ent), Constraint(y, Ent)
     groupbyR = (R(x, Qlt) ** Qlt) ** R(x, Qlt, y) ** R(y, Qlt), \
-        x.constrain(Ent), y.constrain(Ent)
+        Constraint(x, Ent), Constraint(y, Ent)
     groupbyR_simpler = (R(Ent) ** z) ** R(x, Qlt, y) ** R(y, z)
