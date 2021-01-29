@@ -4,6 +4,7 @@ Simple testing module.
 
 from sys import stdin
 
+from quangis import error
 from quangis.transformation.cct import CCT
 
 algebra = CCT()
@@ -13,8 +14,8 @@ for line in stdin.readlines():
     if line:
         try:
             expr = algebra.parse(line)
-            print(expr)
-        except Exception as e:
-            print("FAILED PARSE FOR:", line)
+        except error.AlgebraTypeError as e:
+            print("FAILED: ", line)
             print(e)
-            exit(0)
+            exit(1)
+        print(expr)
