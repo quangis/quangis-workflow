@@ -57,8 +57,8 @@ class CCT(TransformationAlgebra):
     contourline = R(Itv, Reg), 1
     objectcounts = R(Obj, Count), 1
     field = R(Loc, Ratio), 1
-    object = R(Obj), 1
-    region = R(Reg), 1
+    object = Obj, 1
+    region = Reg, 1
     in_ = Nom, 0
     countV = Count, 1
     ratioV = Ratio, 1
