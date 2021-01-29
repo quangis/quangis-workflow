@@ -4,7 +4,7 @@ Simple testing module.
 
 from sys import stdin
 
-from quangis.transformation.algebra import CCT
+from quangis.transformation.cct import CCT
 
 algebra = CCT()
 print("Reading from standard input...")
