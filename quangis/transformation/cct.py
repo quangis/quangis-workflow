@@ -5,7 +5,8 @@ Module containing the core concept transformation algebra.
 from itertools import chain
 from typing import List
 
-from quangis.transformation.type import TypeOperator, TypeVar, AlgebraType
+from quangis.transformation.type import TypeOperator, TypeVar, \
+        AlgebraType, Constraint
 from quangis.transformation.algebra import TransformationAlgebra
 
 
@@ -110,9 +111,14 @@ class CCT(TransformationAlgebra):
     # conversions
     reify = R(Loc) ** Reg
     deify = Reg ** R(Loc)
-    get = R(x) ** x, x << [Ent]
-    invert = x ** y, x ** y << [R(Loc, Ord) ** R(Ord, Reg), R(Loc, Nom) ** R(Reg, Nom)]
-    revert = x ** y, x ** y << [R(Ord, Reg) ** R(Loc, Ord), R(Reg, Nom) ** R(Loc, Nom)]
+    get = R(x) ** x, \
+        x.constrain(Ent)
+    invert = x ** y, (x ** y).constrain(
+        R(Loc, Ord) ** R(Ord, Reg),
+        R(Loc, Nom) ** R(Reg, Nom))
+    revert = x ** y, (x ** y).constrain(
+        R(Ord, Reg) ** R(Loc, Ord),
+        R(Reg, Nom) ** R(Loc, Nom))
 
     # quantified relations
     oDist = R(Obj, Reg) ** R(Obj, Reg) ** R(Obj, Ratio, Obj)
@@ -132,20 +138,26 @@ class CCT(TransformationAlgebra):
     # Relational transformations
 
     # projection
-    pi1 = x ** y, x << has(y, at=1)
-    pi2 = x ** y, x << has(y, at=2)
-    pi3 = x ** y, x << has(y, at=3)
+    pi1 = x ** y, x.constrain(*has(y, at=1))
+    pi2 = x ** y, x.constrain(*has(y, at=2))
+    pi3 = x ** y, x.constrain(*has(y, at=3))
 
     # selection operations
-    sigmae = x ** y ** x, x << [Qlt], y << has(x)
-    sigmale = x ** y ** x, x << [Ord], y << has(x)
+    sigmae = x ** y ** x, \
+        x.constrain(Qlt), y.constrain(*has(x))
+    sigmale = x ** y ** x, \
+        x.constrain(Ord), y.constrain(*has(x))
 
     # join and set operations
-    bowtie = x ** R(y) ** x, y << [Ent], y << has(x)
-    bowtiestar = R(x, y, x) ** R(x, y) ** R(x, y, x), y << [Qlt], x << [Ent]
+    bowtie = x ** R(y) ** x, \
+        y.constrain(Ent), y.constrain(*has(x))
+    bowtiestar = R(x, y, x) ** R(x, y) ** R(x, y, x), \
+        y.constrain(Qlt), x.constrain(Ent)
     bowtie_ = (Qlt ** Qlt ** Qlt) ** R(Ent, Qlt) ** R(Ent, Qlt) ** R(Ent, Qlt)
 
     # group by
-    groupbyL = (R(y, Qlt) ** Qlt) ** R(x, Qlt, y) ** R(x, Qlt), x << [Ent], y << [Ent]
-    groupbyR = (R(x, Qlt) ** Qlt) ** R(x, Qlt, y) ** R(y, Qlt), x << [Ent], y << [Ent]
+    groupbyL = (R(y, Qlt) ** Qlt) ** R(x, Qlt, y) ** R(x, Qlt), \
+        x.constrain(Ent), y.constrain(Ent)
+    groupbyR = (R(x, Qlt) ** Qlt) ** R(x, Qlt, y) ** R(y, Qlt), \
+        x.constrain(Ent), y.constrain(Ent)
     groupbyR_simpler = (R(Ent) ** z) ** R(x, Qlt, y) ** R(y, z)
