@@ -122,9 +122,9 @@ class CCT(TransformationAlgebra):
     # Relational transformations
 
     # projection
-    pi1 = x ** y, Constraint.has(x, R, y, at=1)
-    pi2 = x ** y, Constraint.has(x, R, y, at=2)
-    pi3 = x ** y, Constraint.has(x, R, y, at=3)
+    pi1 = x ** R(y), Constraint.has(x, R, y, at=1)
+    pi2 = x ** R(y), Constraint.has(x, R, y, at=2)
+    pi3 = x ** R(y), Constraint.has(x, R, y, at=3)
 
     # selection operations
     sigmae = x ** y ** x, \
