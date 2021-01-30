@@ -102,12 +102,12 @@ class CCT(TransformationAlgebra):
     deify = Reg ** R(Loc)
     get = R(x) ** x, \
         x.limit(Val)
-    invert = x ** y, (x ** y).limit(
-        R(Loc, Ord) ** R(Ord, Reg),
-        R(Loc, Nom) ** R(Reg, Nom))
-    revert = x ** y, (x ** y).limit(
-        R(Ord, Reg) ** R(Loc, Ord),
-        R(Reg, Nom) ** R(Loc, Nom))
+    invert = \
+        R(Loc, Ord) ** R(Ord, Reg), \
+        R(Loc, Nom) ** R(Reg, Nom)
+    revert = \
+        R(Ord, Reg) ** R(Loc, Ord), \
+        R(Reg, Nom) ** R(Loc, Nom)
 
     # quantified relations
     oDist = R(Obj, Reg) ** R(Obj, Reg) ** R(Obj, Ratio, Obj)
