@@ -29,11 +29,11 @@ class CCT(TransformationAlgebra):
     ##########################################################################
     # Types and type synonyms
 
-    Ent = TypeOperator("Ent")
-    Obj = TypeOperator("Obj", supertype=Ent)  # O
-    Reg = TypeOperator("Reg", supertype=Ent)  # S
-    Loc = TypeOperator("Loc", supertype=Ent)  # L
-    Qlt = TypeOperator("Qlt", supertype=Ent)  # Q
+    Val = TypeOperator("Val")
+    Obj = TypeOperator("Obj", supertype=Val)  # O
+    Reg = TypeOperator("Reg", supertype=Val)  # S
+    Loc = TypeOperator("Loc", supertype=Val)  # L
+    Qlt = TypeOperator("Qlt", supertype=Val)  # Q
     Nom = TypeOperator("Nom", supertype=Qlt)
     Bool = TypeOperator("Bool", supertype=Nom)
     Ord = TypeOperator("Ord", supertype=Nom)
@@ -90,10 +90,10 @@ class CCT(TransformationAlgebra):
     centroid = R(Loc) ** Loc
 
     # statistical operations
-    avg = R(Ent, Itv) ** Itv
-    min = R(Ent, Ord) ** Ord
-    max = R(Ent, Ord) ** Ord
-    sum = R(Ent, Count) ** Count
+    avg = R(Val, Itv) ** Itv
+    min = R(Val, Ord) ** Ord
+    max = R(Val, Ord) ** Ord
+    sum = R(Val, Count) ** Count
 
     ##########################################################################
     # Geographic transformations
@@ -102,7 +102,7 @@ class CCT(TransformationAlgebra):
     reify = R(Loc) ** Reg
     deify = Reg ** R(Loc)
     get = R(x) ** x, \
-        x.limit(Ent)
+        x.limit(Val)
     invert = x ** y, (x ** y).limit(
         R(Loc, Ord) ** R(Ord, Reg),
         R(Loc, Nom) ** R(Reg, Nom))
@@ -135,21 +135,21 @@ class CCT(TransformationAlgebra):
     # selection operations
 
     sigmae = rel ** q ** rel, \
-        q.limit(Ent), rel.has_param(R, q)
+        q.limit(Val), rel.has_param(R, q)
 
     sigmale = x ** y ** x, \
         x.limit(Ord), y.has_param(R, x)
 
     # join and set operations
     bowtie = x ** R(y) ** x, \
-        y.limit(Ent), y.has_param(R, x)
+        y.limit(Val), y.has_param(R, x)
     bowtiestar = R(x, y, x) ** R(x, y) ** R(x, y, x), \
         x.limit(Qlt), y.has_param(R, x)
-    bowtie_ = (Qlt ** Qlt ** Qlt) ** R(Ent, Qlt) ** R(Ent, Qlt) ** R(Ent, Qlt)
+    bowtie_ = (Qlt ** Qlt ** Qlt) ** R(Val, Qlt) ** R(Val, Qlt) ** R(Val, Qlt)
 
     # group by
     groupbyL = (R(y, Qlt) ** Qlt) ** R(x, Qlt, y) ** R(x, Qlt), \
-        x.limit(Ent), y.limit(Ent)
+        x.limit(Val), y.limit(Val)
     groupbyR = (R(x, Qlt) ** Qlt) ** R(x, Qlt, y) ** R(y, Qlt), \
-        x.limit(Ent), y.limit(Ent)
-    groupbyR_simpler = (R(Ent) ** z) ** R(x, Qlt, y) ** R(y, z)
+        x.limit(Val), y.limit(Val)
+    groupbyR_simpler = (R(Val) ** z) ** R(x, Qlt, y) ** R(y, z)
