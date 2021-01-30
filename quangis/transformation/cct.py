@@ -19,12 +19,11 @@ class CCT(TransformationAlgebra):
 
     """
 
-    # Some type variables for convenience
-    x, y, z = (TypeVar() for _ in range(0, 3))
-
     # Dispenser for generic variables
     v = defaultdict(TypeVar)
-    rel, q = TypeVar(), TypeVar()
+
+    # Some type variables for convenience
+    x, y, z, rel = (TypeVar() for _ in range(0, 4))
 
     ##########################################################################
     # Types and type synonyms
@@ -133,16 +132,15 @@ class CCT(TransformationAlgebra):
     pi3 = rel ** R(x), rel.has_param(R, x, at=3)
 
     # selection operations
+    sigmae = rel ** x ** rel, \
+        x.limit(Val), rel.has_param(R, x)
 
-    sigmae = rel ** q ** rel, \
-        q.limit(Val), rel.has_param(R, q)
-
-    sigmale = x ** y ** x, \
-        x.limit(Ord), y.has_param(R, x)
+    sigmale = rel ** x ** rel, \
+        x.limit(Ord), rel.has_param(R, x)
 
     # join and set operations
-    bowtie = x ** R(y) ** x, \
-        y.limit(Val), y.has_param(R, x)
+    bowtie = rel ** R(x) ** rel, \
+        x.limit(Val), rel.has_param(R, x)
     bowtiestar = R(x, y, x) ** R(x, y) ** R(x, y, x), \
         x.limit(Qlt), y.has_param(R, x)
     bowtie_ = (Qlt ** Qlt ** Qlt) ** R(Val, Qlt) ** R(Val, Qlt) ** R(Val, Qlt)
