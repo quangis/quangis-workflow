@@ -5,6 +5,9 @@ Module containing the core concept transformation algebra.
 from quangis.transformation.type import TypeOperator, TypeVar
 from quangis.transformation.algebra import TransformationAlgebra
 
+# Some type variables for convenience
+x, y, z, rel = (TypeVar() for _ in range(0, 4))
+
 
 class CCT(TransformationAlgebra):
     """
@@ -17,9 +20,6 @@ class CCT(TransformationAlgebra):
         R(Obj)
 
     """
-
-    # Some type variables for convenience
-    x, y, z, rel = (TypeVar() for _ in range(0, 4))
 
     ##########################################################################
     # Types and type synonyms
