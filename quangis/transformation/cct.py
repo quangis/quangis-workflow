@@ -2,7 +2,9 @@
 Module containing the core concept transformation algebra.
 """
 
-from quangis.transformation.type import TypeOperator, TypeVar, Constraint
+from collections import defaultdict
+
+from quangis.transformation.type import TypeOperator, TypeVar
 from quangis.transformation.algebra import TransformationAlgebra
 
 
@@ -19,6 +21,10 @@ class CCT(TransformationAlgebra):
 
     # Some type variables for convenience
     x, y, z = (TypeVar() for _ in range(0, 3))
+
+    # Dispenser for generic variables
+    v = defaultdict(TypeVar)
+    rel, q = TypeVar(), TypeVar()
 
     ##########################################################################
     # Types and type synonyms
@@ -67,13 +73,15 @@ class CCT(TransformationAlgebra):
     nominal = Nom, 1
 
     ##########################################################################
-    # Geographic transformations
+    # Math/stats transformations
 
     # functional
     compose = (y ** z) ** (x ** y) ** (x ** z)
 
     # derivations
     ratio = Ratio ** Ratio ** Ratio
+    le = Ord ** Ord ** Bool
+    eq = Qlt ** Qlt ** Bool
 
     # aggregations of collections
     count = R(Obj) ** Ratio
@@ -94,13 +102,11 @@ class CCT(TransformationAlgebra):
     reify = R(Loc) ** Reg
     deify = Reg ** R(Loc)
     get = R(x) ** x, \
-        Constraint(x, Ent)
-    invert = x ** y, Constraint(
-        x ** y,
+        x.limit(Ent)
+    invert = x ** y, (x ** y).limit(
         R(Loc, Ord) ** R(Ord, Reg),
         R(Loc, Nom) ** R(Reg, Nom))
-    revert = x ** y, Constraint(
-        x ** y,
+    revert = x ** y, (x ** y).limit(
         R(Ord, Reg) ** R(Loc, Ord),
         R(Reg, Nom) ** R(Loc, Nom))
 
@@ -122,26 +128,28 @@ class CCT(TransformationAlgebra):
     # Relational transformations
 
     # projection
-    pi1 = x ** R(y), Constraint.has(x, R, y, at=1)
-    pi2 = x ** R(y), Constraint.has(x, R, y, at=2)
-    pi3 = x ** R(y), Constraint.has(x, R, y, at=3)
+    pi1 = rel ** R(x), rel.has_param(R, x, at=1)
+    pi2 = rel ** R(x), rel.has_param(R, x, at=2)
+    pi3 = rel ** R(x), rel.has_param(R, x, at=3)
 
     # selection operations
-    sigmae = x ** y ** x, \
-        Constraint(x, Qlt), Constraint.has(y, R, x)
+
+    sigmae = rel ** q ** rel, \
+        q.limit(Ent), rel.has_param(R, q)
+
     sigmale = x ** y ** x, \
-        Constraint(x, Ord), Constraint.has(y, R, x)
+        x.limit(Ord), y.has_param(R, x)
 
     # join and set operations
     bowtie = x ** R(y) ** x, \
-        Constraint(y, Ent), Constraint.has(y, R, x)
+        y.limit(Ent), y.has_param(R, x)
     bowtiestar = R(x, y, x) ** R(x, y) ** R(x, y, x), \
-        Constraint(y, Qlt), Constraint.has(y, R, x)
+        x.limit(Qlt), y.has_param(R, x)
     bowtie_ = (Qlt ** Qlt ** Qlt) ** R(Ent, Qlt) ** R(Ent, Qlt) ** R(Ent, Qlt)
 
     # group by
     groupbyL = (R(y, Qlt) ** Qlt) ** R(x, Qlt, y) ** R(x, Qlt), \
-        Constraint(x, Ent), Constraint(y, Ent)
+        x.limit(Ent), y.limit(Ent)
     groupbyR = (R(x, Qlt) ** Qlt) ** R(x, Qlt, y) ** R(y, Qlt), \
-        Constraint(x, Ent), Constraint(y, Ent)
+        x.limit(Ent), y.limit(Ent)
     groupbyR_simpler = (R(Ent) ** z) ** R(x, Qlt, y) ** R(y, z)
