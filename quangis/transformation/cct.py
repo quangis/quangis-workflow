@@ -2,8 +2,6 @@
 Module containing the core concept transformation algebra.
 """
 
-from collections import defaultdict
-
 from quangis.transformation.type import TypeOperator, TypeVar
 from quangis.transformation.algebra import TransformationAlgebra
 
@@ -12,15 +10,13 @@ class CCT(TransformationAlgebra):
     """
     Core concept transformation algebra. Usage:
 
+        >>> from quangis import CCT
         >>> cct = CCT()
         >>> expr = cct.parse("pi1 (objects data)")
         >>> print(expr.type)
         R(Obj)
 
     """
-
-    # Dispenser for generic variables
-    v = defaultdict(TypeVar)
 
     # Some type variables for convenience
     x, y, z, rel = (TypeVar() for _ in range(0, 4))
@@ -100,8 +96,7 @@ class CCT(TransformationAlgebra):
     # conversions
     reify = R(Loc) ** Reg
     deify = Reg ** R(Loc)
-    get = R(x) ** x, \
-        x.limit(Val)
+    get = R(x) ** x, x.limit(Val)
     invert = \
         R(Loc, Ord) ** R(Ord, Reg), \
         R(Loc, Nom) ** R(Reg, Nom)
@@ -132,6 +127,13 @@ class CCT(TransformationAlgebra):
     pi3 = rel ** R(x), rel.has_param(R, x, at=3)
 
     # selection operations
+
+    # Experimental:
+    # sigmae = select @ eq
+    # sigmale = select @ leq
+    select = (x ** x ** Bool) ** rel ** x ** rel, \
+        x.limit(Val), rel.has_param(R, x)
+
     sigmae = rel ** x ** rel, \
         x.limit(Val), rel.has_param(R, x)
 
