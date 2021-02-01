@@ -6,7 +6,7 @@ from quangis.transformation.type import TypeOperator, TypeVar
 from quangis.transformation.algebra import TransformationAlgebra
 
 # Some type variables for convenience
-x, y, z, rel = (TypeVar() for _ in range(0, 4))
+x, y, z, q, q1, q2, rel = (TypeVar() for _ in range(0, 7))
 
 
 class CCT(TransformationAlgebra):
@@ -21,7 +21,7 @@ class CCT(TransformationAlgebra):
 
     """
 
-    ##########################################################################
+    ###########################################################################
     # Types and type synonyms
 
     Val = TypeOperator("Val")
@@ -47,7 +47,7 @@ class CCT(TransformationAlgebra):
     NominalInvertedField = R(Nom, Reg)
     BooleanInvertedField = R(Bool, Reg)
 
-    ##########################################################################
+    ###########################################################################
     # Data inputs
 
     pointmeasures = R(Reg, Itv), 1
@@ -67,7 +67,7 @@ class CCT(TransformationAlgebra):
     ordinal = Ord, 1
     nominal = Nom, 1
 
-    ##########################################################################
+    ###########################################################################
     # Math/stats transformations
 
     # functional
@@ -75,8 +75,8 @@ class CCT(TransformationAlgebra):
 
     # derivations
     ratio = Ratio ** Ratio ** Ratio
-    le = Ord ** Ord ** Bool
-    eq = Qlt ** Qlt ** Bool
+    leq = Ord ** Ord ** Bool
+    eq = Val ** Val ** Bool
 
     # aggregations of collections
     count = R(Obj) ** Ratio
@@ -90,7 +90,7 @@ class CCT(TransformationAlgebra):
     max = R(Val, Ord) ** Ord
     sum = R(Val, Count) ** Count
 
-    ##########################################################################
+    ###########################################################################
     # Geographic transformations
 
     # conversions
@@ -118,38 +118,45 @@ class CCT(TransformationAlgebra):
     fcont = R(Loc, Itv) ** Ratio
     ocont = R(Obj, Ratio) ** Ratio
 
-    ##########################################################################
+    ###########################################################################
     # Relational transformations
 
-    # projection
+    # Projection (π). Projects a given relation to one of its attributes,
+    # resulting in a collection.
     pi1 = rel ** R(x), rel.has_param(R, x, at=1)
     pi2 = rel ** R(x), rel.has_param(R, x, at=2)
     pi3 = rel ** R(x), rel.has_param(R, x, at=3)
 
-    # selection operations
-
-    # Experimental:
-    # sigmae = select @ eq
-    # sigmale = select @ leq
+    # Selection (σ). Selects a subset of the relation using a constraint on
+    # attribute values, like equality (eq) or order (leq).
     select = (x ** x ** Bool) ** rel ** x ** rel, \
         x.limit(Val), rel.has_param(R, x)
 
-    sigmae = rel ** x ** rel, \
+    # Join (⨝). Subset a relation to those tuples having an attribute value
+    # contained in a collection.
+    join_subset = rel ** R(x) ** rel, \
         x.limit(Val), rel.has_param(R, x)
 
-    sigmale = rel ** x ** rel, \
-        x.limit(Ord), rel.has_param(R, x)
+    # Join (⨝*). Substitute the quality of a quantified relation to some
+    # quality of one of its keys.
+    join_key = R(x, Qlt, y) ** rel ** R(x, q, y), \
+        x.limit(Val), y.limit(Val), q.limit(Qlt), \
+        rel.limit(R(x, q), R(y, q))
 
-    # join and set operations
-    bowtie = rel ** R(x) ** rel, \
-        x.limit(Val), rel.has_param(R, x)
-    bowtiestar = R(x, y, x) ** R(x, y) ** R(x, y, x), \
-        x.limit(Qlt), y.has_param(R, x)
-    bowtie_ = (Qlt ** Qlt ** Qlt) ** R(Val, Qlt) ** R(Val, Qlt) ** R(Val, Qlt)
+    # Join with (⨝_f). Generate a unary concept from two other unary concepts
+    # of the same type:
+    join_with = (q1 ** q1 ** q2) ** R(x, q1) ** R(x, q1) ** R(x, q2), \
+        q1.limit(Qlt), q2.limit(Qlt), x.limit(Val)
 
-    # group by
-    groupbyL = (R(y, Qlt) ** Qlt) ** R(x, Qlt, y) ** R(x, Qlt), \
-        x.limit(Val), y.limit(Val)
-    groupbyR = (R(x, Qlt) ** Qlt) ** R(x, Qlt, y) ** R(y, Qlt), \
-        x.limit(Val), y.limit(Val)
-    groupbyR_simpler = (R(Val) ** z) ** R(x, Qlt, y) ** R(y, z)
+    # Group by (β). Group quantified relations by the left (right) key,
+    # summarizing lists of quality values with the same key value into a new
+    # value per key, resulting in a unary core concept relation.
+    groupbyL = (rel ** q) ** R(x, q, y) ** R(x, q), \
+        x.limit(Val), y.limit(Val), \
+        q.limit(Qlt), \
+        rel.limit(R(x), R(x, q1))
+
+    groupbyR = (rel ** q) ** R(x, q, y) ** R(y, q), \
+        x.limit(Val), y.limit(Val), \
+        q.limit(Qlt), \
+        rel.limit(R(y), R(y, q))
