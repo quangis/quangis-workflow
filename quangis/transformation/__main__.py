@@ -5,17 +5,15 @@ Simple testing module.
 from sys import stdin
 
 from quangis import error
-from quangis.transformation.cct import CCT
+from quangis.transformation.cct import cct
 
-algebra = CCT()
 print("Reading from standard input...")
 for line in stdin.readlines():
     line = line.strip()
     if line:
         try:
-            expr = algebra.parse(line)
+            expr = cct.parse(line)
+            print("SUCCESS: ", expr)
         except error.AlgebraTypeError as e:
             print("FAILED: ", line)
             print(e)
-            exit(1)
-        print(expr)
