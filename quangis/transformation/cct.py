@@ -32,9 +32,9 @@ class CCT(TransformationAlgebra):
     Nom = TypeOperator("Nom", supertype=Qlt)
     Bool = TypeOperator("Bool", supertype=Nom)
     Ord = TypeOperator("Ord", supertype=Nom)
-    Count = TypeOperator("Count", supertype=Ord)
-    Ratio = TypeOperator("Ratio", supertype=Count)
-    Itv = TypeOperator("Itv", supertype=Ratio)
+    Itv = TypeOperator("Itv", supertype=Ord)
+    Ratio = TypeOperator("Ratio", supertype=Itv)
+    Count = TypeOperator("Count", supertype=Ratio)
     R = TypeOperator.R
 
     SpatialField = R(Loc, Qlt)
