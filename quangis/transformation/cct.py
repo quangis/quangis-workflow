@@ -7,10 +7,11 @@ Module containing the core concept transformation algebra. Usage:
     R(Obj)
 """
 
-from quangis.transformation.type import TypeOperator, TypeVar
+from quangis.transformation.type import TypeOperator, Variables
 from quangis.transformation.algebra import TransformationAlgebra
 
 cct = TransformationAlgebra()
+var = Variables()
 
 ##############################################################################
 # Types and type synonyms
@@ -38,10 +39,6 @@ BooleanField = R(Loc, Bool)
 NominalInvertedField = R(Nom, Reg)
 BooleanInvertedField = R(Bool, Reg)
 
-# Some type variables for convenience
-x, y, z, q, q1, q2, rel = (TypeVar() for _ in range(0, 7))
-
-
 ##############################################################################
 # Data inputs
 
@@ -66,8 +63,8 @@ cct.nominal = Nom, 1
 # Math/stats transformations
 
 # functional
-cct.compose = (y ** z) ** (x ** y) ** (x ** z)
-cct.swap = (x ** y ** z) ** (y ** x ** z)
+cct.compose = (var.y ** var.z) ** (var.x ** var.y) ** (var.x ** var.z)
+cct.swap = (var.x ** var.y ** var.z) ** (var.y ** var.x ** var.z)
 
 # derivations
 cct.ratio = Ratio ** Ratio ** Ratio
@@ -94,7 +91,7 @@ cct.intersect = R(Loc) ** R(Loc) ** R(Loc)
 # conversions
 cct.reify = R(Loc) ** Reg
 cct.deify = Reg ** R(Loc)
-cct.get = R(x) ** x, x.limit(Val)
+cct.get = R(var.x) ** var.x, var.x.limit(Val)
 cct.invert = \
     R(Loc, Ord) ** R(Ord, Reg), \
     R(Loc, Nom) ** R(Reg, Nom)
@@ -121,45 +118,45 @@ cct.ocont = R(Obj, Ratio) ** Ratio
 
 # Projection (π). Projects a given relation to one of its attributes,
 # resulting in a collection.
-cct.pi1 = rel ** R(x), rel.has_param(R, x, at=1)
-cct.pi2 = rel ** R(x), rel.has_param(R, x, at=2)
-cct.pi3 = rel ** R(x), rel.has_param(R, x, at=3)
+cct.pi1 = var.rel ** R(var.x), var.rel.has_param(R, var.x, at=1)
+cct.pi2 = var.rel ** R(var.x), var.rel.has_param(R, var.x, at=2)
+cct.pi3 = var.rel ** R(var.x), var.rel.has_param(R, var.x, at=3)
 
 # Selection (σ). Selects a subset of the relation using a constraint on
 # attribute values, like equality (eq) or order (leq). Used to be sigmae
 # and sigmale.
-cct.select = (x ** x ** Bool) ** rel ** x ** rel, \
-    x.limit(Val), rel.has_param(R, x)
+cct.select = (var.x ** var.x ** Bool) ** var.rel ** var.x ** var.rel, \
+    var.x.limit(Val), var.rel.has_param(R, var.x)
 
 # Join (⨝). Subset a relation to those tuples having an attribute value
 # contained in a collection. Used to be bowtie.
-cct.join_subset = rel ** R(x) ** rel, \
-    x.limit(Val), rel.has_param(R, x)
+cct.join_subset = var.rel ** R(var.x) ** var.rel, \
+    var.x.limit(Val), var.rel.has_param(R, var.x)
 
 # Join (⨝*). Substitute the quality of a quantified relation to some
 # quality of one of its keys. Used to be bowtie*.
-cct.join_key = R(x, Qlt, y) ** rel ** R(x, q, y), \
-    x.limit(Val), y.limit(Val), q.limit(Qlt), \
-    rel.limit(R(x, q), R(y, q))
+cct.join_key = R(var.x, Qlt, var.y) ** var.rel ** R(var.x, var.q, var.y), \
+    var.x.limit(Val), var.y.limit(Val), var.q.limit(Qlt), \
+    var.rel.limit(R(var.x, var.q), R(var.y, var.q))
 
 # Join with unary function. Generate a unary concept from one 
 # See: compose join_fa (compose (compose reify (intersect (deify region 1)))) deify
-cct.join_fa = (x ** y) ** R(z, x) ** R(z, y)
+cct.join_fa = (var.x ** var.y) ** R(var.z, var.x) ** R(var.z, var.y)
 
 # Join with binary function (⨝_f). Generate a unary concept from two other
 # unary concepts of the same type. Used to be bowtie_ratio and others.
-cct.join_with = (q1 ** q1 ** q2) ** R(x, q1) ** R(x, q1) ** R(x, q2), \
-    q1.limit(Qlt), q2.limit(Qlt), x.limit(Val)
+cct.join_with = (var.q1 ** var.q1 ** var.q2) ** R(var.x, var.q1) ** R(var.x, var.q1) ** R(var.x, var.q2), \
+    var.q1.limit(Qlt), var.q2.limit(Qlt), var.x.limit(Val)
 
 # Group by (β). Group quantified relations by the left (right) key,
 # summarizing lists of quality values with the same key value into a new
 # value per key, resulting in a unary core concept relation.
-cct.groupbyL = (rel ** q) ** R(x, q, y) ** R(x, q), \
-    x.limit(Val), y.limit(Val), \
-    q.limit(Qlt), \
-    rel.limit(R(x), R(x, q))
+cct.groupbyL = (var.rel ** var.q) ** R(var.x, var.q, var.y) ** R(var.x, var.q), \
+    var.x.limit(Val), var.y.limit(Val), \
+    var.q.limit(Qlt), \
+    var.rel.limit(R(var.x), R(var.x, var.q))
 
-cct.groupbyR = (rel ** q) ** R(x, q, y) ** R(y, q), \
-    x.limit(Val), y.limit(Val), \
-    q.limit(Qlt), \
-    rel.limit(R(y), R(y, q))
+cct.groupbyR = (var.rel ** var.q) ** R(var.x, var.q, var.y) ** R(var.y, var.q), \
+    var.x.limit(Val), var.y.limit(Val), \
+    var.q.limit(Qlt), \
+    var.rel.limit(R(var.y), R(var.y, var.q))
