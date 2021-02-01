@@ -72,6 +72,7 @@ class CCT(TransformationAlgebra):
 
     # functional
     compose = (y ** z) ** (x ** y) ** (x ** z)
+    swap = (x ** y ** z) ** (y ** x ** z)
 
     # derivations
     ratio = Ratio ** Ratio ** Ratio
@@ -92,6 +93,8 @@ class CCT(TransformationAlgebra):
 
     ###########################################################################
     # Geographic transformations
+
+    intersect = R(Loc) ** R(Loc) ** R(Loc)
 
     # conversions
     reify = R(Loc) ** Reg
@@ -128,23 +131,28 @@ class CCT(TransformationAlgebra):
     pi3 = rel ** R(x), rel.has_param(R, x, at=3)
 
     # Selection (σ). Selects a subset of the relation using a constraint on
-    # attribute values, like equality (eq) or order (leq).
+    # attribute values, like equality (eq) or order (leq). Used to be sigmae
+    # and sigmale.
     select = (x ** x ** Bool) ** rel ** x ** rel, \
         x.limit(Val), rel.has_param(R, x)
 
     # Join (⨝). Subset a relation to those tuples having an attribute value
-    # contained in a collection.
+    # contained in a collection. Used to be bowtie.
     join_subset = rel ** R(x) ** rel, \
         x.limit(Val), rel.has_param(R, x)
 
     # Join (⨝*). Substitute the quality of a quantified relation to some
-    # quality of one of its keys.
+    # quality of one of its keys. Used to be bowtie*.
     join_key = R(x, Qlt, y) ** rel ** R(x, q, y), \
         x.limit(Val), y.limit(Val), q.limit(Qlt), \
         rel.limit(R(x, q), R(y, q))
 
-    # Join with (⨝_f). Generate a unary concept from two other unary concepts
-    # of the same type:
+    # Join with unary function. Generate a unary concept from one 
+    # See: compose join_fa (compose (compose reify (intersect (deify region 1)))) deify
+    join_fa = (x ** y) ** R(z, x) ** R(z, y)
+
+    # Join with binary function (⨝_f). Generate a unary concept from two other
+    # unary concepts of the same type. Used to be bowtie_ratio and others.
     join_with = (q1 ** q1 ** q2) ** R(x, q1) ** R(x, q1) ** R(x, q2), \
         q1.limit(Qlt), q2.limit(Qlt), x.limit(Val)
 
@@ -154,7 +162,7 @@ class CCT(TransformationAlgebra):
     groupbyL = (rel ** q) ** R(x, q, y) ** R(x, q), \
         x.limit(Val), y.limit(Val), \
         q.limit(Qlt), \
-        rel.limit(R(x), R(x, q1))
+        rel.limit(R(x), R(x, q))
 
     groupbyR = (rel ** q) ** R(x, q, y) ** R(y, q), \
         x.limit(Val), y.limit(Val), \
