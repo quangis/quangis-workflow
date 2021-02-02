@@ -108,6 +108,7 @@ cct.loTopo = R(Loc) ** R(Obj, Reg) ** R(Loc, Nom, Obj)
 cct.nDist = R(Obj) ** R(Obj) ** R(Obj, Ratio, Obj) ** R(Obj, Ratio, Obj)
 cct.lVis = R(Loc) ** R(Loc) ** R(Loc, Itv) ** R(Loc, Bool, Loc)
 cct.interpol = R(Reg, Itv) ** R(Loc) ** R(Loc, Itv)
+cct.extrapol = R(Obj, Reg) ** R(Loc, Bool) #Buffering
 
 # amount operations
 cct.fcont = R(Loc, Itv) ** Ratio
