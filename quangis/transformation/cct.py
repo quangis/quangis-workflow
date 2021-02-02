@@ -44,6 +44,7 @@ BooleanInvertedField = R(Bool, Reg)
 
 cct.pointmeasures = R(Reg, Itv), 1
 cct.amountpatches = R(Reg, Nom), 1
+cct.regions = R(Reg), 1
 cct.contour = R(Ord, Reg), 1
 cct.objects = R(Obj, Ratio), 1
 cct.objectregions = R(Obj, Reg), 1
@@ -58,6 +59,7 @@ cct.ratioV = Ratio, 1
 cct.interval = Itv, 1
 cct.ordinal = Ord, 1
 cct.nominal = Nom, 1
+cct.true = Bool, 0
 
 ###########################################################################
 # Math/stats transformations
@@ -68,6 +70,7 @@ cct.swap = (var.x ** var.y ** var.z) ** (var.y ** var.x ** var.z)
 
 # derivations
 cct.ratio = Ratio ** Ratio ** Ratio
+cct.product = Ratio ** Ratio ** Ratio
 cct.leq = Ord ** Ord ** Bool
 cct.eq = Val ** Val ** Bool
 
@@ -84,13 +87,16 @@ cct.max = R(Val, Ord) ** Ord
 cct.sum = R(Val, Count) ** Count
 
 ###########################################################################
-# Geographic transformations
+# Geometric transformations
 
 cct.intersect = R(Loc) ** R(Loc) ** R(Loc)
+cct.subtract = R(Loc) ** R(Loc) ** R(Loc)
+cct.unify = R(Loc) ** R(Loc) ** R(Loc)
 
 # conversions
 cct.reify = R(Loc) ** Reg
 cct.deify = Reg ** R(Loc)
+cct.nest = Reg ** R(Reg) #Puts regions into some unary relation
 cct.get = R(var.x) ** var.x, var.x.limit(Val)
 cct.invert = \
     R(Loc, Ord) ** R(Ord, Reg), \
