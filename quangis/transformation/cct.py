@@ -125,38 +125,49 @@ cct.pi3 = var.rel ** R(var.x), var.rel.has_param(R, var.x, at=3)
 # Selection (σ). Selects a subset of the relation using a constraint on
 # attribute values, like equality (eq) or order (leq). Used to be sigmae
 # and sigmale.
-cct.select = (var.x ** var.x ** Bool) ** var.rel ** var.x ** var.rel, \
-    var.x.limit(Val), var.rel.has_param(R, var.x)
+cct.select = (
+    (var.x ** var.x ** Bool) ** var.rel ** var.x ** var.rel,
+    var.rel.has_param(R, var.x)
+)
 
-# Join (⨝). Subset a relation to those tuples having an attribute value
-# contained in a collection. Used to be bowtie.
-cct.join_subset = var.rel ** R(var.x) ** var.rel, \
-    var.x.limit(Val), var.rel.has_param(R, var.x)
+# Join on subset (⨝). Subset a relation to those tuples having an attribute
+# value contained in a collection. Used to be bowtie.
+cct.join_subset = (
+    var.rel ** R(var.x) ** var.rel,
+    var.rel.has_param(R, var.x)
+)
 
 # Join (⨝*). Substitute the quality of a quantified relation to some
 # quality of one of its keys. Used to be bowtie*.
-cct.join_key = R(var.x, Qlt, var.y) ** var.rel ** R(var.x, var.q, var.y), \
-    var.x.limit(Val), var.y.limit(Val), var.q.limit(Qlt), \
+cct.join_key = (
+    R(var.x, var.q1, var.y) ** var.rel ** R(var.x, var.q2, var.y),
     var.rel.limit(R(var.x, var.q), R(var.y, var.q))
+)
 
-# Join with unary function. Generate a unary concept from one 
-# See: compose join_fa (compose (compose reify (intersect (deify region 1)))) deify
-cct.join_fa = (var.x ** var.y) ** R(var.z, var.x) ** R(var.z, var.y)
+# Join with unary function. Generate a unary concept from one other unary
+# concept of the same type. Used to be join_fa.
+# See: compose join_with1 (compose (compose reify (intersect (deify region 1)))) deify
+cct.join_with1 = (
+    (var.x ** var.y)
+    ** R(var.z, var.x) ** R(var.z, var.y)
+)
 
 # Join with binary function (⨝_f). Generate a unary concept from two other
 # unary concepts of the same type. Used to be bowtie_ratio and others.
-cct.join_with = (var.q1 ** var.q1 ** var.q2) ** R(var.x, var.q1) ** R(var.x, var.q1) ** R(var.x, var.q2), \
-    var.q1.limit(Qlt), var.q2.limit(Qlt), var.x.limit(Val)
+cct.join_with2 = (
+    (var.x1 ** var.x2 ** var.x3)
+    ** R(var.y, var.x1) ** R(var.y, var.x2) ** R(var.y, var.x3)
+)
 
 # Group by (β). Group quantified relations by the left (right) key,
 # summarizing lists of quality values with the same key value into a new
 # value per key, resulting in a unary core concept relation.
-cct.groupbyL = (var.rel ** var.q) ** R(var.x, var.q, var.y) ** R(var.x, var.q), \
-    var.x.limit(Val), var.y.limit(Val), \
-    var.q.limit(Qlt), \
+cct.groupbyL = (
+    (var.rel ** var.q) ** R(var.x, var.q, var.y) ** R(var.x, var.q),
     var.rel.limit(R(var.x), R(var.x, var.q))
+)
 
-cct.groupbyR = (var.rel ** var.q) ** R(var.x, var.q, var.y) ** R(var.y, var.q), \
-    var.x.limit(Val), var.y.limit(Val), \
-    var.q.limit(Qlt), \
+cct.groupbyR = (
+    (var.rel ** var.q) ** R(var.x, var.q, var.y) ** R(var.y, var.q),
     var.rel.limit(R(var.y), R(var.y, var.q))
+)
