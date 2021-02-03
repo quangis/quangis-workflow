@@ -1,7 +1,7 @@
 """
 Module containing the core concept transformation algebra. Usage:
 
-    >>> from quangis import cct
+    >>> from quangis.transformation.cct import cct
     >>> expr = cct.parse("pi1 (objects data)")
     >>> print(expr.type)
     R(Obj)
@@ -44,13 +44,20 @@ BooleanInvertedField = R(Bool, Reg)
 
 cct.pointmeasures = R(Reg, Itv), 1
 cct.amountpatches = R(Reg, Nom), 1
+cct.countamounts = R(Reg, Count), 1
+cct.boolpatches = R(Bool, Reg), 1
+cct.nompatches = R(Nom, Reg), 1
 cct.regions = R(Reg), 1
 cct.contour = R(Ord, Reg), 1
 cct.objects = R(Obj, Ratio), 1
+cct.objectnominals = R(Obj, Nom), 1
 cct.objectregions = R(Obj, Reg), 1
 cct.contourline = R(Itv, Reg), 1
 cct.objectcounts = R(Obj, Count), 1
 cct.field = R(Loc, Ratio), 1
+cct.nomfield = R(Loc, Nom), 1
+cct.boolfield = R(Loc, Bool), 1
+cct.ordfield = R(Loc, Ord), 1
 cct.object = Obj, 1
 cct.region = Reg, 1
 cct.in_ = Nom, 0
@@ -68,9 +75,13 @@ cct.true = Bool, 0
 cct.compose = (var.y ** var.z) ** (var.x ** var.y) ** (var.x ** var.z)
 cct.swap = (var.x ** var.y ** var.z) ** (var.y ** var.x ** var.z)
 
+
 # derivations
 cct.ratio = Ratio ** Ratio ** Ratio
 cct.product = Ratio ** Ratio ** Ratio
+cct.conj = Bool ** Bool ** Bool
+cct.disj = Bool ** Bool ** Bool
+cct.notj = Bool ** Bool
 cct.leq = Ord ** Ord ** Bool
 cct.eq = Val ** Val ** Bool
 
@@ -93,17 +104,20 @@ cct.intersect = R(Loc) ** R(Loc) ** R(Loc)
 cct.subtract = R(Loc) ** R(Loc) ** R(Loc)
 cct.unify = R(Loc) ** R(Loc) ** R(Loc)
 
+
 # conversions
 cct.reify = R(Loc) ** Reg
 cct.deify = Reg ** R(Loc)
-cct.nest = Reg ** R(Reg) #Puts regions into some unary relation
+cct.nest = Qlt ** R(Qlt) #Puts regions into some unary relation
 cct.get = R(var.x) ** var.x, var.x.limit(Val)
-cct.invert = \
-    R(Loc, Ord) ** R(Ord, Reg), \
-    R(Loc, Nom) ** R(Reg, Nom)
-cct.revert = \
-    R(Ord, Reg) ** R(Loc, Ord), \
-    R(Reg, Nom) ** R(Loc, Nom)
+cct.invertord = R(Loc, Ord) ** R(Ord, Reg)
+cct.invert  =  R(Loc, Nom) ** R(Nom, Reg)
+cct.invertbool  =  R(Loc, Bool) ** R(Bool, Reg)
+cct.revertord = R(Ord, Reg) ** R(Loc, Ord)
+cct.revert = R(Nom, Reg) ** R(Loc, Nom)
+cct.revertbool = R(Bool, Reg) ** R(Loc, Bool)
+cct.getamounts = R(Obj, Ratio) ** R(Obj, Reg) ** R(Reg, Ratio)
+
 
 # quantified relations
 cct.oDist = R(Obj, Reg) ** R(Obj, Reg) ** R(Obj, Ratio, Obj)
@@ -115,13 +129,16 @@ cct.nDist = R(Obj) ** R(Obj) ** R(Obj, Ratio, Obj) ** R(Obj, Ratio, Obj)
 cct.lVis = R(Loc) ** R(Loc) ** R(Loc, Itv) ** R(Loc, Bool, Loc)
 cct.interpol = R(Reg, Itv) ** R(Loc) ** R(Loc, Itv)
 cct.extrapol = R(Obj, Reg) ** R(Loc, Bool) #Buffering
+cct.arealinterpol = R(Reg, Ratio) ** R(Reg) ** R(Reg, Ratio)
 
 # amount operations
-cct.fcont = R(Loc, Itv) ** Ratio
-cct.ocont = R(Obj, Ratio) ** Ratio
+cct.fcont = R(Loc, Nom) ** Ratio
+cct.ocont = R(Obj, Nom) ** Ratio
 
 ###########################################################################
 # Relational transformations
+
+cct.apply = R(var.x, var.y) ** var.x ** var.y
 
 # Projection (π). Projects a given relation to one of its attributes,
 # resulting in a collection.
@@ -167,3 +184,5 @@ cct.groupbyR = (var.rel ** var.q) ** R(var.x, var.q, var.y) ** R(var.y, var.q), 
     var.x.limit(Val), var.y.limit(Val), \
     var.q.limit(Qlt), \
     var.rel.limit(R(var.y), R(var.y, var.q))
+
+
