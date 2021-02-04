@@ -92,12 +92,10 @@ cct.intersect = R(Loc) ** R(Loc) ** R(Loc)
 cct.reify = R(Loc) ** Reg
 cct.deify = Reg ** R(Loc)
 cct.get = R(var.x) ** var.x, var.x.limit(Val)
-cct.invert = \
-    R(Loc, Ord) ** R(Ord, Reg), \
-    R(Loc, Nom) ** R(Reg, Nom)
-cct.revert = \
-    R(Ord, Reg) ** R(Loc, Ord), \
-    R(Reg, Nom) ** R(Loc, Nom)
+cct.invert = R(Loc, var.x) ** R(Reg, var.x), var.x.limit(Nom)
+cct.invert2 = R(Loc, Ord) ** R(Ord, Reg)
+cct.revert = R(Reg, var.x) ** R(Loc, var.x), var.x.limit(Nom)
+cct.revert2 = R(Ord, Reg) ** R(Loc, Ord)
 
 # quantified relations
 cct.oDist = R(Obj, Reg) ** R(Obj, Reg) ** R(Obj, Ratio, Obj)
@@ -140,7 +138,7 @@ cct.join_subset = (
 # Join (⨝*). Substitute the quality of a quantified relation to some
 # quality of one of its keys. Used to be bowtie*.
 cct.join_key = (
-    R(var.x, var.q1, var.y) ** var.rel ** R(var.x, var.q2, var.y),
+    R(var.x, var.q, var.y) ** var.rel ** R(var.x, var.q, var.y),
     var.rel.limit(R(var.x, var.q), R(var.y, var.q))
 )
 
@@ -148,8 +146,8 @@ cct.join_key = (
 # concept of the same type. Used to be join_fa.
 # See: compose join_with1 (compose (compose reify (intersect (deify region 1)))) deify
 cct.join_with1 = (
-    (var.x ** var.y)
-    ** R(var.z, var.x) ** R(var.z, var.y)
+    (var.x1 ** var.x2)
+    ** R(var.y, var.x1) ** R(var.y, var.x2)
 )
 
 # Join with binary function (⨝_f). Generate a unary concept from two other
@@ -163,11 +161,11 @@ cct.join_with2 = (
 # summarizing lists of quality values with the same key value into a new
 # value per key, resulting in a unary core concept relation.
 cct.groupbyL = (
-    (var.rel ** var.q) ** R(var.x, var.q, var.y) ** R(var.x, var.q),
-    var.rel.limit(R(var.x), R(var.x, var.q))
+    (var.rel ** var.q) ** R(var.l, var.q, var.r) ** R(var.l, var.q),
+    var.rel.limit(R(var.r), R(var.r, var.q))
 )
 
 cct.groupbyR = (
-    (var.rel ** var.q) ** R(var.x, var.q, var.y) ** R(var.y, var.q),
-    var.rel.limit(R(var.y), R(var.y, var.q))
+    (var.rel ** var.q) ** R(var.l, var.q, var.r) ** R(var.r, var.q),
+    var.rel.limit(R(var.l), R(var.l, var.q))
 )
