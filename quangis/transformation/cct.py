@@ -65,6 +65,7 @@ cct.nominal = Nom, 1
 # functional
 cct.compose = (var.y ** var.z) ** (var.x ** var.y) ** (var.x ** var.z)
 cct.swap = (var.x ** var.y ** var.z) ** (var.y ** var.x ** var.z)
+cct.cast = var.x ** var.y, var.x.subtype(var.y)
 
 # derivations
 cct.ratio = Ratio ** Ratio ** Ratio
@@ -76,8 +77,6 @@ cct.count = R(Obj) ** Ratio
 cct.size = R(Loc) ** Ratio
 cct.merge = R(Reg) ** Reg
 cct.centroid = R(Loc) ** Loc
-
-#cct.subtype = var.x ** var.y, var.y.limit(var.x)
 
 # statistical operations
 cct.avg = R(var.v, Itv) ** Itv, var.v.subtype(Val)
@@ -127,7 +126,7 @@ cct.pi3 = var.rel ** R(var.x), var.rel.has_param(R, var.x, at=3)
 # and sigmale.
 cct.select = (
     (var.x ** var.y ** Bool) ** var.rel ** var.y ** var.rel,
-    var.rel.has_param(R, var.x)
+    var.rel.has_param(R, var.x, allow_subtype=True)
 )
 
 # Join on subset (⨝). Subset a relation to those tuples having an attribute
