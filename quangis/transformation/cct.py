@@ -68,8 +68,8 @@ cct.swap = (var.x ** var.y ** var.z) ** (var.y ** var.x ** var.z)
 
 # derivations
 cct.ratio = Ratio ** Ratio ** Ratio
-cct.leq = var.x ** var.x ** Bool, var.x.limit(Ord)
-cct.eq = var.x ** var.x ** Bool, var.x.limit(Val)
+cct.leq = var.x ** var.x ** Bool, var.x.subtype(Ord)
+cct.eq = var.x ** var.x ** Bool, var.x.subtype(Val)
 
 # aggregations of collections
 cct.count = R(Obj) ** Ratio
@@ -80,10 +80,10 @@ cct.centroid = R(Loc) ** Loc
 #cct.subtype = var.x ** var.y, var.y.limit(var.x)
 
 # statistical operations
-cct.avg = R(var.v, Itv) ** Itv, var.v.limit(Val)
-cct.min = R(var.v, Ord) ** Ord, var.v.limit(Val)
-cct.max = R(var.v, Ord) ** Ord, var.v.limit(Val)
-cct.sum = R(var.v, Count) ** Count, var.v.limit(Val)
+cct.avg = R(var.v, Itv) ** Itv, var.v.subtype(Val)
+cct.min = R(var.v, Ord) ** Ord, var.v.subtype(Val)
+cct.max = R(var.v, Ord) ** Ord, var.v.subtype(Val)
+cct.sum = R(var.v, Count) ** Count, var.v.subtype(Val)
 
 ###########################################################################
 # Geographic transformations
@@ -93,10 +93,10 @@ cct.intersect = R(Loc) ** R(Loc) ** R(Loc)
 # conversions
 cct.reify = R(Loc) ** Reg
 cct.deify = Reg ** R(Loc)
-cct.get = R(var.x) ** var.x, var.x.limit(Val)
-cct.invert = R(Loc, var.x) ** R(Reg, var.x), var.x.limit(Nom)
+cct.get = R(var.x) ** var.x, var.x.subtype(Val)
+cct.invert = R(Loc, var.x) ** R(Reg, var.x), var.x.subtype(Nom)
 cct.invert2 = R(Loc, Ord) ** R(Ord, Reg)
-cct.revert = R(Reg, var.x) ** R(Loc, var.x), var.x.limit(Nom)
+cct.revert = R(Reg, var.x) ** R(Loc, var.x), var.x.subtype(Nom)
 cct.revert2 = R(Ord, Reg) ** R(Loc, Ord)
 
 # quantified relations
@@ -126,7 +126,7 @@ cct.pi3 = var.rel ** R(var.x), var.rel.has_param(R, var.x, at=3)
 # attribute values, like equality (eq) or order (leq). Used to be sigmae
 # and sigmale.
 cct.select = (
-    (var.x ** var.x ** Bool) ** var.rel ** var.x ** var.rel,
+    (var.x ** var.y ** Bool) ** var.rel ** var.y ** var.rel,
     var.rel.has_param(R, var.x)
 )
 
@@ -140,8 +140,8 @@ cct.join_subset = (
 # Join (⨝*). Substitute the quality of a quantified relation to some
 # quality of one of its keys. Used to be bowtie*.
 cct.join_key = (
-    R(var.x, var.q, var.y) ** var.rel ** R(var.x, var.q, var.y),
-    var.rel.limit(R(var.x, var.q), R(var.y, var.q))
+    R(var.x, var.q1, var.y) ** var.rel ** R(var.x, var.q2, var.y),
+    var.rel.limit(R(var.x, var.q2), R(var.y, var.q2))
 )
 
 # Join with unary function. Generate a unary concept from one other unary
@@ -163,11 +163,11 @@ cct.join_with2 = (
 # summarizing lists of quality values with the same key value into a new
 # value per key, resulting in a unary core concept relation.
 cct.groupbyL = (
-    (var.rel ** var.q) ** R(var.l, var.q, var.r) ** R(var.l, var.q),
-    var.rel.limit(R(var.r), R(var.r, var.q))
+    (var.rel ** var.q2) ** R(var.l, var.q1, var.r) ** R(var.l, var.q2),
+    var.rel.limit(R(var.r), R(var.r, var.q1))
 )
 
 cct.groupbyR = (
-    (var.rel ** var.q) ** R(var.l, var.q, var.r) ** R(var.r, var.q),
-    var.rel.limit(R(var.l), R(var.l, var.q))
+    (var.rel ** var.q2) ** R(var.l, var.q1, var.r) ** R(var.r, var.q2),
+    var.rel.limit(R(var.l), R(var.l, var.q1))
 )
