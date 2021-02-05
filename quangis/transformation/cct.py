@@ -68,8 +68,8 @@ cct.swap = (var.x ** var.y ** var.z) ** (var.y ** var.x ** var.z)
 
 # derivations
 cct.ratio = Ratio ** Ratio ** Ratio
-cct.leq = Ord ** Ord ** Bool
-cct.eq = Val ** Val ** Bool
+cct.leq = var.x ** var.x ** Bool, var.x.limit(Ord)
+cct.eq = var.x ** var.x ** Bool, var.x.limit(Val)
 
 # aggregations of collections
 cct.count = R(Obj) ** Ratio
@@ -77,11 +77,13 @@ cct.size = R(Loc) ** Ratio
 cct.merge = R(Reg) ** Reg
 cct.centroid = R(Loc) ** Loc
 
+#cct.subtype = var.x ** var.y, var.y.limit(var.x)
+
 # statistical operations
-cct.avg = R(Val, Itv) ** Itv
-cct.min = R(Val, Ord) ** Ord
-cct.max = R(Val, Ord) ** Ord
-cct.sum = R(Val, Count) ** Count
+cct.avg = R(var.v, Itv) ** Itv, var.v.limit(Val)
+cct.min = R(var.v, Ord) ** Ord, var.v.limit(Val)
+cct.max = R(var.v, Ord) ** Ord, var.v.limit(Val)
+cct.sum = R(var.v, Count) ** Count, var.v.limit(Val)
 
 ###########################################################################
 # Geographic transformations
