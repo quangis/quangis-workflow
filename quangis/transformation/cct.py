@@ -117,30 +117,30 @@ cct.ocont = R(Obj, Ratio) ** Ratio
 
 # Projection (π). Projects a given relation to one of its attributes,
 # resulting in a collection.
-cct.pi1 = var.rel ** R(var.x), var.rel.has(R, var.x, at=1)
-cct.pi2 = var.rel ** R(var.x), var.rel.has(R, var.x, at=2)
-cct.pi3 = var.rel ** R(var.x), var.rel.has(R, var.x, at=3)
+cct.pi1 = var.rel ** R(var.x), var.rel.param(var.x, at=1)
+cct.pi2 = var.rel ** R(var.x), var.rel.param(var.x, at=2)
+cct.pi3 = var.rel ** R(var.x), var.rel.param(var.x, at=3)
 
 # Selection (σ). Selects a subset of the relation using a constraint on
 # attribute values, like equality (eq) or order (leq). Used to be sigmae
 # and sigmale.
 cct.select = (
     (var.x ** var.y ** Bool) ** var.rel ** var.y ** var.rel,
-    var.rel.has(R, var.x, subtype=True)
+    var.rel.param(var.x, subtype=True)
 )
 
 # Join on subset (⨝). Subset a relation to those tuples having an attribute
 # value contained in a collection. Used to be bowtie.
 cct.join_subset = (
     var.rel ** R(var.x) ** var.rel,
-    var.rel.has(R, var.x)
+    var.rel.param(var.x)
 )
 
 # Join (⨝*). Substitute the quality of a quantified relation to some
 # quality of one of its keys. Used to be bowtie*.
 cct.join_key = (
     R(var.x, var.q1, var.y) ** var.rel ** R(var.x, var.q2, var.y),
-    var.rel.is_(R(var.x, var.q2), R(var.y, var.q2))
+    var.rel.member(R(var.x, var.q2), R(var.y, var.q2))
 )
 
 # Join with unary function. Generate a unary concept from one other unary
@@ -163,10 +163,10 @@ cct.join_with2 = (
 # value per key, resulting in a unary core concept relation.
 cct.groupbyL = (
     (var.rel ** var.q2) ** R(var.l, var.q1, var.r) ** R(var.l, var.q2),
-    var.rel.is_(R(var.r), R(var.r, var.q1))
+    var.rel.member(R(var.r), R(var.r, var.q1))
 )
 
 cct.groupbyR = (
     (var.rel ** var.q2) ** R(var.l, var.q1, var.r) ** R(var.r, var.q2),
-    var.rel.is_(R(var.l), R(var.l, var.q1))
+    var.rel.member(R(var.l), R(var.l, var.q1))
 )
