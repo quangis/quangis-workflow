@@ -147,7 +147,6 @@ cct.join_key = (
 
 # Join with unary function. Generate a unary concept from one other unary
 # concept of the same type. Used to be join_fa.
-# See: compose join_with1 (compose (compose reify (intersect (deify region 1)))) deify
 cct.join_with1 = (
     (var.x1 ** var.x2)
     ** R2(var.y, var.x1) ** R2(var.y, var.x2)
