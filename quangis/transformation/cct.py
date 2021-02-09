@@ -132,6 +132,7 @@ cct.lDist = R(Loc) ** R(Loc) ** R(Loc, Ratio, Loc)
 cct.loDist = R(Loc) ** R(Obj, Reg) ** R(Loc, Ratio, Obj)
 cct.oTopo = R(Obj, Reg) ** R(Obj, Reg) ** R(Obj, Nom, Obj)
 cct.loTopo = R(Loc) ** R(Obj, Reg) ** R(Loc, Nom, Obj)
+cct.rTopo = R(Reg) ** R(Reg) ** R(Reg, Nom, Reg)
 cct.nDist = R(Obj) ** R(Obj) ** R(Obj, Ratio, Obj) ** R(Obj, Ratio, Obj)
 cct.lVis = R(Loc) ** R(Loc) ** R(Loc, Itv) ** R(Loc, Bool, Loc)
 cct.interpol = R(Reg, Itv) ** R(Loc) ** R(Loc, Itv)
@@ -143,10 +144,12 @@ cct.fcont = R(Loc, var.x) ** R(Reg) ** R(Reg, Ratio), var.x.limit(Nom)
 cct.ocont = R(Obj, Reg) ** R(Reg) ** R(Reg, Count)
 cct.fcover = R(Loc, var.x) ** R(var.x) ** R(var.x,Reg), var.x.limit(Nom)
 cct.ocover =  R(Obj, Reg) ** R(Obj) ** Reg
+
 ###########################################################################
 # Relational transformations
 
 cct.apply = R(var.x, var.y) ** var.x ** var.y
+
 
 # Projection (π). Projects a given relation to one of its attributes,
 # resulting in a collection.
@@ -179,6 +182,9 @@ cct.join_fa = (var.x ** var.y) ** R(var.z, var.x) ** R(var.z, var.y)
 # unary concepts of the same type. Used to be bowtie_ratio and others.
 cct.join_with = (var.q1 ** var.q1 ** var.q2) ** R(var.x, var.q1) ** R(var.x, var.q1) ** R(var.x, var.q2), \
     var.q1.limit(Qlt), var.q2.limit(Qlt), var.x.limit(Val)
+
+
+cct.join = R(var.x, var.y) ** R(var.y, var.z) ** R(var.x, var.z)
 
 # Group by (β). Group quantified relations by the left (right) key,
 # summarizing lists of quality values with the same key value into a new
