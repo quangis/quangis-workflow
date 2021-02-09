@@ -45,8 +45,10 @@ BooleanInvertedField = R(Bool, Reg)
 cct.pointmeasures = R(Reg, Itv), 1
 cct.amountpatches = R(Reg, Nom), 1
 cct.countamounts = R(Reg, Count), 1
-cct.boolpatches = R(Bool, Reg), 1
-cct.nompatches = R(Nom, Reg), 1
+cct.boolcoverages = R(Bool, Reg), 1
+cct.boolratio = R(Bool, Ratio), 1
+cct.nomcoverages = R(Nom, Reg), 1
+cct.nomsize = R(Nom, Ratio), 1
 cct.regions = R(Reg), 1
 cct.contour = R(Ord, Reg), 1
 cct.objects = R(Obj, Ratio), 1
@@ -95,7 +97,9 @@ cct.centroid = R(Loc) ** Loc
 cct.avg = R(Val, Itv) ** Itv
 cct.min = R(Val, Ord) ** Ord
 cct.max = R(Val, Ord) ** Ord
-cct.sum = R(Val, Count) ** Count
+cct.sum = R(Val, var.x) ** var.x , var.x.limit(Ratio)
+cct.contentsum = R(Reg, var.x) ** R(Reg, var.x), var.x.limit(Ratio)
+cct.coveragesum = R(Nom, var.x) ** R(Nom, var.x), var.x.limit(Ratio)
 
 ###########################################################################
 # Geometric transformations
@@ -108,7 +112,9 @@ cct.unify = R(Loc) ** R(Loc) ** R(Loc)
 # conversions
 cct.reify = R(Loc) ** Reg
 cct.deify = Reg ** R(Loc)
-cct.nest = Qlt ** R(Qlt) #Puts regions into some unary relation
+cct.nest = var.x ** R(var.x) #Puts values into some unary relation
+cct.nest2 = var.x ** var.y ** R(var.x, var.y)
+cct.nest3 = var.x ** var.y ** var.z ** R(var.x, var.y, var.z)
 cct.get = R(var.x) ** var.x, var.x.limit(Val)
 cct.invertord = R(Loc, Ord) ** R(Ord, Reg)
 cct.invert  =  R(Loc, Nom) ** R(Nom, Reg)
@@ -116,7 +122,7 @@ cct.invertbool  =  R(Loc, Bool) ** R(Bool, Reg)
 cct.revertord = R(Ord, Reg) ** R(Loc, Ord)
 cct.revert = R(Nom, Reg) ** R(Loc, Nom)
 cct.revertbool = R(Bool, Reg) ** R(Loc, Bool)
-cct.getamounts = R(Obj, Ratio) ** R(Obj, Reg) ** R(Reg, Ratio)
+cct.getamounts = R(Obj, var.x) ** R(Obj, Reg) ** R(Reg, var.x), var.x.limit(Ratio)
 
 
 # quantified relations
@@ -132,9 +138,10 @@ cct.extrapol = R(Obj, Reg) ** R(Loc, Bool) #Buffering
 cct.arealinterpol = R(Reg, Ratio) ** R(Reg) ** R(Reg, Ratio)
 
 # amount operations
-cct.fcont = R(Loc, Nom) ** Ratio
-cct.ocont = R(Obj, Nom) ** Ratio
-
+cct.fcont = R(Loc, var.x) ** R(Reg) ** R(Reg, Ratio), var.x.limit(Nom)
+cct.ocont = R(Obj, Reg) ** R(Reg) ** R(Reg, Count)
+cct.fcover = R(Loc, var.x) ** R(var.x) ** R(var.x,Reg), var.x.limit(Nom)
+cct.ocover =  R(Obj, Reg) ** R(Obj) ** Reg
 ###########################################################################
 # Relational transformations
 
