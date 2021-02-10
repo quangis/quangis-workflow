@@ -64,6 +64,7 @@ cct.object = Obj, 1
 cct.objects = R(Obj), 1
 cct.region = Reg, 1
 cct.in_ = Nom, 0
+cct.out_ = Nom, 0
 cct.noms = R(Nom), 1
 cct.ratios = R(Ratio), 1
 cct.countV = Count, 1
@@ -135,6 +136,7 @@ cct.loDist = R(Loc) ** R(Obj, Reg) ** R(Loc, Ratio, Obj)
 cct.oTopo = R(Obj, Reg) ** R(Obj, Reg) ** R(Obj, Nom, Obj)
 cct.loTopo = R(Loc) ** R(Obj, Reg) ** R(Loc, Nom, Obj)
 cct.rTopo = R(Reg) ** R(Reg) ** R(Reg, Nom, Reg)
+cct.lTopo = R(Loc) ** R(Loc) ** R(Loc, Nom, Loc)
 cct.nDist = R(Obj) ** R(Obj) ** R(Obj, Ratio, Obj) ** R(Obj, Ratio, Obj)
 cct.lVis = R(Loc) ** R(Loc) ** R(Loc, Itv) ** R(Loc, Bool, Loc)
 cct.interpol = R(Reg, Itv) ** R(Loc) ** R(Loc, Itv)
@@ -198,7 +200,7 @@ cct.groupbyR = (var.rel ** var.r) ** R(var.x, var.q, var.y) ** R(var.y, var.r), 
 
 cct.groupbyL = (var.rel ** var.r) ** R(var.x, var.q, var.y) ** R(var.x, var.r), \
     var.x.limit(Val), var.y.limit(Val), \
-    var.q.limit(Nom), \
+    var.q.limit(Qlt), \
     var.rel.limit(R(var.y), R(var.y, var.q))
 
 
