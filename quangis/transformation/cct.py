@@ -60,6 +60,7 @@ cct.field = R(Loc, Ratio), 1
 cct.nomfield = R(Loc, Nom), 1
 cct.boolfield = R(Loc, Bool), 1
 cct.ordfield = R(Loc, Ord), 1
+cct.itvfield = R(Loc, Itv), 1
 cct.object = Obj, 1
 cct.objects = R(Obj), 1
 cct.region = Reg, 1
@@ -96,22 +97,18 @@ cct.count = R(Obj) ** Ratio
 cct.size = R(Loc) ** Ratio
 cct.merge = R(Reg) ** Reg
 cct.centroid = R(Loc) ** Loc
+cct.name = R(Nom) ** Nom
 
 # statistical operations
-cct.avg = R(Val, Itv) ** Itv
-cct.min = R(Val, Ord) ** Ord
-cct.max = R(Val, Ord) ** Ord
+cct.avg = R(Val, var.x) ** var.x, var.x.limit(Itv)
+cct.min = R(Val, var.x) ** var.x, var.x.limit(Ord)
+cct.max = R(Val, var.x) ** var.x, var.x.limit(Ord)
 cct.sum = R(Val, var.x) ** var.x , var.x.limit(Ratio)
 cct.contentsum = R(Reg, var.x) ** R(Reg, var.x), var.x.limit(Ratio)
 cct.coveragesum = R(Nom, var.x) ** R(Nom, var.x), var.x.limit(Ratio)
 
 ###########################################################################
 # Geometric transformations
-
-cct.intersect = R(Loc) ** R(Loc) ** R(Loc)
-cct.subtract = R(Loc) ** R(Loc) ** R(Loc)
-cct.unify = R(Loc) ** R(Loc) ** R(Loc)
-
 
 # conversions
 cct.reify = R(Loc) ** Reg
@@ -144,7 +141,7 @@ cct.extrapol = R(Obj, Reg) ** R(Loc, Bool) #Buffering
 cct.arealinterpol = R(Reg, Ratio) ** R(Reg) ** R(Reg, Ratio)
 
 # amount operations
-cct.fcont = R(Loc, var.x) ** Reg ** Ratio, var.x.limit(Nom)
+cct.fcont = R(Loc, var.x) ** (R(Val, var.x) ** var.x) ** Reg ** Ratio, var.x.limit(Nom)
 cct.ocont = R(Obj, Reg) ** Reg ** Count
 cct.fcover = R(Loc, var.x) ** R(var.x) ** Reg, var.x.limit(Nom)
 cct.ocover =  R(Obj, Reg) ** R(Obj) ** Reg
