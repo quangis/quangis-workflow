@@ -64,6 +64,8 @@ cct.object = Obj, 1
 cct.objects = R(Obj), 1
 cct.region = Reg, 1
 cct.in_ = Nom, 0
+cct.noms = R(Nom), 1
+cct.ratios = R(Ratio), 1
 cct.countV = Count, 1
 cct.ratioV = Ratio, 1
 cct.interval = Itv, 1
@@ -140,9 +142,9 @@ cct.extrapol = R(Obj, Reg) ** R(Loc, Bool) #Buffering
 cct.arealinterpol = R(Reg, Ratio) ** R(Reg) ** R(Reg, Ratio)
 
 # amount operations
-cct.fcont = R(Loc, var.x) ** R(Reg) ** R(Reg, Ratio), var.x.limit(Nom)
-cct.ocont = R(Obj, Reg) ** R(Reg) ** R(Reg, Count)
-cct.fcover = R(Loc, var.x) ** R(var.x) ** R(var.x,Reg), var.x.limit(Nom)
+cct.fcont = R(Loc, var.x) ** Reg ** Ratio, var.x.limit(Nom)
+cct.ocont = R(Obj, Reg) ** Reg ** Count
+cct.fcover = R(Loc, var.x) ** R(var.x) ** Reg, var.x.limit(Nom)
 cct.ocover =  R(Obj, Reg) ** R(Obj) ** Reg
 
 ###########################################################################
@@ -189,14 +191,14 @@ cct.join = R(var.x, var.y) ** R(var.y, var.z) ** R(var.x, var.z)
 # Group by (β). Group quantified relations by the left (right) key,
 # summarizing lists of quality values with the same key value into a new
 # value per key, resulting in a unary core concept relation.
-cct.groupbyL = (var.rel ** var.q) ** R(var.x, var.q, var.y) ** R(var.x, var.q), \
+cct.groupbyR = (var.rel ** var.r) ** R(var.x, var.q, var.y) ** R(var.y, var.r), \
     var.x.limit(Val), var.y.limit(Val), \
     var.q.limit(Qlt), \
     var.rel.limit(R(var.x), R(var.x, var.q))
 
-cct.groupbyR = (var.rel ** var.q) ** R(var.x, var.q, var.y) ** R(var.y, var.q), \
+cct.groupbyL = (var.rel ** var.r) ** R(var.x, var.q, var.y) ** R(var.x, var.r), \
     var.x.limit(Val), var.y.limit(Val), \
-    var.q.limit(Qlt), \
+    var.q.limit(Nom), \
     var.rel.limit(R(var.y), R(var.y, var.q))
 
 
