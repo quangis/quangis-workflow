@@ -10,8 +10,7 @@ from rdflib import Graph, URIRef
 from rdflib.term import Node
 from typing import Iterable, List
 
-from quangis import namespace
-from quangis.namespace import RDFS
+from quangis.namespace import RDFS, namespaces
 
 
 class Ontology(Graph):
@@ -22,7 +21,7 @@ class Ontology(Graph):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        for prefix, ns in namespace.mapping.items():
+        for prefix, ns in namespaces.items():
             self.bind(prefix, str(ns))
 
     def dimensionality(self, concept: URIRef,

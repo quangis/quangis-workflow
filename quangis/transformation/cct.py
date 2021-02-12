@@ -1,7 +1,7 @@
 """
 Module containing the core concept transformation algebra. Usage:
 
-    >>> from quangis import cct
+    >>> from quangis.transformation.cct import cct
     >>> expr = cct.parse("pi1 (objects data)")
     >>> print(expr.type)
     R(Obj)
@@ -28,8 +28,8 @@ Itv = TypeOperator("Itv", supertype=Ord)
 Ratio = TypeOperator("Ratio", supertype=Itv)
 Count = TypeOperator("Count", supertype=Ratio)
 R1 = TypeOperator.parameterized("R1", 1)  # Collections
-R2 = TypeOperator.parameterized("R2", 2)  # Unary core concepts
-R3 = TypeOperator.parameterized("R3", 3)  # Quantified relations
+R2 = TypeOperator.parameterized("R2", 2)  # Unary core concepts, 1 key (left)
+R3 = TypeOperator.parameterized("R3", 3)  # Quantified relation, 2 keys (l & r)
 
 SpatialField = R2(Loc, Qlt)
 InvertedField = R2(Qlt, Reg)
@@ -46,20 +46,36 @@ BooleanInvertedField = R2(Bool, Reg)
 
 cct.pointmeasures = R2(Reg, Itv), 1
 cct.amountpatches = R2(Reg, Nom), 1
+cct.countamounts = R2(Reg, Count), 1
+cct.boolcoverages = R2(Bool, Reg), 1
+cct.boolratio = R2(Bool, Ratio), 1
+cct.nomcoverages = R2(Nom, Reg), 1
+cct.nomsize = R2(Nom, Ratio), 1
+cct.regions = R1(Reg), 1
 cct.contour = R2(Ord, Reg), 1
-cct.objects = R2(Obj, Ratio), 1
+cct.objectratios = R2(Obj, Ratio), 1
+cct.objectnominals = R2(Obj, Nom), 1
 cct.objectregions = R2(Obj, Reg), 1
 cct.contourline = R2(Itv, Reg), 1
 cct.objectcounts = R2(Obj, Count), 1
 cct.field = R2(Loc, Ratio), 1
+cct.nomfield = R2(Loc, Nom), 1
+cct.boolfield = R2(Loc, Bool), 1
+cct.ordfield = R2(Loc, Ord), 1
+cct.itvfield = R2(Loc, Itv), 1
 cct.object = Obj, 1
+cct.objects = R1(Obj), 1
 cct.region = Reg, 1
 cct.in_ = Nom, 0
+cct.out = Nom, 0
+cct.noms = R1(Nom), 1
+cct.ratios = R1(Ratio), 1
 cct.countV = Count, 1
 cct.ratioV = Ratio, 1
 cct.interval = Itv, 1
 cct.ordinal = Ord, 1
 cct.nominal = Nom, 1
+cct.true = Bool, 0
 
 ###########################################################################
 # Math/stats transformations
@@ -71,34 +87,46 @@ cct.cast = var.x ** var.y, var.x.subtype(var.y)
 
 # derivations
 cct.ratio = Ratio ** Ratio ** Ratio
+cct.product = Ratio ** Ratio ** Ratio
 cct.leq = var.x ** var.x ** Bool, var.x.subtype(Ord)
 cct.eq = var.x ** var.x ** Bool, var.x.subtype(Val)
+cct.conj = Bool ** Bool ** Bool
+cct.disj = Bool ** Bool ** Bool
+cct.notj = Bool ** Bool
 
 # aggregations of collections
 cct.count = R1(Obj) ** Ratio
 cct.size = R1(Loc) ** Ratio
 cct.merge = R1(Reg) ** Reg
 cct.centroid = R1(Loc) ** Loc
+cct.name = R1(Nom) ** Nom
 
 # statistical operations
-cct.avg = R2(var.v, Itv) ** Itv, var.v.subtype(Val)
-cct.min = R2(var.v, Ord) ** Ord, var.v.subtype(Val)
-cct.max = R2(var.v, Ord) ** Ord, var.v.subtype(Val)
-cct.sum = R2(var.v, Count) ** Count, var.v.subtype(Val)
+cct.avg = R2(var.v, var.x) ** var.x, var.v.subtype(Val), var.x.subtype(Itv)
+cct.min = R2(var.v, var.x) ** var.x, var.v.subtype(Val), var.x.subtype(Ord)
+cct.max = R2(var.v, var.x) ** var.x, var.v.subtype(Val), var.x.subtype(Ord)
+cct.sum = R2(var.v, var.x) ** var.x, var.v.subtype(Val), var.x.subtype(Ratio)
+cct.contentsum = R2(Reg, var.x) ** R2(Reg, var.x), var.x.subtype(Ratio)
+cct.coveragesum = R2(var.v, var.x) ** R2(Nom, var.x), var.x.subtype(Ratio), var.v.subtype(Nom)
 
-###########################################################################
-# Geographic transformations
 
-cct.intersect = R1(Loc) ** R1(Loc) ** R1(Loc)
+##########################################################################
+# Geometric transformations
+
+cct.interpol = R2(Reg, Itv) ** R1(Loc) ** R2(Loc, Itv)
+cct.extrapol = R2(Obj, Reg) ** R2(Loc, Bool)  # Buffering
+cct.arealinterpol = R2(Reg, Ratio) ** R1(Reg) ** R2(Reg, Ratio)
 
 # conversions
 cct.reify = R1(Loc) ** Reg
 cct.deify = Reg ** R1(Loc)
+cct.nest = var.x ** R1(var.x)  # Puts values into some unary relation
+cct.nest2 = var.x ** var.y ** R2(var.x, var.y)
+cct.nest3 = var.x ** var.y ** var.z ** R3(var.x, var.y, var.z)
 cct.get = R1(var.x) ** var.x, var.x.subtype(Val)
-cct.invert = R2(Loc, var.x) ** R2(Reg, var.x), var.x.subtype(Nom)
-cct.invert2 = R2(Loc, Ord) ** R2(Ord, Reg)
-cct.revert = R2(Reg, var.x) ** R2(Loc, var.x), var.x.subtype(Nom)
-cct.revert2 = R2(Ord, Reg) ** R2(Loc, Ord)
+cct.invert = R2(Loc, var.x) ** R2(var.x, Reg), var.x.subtype(Qlt)
+cct.revert = R2(var.x, Reg) ** R2(Loc, var.x), var.x.subtype(Qlt)
+cct.getamounts = R2(Obj, var.x) ** R2(Obj, Reg) ** R2(Reg, var.x), var.x.subtype(Ratio)
 
 # quantified relations
 cct.oDist = R2(Obj, Reg) ** R2(Obj, Reg) ** R3(Obj, Ratio, Obj)
@@ -106,16 +134,22 @@ cct.lDist = R1(Loc) ** R1(Loc) ** R3(Loc, Ratio, Loc)
 cct.loDist = R1(Loc) ** R2(Obj, Reg) ** R3(Loc, Ratio, Obj)
 cct.oTopo = R2(Obj, Reg) ** R2(Obj, Reg) ** R3(Obj, Nom, Obj)
 cct.loTopo = R1(Loc) ** R2(Obj, Reg) ** R3(Loc, Nom, Obj)
+cct.rTopo = R1(Reg) ** R1(Reg) ** R3(Reg, Nom, Reg)
+cct.lTopo = R1(Loc) ** R1(Loc) ** R3(Loc, Nom, Loc)
 cct.nDist = R1(Obj) ** R1(Obj) ** R3(Obj, Ratio, Obj) ** R3(Obj, Ratio, Obj)
 cct.lVis = R1(Loc) ** R1(Loc) ** R2(Loc, Itv) ** R3(Loc, Bool, Loc)
-cct.interpol = R2(Reg, Itv) ** R1(Loc) ** R2(Loc, Itv)
 
 # amount operations
-cct.fcont = R2(Loc, Itv) ** Ratio
-cct.ocont = R2(Obj, Ratio) ** Ratio
+cct.fcont = (R2(Val, var.x) ** var.x) ** R2(Loc, var.x) ** Reg ** Ratio, var.x.subtype(Qlt)
+cct.ocont = R2(Obj, Reg) ** Reg ** Count
+cct.fcover = R2(Loc, var.x) ** R1(var.x) ** Reg, var.x.subtype(Qlt)
+cct.ocover = R2(Obj, Reg) ** R1(Obj) ** Reg
+
 
 ###########################################################################
 # Relational transformations
+
+cct.apply = R2(var.x, var.y) ** var.x ** var.y
 
 # Projection (π). Projects a given relation to one of its attributes,
 # resulting in a collection.
@@ -130,6 +164,10 @@ cct.select = (
     (var.x ** var.y ** Bool) ** var.rel ** var.y ** var.rel,
     var.rel.param(var.x, subtype=True)
 )
+
+# Join of two unary concepts, like a table join.
+# is join the same as join_with2 eq?
+cct.join = R2(var.x, var.y) ** R2(var.y, var.z) ** R2(var.x, var.z)
 
 # Join on subset (⨝). Subset a relation to those tuples having an attribute
 # value contained in a collection. Used to be bowtie.

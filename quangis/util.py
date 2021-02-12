@@ -5,7 +5,7 @@ Various utility functions.
 from rdflib import URIRef, BNode, Literal
 from rdflib.term import Identifier
 
-from quangis import namespace
+from quangis.namespace import namespaces
 
 
 def shorten(node: Identifier) -> str:
@@ -15,7 +15,7 @@ def shorten(node: Identifier) -> str:
 
     if type(node) == URIRef:
         uri = str(node)
-        for short, full in namespace.mapping.items():
+        for short, full in namespaces.items():
             full = str(full)
             if uri.startswith(full):
                 return "{}:{}".format(short, uri[len(full):])
@@ -31,7 +31,7 @@ def uri(string: str) -> URIRef:
     """
     Convert a possibly shortened string to a URIRef.
     """
-    for prefix, ns in namespace.mapping.items():
+    for prefix, ns in namespaces.items():
         if string.startswith(prefix + ":"):
             return getattr(ns, string[len(prefix)+1:])
     return URIRef(string)
