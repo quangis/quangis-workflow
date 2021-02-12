@@ -30,6 +30,7 @@ Count = TypeOperator("Count", supertype=Ratio)
 R1 = TypeOperator.parameterized("R1", 1)  # Collections
 R2 = TypeOperator.parameterized("R2", 2)  # Unary core concepts, 1 key (left)
 R3 = TypeOperator.parameterized("R3", 3)  # Quantified relation, 2 keys (l & r)
+R3a = TypeOperator.parameterized("R3a", 3)  # Ternary relation, 1 key (left)
 
 SpatialField = R2(Loc, Qlt)
 InvertedField = R2(Qlt, Reg)
@@ -79,6 +80,11 @@ cct.true = Bool, 0
 
 ###########################################################################
 # Math/stats transformations
+
+# functions to handle multiple attributes of the same types with 1 key
+cct.join_attr = R2(var.x, var.y) ** R2(var.x, var.z) ** R3a(var.x, var.y, var.z)
+cct.get_attrL = R3a(var.x, var.y, var.z) ** R2(var.x, var.y)
+cct.get_attrR = R3a(var.x, var.y, var.z) ** R2(var.x, var.z)
 
 # functional
 cct.compose = (var.y ** var.z) ** (var.x ** var.y) ** (var.x ** var.z)
