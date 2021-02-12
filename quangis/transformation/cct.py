@@ -158,7 +158,7 @@ cct.nDist = R1(Obj) ** R1(Obj) ** R3(Obj, Ratio, Obj) ** R3(Obj, Ratio, Obj)
 cct.lVis = R1(Loc) ** R1(Loc) ** R2(Loc, Itv) ** R3(Loc, Bool, Loc)
 
 # amount operations
-cct.fcont = (R2(Val, var.x) ** var.x) ** R2(Loc, var.x) ** Reg ** Ratio, var.x.subtype(Qlt)
+cct.fcont = (R2(var.v, var.x) ** var.x) ** R2(Loc, var.x) ** Reg ** Ratio, var.x.subtype(Qlt), var.v.subtype(Val)
 cct.ocont = R2(Obj, Reg) ** Reg ** Count
 cct.fcover = R2(Loc, var.x) ** R1(var.x) ** Reg, var.x.subtype(Qlt)
 cct.ocover = R2(Obj, Reg) ** R1(Obj) ** Reg
