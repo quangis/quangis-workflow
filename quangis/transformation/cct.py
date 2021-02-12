@@ -97,7 +97,7 @@ cct.product = Ratio ** Ratio ** Ratio
 cct.leq = var.x ** var.x ** Bool, var.x.subtype(Ord)
 cct.eq = var.x ** var.x ** Bool, var.x.subtype(Val)
 cct.conj = Bool ** Bool ** Bool
-cct.disj = Bool ** Bool ** Bool
+cct.disj = Bool ** Bool ** Bool  # define as not-conjunction
 cct.notj = Bool ** Bool
 
 # aggregations of collections
@@ -112,7 +112,9 @@ cct.avg = R2(var.v, var.x) ** var.x, var.v.subtype(Val), var.x.subtype(Itv)
 cct.min = R2(var.v, var.x) ** var.x, var.v.subtype(Val), var.x.subtype(Ord)
 cct.max = R2(var.v, var.x) ** var.x, var.v.subtype(Val), var.x.subtype(Ord)
 cct.sum = R2(var.v, var.x) ** var.x, var.v.subtype(Val), var.x.subtype(Ratio)
+# define in terms of: nest2 (merge pi1) (sum)
 cct.contentsum = R2(Reg, var.x) ** R2(Reg, var.x), var.x.subtype(Ratio)
+# define in terms of: nest2 (name pi1) (sum)
 cct.coveragesum = R2(var.v, var.x) ** R2(Nom, var.x), var.x.subtype(Ratio), var.v.subtype(Nom)
 
 
@@ -120,8 +122,12 @@ cct.coveragesum = R2(var.v, var.x) ** R2(Nom, var.x), var.x.subtype(Ratio), var.
 # Geometric transformations
 
 cct.interpol = R2(Reg, Itv) ** R1(Loc) ** R2(Loc, Itv)
+# should be defined with ldist somehow
 cct.extrapol = R2(Obj, Reg) ** R2(Loc, Bool)  # Buffering
 cct.arealinterpol = R2(Reg, Ratio) ** R1(Reg) ** R2(Reg, Ratio)
+
+# deify/reify, nest/get, invert/revert might be defined in terms of inverse
+cct.inverse = (var.x ** var.y) ** (var.y ** var.x)
 
 # conversions
 cct.reify = R1(Loc) ** Reg
@@ -132,14 +138,20 @@ cct.nest3 = var.x ** var.y ** var.z ** R3(var.x, var.y, var.z)
 cct.get = R1(var.x) ** var.x, var.x.subtype(Val)
 cct.invert = R2(Loc, var.x) ** R2(var.x, Reg), var.x.subtype(Qlt)
 cct.revert = R2(var.x, Reg) ** R2(Loc, var.x), var.x.subtype(Qlt)
+# could be definable with a projection operator that is applied to ternary
+# relation (?)
 cct.getamounts = R2(Obj, var.x) ** R2(Obj, Reg) ** R2(Reg, var.x), var.x.subtype(Ratio)
 
 # quantified relations
+# define odist in terms of the minimal ldist
 cct.oDist = R2(Obj, Reg) ** R2(Obj, Reg) ** R3(Obj, Ratio, Obj)
 cct.lDist = R1(Loc) ** R1(Loc) ** R3(Loc, Ratio, Loc)
+# similar for lodist
 cct.loDist = R1(Loc) ** R2(Obj, Reg) ** R3(Loc, Ratio, Obj)
 cct.oTopo = R2(Obj, Reg) ** R2(Obj, Reg) ** R3(Obj, Nom, Obj)
 cct.loTopo = R1(Loc) ** R2(Obj, Reg) ** R3(Loc, Nom, Obj)
+# otopo can be defined in terms of rtopo? in rtopo, if points of a region are
+# all inside, then the region is inside
 cct.rTopo = R1(Reg) ** R1(Reg) ** R3(Reg, Nom, Reg)
 cct.lTopo = R1(Loc) ** R1(Loc) ** R3(Loc, Nom, Loc)
 cct.nDist = R1(Obj) ** R1(Obj) ** R3(Obj, Ratio, Obj) ** R3(Obj, Ratio, Obj)
