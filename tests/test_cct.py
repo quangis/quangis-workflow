@@ -21,12 +21,12 @@ class TestCCT(unittest.TestCase):
 
     def test_select_match(self):
         self.parse(
-            "select eq (objects xs) (object x)",
+            "select eq (objectratios xs) (object x)",
             R2(Obj, Ratio))
 
     def test_select_mismatch(self):
         self.parse(
-            "select eq (objects xs) (region x)",
+            "select eq (objectratios xs) (region x)",
             error.ViolatedConstraint)
 
     def test01(self):
@@ -64,13 +64,13 @@ class TestCCT(unittest.TestCase):
     def test07(self):
         self.parse(
             "groupbyL sum (join_key (select eq (otopo (objectregions x) "
-            "(objectregions y)) in) (objects z))",
+            "(objectregions y)) in) (objectratios z))",
             R2(Obj, Count))
 
     def test08(self):
         self.parse(
             "groupbyL avg (join_key (select eq (otopo (objectregions x) "
-            "(objectregions y)) in) (objects z))",
+            "(objectregions y)) in) (objectratios z))",
             R2(Obj, Itv))
 
     def test09(self):
@@ -87,18 +87,18 @@ class TestCCT(unittest.TestCase):
 
     def test11(self):
         self.parse(
-            "revert2 (contour x)",
+            "revert (contour x)",
             R2(Loc, Ord))
 
     def test12(self):
         self.parse(
-            "revert (amountpatches x)",
+            "revert (nomcoverages x)",
             R2(Loc, Nom))
 
     def test13(self):
         self.parse(
             "invert (field x)",
-            R2(Reg, Ratio))
+            R2(Ratio, Reg))
 
     def test14(self):
         self.parse(
@@ -119,7 +119,7 @@ class TestCCT(unittest.TestCase):
 
     def test17(self):
         self.parse(
-            "join_with2 ratio (objects x) (objects y)",
+            "join_with2 ratio (objectratios x) (objectratios y)",
             R2(Obj, Ratio))
 
     def test18(self):
@@ -160,7 +160,7 @@ class TestCCT(unittest.TestCase):
 
     def test24(self):
         self.parse(
-            "reify (pi1 (select leq (join_subset (revert2 (contour noise)) "
+            "reify (pi1 (select leq (join_subset (revert (contour noise)) "
             "(deify (merge (pi2 (select eq (objectregions muni) "
             "(object Utrecht)))))) (ordinal 70)))",
             Reg)
@@ -168,7 +168,7 @@ class TestCCT(unittest.TestCase):
     def test25(self):
         self.parse(
             "join_with2 ratio (groupbyR size (select eq (lotopo (pi1 (select "
-            "leq (revert2 (contour noise)) (ordinal 70))) (select eq "
+            "leq (revert (contour noise)) (ordinal 70))) (select eq "
             "(objectregions muni) (object Utrecht))) in)) (groupbyR size "
             "(select eq (lotopo (deify (merge (pi2 (objectregions muni)))) "
             "(select eq (objectregions muni) (object Utrecht))) in))",
@@ -196,10 +196,12 @@ class TestCCT(unittest.TestCase):
 
     def test28(self):
         self.parse(
-            "ratio (fcont (interpol (pointmeasures temperature) (deify (merge "
-            "(pi2 (select eq (objectregions muni) (object Utrecht))))))) (size"
-            "(pi1 (interpol (pointmeasures temperature) (deify (merge (pi2 "
-            "(select eq (objectregions muni) (object Utrecht))))))))",
+            """
+            ratio (fcont avg (interpol (pointmeasures temperature) (deify
+            (merge (pi2 (select eq (objectregions muni) (object Utrecht))))))
+            (region x)) (size (pi1 (interpol (pointmeasures temperature) (deify
+            (merge (pi2 (select eq (objectregions muni) (object Utrecht))))))))
+            """,
             Ratio)
 
 
