@@ -64,6 +64,7 @@ cct.nomfield = R2(Loc, Nom), 1
 cct.boolfield = R2(Loc, Bool), 1
 cct.ordfield = R2(Loc, Ord), 1
 cct.itvfield = R2(Loc, Itv), 1
+cct.ratiofield = R2(Loc, Ratio), 1
 cct.object = Obj, 1
 cct.objects = R1(Obj), 1
 cct.region = Reg, 1
@@ -125,6 +126,8 @@ cct.interpol = R2(Reg, var.x) ** R1(Loc) ** R2(Loc, var.x), var.x.subtype(Itv)
 # should be defined with ldist somehow
 cct.extrapol = R2(Obj, Reg) ** R2(Loc, Bool)  # Buffering
 cct.arealinterpol = R2(Reg, var.x) ** R1(Reg) ** R2(Reg, var.x), var.x.subtype(Ratio)
+cct.slope = R2(Loc, var.x) ** R2(Loc, Ratio), var.x.subtype(Itv)
+cct.aspect = R2(Loc, var.x) ** R2(Loc, Ratio), var.x.subtype(Itv)
 
 # deify/reify, nest/get, invert/revert might be defined in terms of inverse
 cct.inverse = (var.x ** var.y) ** (var.y ** var.x)
