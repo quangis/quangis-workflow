@@ -121,10 +121,10 @@ cct.coveragesum = R2(var.v, var.x) ** R2(Nom, var.x), var.x.subtype(Ratio), var.
 ##########################################################################
 # Geometric transformations
 
-cct.interpol = R2(Reg, Itv) ** R1(Loc) ** R2(Loc, Itv)
+cct.interpol = R2(Reg, var.x) ** R1(Loc) ** R2(Loc, var.x), var.x.subtype(Itv)
 # should be defined with ldist somehow
 cct.extrapol = R2(Obj, Reg) ** R2(Loc, Bool)  # Buffering
-cct.arealinterpol = R2(Reg, Ratio) ** R1(Reg) ** R2(Reg, Ratio)
+cct.arealinterpol = R2(Reg, var.x) ** R1(Reg) ** R2(Reg, var.x), var.x.subtype(Ratio)
 
 # deify/reify, nest/get, invert/revert might be defined in terms of inverse
 cct.inverse = (var.x ** var.y) ** (var.y ** var.x)
@@ -204,15 +204,18 @@ cct.join_key = (
 # Join with unary function. Generate a unary concept from one other unary
 # concept of the same type. Used to be join_fa.
 cct.join_with1 = (
-    (var.x1 ** var.x2)
-    ** R2(var.y, var.x1) ** R2(var.y, var.x2)
+    (var.x11 ** var.x2)
+    ** R2(var.y, var.x1) ** R2(var.y, var.x2),
+    var.x1.subtype(var.x11)
 )
+
 
 # Join with binary function (⨝_f). Generate a unary concept from two other
 # unary concepts of the same type. Used to be bowtie_ratio and others.
 cct.join_with2 = (
-    (var.x1 ** var.x2 ** var.x3)
-    ** R2(var.y, var.x1) ** R2(var.y, var.x2) ** R2(var.y, var.x3)
+    (var.x11 ** var.x22 ** var.x3)
+    ** R2(var.y, var.x1) ** R2(var.y, var.x2) ** R2(var.y, var.x3),
+    var.x1.subtype(var.x11), var.x2.subtype(var.x22)
 )
 
 # Group by (β). Group quantified relations by the left (right) key,
