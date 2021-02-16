@@ -156,12 +156,12 @@ cct.loTopo = R1(Loc) ** R2(Obj, Reg) ** R3(Loc, Nom, Obj)
 # otopo can be defined in terms of rtopo? in rtopo, if points of a region are
 # all inside, then the region is inside
 cct.rTopo = R1(Reg) ** R1(Reg) ** R3(Reg, Nom, Reg)
-cct.lTopo = R1(Loc) ** R1(Loc) ** R3(Loc, Nom, Loc)
+cct.lTopo = R1(Loc) ** Reg ** R3(Loc, Nom, Reg)
 cct.nDist = R1(Obj) ** R1(Obj) ** R3(Obj, Ratio, Obj) ** R3(Obj, Ratio, Obj)
 cct.lVis = R1(Loc) ** R1(Loc) ** R2(Loc, Itv) ** R3(Loc, Bool, Loc)
 
 # amount operations
-cct.fcont = (R2(var.v, var.x) ** var.x) ** R2(Loc, var.x) ** Reg ** Ratio, var.x.subtype(Qlt), var.v.subtype(Val)
+cct.fcont = (R2(var.v, var.x) ** var.y) ** R2(Loc, var.x) ** Reg ** var.y, var.x.subtype(Qlt), var.y.subtype(Qlt), var.v.subtype(Val)
 cct.ocont = R2(Obj, Reg) ** Reg ** Count
 cct.fcover = R2(Loc, var.x) ** R1(var.x) ** Reg, var.x.subtype(Qlt)
 cct.ocover = R2(Obj, Reg) ** R1(Obj) ** Reg
@@ -195,6 +195,14 @@ cct.join = R2(var.x, var.y) ** R2(var.y, var.z) ** R2(var.x, var.z)
 cct.join_subset = (
     var.rel ** R1(var.x) ** var.rel,
     var.rel.param(var.x)
+)
+
+#Set union and set difference
+cct.set_union = (
+    var.rel ** var.rel ** var.rel
+)
+cct.set_diff = (
+    var.rel ** var.rel ** var.rel
 )
 
 # Join (⨝*). Substitute the quality of a quantified relation to some
