@@ -55,6 +55,7 @@ cct.nomsize = R2(Nom, Ratio), 1
 cct.regions = R1(Reg), 1
 cct.contour = R2(Ord, Reg), 1
 cct.contourline = R2(Itv, Reg), 1
+cct.objectregions = R2(Obj, Reg), 1
 cct.objectregionratios = R3a(Obj, Reg, Ratio), 1
 cct.objectregionnominals = R3a(Obj, Reg, Nom), 1
 cct.objectregioncounts = R3a(Obj, Reg, Count), 1
@@ -85,7 +86,7 @@ cct.true = Bool, 0
 # functional
 cct.compose = (var.y ** var.z) ** (var.x ** var.y) ** (var.x ** var.z)
 cct.swap = (var.x ** var.y ** var.z) ** (var.y ** var.x ** var.z)
-cct.cast = var.x ** var.y, var.x.subtype(var.y)
+#cct.cast = var.x ** var.y, var.x.subtype(var.y)
 
 # derivations
 cct.ratio = Ratio ** Ratio ** Ratio
@@ -108,18 +109,17 @@ cct.avg = R2(var.v, var.x) ** var.x, var.v.subtype(Val), var.x.subtype(Itv)
 cct.min = R2(var.v, var.x) ** var.x, var.v.subtype(Val), var.x.subtype(Ord)
 cct.max = R2(var.v, var.x) ** var.x, var.v.subtype(Val), var.x.subtype(Ord)
 cct.sum = R2(var.v, var.x) ** var.x, var.v.subtype(Val), var.x.subtype(Ratio)
-# define in terms of: nest2 (merge pi1) (sum)
+# define in terms of: nest2 (merge (pi1 (countamounts x1))) (sum (countamounts x1))
 cct.contentsum = R2(Reg, var.x) ** R2(Reg, var.x), var.x.subtype(Ratio)
-# define in terms of: nest2 (name pi1) (sum)
+# define in terms of: nest2 (name (pi1 (nomcoverages x1))) (merge (pi2(nomcoverages x1)))
 cct.coveragesum = R2(var.v, var.x) ** R2(Nom, var.x), var.x.subtype(Ratio), var.v.subtype(Nom)
 
 
 ##########################################################################
 # Geometric transformations
-
 cct.interpol = R2(Reg, var.x) ** R1(Loc) ** R2(Loc, var.x), var.x.subtype(Itv)
-# should be defined with ldist somehow
-cct.extrapol = R2(Obj, Reg) ** R2(Loc, Bool)  # Buffering
+# define in terms of ldist: join_with1 (leq (ratioV w))(groupbyL (min) (loDist (deify (region y)) (objectregions x)))
+cct.extrapol = R2(Obj, Reg) ** R2(Loc, Bool)  # Buffering, define in terms of Dist:
 cct.arealinterpol = R2(Reg, var.x) ** R1(Reg) ** R2(Reg, var.x), var.x.subtype(Ratio)
 cct.slope = R2(Loc, var.x) ** R2(Loc, Ratio), var.x.subtype(Itv)
 cct.aspect = R2(Loc, var.x) ** R2(Loc, Ratio), var.x.subtype(Itv)
@@ -134,13 +134,14 @@ cct.nest = var.x ** R1(var.x)  # Puts values into some unary relation
 cct.nest2 = var.x ** var.y ** R2(var.x, var.y)
 cct.nest3 = var.x ** var.y ** var.z ** R3(var.x, var.y, var.z)
 cct.get = R1(var.x) ** var.x, var.x.subtype(Val)
+
 cct.invert = R2(Loc, var.x) ** R2(var.x, Reg), var.x.subtype(Qlt)
 cct.revert = R2(var.x, Reg) ** R2(Loc, var.x), var.x.subtype(Qlt)
 # could be definable with a projection operator that is applied to ternary
 # relation (?)
 cct.getamounts = R3a(Obj, Reg, var.x) ** R2(Reg, var.x), var.x.subtype(Ratio)
 
-# quantified relations
+# operators on quantified relations
 # define odist in terms of the minimal ldist
 cct.oDist = R2(Obj, Reg) ** R2(Obj, Reg) ** R3(Obj, Ratio, Obj)
 cct.lDist = R1(Loc) ** R1(Loc) ** R3(Loc, Ratio, Loc)
@@ -165,12 +166,20 @@ cct.ocover = R2(Obj, Reg) ** R1(Obj) ** Reg
 ###########################################################################
 # Relational transformations
 
+#cct.apply = R2(var.x, var.y) ** var.x ** var.y
+
+#Set union and set difference
+cct.set_union = (
+    var.rel ** var.rel ** var.rel
+)
+cct.set_diff = (
+    var.rel ** var.rel ** var.rel
+)
+
 # functions to handle multiple attributes of the same types with 1 key
 cct.join_attr = R2(var.x, var.y) ** R2(var.x, var.z) ** R3a(var.x, var.y, var.z)
 cct.get_attrL = R3a(var.x, var.y, var.z) ** R2(var.x, var.y)
 cct.get_attrR = R3a(var.x, var.y, var.z) ** R2(var.x, var.z)
-
-cct.apply = R2(var.x, var.y) ** var.x ** var.y
 
 # Projection (π). Projects a given relation to one of its attributes,
 # resulting in a collection.
@@ -197,14 +206,6 @@ cct.join_subset = (
     var.rel.param(var.x)
 )
 
-#Set union and set difference
-cct.set_union = (
-    var.rel ** var.rel ** var.rel
-)
-cct.set_diff = (
-    var.rel ** var.rel ** var.rel
-)
-
 # Join (⨝*). Substitute the quality of a quantified relation to some
 # quality of one of its keys. Used to be bowtie*.
 cct.join_key = (
@@ -220,7 +221,6 @@ cct.join_with1 = (
     var.x1.subtype(var.x11)
 )
 
-
 # Join with binary function (⨝_f). Generate a unary concept from two other
 # unary concepts of the same type. Used to be bowtie_ratio and others.
 cct.join_with2 = (
@@ -228,6 +228,8 @@ cct.join_with2 = (
     ** R2(var.y, var.x1) ** R2(var.y, var.x2) ** R2(var.y, var.x3),
     var.x1.subtype(var.x11), var.x2.subtype(var.x22)
 )
+
+
 
 # Group by (β). Group quantified relations by the left (right) key,
 # summarizing lists of quality values with the same key value into a new
