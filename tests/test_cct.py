@@ -11,7 +11,7 @@ class TestCCT(unittest.TestCase):
         if isinstance(result, type) and issubclass(result, Exception):
             self.assertRaises(result, cct.parse, string)
         else:
-            self.assertEqual(cct.parse(string).type, result)
+            self.assertEqual(cct.parse(string).type.plain, result)
 
     @unittest.skip("this would be desirable")
     def test_projection(self):
