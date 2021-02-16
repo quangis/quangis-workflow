@@ -54,11 +54,15 @@ cct.nomcoverages = R2(Nom, Reg), 1
 cct.nomsize = R2(Nom, Ratio), 1
 cct.regions = R1(Reg), 1
 cct.contour = R2(Ord, Reg), 1
+cct.contourline = R2(Itv, Reg), 1
 cct.objectratios = R2(Obj, Ratio), 1
 cct.objectnominals = R2(Obj, Nom), 1
 cct.objectregions = R2(Obj, Reg), 1
-cct.contourline = R2(Itv, Reg), 1
 cct.objectcounts = R2(Obj, Count), 1
+cct.objectregionratios = R3a(Obj, Reg, Ratio), 1
+cct.objectregionnominals = R3a(Obj, Reg, Nom), 1
+cct.objectregioncounts = R3a(Obj, Reg, Count), 1
+cct.objectregionattr = R3a(Obj, Reg, var.x), 1
 cct.field = R2(Loc, Ratio), 1
 cct.nomfield = R2(Loc, Nom), 1
 cct.boolfield = R2(Loc, Bool), 1
@@ -81,11 +85,6 @@ cct.true = Bool, 0
 
 ###########################################################################
 # Math/stats transformations
-
-# functions to handle multiple attributes of the same types with 1 key
-cct.join_attr = R2(var.x, var.y) ** R2(var.x, var.z) ** R3a(var.x, var.y, var.z)
-cct.get_attrL = R3a(var.x, var.y, var.z) ** R2(var.x, var.y)
-cct.get_attrR = R3a(var.x, var.y, var.z) ** R2(var.x, var.z)
 
 # functional
 cct.compose = (var.y ** var.z) ** (var.x ** var.y) ** (var.x ** var.z)
@@ -143,7 +142,7 @@ cct.invert = R2(Loc, var.x) ** R2(var.x, Reg), var.x.subtype(Qlt)
 cct.revert = R2(var.x, Reg) ** R2(Loc, var.x), var.x.subtype(Qlt)
 # could be definable with a projection operator that is applied to ternary
 # relation (?)
-cct.getamounts = R2(Obj, var.x) ** R2(Obj, Reg) ** R2(Reg, var.x), var.x.subtype(Ratio)
+cct.getamounts = R3a(Obj, Reg, var.x) ** R2(Reg, var.x), var.x.subtype(Ratio)
 
 # quantified relations
 # define odist in terms of the minimal ldist
@@ -169,6 +168,11 @@ cct.ocover = R2(Obj, Reg) ** R1(Obj) ** Reg
 
 ###########################################################################
 # Relational transformations
+
+# functions to handle multiple attributes of the same types with 1 key
+cct.join_attr = R2(var.x, var.y) ** R2(var.x, var.z) ** R3a(var.x, var.y, var.z)
+cct.get_attrL = R3a(var.x, var.y, var.z) ** R2(var.x, var.y)
+cct.get_attrR = R3a(var.x, var.y, var.z) ** R2(var.x, var.z)
 
 cct.apply = R2(var.x, var.y) ** var.x ** var.y
 
