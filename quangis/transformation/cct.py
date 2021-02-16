@@ -85,7 +85,9 @@ cct.true = Bool, 0
 
 # functional
 cct.compose = (var.y ** var.z) ** (var.x ** var.y) ** (var.x ** var.z)
+cct.compose2 = (var.y ** var.z) ** (var.w ** var.x ** var.y) ** (var.w ** var.x ** var.z)
 cct.swap = (var.x ** var.y ** var.z) ** (var.y ** var.x ** var.z)
+cct.id = var.x ** var.x
 #cct.cast = var.x ** var.y, var.x.subtype(var.y)
 
 # derivations
@@ -94,12 +96,14 @@ cct.product = Ratio ** Ratio ** Ratio
 cct.leq = var.x ** var.x ** Bool, var.x.subtype(Ord)
 cct.eq = var.x ** var.x ** Bool, var.x.subtype(Val)
 cct.conj = Bool ** Bool ** Bool
-cct.disj = Bool ** Bool ** Bool  # define as not-conjunction
 cct.notj = Bool ** Bool
+#compose2 notj conj
+cct.disj = Bool ** Bool ** Bool  # define as not-conjunction
 
 # aggregations of collections
 cct.count = R1(Obj) ** Ratio
 cct.size = R1(Loc) ** Ratio
+#define: relunion (regions x)
 cct.merge = R1(Reg) ** Reg
 cct.centroid = R1(Loc) ** Loc
 cct.name = R1(Nom) ** Nom
@@ -119,13 +123,13 @@ cct.coveragesum = R2(var.v, var.x) ** R2(Nom, var.x), var.x.subtype(Ratio), var.
 # Geometric transformations
 cct.interpol = R2(Reg, var.x) ** R1(Loc) ** R2(Loc, var.x), var.x.subtype(Itv)
 # define in terms of ldist: join_with1 (leq (ratioV w))(groupbyL (min) (loDist (deify (region y)) (objectregions x)))
-cct.extrapol = R2(Obj, Reg) ** R2(Loc, Bool)  # Buffering, define in terms of Dist:
+cct.extrapol = R2(Obj, Reg) ** R2(Loc, Bool)  # Buffering, define in terms of Dist
 cct.arealinterpol = R2(Reg, var.x) ** R1(Reg) ** R2(Reg, var.x), var.x.subtype(Ratio)
 cct.slope = R2(Loc, var.x) ** R2(Loc, Ratio), var.x.subtype(Itv)
 cct.aspect = R2(Loc, var.x) ** R2(Loc, Ratio), var.x.subtype(Itv)
 
 # deify/reify, nest/get, invert/revert might be defined in terms of inverse
-cct.inverse = (var.x ** var.y) ** (var.y ** var.x)
+#cct.inverse = (var.x ** var.y) ** (var.y ** R1(var.x))
 
 # conversions
 cct.reify = R1(Loc) ** Reg
@@ -134,11 +138,13 @@ cct.nest = var.x ** R1(var.x)  # Puts values into some unary relation
 cct.nest2 = var.x ** var.y ** R2(var.x, var.y)
 cct.nest3 = var.x ** var.y ** var.z ** R3(var.x, var.y, var.z)
 cct.get = R1(var.x) ** var.x, var.x.subtype(Val)
-
+#define: groupby reify (nomfield x)
 cct.invert = R2(Loc, var.x) ** R2(var.x, Reg), var.x.subtype(Qlt)
+#define: groupbyL id (join_key (select eq (lTopo (deify (merge (pi2 (nomcoverages x)))) (merge (pi2 (nomcoverages x)))) in) (groupby name (nomcoverages x)))
 cct.revert = R2(var.x, Reg) ** R2(Loc, var.x), var.x.subtype(Qlt)
-# could be definable with a projection operator that is applied to ternary
-# relation (?)
+#define?
+# join_with2 nest (get_attrL (objectregionratios x)) (get_attrR (objectregionratios x))
+# groupbyR id (join_key (select eq (rTopo (pi2 (get_attrL (objectregionratios x))) (pi2 (get_attrL (objectregionratios x)))) in) (get_attrR (objectregionratios x)))
 cct.getamounts = R3a(Obj, Reg, var.x) ** R2(Reg, var.x), var.x.subtype(Ratio)
 
 # operators on quantified relations
@@ -153,6 +159,7 @@ cct.loTopo = R1(Loc) ** R2(Obj, Reg) ** R3(Loc, Nom, Obj)
 # all inside, then the region is inside
 cct.rTopo = R1(Reg) ** R1(Reg) ** R3(Reg, Nom, Reg)
 cct.lTopo = R1(Loc) ** Reg ** R3(Loc, Nom, Reg)
+cct.lrTopo = R1(Loc) ** R1(Reg) ** R3(Loc, Nom, Reg)
 cct.nDist = R1(Obj) ** R1(Obj) ** R3(Obj, Ratio, Obj) ** R3(Obj, Ratio, Obj)
 cct.lVis = R1(Loc) ** R1(Loc) ** R2(Loc, Itv) ** R3(Loc, Bool, Loc)
 
@@ -169,11 +176,15 @@ cct.ocover = R2(Obj, Reg) ** R1(Obj) ** Reg
 #cct.apply = R2(var.x, var.y) ** var.x ** var.y
 
 #Set union and set difference
+#define nest ()
 cct.set_union = (
     var.rel ** var.rel ** var.rel
 )
 cct.set_diff = (
     var.rel ** var.rel ** var.rel
+)
+cct.relunion= (
+    R1(var.rel)  ** var.rel
 )
 
 # functions to handle multiple attributes of the same types with 1 key
@@ -242,4 +253,9 @@ cct.groupbyL = (
 cct.groupbyR = (
     (var.rel ** var.q2) ** R3(var.l, var.q1, var.r) ** R2(var.r, var.q2),
     var.rel.member(R1(var.l), R2(var.l, var.q1))
+)
+
+#Group by qualities of unary concepts
+cct.groupby = (
+    (R1(var.x) ** var.q) ** R2(var.x, var.y) ** R2(var.y, var.q)
 )
