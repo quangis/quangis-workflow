@@ -148,17 +148,19 @@ cct.getamounts = R3a(Obj, Reg, var.x) ** R2(Reg, var.x), var.x.subtype(Ratio)
 
 # operators on quantified relations
 #
-# define: cart_prod (join_with1 (compose (groupbyR min) ((swap loDist) (objectregions x1))) (join_with1 deify (objectregions x2)))
-cct.oDist = R2(Obj, Reg) ** R2(Obj, Reg) ** R3(Obj, Ratio, Obj)
 cct.lDist = R1(Loc) ** R1(Loc) ** R3(Loc, Ratio, Loc)
-# define: cart_prod (join_with1 (compose (groupbyL min) (lDist (locs x1))) (join_with1 deify (objectregions x2)))
+# define: rel_prod (join_with1 (compose (groupbyL min) (lDist (locs x1))) (join_with1 deify (objectregions x2)))
 cct.loDist = R1(Loc) ** R2(Obj, Reg) ** R3(Loc, Ratio, Obj)
-cct.oTopo = R2(Obj, Reg) ** R2(Obj, Reg) ** R3(Obj, Nom, Obj)
+# define: rel_prod (join_with1 (compose (groupbyR min) ((swap loDist) (objectregions x1))) (join_with1 deify (objectregions x2)))
+cct.oDist = R2(Obj, Reg) ** R2(Obj, Reg) ** R3(Obj, Ratio, Obj)
+#
+cct.lTopo = R1(Loc) ** Reg ** R3(Loc, Nom, Reg)
 cct.loTopo = R1(Loc) ** R2(Obj, Reg) ** R3(Loc, Nom, Obj)
+cct.oTopo = R2(Obj, Reg) ** R2(Obj, Reg) ** R3(Obj, Nom, Obj)
 # otopo can be defined in terms of rtopo? in rtopo, if points of a region are
 # all inside, then the region is inside
 cct.rTopo = R1(Reg) ** R1(Reg) ** R3(Reg, Nom, Reg)
-cct.lTopo = R1(Loc) ** Reg ** R3(Loc, Nom, Reg)
+# define: (locs x)
 cct.lrTopo = R1(Loc) ** R1(Reg) ** R3(Loc, Nom, Reg)
 cct.nDist = R1(Obj) ** R1(Obj) ** R3(Obj, Ratio, Obj) ** R3(Obj, Ratio, Obj)
 cct.lVis = R1(Loc) ** R1(Loc) ** R2(Loc, Itv) ** R3(Loc, Bool, Loc)
