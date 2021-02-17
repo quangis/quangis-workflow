@@ -147,7 +147,7 @@ cct.revert = R2(var.x, Reg) ** R2(Loc, var.x), var.x.subtype(Qlt)
 cct.getamounts = R3a(Obj, Reg, var.x) ** R2(Reg, var.x), var.x.subtype(Ratio)
 
 # operators on quantified relations
-# define odist in terms of the minimal ldist:
+#
 # define: cart_prod (join_with1 (compose (groupbyR min) ((swap loDist) (objectregions x1))) (join_with1 deify (objectregions x2)))
 cct.oDist = R2(Obj, Reg) ** R2(Obj, Reg) ** R3(Obj, Ratio, Obj)
 cct.lDist = R1(Loc) ** R1(Loc) ** R3(Loc, Ratio, Loc)
@@ -186,8 +186,9 @@ cct.set_diff = (
 cct.relunion= (
     R1(var.rel)  ** var.rel
 )
-#generating a quantified relation from two nested unary concepts (using a cartesian product). The outer type variables are keys
-cct.cart_prod = (
+
+#A constructor for quantified relations from two nested binary relations. The outer type variables are two keys.
+cct.rel_prod = (
     R2(var.z, R2(var.x, var.y)) ** R3(var.x, var.y, var.z)
 )
 
