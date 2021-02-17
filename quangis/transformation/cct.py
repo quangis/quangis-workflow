@@ -69,6 +69,7 @@ cct.ratiofield = R2(Loc, Ratio), 1
 cct.object = Obj, 1
 cct.objects = R1(Obj), 1
 cct.region = Reg, 1
+cct.locs = R1(Loc), 1
 cct.in_ = Nom, 0
 cct.out = Nom, 0
 cct.noms = R1(Nom), 1
@@ -142,16 +143,15 @@ cct.get = R1(var.x) ** var.x, var.x.subtype(Val)
 cct.invert = R2(Loc, var.x) ** R2(var.x, Reg), var.x.subtype(Qlt)
 #define: groupbyL id (join_key (select eq (lTopo (deify (merge (pi2 (nomcoverages x)))) (merge (pi2 (nomcoverages x)))) in) (groupby name (nomcoverages x)))
 cct.revert = R2(var.x, Reg) ** R2(Loc, var.x), var.x.subtype(Qlt)
-#define?
-# join_with2 nest (get_attrL (objectregionratios x)) (get_attrR (objectregionratios x))
-# groupbyR id (join_key (select eq (rTopo (pi2 (get_attrL (objectregionratios x))) (pi2 (get_attrL (objectregionratios x)))) in) (get_attrR (objectregionratios x)))
+#define: pia (objectregionratios x)
 cct.getamounts = R3a(Obj, Reg, var.x) ** R2(Reg, var.x), var.x.subtype(Ratio)
 
 # operators on quantified relations
-# define odist in terms of the minimal ldist
+# define odist in terms of the minimal ldist:
+# define: cart_prod (join_with1 (compose (groupbyR min) ((swap loDist) (objectregions x1))) (join_with1 deify (objectregions x2)))
 cct.oDist = R2(Obj, Reg) ** R2(Obj, Reg) ** R3(Obj, Ratio, Obj)
 cct.lDist = R1(Loc) ** R1(Loc) ** R3(Loc, Ratio, Loc)
-# similar for lodist
+# define: cart_prod (join_with1 (compose (groupbyL min) (lDist (locs x1))) (join_with1 deify (objectregions x2)))
 cct.loDist = R1(Loc) ** R2(Obj, Reg) ** R3(Loc, Ratio, Obj)
 cct.oTopo = R2(Obj, Reg) ** R2(Obj, Reg) ** R3(Obj, Nom, Obj)
 cct.loTopo = R1(Loc) ** R2(Obj, Reg) ** R3(Loc, Nom, Obj)
@@ -186,17 +186,22 @@ cct.set_diff = (
 cct.relunion= (
     R1(var.rel)  ** var.rel
 )
+#generating a quantified relation from two nested unary concepts (using a cartesian product). The outer type variables are keys
+cct.cart_prod = (
+    R2(var.z, R2(var.x, var.y)) ** R3(var.x, var.y, var.z)
+)
 
-# functions to handle multiple attributes of the same types with 1 key
+# functions to handle multiple attributes (with 1 key)
 cct.join_attr = R2(var.x, var.y) ** R2(var.x, var.z) ** R3a(var.x, var.y, var.z)
 cct.get_attrL = R3a(var.x, var.y, var.z) ** R2(var.x, var.y)
 cct.get_attrR = R3a(var.x, var.y, var.z) ** R2(var.x, var.z)
 
 # Projection (π). Projects a given relation to one of its attributes,
-# resulting in a collection.
+# resulting in a collection. Projection is also possible for multiple attributes
 cct.pi1 = var.rel ** R1(var.x), var.rel.param(var.x, at=1)
 cct.pi2 = var.rel ** R1(var.x), var.rel.param(var.x, at=2)
 cct.pi3 = var.rel ** R1(var.x), var.rel.param(var.x, at=3)
+cct.pia = R3a(var.x, var.y, var.z) ** R2(var.y, var.z)
 
 # Selection (σ). Selects a subset of the relation using a constraint on
 # attribute values, like equality (eq) or order (leq). Used to be sigmae
