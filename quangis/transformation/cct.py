@@ -45,6 +45,12 @@ BooleanInvertedField = R2(Bool, Reg)
 ##############################################################################
 # Data inputs
 
+# Reintroducing these for now to make sure the tests still work
+cct.objectratios = R2(Obj, Ratio), 1
+cct.objectnominals = R2(Obj, Nom), 1
+cct.objectregions = R2(Obj, Reg), 1
+cct.objectcounts = R2(Obj, Count), 1
+
 cct.pointmeasures = R2(Reg, Itv), 1
 cct.amountpatches = R2(Reg, Nom), 1
 cct.countamounts = R2(Reg, Count), 1
