@@ -69,6 +69,7 @@ cct.ratiofield = R2(Loc, Ratio), 1
 cct.object = Obj, 1
 cct.objects = R1(Obj), 1
 cct.region = Reg, 1
+cct.regions = R1(Reg), 1
 cct.locs = R1(Loc), 1
 cct.in_ = Nom, 0
 cct.out = Nom, 0
@@ -143,7 +144,7 @@ cct.get = R1(var.x) ** var.x, var.x.subtype(Val)
 cct.invert = R2(Loc, var.x) ** R2(var.x, Reg), var.x.subtype(Qlt)
 #define: groupbyL id (join_key (select eq (lTopo (deify (merge (pi2 (nomcoverages x)))) (merge (pi2 (nomcoverages x)))) in) (groupby name (nomcoverages x)))
 cct.revert = R2(var.x, Reg) ** R2(Loc, var.x), var.x.subtype(Qlt)
-#define: pia (objectregionratios x)
+#define: join (groupby get (get_attrL (objectregionratios x1))) (get_attrR (objectregionratios x1))
 cct.getamounts = R3a(Obj, Reg, var.x) ** R2(Reg, var.x), var.x.subtype(Ratio)
 
 # operators on quantified relations
@@ -155,13 +156,15 @@ cct.loDist = R1(Loc) ** R2(Obj, Reg) ** R3(Loc, Ratio, Obj)
 cct.oDist = R2(Obj, Reg) ** R2(Obj, Reg) ** R3(Obj, Ratio, Obj)
 #
 cct.lTopo = R1(Loc) ** Reg ** R3(Loc, Nom, Reg)
+#define: rel_prod (join_with1 (compose (groupbyL id) (lTopo (locs x1))) (objectregions x2))
 cct.loTopo = R1(Loc) ** R2(Obj, Reg) ** R3(Loc, Nom, Obj)
+#define: rel_prod (join_with1 (compose (groupbyR id) ((swap loTopo) (objectregions x1))) (join_with1 deify (objectregions x2)))
 cct.oTopo = R2(Obj, Reg) ** R2(Obj, Reg) ** R3(Obj, Nom, Obj)
-# otopo can be defined in terms of rtopo? in rtopo, if points of a region are
-# all inside, then the region is inside
-cct.rTopo = R1(Reg) ** R1(Reg) ** R3(Reg, Nom, Reg)
-# define: (locs x)
+# define: rel_prod (join_with (compose (groupbyL id) (lTopo (locs x1))) (regions x2))
 cct.lrTopo = R1(Loc) ** R1(Reg) ** R3(Loc, Nom, Reg)
+# define: rel_prod (join_with (compose (compose (groupbyR id) ((swap lrTopo) (regions x1))) deify) (regions x2))
+cct.rTopo = R1(Reg) ** R1(Reg) ** R3(Reg, Nom, Reg)
+
 cct.nDist = R1(Obj) ** R1(Obj) ** R3(Obj, Ratio, Obj) ** R3(Obj, Ratio, Obj)
 cct.lVis = R1(Loc) ** R1(Loc) ** R2(Loc, Itv) ** R3(Loc, Bool, Loc)
 
@@ -175,10 +178,7 @@ cct.ocover = R2(Obj, Reg) ** R1(Obj) ** Reg
 ###########################################################################
 # Relational transformations
 
-#cct.apply = R2(var.x, var.y) ** var.x ** var.y
-
 #Set union and set difference
-#define nest ()
 cct.set_union = (
     var.rel ** var.rel ** var.rel
 )
@@ -189,7 +189,7 @@ cct.relunion= (
     R1(var.rel)  ** var.rel
 )
 
-#A constructor for quantified relations from two nested binary relations. The outer type variables are two keys.
+#A constructor for quantified relations from two nested binary relations. The keys of the nested relations become two keys of the quantified relation.
 cct.rel_prod = (
     R2(var.z, R2(var.x, var.y)) ** R3(var.x, var.y, var.z)
 )
@@ -204,7 +204,6 @@ cct.get_attrR = R3a(var.x, var.y, var.z) ** R2(var.x, var.z)
 cct.pi1 = var.rel ** R1(var.x), var.rel.param(var.x, at=1)
 cct.pi2 = var.rel ** R1(var.x), var.rel.param(var.x, at=2)
 cct.pi3 = var.rel ** R1(var.x), var.rel.param(var.x, at=3)
-cct.pia = R3a(var.x, var.y, var.z) ** R2(var.y, var.z)
 
 # Selection (σ). Selects a subset of the relation using a constraint on
 # attribute values, like equality (eq) or order (leq). Used to be sigmae
@@ -216,6 +215,7 @@ cct.select = (
 
 # Join of two unary concepts, like a table join.
 # is join the same as join_with2 eq?
+# no
 cct.join = R2(var.x, var.y) ** R2(var.y, var.z) ** R2(var.x, var.z)
 
 # Join on subset (⨝). Subset a relation to those tuples having an attribute
@@ -234,6 +234,11 @@ cct.join_key = (
 
 # Join with unary function. Generate a unary concept from one other unary
 # concept of the same type. Used to be join_fa.
+cct.join_with = (
+    (var.x11 ** var.x2)
+    ** R1(var.x1) ** R2(var.x1, var.x2),
+    var.x1.subtype(var.x11)
+)
 cct.join_with1 = (
     (var.x11 ** var.x2)
     ** R2(var.y, var.x1) ** R2(var.y, var.x2),
@@ -247,7 +252,6 @@ cct.join_with2 = (
     ** R2(var.y, var.x1) ** R2(var.y, var.x2) ** R2(var.y, var.x3),
     var.x1.subtype(var.x11), var.x2.subtype(var.x22)
 )
-
 
 
 # Group by (β). Group quantified relations by the left (right) key,
