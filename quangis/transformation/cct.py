@@ -56,6 +56,7 @@ cct.regions = R1(Reg), 1
 cct.contour = R2(Ord, Reg), 1
 cct.contourline = R2(Itv, Reg), 1
 cct.objectregions = R2(Obj, Reg), 1
+cct.objectratios = R2(Obj, Ratio), 1
 cct.objectregionratios = R3a(Obj, Reg, Ratio), 1
 cct.objectregionnominals = R3a(Obj, Reg, Nom), 1
 cct.objectregioncounts = R3a(Obj, Reg, Count), 1
@@ -205,7 +206,8 @@ cct.relunion= (
 )
 
 #A constructor for quantified relations. prod generates a cartesian product as a nested binary relation. prod3 generates a quantified relation from two nested binary relations. The keys of the nested relations become two keys of the quantified relation.
-#cct.prod = R1(var.x) ** R2(var.y, var.z) ** R2(var.x, R2(var.y, var.z))
+#define: apply1 (compose ((swap apply1) (objectratios x2)) ratio) (ratiofield x1)
+cct.prod = (var.y ** var.z ** var.u) ** R2(var.x, var.y) ** R2(var.w, var.z) ** R2(var.x, R2(var.w, var.u))
 cct.prod3 = (
     R2(var.z, R2(var.x, var.y)) ** R3(var.x, var.y, var.z)
 )
@@ -267,7 +269,7 @@ cct.apply1 = (
 
 # Join with binary function (⨝_f). Generate a unary concept from two other
 # unary concepts of the same type. Used to be bowtie_ratio and others.
-# define: pi12 (select2 eq (prod3 (apply1 (compose ((swap apply1) (boolfield x1)) conj) (boolfield x2))))
+# define: pi12 (select2 eq (prod3 (prod conj (boolfield x1) (boolfield x2))))
 cct.apply2 = (
     (var.x11 ** var.x22 ** var.x3)
     ** R2(var.y, var.x1) ** R2(var.y, var.x2) ** R2(var.y, var.x3),
