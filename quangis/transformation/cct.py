@@ -72,6 +72,7 @@ cct.region = Reg, 1
 cct.regions = R1(Reg), 1
 cct.locs = R1(Loc), 1
 cct.in_ = Nom, 0
+cct.contains = Nom, 0
 cct.out = Nom, 0
 cct.noms = R1(Nom), 1
 cct.ratios = R1(Ratio), 1
@@ -81,16 +82,11 @@ cct.interval = Itv, 1
 cct.ordinal = Ord, 1
 cct.nominal = Nom, 1
 cct.true = Bool, 0
+cct.rationetwork = R3(Obj, Ratio, Obj), 1
 
 ###########################################################################
 # Math/stats transformations
 
-# functional
-cct.compose = (var.y ** var.z) ** (var.x ** var.y) ** (var.x ** var.z)
-cct.compose2 = (var.y ** var.z) ** (var.w ** var.x ** var.y) ** (var.w ** var.x ** var.z)
-cct.swap = (var.x ** var.y ** var.z) ** (var.y ** var.x ** var.z)
-cct.id = var.x ** var.x
-#cct.cast = var.x ** var.y, var.x.subtype(var.y)
 
 # derivations
 cct.ratio = Ratio ** Ratio ** Ratio
@@ -99,7 +95,7 @@ cct.leq = var.x ** var.x ** Bool, var.x.subtype(Ord)
 cct.eq = var.x ** var.x ** Bool, var.x.subtype(Val)
 cct.conj = Bool ** Bool ** Bool
 cct.notj = Bool ** Bool
-#compose2 notj conj
+#define: compose2 notj conj
 cct.disj = Bool ** Bool ** Bool  # define as not-conjunction
 
 # aggregations of collections
@@ -124,7 +120,7 @@ cct.coveragesum = R2(var.v, var.x) ** R2(Nom, var.x), var.x.subtype(Ratio), var.
 ##########################################################################
 # Geometric transformations
 cct.interpol = R2(Reg, var.x) ** R1(Loc) ** R2(Loc, var.x), var.x.subtype(Itv)
-# define in terms of ldist: join_with1 (leq (ratioV w))(groupbyL (min) (loDist (deify (region y)) (objectregions x)))
+# define in terms of ldist: apply1 (leq (ratioV w))(groupbyL (min) (loDist (deify (region y)) (objectregions x)))
 cct.extrapol = R2(Obj, Reg) ** R2(Loc, Bool)  # Buffering, define in terms of Dist
 cct.arealinterpol = R2(Reg, var.x) ** R1(Reg) ** R2(Reg, var.x), var.x.subtype(Ratio)
 cct.slope = R2(Loc, var.x) ** R2(Loc, Ratio), var.x.subtype(Itv)
@@ -139,6 +135,7 @@ cct.deify = Reg ** R1(Loc)
 cct.nest = var.x ** R1(var.x)  # Puts values into some unary relation
 cct.nest2 = var.x ** var.y ** R2(var.x, var.y)
 cct.nest3 = var.x ** var.y ** var.z ** R3(var.x, var.y, var.z)
+cct.add = R1(var.x) ** var.x ** R1(var.x)
 cct.get = R1(var.x) ** var.x, var.x.subtype(Val)
 #define: groupby reify (nomfield x)
 cct.invert = R2(Loc, var.x) ** R2(var.x, Reg), var.x.subtype(Qlt)
@@ -150,60 +147,76 @@ cct.getamounts = R3a(Obj, Reg, var.x) ** R2(Reg, var.x), var.x.subtype(Ratio)
 # operators on quantified relations
 #
 cct.lDist = R1(Loc) ** R1(Loc) ** R3(Loc, Ratio, Loc)
-# define: rel_prod (join_with1 (compose (groupbyL min) (lDist (locs x1))) (join_with1 deify (objectregions x2)))
+# define: prod3 (apply1 (compose (groupbyL min) (lDist (locs x1))) (apply1 deify (objectregions x2)))
 cct.loDist = R1(Loc) ** R2(Obj, Reg) ** R3(Loc, Ratio, Obj)
-# define: rel_prod (join_with1 (compose (groupbyR min) ((swap loDist) (objectregions x1))) (join_with1 deify (objectregions x2)))
+# define: prod3 (apply1 (compose (groupbyR min) ((swap loDist) (objectregions x1))) (apply1 deify (objectregions x2)))
 cct.oDist = R2(Obj, Reg) ** R2(Obj, Reg) ** R3(Obj, Ratio, Obj)
 #
 cct.lTopo = R1(Loc) ** Reg ** R3(Loc, Nom, Reg)
-#define: rel_prod (join_with1 (compose (groupbyL id) (lTopo (locs x1))) (objectregions x2))
+#define: prod3 (apply1 (compose (groupbyL id) (lTopo (locs x1))) (objectregions x2))
 cct.loTopo = R1(Loc) ** R2(Obj, Reg) ** R3(Loc, Nom, Obj)
-#define: rel_prod (join_with1 (compose (groupbyR id) ((swap loTopo) (objectregions x1))) (join_with1 deify (objectregions x2)))
+#define: prod3 (apply1 (compose (groupbyR (compose name pi2)) ((swap loTopo) (objectregions x1))) (apply1 deify (objectregions x2)))
 cct.oTopo = R2(Obj, Reg) ** R2(Obj, Reg) ** R3(Obj, Nom, Obj)
-# define: rel_prod (join_with (compose (groupbyL id) (lTopo (locs x1))) (regions x2))
+# define: prod3 (apply (compose (groupbyL id) (lTopo (locs x1))) (regions x2))
 cct.lrTopo = R1(Loc) ** R1(Reg) ** R3(Loc, Nom, Reg)
-# define: rel_prod (join_with (compose (compose (groupbyR id) ((swap lrTopo) (regions x1))) deify) (regions x2))
+# define: prod3 (apply (compose (compose (groupbyR (compose name pi2)) ((swap lrTopo) (regions x1))) deify) (regions x2))
 cct.rTopo = R1(Reg) ** R1(Reg) ** R3(Reg, Nom, Reg)
+# define: prod3 (apply (compose (compose (groupbyR (compose name pi2)) ((swap loTopo) (objectregions x1))) deify) (regions x2))
+cct.orTopo = R2(Obj, Reg) ** R1(Reg) ** R3(Obj, Nom, Reg)
 
 cct.nDist = R1(Obj) ** R1(Obj) ** R3(Obj, Ratio, Obj) ** R3(Obj, Ratio, Obj)
 cct.lVis = R1(Loc) ** R1(Loc) ** R2(Loc, Itv) ** R3(Loc, Bool, Loc)
 
 # amount operations
+# define: sum (join_subset (field x2) (deify (region x3)))
 cct.fcont = (R2(var.v, var.x) ** var.y) ** R2(Loc, var.x) ** Reg ** var.y, var.x.subtype(Qlt), var.y.subtype(Qlt), var.v.subtype(Val)
+# define: get (pi2 (groupbyR count (select eq (orTopo (objectregions x1) (nest (region x2))) in)))
 cct.ocont = R2(Obj, Reg) ** Reg ** Count
+# define: reify (pi1 (join_subset (field x1) (ratios x2)))
 cct.fcover = R2(Loc, var.x) ** R1(var.x) ** Reg, var.x.subtype(Qlt)
+# define: merge (pi2 (join_subset (objectregions x1) (objects x2)))
 cct.ocover = R2(Obj, Reg) ** R1(Obj) ** Reg
 
 
 ###########################################################################
-# Relational transformations
+# Functional and Relational transformations
+
+# functional
+cct.compose = (var.y ** var.z) ** (var.x ** var.y) ** (var.x ** var.z)
+cct.compose2 = (var.y ** var.z) ** (var.w ** var.x ** var.y) ** (var.w ** var.x ** var.z)
+cct.swap = (var.x ** var.y ** var.z) ** (var.y ** var.x ** var.z)
+cct.id = var.x ** var.x
+cct.apply = (var.x11 ** var.y) **  R1(var.x1)  ** R2(var.x1, var.y), var.x1.subtype(var.x11)
 
 #Set union and set difference
+#define: relunion (add (nest (regions x)) (regions y))
 cct.set_union = (
     var.rel ** var.rel ** var.rel
 )
 cct.set_diff = (
     var.rel ** var.rel ** var.rel
 )
+#define: set_diff rel1 (set_diff rel1 rel2)
+cct.set_inters = (
+    var.rel ** var.rel ** var.rel
+)
 cct.relunion= (
-    R1(var.rel)  ** var.rel
+    R1(var.rel) ** var.rel
 )
 
-#A constructor for quantified relations from two nested binary relations. The keys of the nested relations become two keys of the quantified relation.
-cct.rel_prod = (
+#A constructor for quantified relations. prod generates a cartesian product as a nested binary relation. prod3 generates a quantified relation from two nested binary relations. The keys of the nested relations become two keys of the quantified relation.
+#cct.prod = R1(var.x) ** R2(var.y, var.z) ** R2(var.x, R2(var.y, var.z))
+cct.prod3 = (
     R2(var.z, R2(var.x, var.y)) ** R3(var.x, var.y, var.z)
 )
-
-# functions to handle multiple attributes (with 1 key)
-cct.join_attr = R2(var.x, var.y) ** R2(var.x, var.z) ** R3a(var.x, var.y, var.z)
-cct.get_attrL = R3a(var.x, var.y, var.z) ** R2(var.x, var.y)
-cct.get_attrR = R3a(var.x, var.y, var.z) ** R2(var.x, var.z)
 
 # Projection (π). Projects a given relation to one of its attributes,
 # resulting in a collection. Projection is also possible for multiple attributes
 cct.pi1 = var.rel ** R1(var.x), var.rel.param(var.x, at=1)
 cct.pi2 = var.rel ** R1(var.x), var.rel.param(var.x, at=2)
 cct.pi3 = var.rel ** R1(var.x), var.rel.param(var.x, at=3)
+cct.pi12 = R3(var.x, var.y, var.z) ** R2(var.x, var.y)
+cct.pi23 = R3(var.z, var.x, var.y) ** R2(var.x, var.y)
 
 # Selection (σ). Selects a subset of the relation using a constraint on
 # attribute values, like equality (eq) or order (leq). Used to be sigmae
@@ -212,9 +225,13 @@ cct.select = (
     (var.x ** var.y ** Bool) ** var.rel ** var.y ** var.rel,
     var.rel.param(var.x, subtype=True)
 )
+cct.select2 = (
+    (var.x ** var.y ** Bool) ** var.rel ** var.rel,
+    var.rel.param(var.x, subtype=True), var.rel.param(var.y, subtype=True)
+)
 
 # Join of two unary concepts, like a table join.
-# is join the same as join_with2 eq?
+# is join the same as apply2 eq?
 # no
 cct.join = R2(var.x, var.y) ** R2(var.y, var.z) ** R2(var.x, var.z)
 
@@ -225,8 +242,15 @@ cct.join_subset = (
     var.rel.param(var.x)
 )
 
+# functions to handle multiple attributes (with 1 key)
+# define: prod3 (pi12 (select2 eq (prod3 (apply1 (compose ((swap apply1) (boolfield x1)) nest2) (ratiofield x2)))))
+cct.join_attr = R2(var.x, var.y) ** R2(var.x, var.z) ** R3a(var.x, var.y, var.z)
+cct.get_attrL = R3a(var.x, var.y, var.z) ** R2(var.x, var.y)
+cct.get_attrR = R3a(var.x, var.y, var.z) ** R2(var.x, var.z)
+
 # Join (⨝*). Substitute the quality of a quantified relation to some
 # quality of one of its keys. Used to be bowtie*.
+#define: prod3 (apply1 (join_subset (objectregions x2)) (groupbyL pi1 (rationetwork x1)))
 cct.join_key = (
     R3(var.x, var.q1, var.y) ** var.rel ** R3(var.x, var.q2, var.y),
     var.rel.member(R2(var.x, var.q2), R2(var.y, var.q2))
@@ -234,12 +258,8 @@ cct.join_key = (
 
 # Join with unary function. Generate a unary concept from one other unary
 # concept of the same type. Used to be join_fa.
-cct.join_with = (
-    (var.x11 ** var.x2)
-    ** R1(var.x1) ** R2(var.x1, var.x2),
-    var.x1.subtype(var.x11)
-)
-cct.join_with1 = (
+# define: join (objectregions x) (apply id (pi2 (objectregions x)))
+cct.apply1 = (
     (var.x11 ** var.x2)
     ** R2(var.y, var.x1) ** R2(var.y, var.x2),
     var.x1.subtype(var.x11)
@@ -247,7 +267,8 @@ cct.join_with1 = (
 
 # Join with binary function (⨝_f). Generate a unary concept from two other
 # unary concepts of the same type. Used to be bowtie_ratio and others.
-cct.join_with2 = (
+# define: pi12 (select2 eq (prod3 (apply1 (compose ((swap apply1) (boolfield x1)) conj) (boolfield x2))))
+cct.apply2 = (
     (var.x11 ** var.x22 ** var.x3)
     ** R2(var.y, var.x1) ** R2(var.y, var.x2) ** R2(var.y, var.x3),
     var.x1.subtype(var.x11), var.x2.subtype(var.x22)
