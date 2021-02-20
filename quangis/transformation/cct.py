@@ -290,7 +290,8 @@ cct.groupbyR = (
     var.rel.member(R1(var.l), R2(var.l, var.q1))
 )
 
-#Group by qualities of unary concepts
+#Group by qualities of binary relations
+# example:  groupby count (objectregions x)
 cct.groupby = (
-    (R1(var.x) ** var.q) ** R2(var.x, var.y) ** R2(var.y, var.q)
+    (R1(var.l) ** var.q) ** R2(var.l, var.y) ** R2(var.y, var.q)
 )
