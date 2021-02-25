@@ -7,7 +7,7 @@ Module containing the core concept transformation algebra. Usage:
     R(Obj)
 """
 
-from quangis.transformation.type import TypeOperator, Variables, Variance
+from quangis.transformation.type import TypeConstructor, Variables, Variance
 from quangis.transformation.algebra import TransformationAlgebra
 
 cct = TransformationAlgebra()
@@ -16,21 +16,21 @@ var = Variables()
 ##############################################################################
 # Types and type synonyms
 
-Val = TypeOperator("Val")
-Obj = TypeOperator("Obj", supertype=Val)  # O
-Reg = TypeOperator("Reg", supertype=Val)  # S
-Loc = TypeOperator("Loc", supertype=Val)  # L
-Qlt = TypeOperator("Qlt", supertype=Val)  # Q
-Nom = TypeOperator("Nom", supertype=Qlt)
-Bool = TypeOperator("Bool", supertype=Nom)
-Ord = TypeOperator("Ord", supertype=Nom)
-Itv = TypeOperator("Itv", supertype=Ord)
-Ratio = TypeOperator("Ratio", supertype=Itv)
-Count = TypeOperator("Count", supertype=Ratio)
-R1 = TypeOperator.parameterized("R1", Variance.CONTRAVARIANT)  # Collections
-R2 = TypeOperator.parameterized("R2", *(Variance.CONTRAVARIANT for _ in range(2)))  # Unary core concepts, 1 key (left)
-R3 = TypeOperator.parameterized("R3", *(Variance.CONTRAVARIANT for _ in range(3)))  # Quantified relation, 2 keys (l & r)
-R3a = TypeOperator.parameterized("R3a", *(Variance.CONTRAVARIANT for _ in range(3)))  # Ternary relation, 1 key (left)
+Val = TypeConstructor("Val")()
+Obj = TypeConstructor("Obj", supertype=Val)()  # O
+Reg = TypeConstructor("Reg", supertype=Val)()  # S
+Loc = TypeConstructor("Loc", supertype=Val)()  # L
+Qlt = TypeConstructor("Qlt", supertype=Val)()  # Q
+Nom = TypeConstructor("Nom", supertype=Qlt)()
+Bool = TypeConstructor("Bool", supertype=Nom)()
+Ord = TypeConstructor("Ord", supertype=Nom)()
+Itv = TypeConstructor("Itv", supertype=Ord)()
+Ratio = TypeConstructor("Ratio", supertype=Itv)()
+Count = TypeConstructor("Count", supertype=Ratio)()
+R1 = TypeConstructor("R1", Variance.COVARIANT)  # Collections
+R2 = TypeConstructor("R2", *(Variance.COVARIANT for _ in range(2)))  # Unary core concepts, 1 key (left)
+R3 = TypeConstructor("R3", *(Variance.COVARIANT for _ in range(3)))  # Quantified relation, 2 keys (l & r)
+R3a = TypeConstructor("R3a", *(Variance.COVARIANT for _ in range(3)))  # Ternary relation, 1 key (left)
 
 SpatialField = R2(Loc, Qlt)
 InvertedField = R2(Qlt, Reg)
