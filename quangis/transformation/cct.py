@@ -7,26 +7,9 @@ Module containing the core concept transformation algebra. Usage:
     R(Obj)
 """
 
-from quangis.transformation.type import Operator, VariableTerm, Σ, Subtype
+from quangis.transformation.type import Σ, Operator, Subtype, Member, Param
 from quangis.transformation.algebra import TransformationAlgebra
-from collections import defaultdict
 
-
-class tmp(defaultdict):
-    "temporary, until moved over to new style"
-
-    def __init__(self):
-        super().__init__(VariableTerm)
-
-    def __getattr__(self, key):
-        if key == '_':
-            return VariableTerm(wildcard=True)
-        return self[key]
-
-
-var = tmp()
-
-cct = tmp()
 
 ##############################################################################
 # Types and type synonyms
@@ -107,7 +90,7 @@ true = Σ(Bool, 0)
 # functional
 compose = Σ(lambda α, β, γ: (β ** γ) ** (α ** β) ** (α ** γ))
 compose2 = Σ(lambda α, β, γ, δ: (β ** γ) ** (δ ** α ** β) ** (δ ** α ** γ))
-sδap = Σ(lambda α, β, γ: (α ** β ** γ) ** (β ** α ** γ))
+swap = Σ(lambda α, β, γ: (α ** β ** γ) ** (β ** α ** γ))
 id = Σ(lambda α: α ** α)
 
 # derivations
