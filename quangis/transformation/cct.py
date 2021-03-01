@@ -7,7 +7,7 @@ Module containing the core concept transformation algebra. Usage:
     R(Obj)
 """
 
-from quangis.transformation.type import TypeConstructor, Variance, TypeVar
+from quangis.transformation.type import TypeConstructor, TypeVar
 from quangis.transformation.algebra import TransformationAlgebra
 from collections import defaultdict
 
@@ -42,10 +42,10 @@ Ord = TypeConstructor("Ord", supertype=Nom)
 Itv = TypeConstructor("Itv", supertype=Ord)
 Ratio = TypeConstructor("Ratio", supertype=Itv)
 Count = TypeConstructor("Count", supertype=Ratio)
-R1 = TypeConstructor("R1", Variance.COVARIANT)  # Collections
-R2 = TypeConstructor("R2", *(Variance.COVARIANT for _ in range(2)))  # Unary core concepts, 1 key (left)
-R3 = TypeConstructor("R3", *(Variance.COVARIANT for _ in range(3)))  # Quantified relation, 2 keys (l & r)
-R3a = TypeConstructor("R3a", *(Variance.COVARIANT for _ in range(3)))  # Ternary relation, 1 key (left)
+R1 = TypeConstructor("R1", 1)  # Collections
+R2 = TypeConstructor("R2", 2)  # Unary core concepts, 1 key (left)
+R3 = TypeConstructor("R3", 3)  # Quantified relation, 2 keys (l & r)
+R3a = TypeConstructor("R3a", 3)  # Ternary relation, 1 key (left)
 
 SpatialField = R2(Loc, Qlt)
 InvertedField = R2(Qlt, Reg)
