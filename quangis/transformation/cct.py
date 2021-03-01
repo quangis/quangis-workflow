@@ -31,17 +31,17 @@ cct = TransformationAlgebra()
 ##############################################################################
 # Types and type synonyms
 
-Val = TypeConstructor("Val")()
-Obj = TypeConstructor("Obj", supertype=Val)()  # O
-Reg = TypeConstructor("Reg", supertype=Val)()  # S
-Loc = TypeConstructor("Loc", supertype=Val)()  # L
-Qlt = TypeConstructor("Qlt", supertype=Val)()  # Q
-Nom = TypeConstructor("Nom", supertype=Qlt)()
-Bool = TypeConstructor("Bool", supertype=Nom)()
-Ord = TypeConstructor("Ord", supertype=Nom)()
-Itv = TypeConstructor("Itv", supertype=Ord)()
-Ratio = TypeConstructor("Ratio", supertype=Itv)()
-Count = TypeConstructor("Count", supertype=Ratio)()
+Val = TypeConstructor("Val")
+Obj = TypeConstructor("Obj", supertype=Val)  # O
+Reg = TypeConstructor("Reg", supertype=Val)  # S
+Loc = TypeConstructor("Loc", supertype=Val)  # L
+Qlt = TypeConstructor("Qlt", supertype=Val)  # Q
+Nom = TypeConstructor("Nom", supertype=Qlt)
+Bool = TypeConstructor("Bool", supertype=Nom)
+Ord = TypeConstructor("Ord", supertype=Nom)
+Itv = TypeConstructor("Itv", supertype=Ord)
+Ratio = TypeConstructor("Ratio", supertype=Itv)
+Count = TypeConstructor("Count", supertype=Ratio)
 R1 = TypeConstructor("R1", Variance.COVARIANT)  # Collections
 R2 = TypeConstructor("R2", *(Variance.COVARIANT for _ in range(2)))  # Unary core concepts, 1 key (left)
 R3 = TypeConstructor("R3", *(Variance.COVARIANT for _ in range(3)))  # Quantified relation, 2 keys (l & r)
