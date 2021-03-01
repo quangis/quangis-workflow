@@ -7,11 +7,26 @@ Module containing the core concept transformation algebra. Usage:
     R(Obj)
 """
 
-from quangis.transformation.type import TypeConstructor, Variables, Variance
+from quangis.transformation.type import TypeConstructor, Variance, TypeVar
 from quangis.transformation.algebra import TransformationAlgebra
+from collections import defaultdict
+
+
+class tmp(defaultdict):
+    "temporary, until moved over to new style"
+
+    def __init__(self):
+        super().__init__(TypeVar)
+
+    def __getattr__(self, key):
+        if key == '_':
+            return TypeVar(wildcard=True)
+        return self[key]
+
+
+var = tmp()
 
 cct = TransformationAlgebra()
-var = Variables()
 
 ##############################################################################
 # Types and type synonyms
@@ -65,7 +80,7 @@ cct.objectregions = R2(Obj, Reg), 1
 cct.objectregionratios = R3a(Obj, Reg, Ratio), 1
 cct.objectregionnominals = R3a(Obj, Reg, Nom), 1
 cct.objectregioncounts = R3a(Obj, Reg, Count), 1
-cct.objectregionattr = R3a(Obj, Reg, var.x), 1
+cct.objectregionattr = (lambda x: R3a(Obj, Reg, x)), 1
 cct.field = R2(Loc, Ratio), 1
 cct.nomfield = R2(Loc, Nom), 1
 cct.boolfield = R2(Loc, Bool), 1
@@ -90,10 +105,10 @@ cct.true = Bool, 0
 # Math/stats transformations
 
 # functional
-cct.compose = (var.y ** var.z) ** (var.x ** var.y) ** (var.x ** var.z)
-cct.compose2 = (var.y ** var.z) ** (var.w ** var.x ** var.y) ** (var.w ** var.x ** var.z)
-cct.swap = (var.x ** var.y ** var.z) ** (var.y ** var.x ** var.z)
-cct.id = var.x ** var.x
+cct.compose = lambda x, y, z: (y ** z) ** (x ** y) ** (x ** z)
+cct.compose2 = lambda x, y, z, w: (y ** z) ** (w ** x ** y) ** (w ** x ** z)
+cct.swap = lambda x, y, z: (x ** y ** z) ** (y ** x ** z)
+cct.id = lambda x: x ** x
 #cct.cast = var.x ** var.y, var.x.subtype(var.y)
 
 # derivations
