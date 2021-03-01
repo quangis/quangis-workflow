@@ -1,36 +1,34 @@
 """
 Module containing the core concept transformation algebra. Usage:
 
-    >>> from quangis.transformation.cct import cct
-    >>> expr = cct.parse("pi1 (objects data)")
-    >>> print(expr.type)
+    >>> from quangis.transformation.cct import algebra
+    >>> expr = algebra.parse("pi1 (objects data)")
+    >>> print(expr)
     R(Obj)
 """
 
-from quangis.transformation.type import TypeOperator, Variables
+from quangis.transformation.type import Σ, Operator, Subtype, Member, Param
 from quangis.transformation.algebra import TransformationAlgebra
 
-cct = TransformationAlgebra()
-var = Variables()
 
 ##############################################################################
 # Types and type synonyms
 
-Val = TypeOperator("Val")
-Obj = TypeOperator("Obj", supertype=Val)  # O
-Reg = TypeOperator("Reg", supertype=Val)  # S
-Loc = TypeOperator("Loc", supertype=Val)  # L
-Qlt = TypeOperator("Qlt", supertype=Val)  # Q
-Nom = TypeOperator("Nom", supertype=Qlt)
-Bool = TypeOperator("Bool", supertype=Nom)
-Ord = TypeOperator("Ord", supertype=Nom)
-Itv = TypeOperator("Itv", supertype=Ord)
-Ratio = TypeOperator("Ratio", supertype=Itv)
-Count = TypeOperator("Count", supertype=Ratio)
-R1 = TypeOperator.parameterized("R1", 1)  # Collections
-R2 = TypeOperator.parameterized("R2", 2)  # Unary core concepts, 1 key (left)
-R3 = TypeOperator.parameterized("R3", 3)  # Quantified relation, 2 keys (l & r)
-R3a = TypeOperator.parameterized("R3a", 3)  # Ternary relation, 1 key (left)
+Val = Operator('Val')
+Obj = Operator('Obj', supertype=Val)  # O
+Reg = Operator('Reg', supertype=Val)  # S
+Loc = Operator('Loc', supertype=Val)  # L
+Qlt = Operator('Qlt', supertype=Val)  # Q
+Nom = Operator('Nom', supertype=Qlt)
+Bool = Operator('Bool', supertype=Nom)
+Ord = Operator('Ord', supertype=Nom)
+Itv = Operator('Itv', supertype=Ord)
+Ratio = Operator('Ratio', supertype=Itv)
+Count = Operator('Count', supertype=Ratio)
+R1 = Operator('R1', 1)  # Collections
+R2 = Operator('R2', 2)  # Unary core concepts, 1 key (left)
+R3 = Operator('R3', 3)  # Quantified relation, 2 keys (l & r)
+R3a = Operator('R3a', 3)  # Ternary relation, 1 key (left)
 
 SpatialField = R2(Loc, Qlt)
 InvertedField = R2(Qlt, Reg)
@@ -46,134 +44,136 @@ BooleanInvertedField = R2(Bool, Reg)
 # Data inputs
 
 # Reintroducing these for now to make sure the tests still work
-cct.objectratios = R2(Obj, Ratio), 1
-cct.objectnominals = R2(Obj, Nom), 1
-cct.objectregions = R2(Obj, Reg), 1
-cct.objectcounts = R2(Obj, Count), 1
+objectratios = Σ(R2(Obj, Ratio), 1)
+objectnominals = Σ(R2(Obj, Nom), 1)
+objectregions = Σ(R2(Obj, Reg), 1)
+objectcounts = Σ(R2(Obj, Count), 1)
 
-cct.pointmeasures = R2(Reg, Itv), 1
-cct.amountpatches = R2(Reg, Nom), 1
-cct.countamounts = R2(Reg, Count), 1
-cct.boolcoverages = R2(Bool, Reg), 1
-cct.boolratio = R2(Bool, Ratio), 1
-cct.nomcoverages = R2(Nom, Reg), 1
-cct.nomsize = R2(Nom, Ratio), 1
-cct.regions = R1(Reg), 1
-cct.contour = R2(Ord, Reg), 1
-cct.contourline = R2(Itv, Reg), 1
-cct.objectregions = R2(Obj, Reg), 1
-cct.objectregionratios = R3a(Obj, Reg, Ratio), 1
-cct.objectregionnominals = R3a(Obj, Reg, Nom), 1
-cct.objectregioncounts = R3a(Obj, Reg, Count), 1
-cct.objectregionattr = R3a(Obj, Reg, var.x), 1
-cct.field = R2(Loc, Ratio), 1
-cct.nomfield = R2(Loc, Nom), 1
-cct.boolfield = R2(Loc, Bool), 1
-cct.ordfield = R2(Loc, Ord), 1
-cct.itvfield = R2(Loc, Itv), 1
-cct.ratiofield = R2(Loc, Ratio), 1
-cct.object = Obj, 1
-cct.objects = R1(Obj), 1
-cct.region = Reg, 1
-cct.in_ = Nom, 0
-cct.out = Nom, 0
-cct.noms = R1(Nom), 1
-cct.ratios = R1(Ratio), 1
-cct.countV = Count, 1
-cct.ratioV = Ratio, 1
-cct.interval = Itv, 1
-cct.ordinal = Ord, 1
-cct.nominal = Nom, 1
-cct.true = Bool, 0
+pointmeasures = Σ(R2(Reg, Itv), 1)
+amountpatches = Σ(R2(Reg, Nom), 1)
+countamounts = Σ(R2(Reg, Count), 1)
+boolcoverages = Σ(R2(Bool, Reg), 1)
+boolratio = Σ(R2(Bool, Ratio), 1)
+nomcoverages = Σ(R2(Nom, Reg), 1)
+nomsize = Σ(R2(Nom, Ratio), 1)
+regions = Σ(R1(Reg), 1)
+contour = Σ(R2(Ord, Reg), 1)
+contourline = Σ(R2(Itv, Reg), 1)
+objectregions = Σ(R2(Obj, Reg), 1)
+objectregionratios = Σ(R3a(Obj, Reg, Ratio), 1)
+objectregionnominals = Σ(R3a(Obj, Reg, Nom), 1)
+objectregioncounts = Σ(R3a(Obj, Reg, Count), 1)
+objectregionattr = Σ(lambda x: R3a(Obj, Reg, x), 1)
+field = Σ(R2(Loc, Ratio), 1)
+nomfield = Σ(R2(Loc, Nom), 1)
+boolfield = Σ(R2(Loc, Bool), 1)
+ordfield = Σ(R2(Loc, Ord), 1)
+itvfield = Σ(R2(Loc, Itv), 1)
+ratiofield = Σ(R2(Loc, Ratio), 1)
+object = Σ(Obj, 1)
+objects = Σ(R1(Obj), 1)
+region = Σ(Reg, 1)
+in_ = Σ(Nom, 0)
+out = Σ(Nom, 0)
+noms = Σ(R1(Nom), 1)
+ratios = Σ(R1(Ratio), 1)
+countV = Σ(Count, 1)
+ratioV = Σ(Ratio, 1)
+interval = Σ(Itv, 1)
+ordinal = Σ(Ord, 1)
+nominal = Σ(Nom, 1)
+true = Σ(Bool, 0)
 
 ###########################################################################
 # Math/stats transformations
 
 # functional
-cct.compose = (var.y ** var.z) ** (var.x ** var.y) ** (var.x ** var.z)
-cct.compose2 = (var.y ** var.z) ** (var.w ** var.x ** var.y) ** (var.w ** var.x ** var.z)
-cct.swap = (var.x ** var.y ** var.z) ** (var.y ** var.x ** var.z)
-cct.id = var.x ** var.x
-#cct.cast = var.x ** var.y, var.x.subtype(var.y)
+compose = Σ(lambda α, β, γ: (β ** γ) ** (α ** β) ** (α ** γ))
+compose2 = Σ(lambda α, β, γ, δ: (β ** γ) ** (δ ** α ** β) ** (δ ** α ** γ))
+swap = Σ(lambda α, β, γ: (α ** β ** γ) ** (β ** α ** γ))
+id = Σ(lambda α: α ** α)
 
 # derivations
-cct.ratio = Ratio ** Ratio ** Ratio
-cct.product = Ratio ** Ratio ** Ratio
-cct.leq = var.x ** var.x ** Bool, var.x.subtype(Ord)
-cct.eq = var.x ** var.x ** Bool, var.x.subtype(Val)
-cct.conj = Bool ** Bool ** Bool
-cct.notj = Bool ** Bool
-#compose2 notj conj
-cct.disj = Bool ** Bool ** Bool  # define as not-conjunction
+ratio = Σ(Ratio ** Ratio ** Ratio)
+product = Σ(Ratio ** Ratio ** Ratio)
+leq = Σ(lambda α: α ** α ** Bool | Subtype(α, Ord))
+eq = Σ(lambda α: α ** α ** Bool | Subtype(α, Val))
+conj = Σ(Bool ** Bool ** Bool)
+notj = Σ(Bool ** Bool)
+# compose2 notj conj
+disj = Σ(Bool ** Bool ** Bool)  # define as not-conjunction
 
 # aggregations of collections
-cct.count = R1(Obj) ** Ratio
-cct.size = R1(Loc) ** Ratio
-#define: relunion (regions x)
-cct.merge = R1(Reg) ** Reg
-cct.centroid = R1(Loc) ** Loc
-cct.name = R1(Nom) ** Nom
+count = Σ(R1(Obj) ** Ratio)
+size = Σ(R1(Loc) ** Ratio)
+# define: relunion (regions x)
+merge = Σ(R1(Reg) ** Reg)
+centroid = Σ(R1(Loc) ** Loc)
+name = Σ(R1(Nom) ** Nom)
 
 # statistical operations
-cct.avg = R2(var.v, var.x) ** var.x, var.v.subtype(Val), var.x.subtype(Itv)
-cct.min = R2(var.v, var.x) ** var.x, var.v.subtype(Val), var.x.subtype(Ord)
-cct.max = R2(var.v, var.x) ** var.x, var.v.subtype(Val), var.x.subtype(Ord)
-cct.sum = R2(var.v, var.x) ** var.x, var.v.subtype(Val), var.x.subtype(Ratio)
+avg = Σ(R2(Val, Itv) ** Itv)
+min = Σ(R2(Val, Ord) ** Ord)
+max = Σ(R2(Val, Ord) ** Ord)
+sum = Σ(R2(Val, Ratio) ** Ratio)
+
 # define in terms of: nest2 (merge (pi1 (countamounts x1))) (sum (countamounts x1))
-cct.contentsum = R2(Reg, var.x) ** R2(Reg, var.x), var.x.subtype(Ratio)
+contentsum = Σ(lambda x: R2(Reg, x) ** R2(Reg, x) | Subtype(x, Ratio))
+
 # define in terms of: nest2 (name (pi1 (nomcoverages x1))) (merge (pi2(nomcoverages x1)))
-cct.coveragesum = R2(var.v, var.x) ** R2(Nom, var.x), var.x.subtype(Ratio), var.v.subtype(Nom)
+coveragesum = Σ(lambda x: R2(Nom, x) ** R2(Nom, x) | Subtype(x, Ratio))
 
 
 ##########################################################################
 # Geometric transformations
-cct.interpol = R2(Reg, var.x) ** R1(Loc) ** R2(Loc, var.x), var.x.subtype(Itv)
+interpol = Σ(lambda x: R2(Reg, x) ** R1(Loc) ** R2(Loc, x) | Subtype(x, Itv))
+
 # define in terms of ldist: join_with1 (leq (ratioV w))(groupbyL (min) (loDist (deify (region y)) (objectregions x)))
-cct.extrapol = R2(Obj, Reg) ** R2(Loc, Bool)  # Buffering, define in terms of Dist
-cct.arealinterpol = R2(Reg, var.x) ** R1(Reg) ** R2(Reg, var.x), var.x.subtype(Ratio)
-cct.slope = R2(Loc, var.x) ** R2(Loc, Ratio), var.x.subtype(Itv)
-cct.aspect = R2(Loc, var.x) ** R2(Loc, Ratio), var.x.subtype(Itv)
+extrapol = Σ(R2(Obj, Reg) ** R2(Loc, Bool))  # Buffering, define in terms of Dist
+arealinterpol = Σ(lambda x: R2(Reg, x) ** R1(Reg) ** R2(Reg, x) | Subtype(x, Ratio))
+slope = Σ(R2(Loc, Itv) ** R2(Loc, Ratio))
+aspect = Σ(R2(Loc, Itv) ** R2(Loc, Ratio))
 
 # deify/reify, nest/get, invert/revert might be defined in terms of inverse
 #cct.inverse = (var.x ** var.y) ** (var.y ** R1(var.x))
 
 # conversions
-cct.reify = R1(Loc) ** Reg
-cct.deify = Reg ** R1(Loc)
-cct.nest = var.x ** R1(var.x)  # Puts values into some unary relation
-cct.nest2 = var.x ** var.y ** R2(var.x, var.y)
-cct.nest3 = var.x ** var.y ** var.z ** R3(var.x, var.y, var.z)
-cct.get = R1(var.x) ** var.x, var.x.subtype(Val)
+reify = Σ(R1(Loc) ** Reg)
+deify = Σ(Reg ** R1(Loc))
+nest = Σ(lambda x: x ** R1(x))  # Puts values into some unary relation
+nest2 = Σ(lambda x, y: x ** y ** R2(x, y))
+nest3 = Σ(lambda x, y, z: x ** y ** z ** R3(x, y, z))
+get = Σ(lambda x: R1(x) ** x)
 #define: groupby reify (nomfield x)
-cct.invert = R2(Loc, var.x) ** R2(var.x, Reg), var.x.subtype(Qlt)
+invert = Σ(lambda x: R2(Loc, x) ** R2(x, Reg) | Subtype(x, Qlt))
 #define: groupbyL id (join_key (select eq (lTopo (deify (merge (pi2 (nomcoverages x)))) (merge (pi2 (nomcoverages x)))) in) (groupby name (nomcoverages x)))
-cct.revert = R2(var.x, Reg) ** R2(Loc, var.x), var.x.subtype(Qlt)
+revert = Σ(lambda x: R2(x, Reg) ** R2(Loc, x) | Subtype(x, Qlt))
 #define?
 # join_with2 nest (get_attrL (objectregionratios x)) (get_attrR (objectregionratios x))
 # groupbyR id (join_key (select eq (rTopo (pi2 (get_attrL (objectregionratios x))) (pi2 (get_attrL (objectregionratios x)))) in) (get_attrR (objectregionratios x)))
-cct.getamounts = R3a(Obj, Reg, var.x) ** R2(Reg, var.x), var.x.subtype(Ratio)
+getamounts = Σ(lambda x: R3a(Obj, Reg, x) ** R2(Reg, x) | Subtype(x, Ratio))
 
 # operators on quantified relations
 # define odist in terms of the minimal ldist
-cct.oDist = R2(Obj, Reg) ** R2(Obj, Reg) ** R3(Obj, Ratio, Obj)
-cct.lDist = R1(Loc) ** R1(Loc) ** R3(Loc, Ratio, Loc)
-# similar for lodist
-cct.loDist = R1(Loc) ** R2(Obj, Reg) ** R3(Loc, Ratio, Obj)
-cct.oTopo = R2(Obj, Reg) ** R2(Obj, Reg) ** R3(Obj, Nom, Obj)
-cct.loTopo = R1(Loc) ** R2(Obj, Reg) ** R3(Loc, Nom, Obj)
-# otopo can be defined in terms of rtopo? in rtopo, if points of a region are
-# all inside, then the region is inside
-cct.rTopo = R1(Reg) ** R1(Reg) ** R3(Reg, Nom, Reg)
-cct.lTopo = R1(Loc) ** Reg ** R3(Loc, Nom, Reg)
-cct.lrTopo = R1(Loc) ** R1(Reg) ** R3(Loc, Nom, Reg)
-cct.nDist = R1(Obj) ** R1(Obj) ** R3(Obj, Ratio, Obj) ** R3(Obj, Ratio, Obj)
-cct.lVis = R1(Loc) ** R1(Loc) ** R2(Loc, Itv) ** R3(Loc, Bool, Loc)
+oDist = Σ(R2(Obj, Reg) ** R2(Obj, Reg) ** R3(Obj, Ratio, Obj))
+lDist = Σ(R1(Loc) ** R1(Loc) ** R3(Loc, Ratio, Loc))
+# similar for lodist)
+loDist = Σ(R1(Loc) ** R2(Obj, Reg) ** R3(Loc, Ratio, Obj))
+oTopo = Σ(R2(Obj, Reg) ** R2(Obj, Reg) ** R3(Obj, Nom, Obj))
+loTopo = Σ(R1(Loc) ** R2(Obj, Reg) ** R3(Loc, Nom, Obj))
+# otopo can be defined in terms of rtopo? in rtopo, if points of a region are)
+# all inside, then the region is inside)
+rTopo = Σ(R1(Reg) ** R1(Reg) ** R3(Reg, Nom, Reg))
+lTopo = Σ(R1(Loc) ** Reg ** R3(Loc, Nom, Reg))
+lrTopo = Σ(R1(Loc) ** R1(Reg) ** R3(Loc, Nom, Reg))
+nDist = Σ(R1(Obj) ** R1(Obj) ** R3(Obj, Ratio, Obj) ** R3(Obj, Ratio, Obj))
+lVis = Σ(R1(Loc) ** R1(Loc) ** R2(Loc, Itv) ** R3(Loc, Bool, Loc))
 
 # amount operations
-cct.fcont = (R2(var.v, var.x) ** var.y) ** R2(Loc, var.x) ** Reg ** var.y, var.x.subtype(Qlt), var.y.subtype(Qlt), var.v.subtype(Val)
-cct.ocont = R2(Obj, Reg) ** Reg ** Count
-cct.fcover = R2(Loc, var.x) ** R1(var.x) ** Reg, var.x.subtype(Qlt)
-cct.ocover = R2(Obj, Reg) ** R1(Obj) ** Reg
+fcont = Σ(lambda v, x, y: (R2(Val, x) ** y) ** R2(Loc, x) ** Reg ** y | [Subtype(x, Qlt), Subtype(y, Qlt)])
+ocont = Σ(R2(Obj, Reg) ** Reg ** Count)
+fcover = Σ(lambda x: R2(Loc, x) ** R1(x) ** Reg | Subtype(x, Qlt))
+ocover = Σ(R2(Obj, Reg) ** R1(Obj) ** Reg)
 
 
 ###########################################################################
@@ -183,85 +183,63 @@ cct.ocover = R2(Obj, Reg) ** R1(Obj) ** Reg
 
 #Set union and set difference
 #define nest ()
-cct.set_union = (
-    var.rel ** var.rel ** var.rel
+set_union = Σ(
+    lambda rel: rel ** rel ** rel
 )
-cct.set_diff = (
-    var.rel ** var.rel ** var.rel
+set_diff = Σ(
+    lambda rel: rel ** rel ** rel
 )
-cct.relunion= (
-    R1(var.rel)  ** var.rel
+relunion = Σ(
+    lambda rel: R1(rel) ** rel
 )
 
 # functions to handle multiple attributes of the same types with 1 key
-cct.join_attr = R2(var.x, var.y) ** R2(var.x, var.z) ** R3a(var.x, var.y, var.z)
-cct.get_attrL = R3a(var.x, var.y, var.z) ** R2(var.x, var.y)
-cct.get_attrR = R3a(var.x, var.y, var.z) ** R2(var.x, var.z)
+join_attr = Σ(lambda x, y, z: R2(x, y) ** R2(x, z) ** R3a(x, y, z))
+get_attrL = Σ(lambda x, y, z: R3a(x, y, z) ** R2(x, y))
+get_attrR = Σ(lambda x, y, z: R3a(x, y, z) ** R2(x, z))
 
 # Projection (π). Projects a given relation to one of its attributes,
 # resulting in a collection.
-cct.pi1 = var.rel ** R1(var.x), var.rel.param(var.x, at=1)
-cct.pi2 = var.rel ** R1(var.x), var.rel.param(var.x, at=2)
-cct.pi3 = var.rel ** R1(var.x), var.rel.param(var.x, at=3)
+pi1 = Σ(lambda rel, x: rel ** R1(x) | Param(rel, x, at=1))
+pi2 = Σ(lambda rel, x: rel ** R1(x) | Param(rel, x, at=2))
+pi3 = Σ(lambda rel, x: rel ** R1(x) | Param(rel, x, at=3))
 
 # Selection (σ). Selects a subset of the relation using a constraint on
 # attribute values, like equality (eq) or order (leq). Used to be sigmae
 # and sigmale.
-cct.select = (
-    (var.x ** var.y ** Bool) ** var.rel ** var.y ** var.rel,
-    var.rel.param(var.x, subtype=True)
-)
+select = Σ(lambda x, y, rel: (x ** y ** Bool) ** rel ** y ** rel | Param(var.rel, x))
 
 # Join of two unary concepts, like a table join.
 # is join the same as join_with2 eq?
-cct.join = R2(var.x, var.y) ** R2(var.y, var.z) ** R2(var.x, var.z)
+join = Σ(lambda x, y, z: R2(x, y) ** R2(y, z) ** R2(x, z))
 
 # Join on subset (⨝). Subset a relation to those tuples having an attribute
 # value contained in a collection. Used to be bowtie.
-cct.join_subset = (
-    var.rel ** R1(var.x) ** var.rel,
-    var.rel.param(var.x)
-)
+join_subset = Σ(lambda x, rel: rel ** R1(x) ** rel | Param(x))
 
 # Join (⨝*). Substitute the quality of a quantified relation to some
 # quality of one of its keys. Used to be bowtie*.
-cct.join_key = (
-    R3(var.x, var.q1, var.y) ** var.rel ** R3(var.x, var.q2, var.y),
-    var.rel.member(R2(var.x, var.q2), R2(var.y, var.q2))
-)
+join_key = Σ(lambda x, q1, y, rel, q2: R3(x, q1, y) ** rel ** R3(x, q2, y) | Member(rel, R2(x, q2), R2(y, q2)))
 
 # Join with unary function. Generate a unary concept from one other unary
 # concept of the same type. Used to be join_fa.
-cct.join_with1 = (
-    (var.x11 ** var.x2)
-    ** R2(var.y, var.x1) ** R2(var.y, var.x2),
-    var.x1.subtype(var.x11)
-)
+join_with1 = Σ(lambda x11, y, x1, x2: (x11 ** x2) ** R2(y, x1) ** R2(y, x2) | Subtype(x1, x11))
 
 # Join with binary function (⨝_f). Generate a unary concept from two other
 # unary concepts of the same type. Used to be bowtie_ratio and others.
-cct.join_with2 = (
-    (var.x11 ** var.x22 ** var.x3)
-    ** R2(var.y, var.x1) ** R2(var.y, var.x2) ** R2(var.y, var.x3),
-    var.x1.subtype(var.x11), var.x2.subtype(var.x22)
-)
-
-
+join_with2 = Σ(lambda x11, x22, x3, y, x1, x2: (x11 ** x22 ** x3) ** R2(y, x1) ** R2(y, x2) ** R2(y, x3) | [Subtype(x1, x11), Subtype(x2, x22)])
 
 # Group by (β). Group quantified relations by the left (right) key,
 # summarizing lists of quality values with the same key value into a new
 # value per key, resulting in a unary core concept relation.
-cct.groupbyL = (
-    (var.rel ** var.q2) ** R3(var.l, var.q1, var.r) ** R2(var.l, var.q2),
-    var.rel.member(R1(var.r), R2(var.r, var.q1))
-)
+groupbyL = Σ(lambda rel, q2, l, q1, r: (rel ** q2) ** R3(l, q1, r) ** R2(l, q2) | Member(rel, R1(r), R2(r, q1)))
 
-cct.groupbyR = (
-    (var.rel ** var.q2) ** R3(var.l, var.q1, var.r) ** R2(var.r, var.q2),
-    var.rel.member(R1(var.l), R2(var.l, var.q1))
-)
+groupbyR = Σ(lambda rel, q2, l, q1, r: (rel ** q2) ** R3(l, q1, r) ** R2(r, q2) | Member(rel, R1(l), R2(l, q1)))
 
 #Group by qualities of unary concepts
-cct.groupby = (
-    (R1(var.x) ** var.q) ** R2(var.x, var.y) ** R2(var.y, var.q)
-)
+groupby = Σ(lambda x, q, y: (R1(x) ** q) ** R2(x, y) ** R2(y, q))
+
+# Generate an algebra out of all signatures defined in this module
+algebra = TransformationAlgebra(**{
+    k: v for k, v in dict(globals()).items() if isinstance(v, Σ)
+})
