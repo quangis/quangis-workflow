@@ -7,7 +7,7 @@ Module containing the core concept transformation algebra. Usage:
     R(Obj)
 """
 
-from quangis.transformation.type import TypeConstructor, TypeVar
+from quangis.transformation.type import Operator, VariableTerm
 from quangis.transformation.algebra import TransformationAlgebra
 from collections import defaultdict
 
@@ -16,11 +16,11 @@ class tmp(defaultdict):
     "temporary, until moved over to new style"
 
     def __init__(self):
-        super().__init__(TypeVar)
+        super().__init__(VariableTerm)
 
     def __getattr__(self, key):
         if key == '_':
-            return TypeVar(wildcard=True)
+            return VariableTerm(wildcard=True)
         return self[key]
 
 
@@ -31,21 +31,21 @@ cct = TransformationAlgebra()
 ##############################################################################
 # Types and type synonyms
 
-Val = TypeConstructor("Val")
-Obj = TypeConstructor("Obj", supertype=Val)  # O
-Reg = TypeConstructor("Reg", supertype=Val)  # S
-Loc = TypeConstructor("Loc", supertype=Val)  # L
-Qlt = TypeConstructor("Qlt", supertype=Val)  # Q
-Nom = TypeConstructor("Nom", supertype=Qlt)
-Bool = TypeConstructor("Bool", supertype=Nom)
-Ord = TypeConstructor("Ord", supertype=Nom)
-Itv = TypeConstructor("Itv", supertype=Ord)
-Ratio = TypeConstructor("Ratio", supertype=Itv)
-Count = TypeConstructor("Count", supertype=Ratio)
-R1 = TypeConstructor("R1", 1)  # Collections
-R2 = TypeConstructor("R2", 2)  # Unary core concepts, 1 key (left)
-R3 = TypeConstructor("R3", 3)  # Quantified relation, 2 keys (l & r)
-R3a = TypeConstructor("R3a", 3)  # Ternary relation, 1 key (left)
+Val = Operator("Val")
+Obj = Operator("Obj", supertype=Val)  # O
+Reg = Operator("Reg", supertype=Val)  # S
+Loc = Operator("Loc", supertype=Val)  # L
+Qlt = Operator("Qlt", supertype=Val)  # Q
+Nom = Operator("Nom", supertype=Qlt)
+Bool = Operator("Bool", supertype=Nom)
+Ord = Operator("Ord", supertype=Nom)
+Itv = Operator("Itv", supertype=Ord)
+Ratio = Operator("Ratio", supertype=Itv)
+Count = Operator("Count", supertype=Ratio)
+R1 = Operator("R1", 1)  # Collections
+R2 = Operator("R2", 2)  # Unary core concepts, 1 key (left)
+R3 = Operator("R3", 3)  # Quantified relation, 2 keys (l & r)
+R3a = Operator("R3a", 3)  # Ternary relation, 1 key (left)
 
 SpatialField = R2(Loc, Qlt)
 InvertedField = R2(Qlt, Reg)
