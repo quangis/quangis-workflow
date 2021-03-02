@@ -44,45 +44,45 @@ BooleanInvertedField = R2(Bool, Reg)
 # Data inputs
 
 # Reintroducing these for now to make sure the tests still work
-objectratios = Σ(R2(Obj, Ratio), 1)
-objectnominals = Σ(R2(Obj, Nom), 1)
-objectregions = Σ(R2(Obj, Reg), 1)
-objectcounts = Σ(R2(Obj, Count), 1)
+objectratios = Σ(R2(Obj, Ratio)), 1
+objectnominals = Σ(R2(Obj, Nom)), 1
+objectregions = Σ(R2(Obj, Reg)), 1
+objectcounts = Σ(R2(Obj, Count)), 1
 
-pointmeasures = Σ(R2(Reg, Itv), 1)
-amountpatches = Σ(R2(Reg, Nom), 1)
-countamounts = Σ(R2(Reg, Count), 1)
-boolcoverages = Σ(R2(Bool, Reg), 1)
-boolratio = Σ(R2(Bool, Ratio), 1)
-nomcoverages = Σ(R2(Nom, Reg), 1)
-nomsize = Σ(R2(Nom, Ratio), 1)
-regions = Σ(R1(Reg), 1)
-contour = Σ(R2(Ord, Reg), 1)
-contourline = Σ(R2(Itv, Reg), 1)
-objectregions = Σ(R2(Obj, Reg), 1)
-objectregionratios = Σ(R3a(Obj, Reg, Ratio), 1)
-objectregionnominals = Σ(R3a(Obj, Reg, Nom), 1)
-objectregioncounts = Σ(R3a(Obj, Reg, Count), 1)
-objectregionattr = Σ(lambda x: R3a(Obj, Reg, x), 1)
-field = Σ(R2(Loc, Ratio), 1)
-nomfield = Σ(R2(Loc, Nom), 1)
-boolfield = Σ(R2(Loc, Bool), 1)
-ordfield = Σ(R2(Loc, Ord), 1)
-itvfield = Σ(R2(Loc, Itv), 1)
-ratiofield = Σ(R2(Loc, Ratio), 1)
-object = Σ(Obj, 1)
-objects = Σ(R1(Obj), 1)
-region = Σ(Reg, 1)
-in_ = Σ(Nom, 0)
-out = Σ(Nom, 0)
-noms = Σ(R1(Nom), 1)
-ratios = Σ(R1(Ratio), 1)
-countV = Σ(Count, 1)
-ratioV = Σ(Ratio, 1)
-interval = Σ(Itv, 1)
-ordinal = Σ(Ord, 1)
-nominal = Σ(Nom, 1)
-true = Σ(Bool, 0)
+pointmeasures = Σ(R2(Reg, Itv)), 1
+amountpatches = Σ(R2(Reg, Nom)), 1
+countamounts = Σ(R2(Reg, Count)), 1
+boolcoverages = Σ(R2(Bool, Reg)), 1
+boolratio = Σ(R2(Bool, Ratio)), 1
+nomcoverages = Σ(R2(Nom, Reg)), 1
+nomsize = Σ(R2(Nom, Ratio)), 1
+regions = Σ(R1(Reg)), 1
+contour = Σ(R2(Ord, Reg)), 1
+contourline = Σ(R2(Itv, Reg)), 1
+objectregions = Σ(R2(Obj, Reg)), 1
+objectregionratios = Σ(R3a(Obj, Reg, Ratio)), 1
+objectregionnominals = Σ(R3a(Obj, Reg, Nom)), 1
+objectregioncounts = Σ(R3a(Obj, Reg, Count)), 1
+objectregionattr = Σ(lambda x: R3a(Obj, Reg, x)), 1
+field = Σ(R2(Loc, Ratio)), 1
+nomfield = Σ(R2(Loc, Nom)), 1
+boolfield = Σ(R2(Loc, Bool)), 1
+ordfield = Σ(R2(Loc, Ord)), 1
+itvfield = Σ(R2(Loc, Itv)), 1
+ratiofield = Σ(R2(Loc, Ratio)), 1
+object = Σ(Obj), 1
+objects = Σ(R1(Obj)), 1
+region = Σ(Reg), 1
+in_ = Σ(Nom), 0
+out = Σ(Nom), 0
+noms = Σ(R1(Nom)), 1
+ratios = Σ(R1(Ratio)), 1
+countV = Σ(Count), 1
+ratioV = Σ(Ratio), 1
+interval = Σ(Itv), 1
+ordinal = Σ(Ord), 1
+nominal = Σ(Nom), 1
+true = Σ(Bool), 0
 
 ###########################################################################
 # Math/stats transformations
@@ -240,6 +240,4 @@ groupbyR = Σ(lambda rel, q2, l, q1, r: (rel ** q2) ** R3(l, q1, r) ** R2(r, q2)
 groupby = Σ(lambda x, q, y: (R1(x) ** q) ** R2(x, y) ** R2(y, q))
 
 # Generate an algebra out of all signatures defined in this module
-algebra = TransformationAlgebra(**{
-    k: v for k, v in dict(globals()).items() if isinstance(v, Σ)
-})
+algebra = TransformationAlgebra.from_dict(dict(globals()))
