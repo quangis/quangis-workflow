@@ -7,7 +7,7 @@ Module containing the core concept transformation algebra. Usage:
     R(Obj)
 """
 
-from quangis.transformation.type import Operator, Σ, Subtype, Member, Param
+from quangis.transformation.type import Operator, Schema, Subtype, Member, Param
 from quangis.transformation.algebra import TransformationAlgebra
 
 
@@ -63,7 +63,7 @@ objectregions = R2(Obj, Reg), 1
 objectregionratios = R3a(Obj, Reg, Ratio), 1
 objectregionnominals = R3a(Obj, Reg, Nom), 1
 objectregioncounts = R3a(Obj, Reg, Count), 1
-objectregionattr = Σ(lambda x: R3a(Obj, Reg, x)), 1
+objectregionattr = Schema(lambda x: R3a(Obj, Reg, x)), 1
 field = R2(Loc, Ratio), 1
 nomfield = R2(Loc, Nom), 1
 boolfield = R2(Loc, Bool), 1
@@ -83,21 +83,31 @@ interval = Itv, 1
 ordinal = Ord, 1
 nominal = Nom, 1
 true = Bool, 0
+n
 
 ###########################################################################
 # Math/stats transformations
 
 # functional
-compose = Σ(lambda α, β, γ: (β ** γ) ** (α ** β) ** (α ** γ))
-compose2 = Σ(lambda α, β, γ, δ: (β ** γ) ** (δ ** α ** β) ** (δ ** α ** γ))
-swap = Σ(lambda α, β, γ: (α ** β ** γ) ** (β ** α ** γ))
-id = Σ(lambda α: α ** α)
+compose = Schema(lambda α, β, γ:
+    (β ** γ) ** (α ** β) ** (α ** γ)
+)
+
+compose2 = Schema(lambda α, β, γ, δ:
+    (β ** γ) ** (δ ** α ** β) ** (δ ** α ** γ)
+)
+
+swap = Schema(lambda α, β, γ:
+    (α ** β ** γ) ** (β ** α ** γ)
+)
+
+id = Schema(lambda α: α ** α)
 
 # derivations
 ratio = Ratio ** Ratio ** Ratio
 product = Ratio ** Ratio ** Ratio
-leq = Σ(lambda α: α ** α ** Bool | Subtype(α, Ord))
-eq = Σ(lambda α: α ** α ** Bool | Subtype(α, Val))
+leq = Schema(lambda α: α ** α ** Bool | Subtype(α, Ord))
+eq = Schema(lambda α: α ** α ** Bool | Subtype(α, Val))
 conj = Bool ** Bool ** Bool
 notj = Bool ** Bool
 # compose2 notj conj
@@ -118,20 +128,35 @@ max = R2(Val, Ord) ** Ord
 sum = R2(Val, Ratio) ** Ratio
 
 # define in terms of: nest2 (merge (pi1 (countamounts x1))) (sum (countamounts x1))
-contentsum = Σ(lambda x: R2(Reg, x) ** R2(Reg, x) | Subtype(x, Ratio))
+contentsum = Schema(lambda x:
+    R2(Reg, x) ** R2(Reg, x)
+    | Subtype(x, Ratio)
+)
 
 # define in terms of: nest2 (name (pi1 (nomcoverages x1))) (merge (pi2(nomcoverages x1)))
-coveragesum = Σ(lambda x: R2(Nom, x) ** R2(Nom, x) | Subtype(x, Ratio))
+coveragesum = Schema(lambda x:
+    R2(Nom, x) ** R2(Nom, x)
+    | Subtype(x, Ratio)
+)
 
 
 ##########################################################################
 # Geometric transformations
-interpol = Σ(lambda x: R2(Reg, x) ** R1(Loc) ** R2(Loc, x) | Subtype(x, Itv))
+interpol = Schema(lambda x:
+    R2(Reg, x) ** R1(Loc) ** R2(Loc, x)
+    | Subtype(x, Itv)
+)
 
 # define in terms of ldist: join_with1 (leq (ratioV w))(groupbyL (min) (loDist (deify (region y)) (objectregions x)))
 extrapol = R2(Obj, Reg) ** R2(Loc, Bool)  # Buffering, define in terms of Dist
-arealinterpol = Σ(lambda x: R2(Reg, x) ** R1(Reg) ** R2(Reg, x) | Subtype(x, Ratio))
+
+arealinterpol = Schema(lambda x:
+    R2(Reg, x) ** R1(Reg) ** R2(Reg, x)
+    | Subtype(x, Ratio)
+)
+
 slope = R2(Loc, Itv) ** R2(Loc, Ratio)
+
 aspect = R2(Loc, Itv) ** R2(Loc, Ratio)
 
 # deify/reify, nest/get, invert/revert might be defined in terms of inverse
@@ -140,18 +165,21 @@ aspect = R2(Loc, Itv) ** R2(Loc, Ratio)
 # conversions
 reify = R1(Loc) ** Reg
 deify = Reg ** R1(Loc)
-nest = Σ(lambda x: x ** R1(x))  # Puts values into some unary relation
-nest2 = Σ(lambda x, y: x ** y ** R2(x, y))
-nest3 = Σ(lambda x, y, z: x ** y ** z ** R3(x, y, z))
-get = Σ(lambda x: R1(x) ** x)
-#define: groupby reify (nomfield x)
-invert = Σ(lambda x: R2(Loc, x) ** R2(x, Reg) | Subtype(x, Qlt))
-#define: groupbyL id (join_key (select eq (lTopo (deify (merge (pi2 (nomcoverages x)))) (merge (pi2 (nomcoverages x)))) in) (groupby name (nomcoverages x)))
-revert = Σ(lambda x: R2(x, Reg) ** R2(Loc, x) | Subtype(x, Qlt))
-#define?
+nest = Schema(lambda x: x ** R1(x))  # Puts values into some unary relation
+nest2 = Schema(lambda x, y: x ** y ** R2(x, y))
+nest3 = Schema(lambda x, y, z: x ** y ** z ** R3(x, y, z))
+get = Schema(lambda x: R1(x) ** x)
+# define: groupby reify (nomfield x)
+invert = Schema(lambda x: R2(Loc, x) ** R2(x, Reg) | Subtype(x, Qlt))
+# define: groupbyL id (join_key (select eq (lTopo (deify (merge (pi2 (nomcoverages x)))) (merge (pi2 (nomcoverages x)))) in) (groupby name (nomcoverages x)))
+revert = Schema(lambda x: R2(x, Reg) ** R2(Loc, x) | Subtype(x, Qlt))
+# define?
 # join_with2 nest (get_attrL (objectregionratios x)) (get_attrR (objectregionratios x))
 # groupbyR id (join_key (select eq (rTopo (pi2 (get_attrL (objectregionratios x))) (pi2 (get_attrL (objectregionratios x)))) in) (get_attrR (objectregionratios x)))
-getamounts = Σ(lambda x: R3a(Obj, Reg, x) ** R2(Reg, x) | Subtype(x, Ratio))
+getamounts = Schema(lambda x:
+    R3a(Obj, Reg, x) ** R2(Reg, x)
+    | Subtype(x, Ratio)
+)
 
 # operators on quantified relations
 # define odist in terms of the minimal ldist
@@ -170,74 +198,109 @@ nDist = R1(Obj) ** R1(Obj) ** R3(Obj, Ratio, Obj) ** R3(Obj, Ratio, Obj)
 lVis = R1(Loc) ** R1(Loc) ** R2(Loc, Itv) ** R3(Loc, Bool, Loc)
 
 # amount operations
-fcont = Σ(lambda v, x, y: (R2(Val, x) ** y) ** R2(Loc, x) ** Reg ** y | [Subtype(x, Qlt), Subtype(y, Qlt)])
+fcont = Schema(lambda v, x, y:
+    (R2(Val, x) ** y) ** R2(Loc, x) ** Reg ** y
+    | [Subtype(x, Qlt), Subtype(y, Qlt)]
+)
+
 ocont = R2(Obj, Reg) ** Reg ** Count
-fcover = Σ(lambda x: R2(Loc, x) ** R1(x) ** Reg | Subtype(x, Qlt))
+
+fcover = Schema(lambda x:
+    R2(Loc, x) ** R1(x) ** Reg
+    | Subtype(x, Qlt)
+)
+
 ocover = R2(Obj, Reg) ** R1(Obj) ** Reg
 
 
 ###########################################################################
 # Relational transformations
 
-#cct.apply = R2(var.x, var.y) ** var.x ** var.y
+# cct.apply = R2(var.x, var.y) ** var.x ** var.y
 
-#Set union and set difference
-#define nest ()
-set_union = Σ(
-    lambda rel: rel ** rel ** rel
+# Set union and set difference
+# define nest ()
+set_union = Schema(lambda rel:
+    rel ** rel ** rel
 )
-set_diff = Σ(
-    lambda rel: rel ** rel ** rel
+set_diff = Schema(lambda rel:
+    rel ** rel ** rel
 )
-relunion = Σ(
-    lambda rel: R1(rel) ** rel
+relunion = Schema(lambda rel:
+    R1(rel) ** rel
 )
 
 # functions to handle multiple attributes of the same types with 1 key
-join_attr = Σ(lambda x, y, z: R2(x, y) ** R2(x, z) ** R3a(x, y, z))
-get_attrL = Σ(lambda x, y, z: R3a(x, y, z) ** R2(x, y))
-get_attrR = Σ(lambda x, y, z: R3a(x, y, z) ** R2(x, z))
+join_attr = Schema(lambda x, y, z: R2(x, y) ** R2(x, z) ** R3a(x, y, z))
+get_attrL = Schema(lambda x, y, z: R3a(x, y, z) ** R2(x, y))
+get_attrR = Schema(lambda x, y, z: R3a(x, y, z) ** R2(x, z))
 
 # Projection (π). Projects a given relation to one of its attributes,
 # resulting in a collection.
-pi1 = Σ(lambda rel, x: rel ** R1(x) | Param(rel, x, at=1))
-pi2 = Σ(lambda rel, x: rel ** R1(x) | Param(rel, x, at=2))
-pi3 = Σ(lambda rel, x: rel ** R1(x) | Param(rel, x, at=3))
+pi1 = Schema(lambda rel, x: rel ** R1(x) | Param(rel, x, at=1))
+pi2 = Schema(lambda rel, x: rel ** R1(x) | Param(rel, x, at=2))
+pi3 = Schema(lambda rel, x: rel ** R1(x) | Param(rel, x, at=3))
 
 # Selection (σ). Selects a subset of the relation using a constraint on
 # attribute values, like equality (eq) or order (leq). Used to be sigmae
 # and sigmale.
-select = Σ(lambda x, y, rel: (x ** y ** Bool) ** rel ** y ** rel | Param(rel, x))
+select = Schema(lambda x, y, rel:
+    (x ** y ** Bool) ** rel ** y ** rel
+    | Param(rel, x)
+)
 
 # Join of two unary concepts, like a table join.
 # is join the same as join_with2 eq?
-join = Σ(lambda x, y, z: R2(x, y) ** R2(y, z) ** R2(x, z))
+join = Schema(lambda x, y, z:
+    R2(x, y) ** R2(y, z) ** R2(x, z)
+)
 
 # Join on subset (⨝). Subset a relation to those tuples having an attribute
 # value contained in a collection. Used to be bowtie.
-join_subset = Σ(lambda x, rel: rel ** R1(x) ** rel | Param(x))
+join_subset = Schema(lambda x, rel:
+    rel ** R1(x) ** rel
+    | Param(x)
+)
 
 # Join (⨝*). Substitute the quality of a quantified relation to some
 # quality of one of its keys. Used to be bowtie*.
-join_key = Σ(lambda x, q1, y, rel, q2: R3(x, q1, y) ** rel ** R3(x, q2, y) | Member(rel, R2(x, q2), R2(y, q2)))
+join_key = Schema(lambda x, q1, y, rel, q2:
+    R3(x, q1, y) ** rel ** R3(x, q2, y)
+    | Member(rel, R2(x, q2), R2(y, q2))
+)
 
 # Join with unary function. Generate a unary concept from one other unary
 # concept of the same type. Used to be join_fa.
-join_with1 = Σ(lambda x11, y, x1, x2: (x11 ** x2) ** R2(y, x1) ** R2(y, x2) | Subtype(x1, x11))
+join_with1 = Schema(lambda x11, y, x1, x2:
+    (x11 ** x2) ** R2(y, x1) ** R2(y, x2)
+    | Subtype(x1, x11)
+)
 
 # Join with binary function (⨝_f). Generate a unary concept from two other
 # unary concepts of the same type. Used to be bowtie_ratio and others.
-join_with2 = Σ(lambda x11, x22, x3, y, x1, x2: (x11 ** x22 ** x3) ** R2(y, x1) ** R2(y, x2) ** R2(y, x3) | [Subtype(x1, x11), Subtype(x2, x22)])
+join_with2 = Schema(lambda x11, x22, x3, y, x1, x2:
+    (x11 ** x22 ** x3) ** R2(y, x1) ** R2(y, x2) ** R2(y, x3)
+    | [Subtype(x1, x11), Subtype(x2, x22)]
+)
 
 # Group by (β). Group quantified relations by the left (right) key,
 # summarizing lists of quality values with the same key value into a new
 # value per key, resulting in a unary core concept relation.
-groupbyL = Σ(lambda rel, q2, l, q1, r: (rel ** q2) ** R3(l, q1, r) ** R2(l, q2) | Member(rel, R1(r), R2(r, q1)))
+groupbyL = Schema(lambda rel, q2, l, q1, r:
+    (rel ** q2) ** R3(l, q1, r) ** R2(l, q2)
+    | Member(rel, R1(r), R2(r, q1))
+)
 
-groupbyR = Σ(lambda rel, q2, l, q1, r: (rel ** q2) ** R3(l, q1, r) ** R2(r, q2) | Member(rel, R1(l), R2(l, q1)))
+groupbyR = Schema(lambda rel, q2, l, q1, r:
+    (rel ** q2) ** R3(l, q1, r) ** R2(r, q2)
+    | Member(rel, R1(l), R2(l, q1))
+)
 
-#Group by qualities of unary concepts
-groupby = Σ(lambda x, q, y: (R1(x) ** q) ** R2(x, y) ** R2(y, q))
+# Group by qualities of unary concepts
+groupby = Schema(lambda x, q, y:
+    (R1(x) ** q) ** R2(x, y) ** R2(y, q)
+)
 
+##############################################################################
 # Generate an algebra out of all signatures defined in this module
 algebra = TransformationAlgebra.from_dict(dict(globals()))
