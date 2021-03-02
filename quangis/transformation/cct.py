@@ -207,7 +207,7 @@ pi3 = Σ(lambda rel, x: rel ** R1(x) | Param(rel, x, at=3))
 # Selection (σ). Selects a subset of the relation using a constraint on
 # attribute values, like equality (eq) or order (leq). Used to be sigmae
 # and sigmale.
-select = Σ(lambda x, y, rel: (x ** y ** Bool) ** rel ** y ** rel | Param(var.rel, x))
+select = Σ(lambda x, y, rel: (x ** y ** Bool) ** rel ** y ** rel | Param(rel, x))
 
 # Join of two unary concepts, like a table join.
 # is join the same as join_with2 eq?
