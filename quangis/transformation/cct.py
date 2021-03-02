@@ -83,7 +83,6 @@ interval = Itv, 1
 ordinal = Ord, 1
 nominal = Nom, 1
 true = Bool, 0
-n
 
 ###########################################################################
 # Math/stats transformations
