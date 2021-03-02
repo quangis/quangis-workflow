@@ -7,7 +7,7 @@ Module containing the core concept transformation algebra. Usage:
     R(Obj)
 """
 
-from quangis.transformation.type import Σ, Operator, Subtype, Member, Param
+from quangis.transformation.type import Operator, Σ, Subtype, Member, Param
 from quangis.transformation.algebra import TransformationAlgebra
 
 
@@ -44,45 +44,45 @@ BooleanInvertedField = R2(Bool, Reg)
 # Data inputs
 
 # Reintroducing these for now to make sure the tests still work
-objectratios = Σ(R2(Obj, Ratio)), 1
-objectnominals = Σ(R2(Obj, Nom)), 1
-objectregions = Σ(R2(Obj, Reg)), 1
-objectcounts = Σ(R2(Obj, Count)), 1
+objectratios = R2(Obj, Ratio), 1
+objectnominals = R2(Obj, Nom), 1
+objectregions = R2(Obj, Reg), 1
+objectcounts = R2(Obj, Count), 1
 
-pointmeasures = Σ(R2(Reg, Itv)), 1
-amountpatches = Σ(R2(Reg, Nom)), 1
-countamounts = Σ(R2(Reg, Count)), 1
-boolcoverages = Σ(R2(Bool, Reg)), 1
-boolratio = Σ(R2(Bool, Ratio)), 1
-nomcoverages = Σ(R2(Nom, Reg)), 1
-nomsize = Σ(R2(Nom, Ratio)), 1
-regions = Σ(R1(Reg)), 1
-contour = Σ(R2(Ord, Reg)), 1
-contourline = Σ(R2(Itv, Reg)), 1
-objectregions = Σ(R2(Obj, Reg)), 1
-objectregionratios = Σ(R3a(Obj, Reg, Ratio)), 1
-objectregionnominals = Σ(R3a(Obj, Reg, Nom)), 1
-objectregioncounts = Σ(R3a(Obj, Reg, Count)), 1
+pointmeasures = R2(Reg, Itv), 1
+amountpatches = R2(Reg, Nom), 1
+countamounts = R2(Reg, Count), 1
+boolcoverages = R2(Bool, Reg), 1
+boolratio = R2(Bool, Ratio), 1
+nomcoverages = R2(Nom, Reg), 1
+nomsize = R2(Nom, Ratio), 1
+regions = R1(Reg), 1
+contour = R2(Ord, Reg), 1
+contourline = R2(Itv, Reg), 1
+objectregions = R2(Obj, Reg), 1
+objectregionratios = R3a(Obj, Reg, Ratio), 1
+objectregionnominals = R3a(Obj, Reg, Nom), 1
+objectregioncounts = R3a(Obj, Reg, Count), 1
 objectregionattr = Σ(lambda x: R3a(Obj, Reg, x)), 1
-field = Σ(R2(Loc, Ratio)), 1
-nomfield = Σ(R2(Loc, Nom)), 1
-boolfield = Σ(R2(Loc, Bool)), 1
-ordfield = Σ(R2(Loc, Ord)), 1
-itvfield = Σ(R2(Loc, Itv)), 1
-ratiofield = Σ(R2(Loc, Ratio)), 1
-object = Σ(Obj), 1
-objects = Σ(R1(Obj)), 1
-region = Σ(Reg), 1
-in_ = Σ(Nom), 0
-out = Σ(Nom), 0
-noms = Σ(R1(Nom)), 1
-ratios = Σ(R1(Ratio)), 1
-countV = Σ(Count), 1
-ratioV = Σ(Ratio), 1
-interval = Σ(Itv), 1
-ordinal = Σ(Ord), 1
-nominal = Σ(Nom), 1
-true = Σ(Bool), 0
+field = R2(Loc, Ratio), 1
+nomfield = R2(Loc, Nom), 1
+boolfield = R2(Loc, Bool), 1
+ordfield = R2(Loc, Ord), 1
+itvfield = R2(Loc, Itv), 1
+ratiofield = R2(Loc, Ratio), 1
+object = Obj, 1
+objects = R1(Obj), 1
+region = Reg, 1
+in_ = Nom, 0
+out = Nom, 0
+noms = R1(Nom), 1
+ratios = R1(Ratio), 1
+countV = Count, 1
+ratioV = Ratio, 1
+interval = Itv, 1
+ordinal = Ord, 1
+nominal = Nom, 1
+true = Bool, 0
 
 ###########################################################################
 # Math/stats transformations
@@ -94,28 +94,28 @@ swap = Σ(lambda α, β, γ: (α ** β ** γ) ** (β ** α ** γ))
 id = Σ(lambda α: α ** α)
 
 # derivations
-ratio = Σ(Ratio ** Ratio ** Ratio)
-product = Σ(Ratio ** Ratio ** Ratio)
+ratio = Ratio ** Ratio ** Ratio
+product = Ratio ** Ratio ** Ratio
 leq = Σ(lambda α: α ** α ** Bool | Subtype(α, Ord))
 eq = Σ(lambda α: α ** α ** Bool | Subtype(α, Val))
-conj = Σ(Bool ** Bool ** Bool)
-notj = Σ(Bool ** Bool)
+conj = Bool ** Bool ** Bool
+notj = Bool ** Bool
 # compose2 notj conj
-disj = Σ(Bool ** Bool ** Bool)  # define as not-conjunction
+disj = Bool ** Bool ** Bool  # define as not-conjunction
 
 # aggregations of collections
-count = Σ(R1(Obj) ** Ratio)
-size = Σ(R1(Loc) ** Ratio)
-# define: relunion (regions x)
-merge = Σ(R1(Reg) ** Reg)
-centroid = Σ(R1(Loc) ** Loc)
-name = Σ(R1(Nom) ** Nom)
+count = R1(Obj) ** Ratio
+size = R1(Loc) ** Ratio
+# define: relunion (regions x
+merge = R1(Reg) ** Reg
+centroid = R1(Loc) ** Loc
+name = R1(Nom) ** Nom
 
 # statistical operations
-avg = Σ(R2(Val, Itv) ** Itv)
-min = Σ(R2(Val, Ord) ** Ord)
-max = Σ(R2(Val, Ord) ** Ord)
-sum = Σ(R2(Val, Ratio) ** Ratio)
+avg = R2(Val, Itv) ** Itv
+min = R2(Val, Ord) ** Ord
+max = R2(Val, Ord) ** Ord
+sum = R2(Val, Ratio) ** Ratio
 
 # define in terms of: nest2 (merge (pi1 (countamounts x1))) (sum (countamounts x1))
 contentsum = Σ(lambda x: R2(Reg, x) ** R2(Reg, x) | Subtype(x, Ratio))
@@ -129,17 +129,17 @@ coveragesum = Σ(lambda x: R2(Nom, x) ** R2(Nom, x) | Subtype(x, Ratio))
 interpol = Σ(lambda x: R2(Reg, x) ** R1(Loc) ** R2(Loc, x) | Subtype(x, Itv))
 
 # define in terms of ldist: join_with1 (leq (ratioV w))(groupbyL (min) (loDist (deify (region y)) (objectregions x)))
-extrapol = Σ(R2(Obj, Reg) ** R2(Loc, Bool))  # Buffering, define in terms of Dist
+extrapol = R2(Obj, Reg) ** R2(Loc, Bool)  # Buffering, define in terms of Dist
 arealinterpol = Σ(lambda x: R2(Reg, x) ** R1(Reg) ** R2(Reg, x) | Subtype(x, Ratio))
-slope = Σ(R2(Loc, Itv) ** R2(Loc, Ratio))
-aspect = Σ(R2(Loc, Itv) ** R2(Loc, Ratio))
+slope = R2(Loc, Itv) ** R2(Loc, Ratio)
+aspect = R2(Loc, Itv) ** R2(Loc, Ratio)
 
 # deify/reify, nest/get, invert/revert might be defined in terms of inverse
-#cct.inverse = (var.x ** var.y) ** (var.y ** R1(var.x))
+#cct.inverse = (var.x ** var.y) ** (var.y ** R1(var.x)
 
 # conversions
-reify = Σ(R1(Loc) ** Reg)
-deify = Σ(Reg ** R1(Loc))
+reify = R1(Loc) ** Reg
+deify = Reg ** R1(Loc)
 nest = Σ(lambda x: x ** R1(x))  # Puts values into some unary relation
 nest2 = Σ(lambda x, y: x ** y ** R2(x, y))
 nest3 = Σ(lambda x, y, z: x ** y ** z ** R3(x, y, z))
@@ -155,25 +155,25 @@ getamounts = Σ(lambda x: R3a(Obj, Reg, x) ** R2(Reg, x) | Subtype(x, Ratio))
 
 # operators on quantified relations
 # define odist in terms of the minimal ldist
-oDist = Σ(R2(Obj, Reg) ** R2(Obj, Reg) ** R3(Obj, Ratio, Obj))
-lDist = Σ(R1(Loc) ** R1(Loc) ** R3(Loc, Ratio, Loc))
-# similar for lodist)
-loDist = Σ(R1(Loc) ** R2(Obj, Reg) ** R3(Loc, Ratio, Obj))
-oTopo = Σ(R2(Obj, Reg) ** R2(Obj, Reg) ** R3(Obj, Nom, Obj))
-loTopo = Σ(R1(Loc) ** R2(Obj, Reg) ** R3(Loc, Nom, Obj))
-# otopo can be defined in terms of rtopo? in rtopo, if points of a region are)
-# all inside, then the region is inside)
-rTopo = Σ(R1(Reg) ** R1(Reg) ** R3(Reg, Nom, Reg))
-lTopo = Σ(R1(Loc) ** Reg ** R3(Loc, Nom, Reg))
-lrTopo = Σ(R1(Loc) ** R1(Reg) ** R3(Loc, Nom, Reg))
-nDist = Σ(R1(Obj) ** R1(Obj) ** R3(Obj, Ratio, Obj) ** R3(Obj, Ratio, Obj))
-lVis = Σ(R1(Loc) ** R1(Loc) ** R2(Loc, Itv) ** R3(Loc, Bool, Loc))
+oDist = R2(Obj, Reg) ** R2(Obj, Reg) ** R3(Obj, Ratio, Obj)
+lDist = R1(Loc) ** R1(Loc) ** R3(Loc, Ratio, Loc)
+# similar for lodist
+loDist = R1(Loc) ** R2(Obj, Reg) ** R3(Loc, Ratio, Obj)
+oTopo = R2(Obj, Reg) ** R2(Obj, Reg) ** R3(Obj, Nom, Obj)
+loTopo = R1(Loc) ** R2(Obj, Reg) ** R3(Loc, Nom, Obj)
+# otopo can be defined in terms of rtopo? in rtopo, if points of a region are
+# all inside, then the region is inside
+rTopo = R1(Reg) ** R1(Reg) ** R3(Reg, Nom, Reg)
+lTopo = R1(Loc) ** Reg ** R3(Loc, Nom, Reg)
+lrTopo = R1(Loc) ** R1(Reg) ** R3(Loc, Nom, Reg)
+nDist = R1(Obj) ** R1(Obj) ** R3(Obj, Ratio, Obj) ** R3(Obj, Ratio, Obj)
+lVis = R1(Loc) ** R1(Loc) ** R2(Loc, Itv) ** R3(Loc, Bool, Loc)
 
 # amount operations
 fcont = Σ(lambda v, x, y: (R2(Val, x) ** y) ** R2(Loc, x) ** Reg ** y | [Subtype(x, Qlt), Subtype(y, Qlt)])
-ocont = Σ(R2(Obj, Reg) ** Reg ** Count)
+ocont = R2(Obj, Reg) ** Reg ** Count
 fcover = Σ(lambda x: R2(Loc, x) ** R1(x) ** Reg | Subtype(x, Qlt))
-ocover = Σ(R2(Obj, Reg) ** R1(Obj) ** Reg)
+ocover = R2(Obj, Reg) ** R1(Obj) ** Reg
 
 
 ###########################################################################
