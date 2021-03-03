@@ -199,7 +199,8 @@ lVis = R1(Loc) ** R1(Loc) ** R2(Loc, Itv) ** R3(Loc, Bool, Loc)
 # amount operations
 fcont = Schema(lambda v, x, y:
     (R2(Val, x) ** y) ** R2(Loc, x) ** Reg ** y
-    | [Subtype(x, Qlt), Subtype(y, Qlt)]
+    | Subtype(x, Qlt)
+    | Subtype(y, Qlt)
 )
 
 ocont = R2(Obj, Reg) ** Reg ** Count
@@ -279,7 +280,8 @@ join_with1 = Schema(lambda x11, y, x1, x2:
 # unary concepts of the same type. Used to be bowtie_ratio and others.
 join_with2 = Schema(lambda x11, x22, x3, y, x1, x2:
     (x11 ** x22 ** x3) ** R2(y, x1) ** R2(y, x2) ** R2(y, x3)
-    | [Subtype(x1, x11), Subtype(x2, x22)]
+    | Subtype(x1, x11)
+    | Subtype(x2, x22)
 )
 
 # Group by (β). Group quantified relations by the left (right) key,
