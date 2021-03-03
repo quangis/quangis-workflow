@@ -1,7 +1,7 @@
 import unittest
 
 from quangis import error
-from quangis.transformation.cct import cct, \
+from quangis.transformation.cct import algebra, \
     R1, R2, Obj, Ratio, Itv, Count, Reg, Loc, Ord, Nom
 
 
@@ -9,9 +9,10 @@ class TestCCT(unittest.TestCase):
 
     def parse(self, string, result):
         if isinstance(result, type) and issubclass(result, Exception):
-            self.assertRaises(result, cct.parse, string)
+            self.assertRaises(result, algebra.parse, string)
         else:
-            self.assertEqual(cct.parse(string).type.plain, result)
+            self.assertEqual(algebra.parse(string).type.plain,
+                    result.instance().plain)
 
     @unittest.skip("this would be desirable")
     def test_projection(self):
