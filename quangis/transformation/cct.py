@@ -7,7 +7,7 @@ Module containing the core concept transformation algebra. Usage:
     R(Obj)
 """
 
-from quangis.transformation.type import Operator, Schema, Subtype, Member, Param
+from quangis.transformation.type import Operator, Schema, Member, Param
 from quangis.transformation.algebra import TransformationAlgebra
 
 
@@ -105,8 +105,8 @@ id = Schema(lambda α: α ** α)
 # derivations
 ratio = Ratio ** Ratio ** Ratio
 product = Ratio ** Ratio ** Ratio
-leq = Schema(lambda α: α ** α ** Bool | Subtype(α, Ord))
-eq = Schema(lambda α: α ** α ** Bool | Subtype(α, Val))
+leq = Schema(lambda α: α ** α ** Bool | α << Ord)
+eq = Schema(lambda α: α ** α ** Bool | α << Val)
 conj = Bool ** Bool ** Bool
 notj = Bool ** Bool
 # compose2 notj conj
@@ -129,13 +129,13 @@ sum = R2(Val, Ratio) ** Ratio
 # define in terms of: nest2 (merge (pi1 (countamounts x1))) (sum (countamounts x1))
 contentsum = Schema(lambda x:
     R2(Reg, x) ** R2(Reg, x)
-    | Subtype(x, Ratio)
+    | x << Ratio
 )
 
 # define in terms of: nest2 (name (pi1 (nomcoverages x1))) (merge (pi2(nomcoverages x1)))
 coveragesum = Schema(lambda x:
     R2(Nom, x) ** R2(Nom, x)
-    | Subtype(x, Ratio)
+    | x << Ratio
 )
 
 
@@ -143,7 +143,7 @@ coveragesum = Schema(lambda x:
 # Geometric transformations
 interpol = Schema(lambda x:
     R2(Reg, x) ** R1(Loc) ** R2(Loc, x)
-    | Subtype(x, Itv)
+    | x << Itv
 )
 
 # define in terms of ldist: join_with1 (leq (ratioV w))(groupbyL (min) (loDist (deify (region y)) (objectregions x)))
@@ -151,7 +151,7 @@ extrapol = R2(Obj, Reg) ** R2(Loc, Bool)  # Buffering, define in terms of Dist
 
 arealinterpol = Schema(lambda x:
     R2(Reg, x) ** R1(Reg) ** R2(Reg, x)
-    | Subtype(x, Ratio)
+    | x << Ratio
 )
 
 slope = R2(Loc, Itv) ** R2(Loc, Ratio)
@@ -169,15 +169,15 @@ nest2 = Schema(lambda x, y: x ** y ** R2(x, y))
 nest3 = Schema(lambda x, y, z: x ** y ** z ** R3(x, y, z))
 get = Schema(lambda x: R1(x) ** x)
 # define: groupby reify (nomfield x)
-invert = Schema(lambda x: R2(Loc, x) ** R2(x, Reg) | Subtype(x, Qlt))
+invert = Schema(lambda x: R2(Loc, x) ** R2(x, Reg) | x << Qlt)
 # define: groupbyL id (join_key (select eq (lTopo (deify (merge (pi2 (nomcoverages x)))) (merge (pi2 (nomcoverages x)))) in) (groupby name (nomcoverages x)))
-revert = Schema(lambda x: R2(x, Reg) ** R2(Loc, x) | Subtype(x, Qlt))
+revert = Schema(lambda x: R2(x, Reg) ** R2(Loc, x) | x << Qlt)
 # define?
 # join_with2 nest (get_attrL (objectregionratios x)) (get_attrR (objectregionratios x))
 # groupbyR id (join_key (select eq (rTopo (pi2 (get_attrL (objectregionratios x))) (pi2 (get_attrL (objectregionratios x)))) in) (get_attrR (objectregionratios x)))
 getamounts = Schema(lambda x:
     R3a(Obj, Reg, x) ** R2(Reg, x)
-    | Subtype(x, Ratio)
+    | x << Ratio
 )
 
 # operators on quantified relations
@@ -199,15 +199,15 @@ lVis = R1(Loc) ** R1(Loc) ** R2(Loc, Itv) ** R3(Loc, Bool, Loc)
 # amount operations
 fcont = Schema(lambda v, x, y:
     (R2(Val, x) ** y) ** R2(Loc, x) ** Reg ** y
-    | Subtype(x, Qlt)
-    | Subtype(y, Qlt)
+    | x << Qlt
+    | y << Qlt
 )
 
 ocont = R2(Obj, Reg) ** Reg ** Count
 
 fcover = Schema(lambda x:
     R2(Loc, x) ** R1(x) ** Reg
-    | Subtype(x, Qlt)
+    | x << Qlt
 )
 
 ocover = R2(Obj, Reg) ** R1(Obj) ** Reg
@@ -273,15 +273,15 @@ join_key = Schema(lambda x, q1, y, rel, q2:
 # concept of the same type. Used to be join_fa.
 join_with1 = Schema(lambda x11, y, x1, x2:
     (x11 ** x2) ** R2(y, x1) ** R2(y, x2)
-    | Subtype(x1, x11)
+    | x1 << x11
 )
 
 # Join with binary function (⨝_f). Generate a unary concept from two other
 # unary concepts of the same type. Used to be bowtie_ratio and others.
 join_with2 = Schema(lambda x11, x22, x3, y, x1, x2:
     (x11 ** x22 ** x3) ** R2(y, x1) ** R2(y, x2) ** R2(y, x3)
-    | Subtype(x1, x11)
-    | Subtype(x2, x22)
+    | x1 << x11
+    | x2 << x22
 )
 
 # Group by (β). Group quantified relations by the left (right) key,
