@@ -240,7 +240,7 @@ get_attrR = Schema(lambda x, y, z: R3a(x, y, z) ** R2(x, z))
 pi1 = Schema(lambda rel, x:
     rel ** R1(x) | rel << x.parameter_of(R1, R2, R3, at=1))
 pi2 = Schema(lambda rel, x:
-    rel ** R1(x) | rel << x.parameter_of(R1, R3, R3, at=2))
+    rel ** R1(x) | rel << x.parameter_of(R1, R2, R3, at=2))
 pi3 = Schema(lambda rel, x:
     rel ** R1(x) | rel << x.parameter_of(R1, R2, R3, at=3))
 
