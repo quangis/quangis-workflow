@@ -2,19 +2,23 @@ import unittest
 
 from quangis import error
 from quangis.transformation.cct import algebra, \
-    R1, R2, Obj, Ratio, Itv, Count, Reg, Loc, Ord, Nom
+    R1, R2, Obj, Ratio
 
 
 class TestCCT(unittest.TestCase):
 
-    def parse(self, string, result):
-        if isinstance(result, type) and issubclass(result, Exception):
+    def parse(self, string, result=None):
+        if result is None:
+            # if the result is unknown, just check if it contains any
+            # unresolved variables
+            self.assertTrue(
+                not any(algebra.parse(string).type.plain.variables()))
+        elif isinstance(result, type) and issubclass(result, Exception):
             self.assertRaises(result, algebra.parse, string)
         else:
             self.assertEqual(algebra.parse(string).type.plain,
                     result.instance().plain)
 
-    @unittest.skip("this would be desirable")
     def test_projection(self):
         self.parse(
             "pi1 (objectregions xs)",
@@ -22,149 +26,125 @@ class TestCCT(unittest.TestCase):
 
     def test_select_match(self):
         self.parse(
-            "select eq (objectratios xs) (object x)",
+            "select leq (objectratios xs) (interval x)",
             R2(Obj, Ratio))
 
     def test_select_mismatch(self):
         self.parse(
-            "select eq (objectratios xs) (region x)",
-            error.ViolatedConstraint)
+            "select leq (objectratios xs) (nominal x)",
+            error.SubtypeMismatch)
 
     def test01(self):
         self.parse(
-            "compose deify reify (pi1 (field something))",
-            R1(Loc))
+            "compose deify reify (pi1 (field something))")
 
     def test02(self):
         self.parse(
-            "select eq (objectregions x) (object y)",
-            R2(Obj, Reg))
+            "select eq (objectregions x) (object y)")
 
     def test03(self):
         self.parse(
-            "select eq (amountpatches x) (nominal y)",
-            R2(Reg, Nom))
+            "select eq (amountpatches x) (nominal y)")
 
     def test04(self):
         self.parse(
-            "select leq (contour x) (ordinal y)",
-            R2(Ord, Reg))
+            "select leq (contour x) (ordinal y)")
 
     def test05(self):
         self.parse(
             "join_subset (objectregions x) (pi1 (select eq (otopo "
-            "(objectregions x) (objectregions y)) in))",
-            R2(Obj, Reg))
+            "(objectregions x) (objectregions y)) in))")
 
     def test06(self):
         self.parse(
             "groupbyL sum (join_key (select eq (otopo (objectregions x) "
-            "(objectregions y)) in) (objectcounts z))",
-            R2(Obj, Count))
+            "(objectregions y)) in) (objectcounts z))")
 
     def test07(self):
         self.parse(
             "groupbyL sum (join_key (select eq (otopo (objectregions x) "
-            "(objectregions y)) in) (objectratios z))",
-            R2(Obj, Count))
+            "(objectregions y)) in) (objectratios z))")
 
     def test08(self):
         self.parse(
             "groupbyL avg (join_key (select eq (otopo (objectregions x) "
-            "(objectregions y)) in) (objectratios z))",
-            R2(Obj, Itv))
+            "(objectregions y)) in) (objectratios z))")
 
     def test09(self):
         self.parse(
             "groupbyL avg (join_key (select eq (otopo (objectregions x) "
-            "(objectregions y)) in) (objectcounts z))",
-            R2(Obj, Itv))
+            "(objectregions y)) in) (objectcounts z))")
 
     def test10(self):
         self.parse(
             "groupbyR count (select eq (otopo (objectregions x) "
-            "(objectregions y)) in)",
-            R2(Obj, Ratio))
+            "(objectregions y)) in)")
 
     def test11(self):
         self.parse(
-            "revert (contour x)",
-            R2(Loc, Ord))
+            "revert (contour x)")
 
     def test12(self):
         self.parse(
-            "revert (nomcoverages x)",
-            R2(Loc, Nom))
+            "revert (nomcoverages x)")
 
     def test13(self):
         self.parse(
-            "invert (field x)",
-            R2(Ratio, Reg))
+            "invert (field x)")
 
     def test14(self):
         self.parse(
-            "select leq (field x) (ordinal y)",
-            R2(Loc, Ratio))
+            "select leq (field x) (ordinal y)")
 
     def test15(self):
         self.parse(
             "groupbyR size (select eq (lotopo (pi1 (field x))"
-            "(objectregions y)) in)",
-            R2(Obj, Ratio))
+            "(objectregions y)) in)")
 
     def test16(self):
         self.parse(
             "groupbyR size (select eq (lotopo (deify (merge (pi2 "
-            "(objectregions x)))) (objectregions x)) in)",
-            R2(Obj, Ratio))
+            "(objectregions x)))) (objectregions x)) in)")
 
     def test17(self):
         self.parse(
-            "join_with2 ratio (objectratios x) (objectratios y)",
-            R2(Obj, Ratio))
+            "join_with2 ratio (objectratios x) (objectratios y)")
 
     def test18(self):
         self.parse(
             "interpol (pointmeasures x) "
-            "(deify (merge (pi2 (objectregions y))))",
-            R2(Loc, Itv))
+            "(deify (merge (pi2 (objectregions y))))")
 
     def test19(self):
         self.parse(
             "groupbyL avg (join_key (select eq (lotopo (pi1 (field x)) "
-            "(objectregions y)) in) (field b))",
-            R2(Loc, Itv))
+            "(objectregions y)) in) (field b))")
 
     def test20(self):
         self.parse(
-            "join_subset (field x) (deify (merge (pi2 (objectregions x))))",
-            R2(Loc, Ratio))
+            "join_subset (field x) (deify (merge (pi2 (objectregions x))))")
 
     def test21(self):
         self.parse(
-            "reify (pi1 (field x))",
-            Reg)
+            "reify (pi1 (field x))")
 
     def test22(self):
         self.parse(
             "groupbyR count (select eq (otopo (objectregions _:source3) "
             "(join_subset (objectregions _:source2) (pi1 (select eq (otopo "
             "(objectregions _:source2) (select eq (objectregions _:source1)"
-            "(object Amsterdam))) in)))) in)",
-            R2(Obj, Ratio))
+            "(object Amsterdam))) in)))) in)")
 
     def test23(self):
         self.parse(
             "join_subset (objectregions roads) (pi3 (select eq (lotopo (deify "
-            "(region 1234)) (objectregions roads)) in))",
-            R2(Obj, Reg))
+            "(region 1234)) (objectregions roads)) in))")
 
     def test24(self):
         self.parse(
             "reify (pi1 (select leq (join_subset (revert (contour noise)) "
             "(deify (merge (pi2 (select eq (objectregions muni) "
-            "(object Utrecht)))))) (ordinal 70)))",
-            Reg)
+            "(object Utrecht)))))) (ordinal 70)))")
 
     def test25(self):
         self.parse(
@@ -172,8 +152,7 @@ class TestCCT(unittest.TestCase):
             "leq (revert (contour noise)) (ordinal 70))) (select eq "
             "(objectregions muni) (object Utrecht))) in)) (groupbyR size "
             "(select eq (lotopo (deify (merge (pi2 (objectregions muni)))) "
-            "(select eq (objectregions muni) (object Utrecht))) in))",
-            R2(Obj, Ratio))
+            "(select eq (objectregions muni) (object Utrecht))) in))")
 
     def test26(self):
         self.parse(
@@ -181,8 +160,7 @@ class TestCCT(unittest.TestCase):
             "households) (join_subset (objectregions neighborhoods) (pi1 "
             "(select eq (otopo (objectregions neighborhoods) (select eq "
             "(objectregions muni) (object Utrecht))) in)))) in) "
-            "(objectcounts households))",
-            R2(Obj, Count))
+            "(objectcounts households))")
 
     def test27(self):
         self.parse(
@@ -192,8 +170,7 @@ class TestCCT(unittest.TestCase):
             "(otopo (objectregions neighborhoods) (select eq (objectregions "
             "muni) (object Utrecht))) in)))) in) (interpol (pointmeasures "
             "temperature) (deify (merge (pi2 (select eq (objectregions muni) "
-            "(object Utrecht)))))))",
-            R2(Obj, Itv))
+            "(object Utrecht)))))))")
 
     def test28(self):
         self.parse(
@@ -202,8 +179,7 @@ class TestCCT(unittest.TestCase):
             (merge (pi2 (select eq (objectregions muni) (object Utrecht))))))
             (region x)) (size (pi1 (interpol (pointmeasures temperature) (deify
             (merge (pi2 (select eq (objectregions muni) (object Utrecht))))))))
-            """,
-            Ratio)
+            """)
 
 
 if __name__ == '__main__':
