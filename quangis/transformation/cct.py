@@ -105,8 +105,8 @@ id = Schema(lambda α: α ** α)
 # derivations
 ratio = Ratio ** Ratio ** Ratio
 product = Ratio ** Ratio ** Ratio
-leq = Schema(lambda α: α ** α ** Bool | α << Ord)
-eq = Schema(lambda α: α ** α ** Bool | α << Val)
+leq = Ord ** Ord ** Bool
+eq = Val ** Val ** Bool
 conj = Bool ** Bool ** Bool
 notj = Bool ** Bool
 # compose2 notj conj
@@ -127,32 +127,20 @@ max = R2(Val, Ord) ** Ord
 sum = R2(Val, Ratio) ** Ratio
 
 # define in terms of: nest2 (merge (pi1 (countamounts x1))) (sum (countamounts x1))
-contentsum = Schema(lambda x:
-    R2(Reg, x) ** R2(Reg, x)
-    | x << Ratio
-)
+contentsum = R2(Reg, Ratio) ** R2(Reg, Ratio)
 
 # define in terms of: nest2 (name (pi1 (nomcoverages x1))) (merge (pi2(nomcoverages x1)))
-coveragesum = Schema(lambda x:
-    R2(Nom, x) ** R2(Nom, x)
-    | x << Ratio
-)
+coveragesum = R2(Nom, Ratio) ** R2(Nom, Ratio)
 
 
 ##########################################################################
 # Geometric transformations
-interpol = Schema(lambda x:
-    R2(Reg, x) ** R1(Loc) ** R2(Loc, x)
-    | x << Itv
-)
+interpol = R2(Reg, Itv) ** R1(Loc) ** R2(Loc, Itv)
 
 # define in terms of ldist: join_with1 (leq (ratioV w))(groupbyL (min) (loDist (deify (region y)) (objectregions x)))
 extrapol = R2(Obj, Reg) ** R2(Loc, Bool)  # Buffering, define in terms of Dist
 
-arealinterpol = Schema(lambda x:
-    R2(Reg, x) ** R1(Reg) ** R2(Reg, x)
-    | x << Ratio
-)
+arealinterpol = R2(Reg, Ratio) ** R1(Reg) ** R2(Reg, Ratio)
 
 slope = R2(Loc, Itv) ** R2(Loc, Ratio)
 
@@ -169,16 +157,14 @@ nest2 = Schema(lambda x, y: x ** y ** R2(x, y))
 nest3 = Schema(lambda x, y, z: x ** y ** z ** R3(x, y, z))
 get = Schema(lambda x: R1(x) ** x)
 # define: groupby reify (nomfield x)
-invert = Schema(lambda x: R2(Loc, x) ** R2(x, Reg) | x << Qlt)
+invert = Schema(lambda x: R2(Loc, x) ** R2(x, Reg))# | x << Qlt)
 # define: groupbyL id (join_key (select eq (lTopo (deify (merge (pi2 (nomcoverages x)))) (merge (pi2 (nomcoverages x)))) in) (groupby name (nomcoverages x)))
-revert = Schema(lambda x: R2(x, Reg) ** R2(Loc, x) | x << Qlt)
+revert = Schema(lambda x: R2(x, Reg) ** R2(Loc, x))# | x << Qlt)
 # define?
 # join_with2 nest (get_attrL (objectregionratios x)) (get_attrR (objectregionratios x))
 # groupbyR id (join_key (select eq (rTopo (pi2 (get_attrL (objectregionratios x))) (pi2 (get_attrL (objectregionratios x)))) in) (get_attrR (objectregionratios x)))
-getamounts = Schema(lambda x:
-    R3a(Obj, Reg, x) ** R2(Reg, x)
-    | x << Ratio
-)
+getamounts = R3a(Obj, Reg, Ratio) ** R2(Reg, Ratio)
+#| x << Ratio
 
 # operators on quantified relations
 # define odist in terms of the minimal ldist
@@ -207,7 +193,7 @@ ocont = R2(Obj, Reg) ** Reg ** Count
 
 fcover = Schema(lambda x:
     R2(Loc, x) ** R1(x) ** Reg
-    | x << Qlt
+    #| x << Qlt
 )
 
 ocover = R2(Obj, Reg) ** R1(Obj) ** Reg
@@ -275,16 +261,16 @@ join_key = Schema(lambda x, q1, y, rel, q2:
 # Join with unary function. Generate a unary concept from one other unary
 # concept of the same type. Used to be join_fa.
 join_with1 = Schema(lambda x11, y, x1, x2:
-    (x11 ** x2) ** R2(y, x1) ** R2(y, x2)
-    | x1 << x11
+    (x1 ** x2) ** R2(y, x1) ** R2(y, x2)
+    #| x1 << x11
 )
 
 # Join with binary function (⨝_f). Generate a unary concept from two other
 # unary concepts of the same type. Used to be bowtie_ratio and others.
 join_with2 = Schema(lambda x11, x22, x3, y, x1, x2:
-    (x11 ** x22 ** x3) ** R2(y, x1) ** R2(y, x2) ** R2(y, x3)
-    | x1 << x11
-    | x2 << x22
+    (x1 ** x2 ** x3) ** R2(y, x1) ** R2(y, x2) ** R2(y, x3)
+    #| x1 << x11
+    #| x2 << x22
 )
 
 # Group by (β). Group quantified relations by the left (right) key,
