@@ -224,18 +224,18 @@ get_attrR = Schema(lambda x, y, z: R3a(x, y, z) ** R2(x, z))
 # Projection (π). Projects a given relation to one of its attributes,
 # resulting in a collection.
 pi1 = Schema(lambda rel, x:
-    rel ** R1(x) | rel << x.parameter_of(R1, R2, R3, at=1))
+    rel ** R1(x) | rel @ x.parameter_of(R1, R2, R3, at=1))
 pi2 = Schema(lambda rel, x:
-    rel ** R1(x) | rel << x.parameter_of(R1, R2, R3, at=2))
+    rel ** R1(x) | rel @ x.parameter_of(R1, R2, R3, at=2))
 pi3 = Schema(lambda rel, x:
-    rel ** R1(x) | rel << x.parameter_of(R1, R2, R3, at=3))
+    rel ** R1(x) | rel @ x.parameter_of(R1, R2, R3, at=3))
 
 # Selection (σ). Selects a subset of the relation using a constraint on
 # attribute values, like equality (eq) or order (leq). Used to be sigmae
 # and sigmale.
 select = Schema(lambda x, y, rel:
     (x ** y ** Bool) ** rel ** y ** rel
-    | rel << x.parameter_of(R1, R2, R3)
+    | rel @ x.parameter_of(R1, R2, R3)
 )
 
 # Join of two unary concepts, like a table join.
@@ -248,14 +248,14 @@ join = Schema(lambda x, y, z:
 # value contained in a collection. Used to be bowtie.
 join_subset = Schema(lambda x, rel:
     rel ** R1(x) ** rel
-    | rel << x.parameter_of(R1, R2, R3)
+    | rel @ x.parameter_of(R1, R2, R3)
 )
 
 # Join (⨝*). Substitute the quality of a quantified relation to some
 # quality of one of its keys. Used to be bowtie*.
 join_key = Schema(lambda x, q1, y, rel, q2:
     R3(x, q1, y) ** rel ** R3(x, q2, y)
-    | rel << [R2(x, q2), R2(y, q2)]
+    | rel @ [R2(x, q2), R2(y, q2)]
 )
 
 # Join with unary function. Generate a unary concept from one other unary
@@ -278,12 +278,12 @@ join_with2 = Schema(lambda x11, x22, x3, y, x1, x2:
 # value per key, resulting in a unary core concept relation.
 groupbyL = Schema(lambda rel, q2, l, q1, r:
     (rel ** q2) ** R3(l, q1, r) ** R2(l, q2)
-    | rel << [R1(r), R2(r, q1)]
+    | rel @ [R1(r), R2(r, q1)]
 )
 
 groupbyR = Schema(lambda rel, q2, l, q1, r:
     (rel ** q2) ** R3(l, q1, r) ** R2(r, q2)
-    | rel << [R1(l), R2(l, q1)]
+    | rel @ [R1(l), R2(l, q1)]
 )
 
 # Group by qualities of unary concepts
