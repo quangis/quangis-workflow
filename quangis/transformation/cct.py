@@ -199,8 +199,8 @@ lVis = R1(Loc) ** R1(Loc) ** R2(Loc, Itv) ** R3(Loc, Bool, Loc)
 # amount operations
 fcont = Schema(lambda v, x, y:
     (R2(Val, x) ** y) ** R2(Loc, x) ** Reg ** y
-    | x << Qlt
-    | y << Qlt
+    #| x << Qlt
+    #| y << Qlt
 )
 
 ocont = R2(Obj, Reg) ** Reg ** Count
