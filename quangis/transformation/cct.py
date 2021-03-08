@@ -7,7 +7,7 @@ Module containing the core concept transformation algebra. Usage:
     R(Obj)
 """
 
-from quangis.transformation.type import Operator, Schema
+from quangis.transformation.type import Operator, Schema, operators
 from quangis.transformation.algebra import TransformationAlgebra
 
 
@@ -224,18 +224,18 @@ get_attrR = Schema(lambda x, y, z: R3a(x, y, z) ** R2(x, z))
 # Projection (π). Projects a given relation to one of its attributes,
 # resulting in a collection.
 pi1 = Schema(lambda rel, x:
-    rel ** R1(x) | rel @ x.parameter_of(R1, R2, R3, at=1))
+    rel ** R1(x) | rel @ operators(R1, R2, R3, param=x, at=1))
 pi2 = Schema(lambda rel, x:
-    rel ** R1(x) | rel @ x.parameter_of(R1, R2, R3, at=2))
+    rel ** R1(x) | rel @ operators(R1, R2, R3, param=x, at=2))
 pi3 = Schema(lambda rel, x:
-    rel ** R1(x) | rel @ x.parameter_of(R1, R2, R3, at=3))
+    rel ** R1(x) | rel @ operators(R1, R2, R3, param=x, at=3))
 
 # Selection (σ). Selects a subset of the relation using a constraint on
 # attribute values, like equality (eq) or order (leq). Used to be sigmae
 # and sigmale.
 select = Schema(lambda x, y, rel:
     (x ** y ** Bool) ** rel ** y ** rel
-    | rel @ x.parameter_of(R1, R2, R3)
+    | rel @ operators(R1, R2, R3, param=x)
 )
 
 # Join of two unary concepts, like a table join.
@@ -248,7 +248,7 @@ join = Schema(lambda x, y, z:
 # value contained in a collection. Used to be bowtie.
 join_subset = Schema(lambda x, rel:
     rel ** R1(x) ** rel
-    | rel @ x.parameter_of(R1, R2, R3)
+    | rel @ operators(R1, R2, R3, param=x)
 )
 
 # Join (⨝*). Substitute the quality of a quantified relation to some
