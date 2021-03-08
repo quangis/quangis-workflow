@@ -157,10 +157,10 @@ nest3 = Schema(lambda x, y, z: x ** y ** z ** R3(x, y, z))
 get = Schema(lambda x: R1(x) ** x)
 
 # define: groupby reify (nomfield x)
-invert = Schema(lambda x: R2(Loc, x) ** R2(x, Reg))# | x << Qlt)
+invert = Schema(lambda x: R2(Loc, x) ** R2(x, Reg))
 
 # define: groupbyL id (join_key (select eq (lTopo (deify (merge (pi2 (nomcoverages x)))) (merge (pi2 (nomcoverages x)))) in) (groupby name (nomcoverages x)))
-revert = Schema(lambda x: R2(x, Reg) ** R2(Loc, x))# | x << Qlt)
+revert = Schema(lambda x: R2(x, Reg) ** R2(Loc, x))
 
 # define?
 # join_with2 nest (get_attrL (objectregionratios x)) (get_attrR (objectregionratios x))
@@ -186,11 +186,11 @@ lVis = R1(Loc) ** R1(Loc) ** R2(Loc, Itv) ** R3(Loc, Bool, Loc)
 # amount operations
 fcont = Schema(lambda v, x, y:
     (R2(Val, x) ** y) ** R2(Loc, x) ** Reg ** y
-    | x << Qlt
-    | y << Qlt
+    | x @ [Qlt]
+    | y @ [Qlt]
 )
 ocont = R2(Obj, Reg) ** Reg ** Count
-fcover = Schema(lambda x: R2(Loc, x) ** R1(x) ** Reg | x << Qlt)
+fcover = Schema(lambda x: R2(Loc, x) ** R1(x) ** Reg | x @ [Qlt])
 ocover = R2(Obj, Reg) ** R1(Obj) ** Reg
 
 
