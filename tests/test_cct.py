@@ -12,12 +12,12 @@ class TestCCT(unittest.TestCase):
             # if the result is unknown, just check if it contains any
             # unresolved variables
             self.assertTrue(
-                not any(algebra.parse(string).type.plain.variables()))
+                not any(algebra.parse(string).type.plain().variables()))
         elif isinstance(result, type) and issubclass(result, Exception):
             self.assertRaises(result, algebra.parse, string)
         else:
-            self.assertEqual(algebra.parse(string).type.plain,
-                    result.instance().plain)
+            self.assertEqual(algebra.parse(string).type.plain(),
+                    result.plain())
 
     def test_projection(self):
         self.parse(
