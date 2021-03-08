@@ -114,7 +114,7 @@ disj = Bool ** Bool ** Bool  # define as not-conjunction
 # aggregations of collections
 count = R1(Obj) ** Ratio
 size = R1(Loc) ** Ratio
-# define: relunion (regions x
+# define: relunion (regions x)
 merge = R1(Reg) ** Reg
 centroid = R1(Loc) ** Loc
 name = R1(Nom) ** Nom
@@ -155,15 +155,17 @@ nest = Schema(lambda x: x ** R1(x))  # Puts values into some unary relation
 nest2 = Schema(lambda x, y: x ** y ** R2(x, y))
 nest3 = Schema(lambda x, y, z: x ** y ** z ** R3(x, y, z))
 get = Schema(lambda x: R1(x) ** x)
+
 # define: groupby reify (nomfield x)
 invert = Schema(lambda x: R2(Loc, x) ** R2(x, Reg))# | x << Qlt)
+
 # define: groupbyL id (join_key (select eq (lTopo (deify (merge (pi2 (nomcoverages x)))) (merge (pi2 (nomcoverages x)))) in) (groupby name (nomcoverages x)))
 revert = Schema(lambda x: R2(x, Reg) ** R2(Loc, x))# | x << Qlt)
+
 # define?
 # join_with2 nest (get_attrL (objectregionratios x)) (get_attrR (objectregionratios x))
 # groupbyR id (join_key (select eq (rTopo (pi2 (get_attrL (objectregionratios x))) (pi2 (get_attrL (objectregionratios x)))) in) (get_attrR (objectregionratios x)))
 getamounts = R3a(Obj, Reg, Ratio) ** R2(Reg, Ratio)
-#| x << Ratio
 
 # operators on quantified relations
 # define odist in terms of the minimal ldist
@@ -184,17 +186,11 @@ lVis = R1(Loc) ** R1(Loc) ** R2(Loc, Itv) ** R3(Loc, Bool, Loc)
 # amount operations
 fcont = Schema(lambda v, x, y:
     (R2(Val, x) ** y) ** R2(Loc, x) ** Reg ** y
-    #| x << Qlt
-    #| y << Qlt
+    | x << Qlt
+    | y << Qlt
 )
-
 ocont = R2(Obj, Reg) ** Reg ** Count
-
-fcover = Schema(lambda x:
-    R2(Loc, x) ** R1(x) ** Reg
-    #| x << Qlt
-)
-
+fcover = Schema(lambda x: R2(Loc, x) ** R1(x) ** Reg | x << Qlt)
 ocover = R2(Obj, Reg) ** R1(Obj) ** Reg
 
 
@@ -216,80 +212,76 @@ relunion = Schema(lambda rel:
 )
 
 # functions to handle multiple attributes of the same types with 1 key
-join_attr = Schema(lambda x, y, z: R2(x, y) ** R2(x, z) ** R3a(x, y, z))
-get_attrL = Schema(lambda x, y, z: R3a(x, y, z) ** R2(x, y))
-get_attrR = Schema(lambda x, y, z: R3a(x, y, z) ** R2(x, z))
+join_attr = Schema(lambda x, y, z:
+    R2(x, y) ** R2(x, z) ** R3a(x, y, z))
+get_attrL = Schema(lambda x, y, z:
+    R3a(x, y, z) ** R2(x, y))
+get_attrR = Schema(lambda x, y, z:
+    R3a(x, y, z) ** R2(x, z))
 
 # Projection (π). Projects a given relation to one of its attributes,
 # resulting in a collection.
 pi1 = Schema(lambda rel, x:
-    rel ** R1(x) | rel @ operators(R1, R2, R3, param=x, at=1))
+    rel ** R1(x)
+    | rel @ operators(R1, R2, R3, param=x, at=1))
+
 pi2 = Schema(lambda rel, x:
-    rel ** R1(x) | rel @ operators(R1, R2, R3, param=x, at=2))
+    rel ** R1(x)
+    | rel @ operators(R1, R2, R3, param=x, at=2))
+
 pi3 = Schema(lambda rel, x:
-    rel ** R1(x) | rel @ operators(R1, R2, R3, param=x, at=3))
+    rel ** R1(x)
+    | rel @ operators(R1, R2, R3, param=x, at=3))
 
 # Selection (σ). Selects a subset of the relation using a constraint on
 # attribute values, like equality (eq) or order (leq). Used to be sigmae
 # and sigmale.
 select = Schema(lambda x, y, rel:
     (x ** y ** Bool) ** rel ** y ** rel
-    | rel @ operators(R1, R2, R3, param=x)
-)
+    | rel @ operators(R1, R2, R3, param=x))
 
 # Join of two unary concepts, like a table join.
 # is join the same as join_with2 eq?
 join = Schema(lambda x, y, z:
-    R2(x, y) ** R2(y, z) ** R2(x, z)
-)
+    R2(x, y) ** R2(y, z) ** R2(x, z))
 
 # Join on subset (⨝). Subset a relation to those tuples having an attribute
 # value contained in a collection. Used to be bowtie.
 join_subset = Schema(lambda x, rel:
     rel ** R1(x) ** rel
-    | rel @ operators(R1, R2, R3, param=x)
-)
+    | rel @ operators(R1, R2, R3, param=x))
 
 # Join (⨝*). Substitute the quality of a quantified relation to some
 # quality of one of its keys. Used to be bowtie*.
 join_key = Schema(lambda x, q1, y, rel, q2:
     R3(x, q1, y) ** rel ** R3(x, q2, y)
-    | rel @ [R2(x, q2), R2(y, q2)]
-)
+    | rel @ [R2(x, q2), R2(y, q2)])
 
 # Join with unary function. Generate a unary concept from one other unary
 # concept of the same type. Used to be join_fa.
-join_with1 = Schema(lambda x11, y, x1, x2:
-    (x1 ** x2) ** R2(y, x1) ** R2(y, x2)
-    #| x1 << x11
-)
+join_with1 = Schema(lambda x1, x2, y:
+    (x1 ** x2) ** R2(y, x1) ** R2(y, x2))
 
 # Join with binary function (⨝_f). Generate a unary concept from two other
 # unary concepts of the same type. Used to be bowtie_ratio and others.
-join_with2 = Schema(lambda x11, x22, x3, y, x1, x2:
-    (x1 ** x2 ** x3) ** R2(y, x1) ** R2(y, x2) ** R2(y, x3)
-    #| x1 << x11
-    #| x2 << x22
-)
+join_with2 = Schema(lambda x1, x2, x3, y:
+    (x1 ** x2 ** x3) ** R2(y, x1) ** R2(y, x2) ** R2(y, x3))
 
 # Group by (β). Group quantified relations by the left (right) key,
 # summarizing lists of quality values with the same key value into a new
 # value per key, resulting in a unary core concept relation.
-groupbyL = Schema(lambda rel, q2, l, q1, r:
+groupbyL = Schema(lambda rel, l, q1, q2, r:
     (rel ** q2) ** R3(l, q1, r) ** R2(l, q2)
-    | rel @ [R1(r), R2(r, q1)]
-)
+    | rel @ [R1(r), R2(r, q1)])
 
 groupbyR = Schema(lambda rel, q2, l, q1, r:
     (rel ** q2) ** R3(l, q1, r) ** R2(r, q2)
-    | rel @ [R1(l), R2(l, q1)]
-)
+    | rel @ [R1(l), R2(l, q1)])
 
 # Group by qualities of unary concepts
 groupby = Schema(lambda x, q, y:
-    (R1(x) ** q) ** R2(x, y) ** R2(y, q)
-)
+    (R1(x) ** q) ** R2(x, y) ** R2(y, q))
 
 ##############################################################################
 # Generate an algebra out of all signatures defined in this module
-algebra = TransformationAlgebra.from_dict(dict(globals()))
+algebra = TransformationAlgebra.from_dict(globals())
