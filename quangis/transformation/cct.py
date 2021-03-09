@@ -159,6 +159,8 @@ aspect = R2(Loc, Itv) ** R2(Loc, Ratio)
 reify = R1(Loc) ** Reg
 # primitive
 deify = Reg ** R1(Loc)
+#primitive: Interpet a name as an object
+objectify = Nom ** Obj
 # primitive
 nest = Schema(lambda x: x ** R1(x))  # Puts values into some unary relation
 # primitive
