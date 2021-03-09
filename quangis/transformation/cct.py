@@ -152,6 +152,8 @@ cct.aspect = R2(Loc, var.x) ** R2(Loc, Ratio), var.x.subtype(Itv)
 cct.reify = R1(Loc) ** Reg
 # primitive
 cct.deify = Reg ** R1(Loc)
+# primitive: interpret name as object
+cct.objectify = Nom ** Obj
 # primitive
 cct.nest = var.x ** R1(var.x)  # Puts values into some unary relation
 # primitive
