@@ -7,7 +7,7 @@ Module containing the core concept transformation algebra. Usage:
     R(Obj)
 """
 
-from quangis.transformation.type import Operator, Schema, operators
+from quangis.transformation.type import Operator, Schema, operators, _
 from quangis.transformation.algebra import TransformationAlgebra
 
 
@@ -44,243 +44,340 @@ BooleanInvertedField = R2(Bool, Reg)
 # Data inputs
 
 # Reintroducing these for now to make sure the tests still work
-objectratios = R2(Obj, Ratio)  # 1
-objectnominals = R2(Obj, Nom)  # 1
-objectcounts = R2(Obj, Count)  # 1
+objectnominals = R2(Obj, Nom)
+objectcounts = R2(Obj, Count)
 
-pointmeasures = R2(Reg, Itv)  # 1
-amountpatches = R2(Reg, Nom)   # 1
-countamounts = R2(Reg, Count)  # 1
-boolcoverages = R2(Bool, Reg)  # 1
-boolratio = R2(Bool, Ratio)  # 1
-nomcoverages = R2(Nom, Reg)  # 1
-nomsize = R2(Nom, Ratio)   # 1
-regions = R1(Reg)  # 1
-contour = R2(Ord, Reg)  # 1
-contourline = R2(Itv, Reg)  # 1
-objectregions = R2(Obj, Reg)  # 1
-objectregionratios = R3a(Obj, Reg, Ratio)  # 1
-objectregionnominals = R3a(Obj, Reg, Nom)  # 1
-objectregioncounts = R3a(Obj, Reg, Count)  # 1
-objectregionattr = Schema(lambda x: R3a(Obj, Reg, x))  # 1
-field = R2(Loc, Ratio)  # 1
-nomfield = R2(Loc, Nom)  # 1
-boolfield = R2(Loc, Bool)  # 1
-ordfield = R2(Loc, Ord)  # 1
-itvfield = R2(Loc, Itv)  # 1
-ratiofield = R2(Loc, Ratio)  # 1
-object = Obj  # 1
-objects = R1(Obj)  # 1
-region = Reg  # 1
-in_ = Nom  # 0
-out = Nom  # 0
-noms = R1(Nom)  # 1
-ratios = R1(Ratio)  # 1
-countV = Count  # 1
-ratioV = Ratio  # 1
-interval = Itv  # 1
-ordinal = Ord  # 1
-nominal = Nom  # 1
-true = Bool  # 0
+pointmeasures = R2(Reg, Itv)
+amountpatches = R2(Reg, Nom)
+countamounts = R2(Reg, Count)
+boolcoverages = R2(Bool, Reg)
+boolratio = R2(Bool, Ratio)
+nomcoverages = R2(Nom, Reg)
+nomsize = R2(Nom, Ratio)
+contour = R2(Ord, Reg)
+contourline = R2(Itv, Reg)
+objectregions = R2(Obj, Reg)
+objectratios = R2(Obj, Ratio)
+objectregionratios = R3a(Obj, Reg, Ratio)
+objectregionnominals = R3a(Obj, Reg, Nom)
+objectregioncounts = R3a(Obj, Reg, Count)
+objectregionattr = Schema(lambda x: R3a(Obj, Reg, x))
+field = R2(Loc, Ratio)
+nomfield = R2(Loc, Nom)
+boolfield = R2(Loc, Bool)
+ordfield = R2(Loc, Ord)
+itvfield = R2(Loc, Itv)
+ratiofield = R2(Loc, Ratio)
+object = Obj
+objects = R1(Obj)
+region = Reg
+regions = R1(Reg)
+locs = R1(Loc)
+in_ = Nom
+contains = Nom
+out = Nom
+noms = R1(Nom)
+ratios = R1(Ratio)
+countV = Count
+ratioV = Ratio
+interval = Itv
+ordinal = Ord
+nominal = Nom
+true = Bool
+rationetwork = R3(Obj, Ratio, Obj)
 
 ###########################################################################
 # Math/stats transformations
 
-# functional
-compose = Schema(lambda α, β, γ:
-    (β ** γ) ** (α ** β) ** (α ** γ)
-)
 
-compose2 = Schema(lambda α, β, γ, δ:
-    (β ** γ) ** (δ ** α ** β) ** (δ ** α ** γ)
-)
+# Derivations
 
-swap = Schema(lambda α, β, γ:
-    (α ** β ** γ) ** (β ** α ** γ)
-)
-
-id = Schema(lambda α: α ** α)
-
-# derivations
+# primitive
 ratio = Ratio ** Ratio ** Ratio
+# primitive
 product = Ratio ** Ratio ** Ratio
+# primitive
 leq = Ord ** Ord ** Bool
+# primitive
 eq = Val ** Val ** Bool
+# primitive
 conj = Bool ** Bool ** Bool
+# primitive
 notj = Bool ** Bool
-# compose2 notj conj
+# define: compose2 notj conj
 disj = Bool ** Bool ** Bool  # define as not-conjunction
 
-# aggregations of collections
+
+# Aggregations of collections
+
+# primitive
 count = R1(Obj) ** Ratio
+# primitive
 size = R1(Loc) ** Ratio
 # define: relunion (regions x)
 merge = R1(Reg) ** Reg
+# primitive
 centroid = R1(Loc) ** Loc
+# primitive
 name = R1(Nom) ** Nom
 
-# statistical operations
+
+# Statistical operations
+
+# primitive
 avg = R2(Val, Itv) ** Itv
+# primitive
 min = R2(Val, Ord) ** Ord
+# primitive
 max = R2(Val, Ord) ** Ord
+# primitive
 sum = R2(Val, Ratio) ** Ratio
-
-# define in terms of: nest2 (merge (pi1 (countamounts x1))) (sum (countamounts x1))
+# define: nest2 (merge (pi1 (countamounts x1))) (sum (countamounts x1))
 contentsum = R2(Reg, Ratio) ** R2(Reg, Ratio)
-
-# define in terms of: nest2 (name (pi1 (nomcoverages x1))) (merge (pi2(nomcoverages x1)))
+# define: nest2 (name (pi1 (nomcoverages x1))) (merge (pi2(nomcoverages x1)))
 coveragesum = R2(Nom, Ratio) ** R2(Nom, Ratio)
 
 
 ##########################################################################
 # Geometric transformations
+
+# primitive
 interpol = R2(Reg, Itv) ** R1(Loc) ** R2(Loc, Itv)
-
-# define in terms of ldist: join_with1 (leq (ratioV w))(groupbyL (min) (loDist (deify (region y)) (objectregions x)))
+# define: apply1 (leq (ratioV w))(groupbyL (min) (loDist (deify (region y)) (objectregions x)))
 extrapol = R2(Obj, Reg) ** R2(Loc, Bool)  # Buffering, define in terms of Dist
-
+# primitive
 arealinterpol = R2(Reg, Ratio) ** R1(Reg) ** R2(Reg, Ratio)
-
+# primitive
 slope = R2(Loc, Itv) ** R2(Loc, Ratio)
-
+# primitive
 aspect = R2(Loc, Itv) ** R2(Loc, Ratio)
 
-# deify/reify, nest/get, invert/revert might be defined in terms of inverse
-#cct.inverse = (var.x ** var.y) ** (var.y ** R1(var.x)
 
-# conversions
+# Conversions
+
+# primitive
 reify = R1(Loc) ** Reg
+# primitive
 deify = Reg ** R1(Loc)
+# primitive
 nest = Schema(lambda x: x ** R1(x))  # Puts values into some unary relation
+# primitive
 nest2 = Schema(lambda x, y: x ** y ** R2(x, y))
+# primitive
 nest3 = Schema(lambda x, y, z: x ** y ** z ** R3(x, y, z))
-get = Schema(lambda x: R1(x) ** x)
-
+# primitive
+add = Schema(lambda x: R1(x) ** x ** R1(x))
+# primitive
+get = Schema(lambda x: R1(x) ** x | x @ [Val])
 # define: groupby reify (nomfield x)
-invert = Schema(lambda x: R2(Loc, x) ** R2(x, Reg))
-
+invert = Schema(lambda x: R2(Loc, x) ** R2(x, Reg) | x @ [Qlt])
 # define: groupbyL id (join_key (select eq (lTopo (deify (merge (pi2 (nomcoverages x)))) (merge (pi2 (nomcoverages x)))) in) (groupby name (nomcoverages x)))
-revert = Schema(lambda x: R2(x, Reg) ** R2(Loc, x))
+revert = Schema(lambda x: R2(x, Reg) ** R2(Loc, x) | x @ [Qlt])
+# define: join (groupby get (get_attrL (objectregionratios x1))) (get_attrR (objectregionratios x1))
+getamounts = Schema(lambda x: R3a(Obj, Reg, x) ** R2(Reg, x) | x @ [Ratio])
 
-# define?
-# join_with2 nest (get_attrL (objectregionratios x)) (get_attrR (objectregionratios x))
-# groupbyR id (join_key (select eq (rTopo (pi2 (get_attrL (objectregionratios x))) (pi2 (get_attrL (objectregionratios x)))) in) (get_attrR (objectregionratios x)))
-getamounts = R3a(Obj, Reg, Ratio) ** R2(Reg, Ratio)
 
-# operators on quantified relations
-# define odist in terms of the minimal ldist
-oDist = R2(Obj, Reg) ** R2(Obj, Reg) ** R3(Obj, Ratio, Obj)
+# Operators on quantified relations
+
+# primitive
 lDist = R1(Loc) ** R1(Loc) ** R3(Loc, Ratio, Loc)
-# similar for lodist
+# define: prod3 (apply1 (compose (groupbyL min) (lDist (locs x1))) (apply1 deify (objectregions x2)))
 loDist = R1(Loc) ** R2(Obj, Reg) ** R3(Loc, Ratio, Obj)
-oTopo = R2(Obj, Reg) ** R2(Obj, Reg) ** R3(Obj, Nom, Obj)
-loTopo = R1(Loc) ** R2(Obj, Reg) ** R3(Loc, Nom, Obj)
-# otopo can be defined in terms of rtopo? in rtopo, if points of a region are
-# all inside, then the region is inside
-rTopo = R1(Reg) ** R1(Reg) ** R3(Reg, Nom, Reg)
+# define: prod3 (apply1 (compose (groupbyR min) ((swap loDist) (objectregions x1))) (apply1 deify (objectregions x2)))
+oDist = R2(Obj, Reg) ** R2(Obj, Reg) ** R3(Obj, Ratio, Obj)
+
+# primitive
 lTopo = R1(Loc) ** Reg ** R3(Loc, Nom, Reg)
+# define: prod3 (apply1 (compose (groupbyL id) (lTopo (locs x1))) (objectregions x2))
+loTopo = R1(Loc) ** R2(Obj, Reg) ** R3(Loc, Nom, Obj)
+# define: prod3 (apply1 (compose (groupbyR (compose name pi2)) ((swap loTopo) (objectregions x1))) (apply1 deify (objectregions x2)))
+oTopo = R2(Obj, Reg) ** R2(Obj, Reg) ** R3(Obj, Nom, Obj)
+# define: prod3 (apply (compose (groupbyL id) (lTopo (locs x1))) (regions x2))
 lrTopo = R1(Loc) ** R1(Reg) ** R3(Loc, Nom, Reg)
+# define: prod3 (apply (compose (compose (groupbyR (compose name pi2)) ((swap lrTopo) (regions x1))) deify) (regions x2))
+rTopo = R1(Reg) ** R1(Reg) ** R3(Reg, Nom, Reg)
+# define: prod3 (apply (compose (compose (groupbyR (compose name pi2)) ((swap loTopo) (objectregions x1))) deify) (regions x2))
+orTopo = R2(Obj, Reg) ** R1(Reg) ** R3(Obj, Nom, Reg)
+
+# primitive
 nDist = R1(Obj) ** R1(Obj) ** R3(Obj, Ratio, Obj) ** R3(Obj, Ratio, Obj)
 lVis = R1(Loc) ** R1(Loc) ** R2(Loc, Itv) ** R3(Loc, Bool, Loc)
 
-# amount operations
+
+# Amount operations
+
+# define: sum (join_subset (field x2) (deify (region x3)))
 fcont = Schema(lambda v, x, y:
-    (R2(Val, x) ** y) ** R2(Loc, x) ** Reg ** y
-    | x @ [Qlt]
-    | y @ [Qlt]
-)
+    (R2(Val, x) ** y) ** R2(Loc, x) ** Reg ** y | x @ [Qlt] | y @ [Qlt])
+# define: get (pi2 (groupbyR count (select eq (orTopo (objectregions x1) (nest (region x2))) in)))
 ocont = R2(Obj, Reg) ** Reg ** Count
-fcover = Schema(lambda x: R2(Loc, x) ** R1(x) ** Reg | x @ [Qlt])
+# define: reify (pi1 (join_subset (field x1) (ratios x2)))
+fcover = Schema(lambda x:
+    R2(Loc, x) ** R1(x) ** Reg | x @ [Qlt])
+# define: merge (pi2 (join_subset (objectregions x1) (objects x2)))
 ocover = R2(Obj, Reg) ** R1(Obj) ** Reg
 
-
 ###########################################################################
-# Relational transformations
+# Functional and Relational transformations
 
-# cct.apply = R2(var.x, var.y) ** var.x ** var.y
+
+# Functional
+
+# primitive
+compose = Schema(lambda α, β, γ:
+    (β ** γ) ** (α ** β) ** (α ** γ)
+)
+
+# primitive
+compose2 = Schema(lambda α, β, γ, δ:
+    (β ** γ) ** (δ ** α ** β) ** (δ ** α ** γ)
+)
+
+# primitive
+swap = Schema(lambda α, β, γ:
+    (α ** β ** γ) ** (β ** α ** γ)
+)
+
+# primitive
+id = Schema(lambda α: α ** α)
+
+# primitive
+apply = Schema(lambda x, y:
+    (x ** y) ** R1(x) ** R2(x, y)
+)
+
 
 # Set union and set difference
-# define nest ()
+
+# define: relunion (add (nest (regions x)) (regions y))
 set_union = Schema(lambda rel:
     rel ** rel ** rel
 )
+
+# primitive
 set_diff = Schema(lambda rel:
     rel ** rel ** rel
 )
+
+# define: set_diff rel1 (set_diff rel1 rel2)
+set_inters = Schema(lambda rel:
+    rel ** rel ** rel
+)
+# primitive
 relunion = Schema(lambda rel:
     R1(rel) ** rel
 )
 
-# functions to handle multiple attributes of the same types with 1 key
-join_attr = Schema(lambda x, y, z:
-    R2(x, y) ** R2(x, z) ** R3a(x, y, z))
-get_attrL = Schema(lambda x, y, z:
-    R3a(x, y, z) ** R2(x, y))
-get_attrR = Schema(lambda x, y, z:
-    R3a(x, y, z) ** R2(x, z))
+# A constructor for quantified relations. prod generates a cartesian product as
+# a nested binary relation. prod3 generates a quantified relation from two
+# nested binary relations. The keys of the nested relations become two keys of
+# the quantified relation.
+# define: apply1 (compose ((swap apply1) (objectratios x2)) ratio) (ratiofield x1)
+prod = Schema(lambda x, y, z, u, w:
+    (y ** z ** u) ** R2(x, y) ** R2(w, z) ** R2(x, R2(w, u))
+)
 
-# Projection (π). Projects a given relation to one of its attributes,
-# resulting in a collection.
+# primitive
+prod3 = Schema(lambda x, y, z:
+    R2(z, R2(x, y)) ** R3(x, y, z)
+)
+
+# Projection (π). Projects a given relation to one of its attributes, resulting
+# in a collection. Projection is also possible for multiple attributes.
+
+# primitive
 pi1 = Schema(lambda rel, x:
     rel ** R1(x)
     | rel @ operators(R1, R2, R3, param=x, at=1))
-
+# primitive
 pi2 = Schema(lambda rel, x:
     rel ** R1(x)
     | rel @ operators(R1, R2, R3, param=x, at=2))
+# primitive
+pi3 = Schema(lambda x: R3(_, _, x) ** R1(x))
+# primitive
+pi12 = Schema(lambda x, y: R3(x, y, _) ** R2(x, y))
+# primitive
+pi23 = Schema(lambda x, y: R3(_, x, y) ** R2(x, y))
 
-pi3 = Schema(lambda rel, x:
-    rel ** R1(x)
-    | rel @ operators(R1, R2, R3, param=x, at=3))
 
 # Selection (σ). Selects a subset of the relation using a constraint on
 # attribute values, like equality (eq) or order (leq). Used to be sigmae
 # and sigmale.
+
+# primitive
 select = Schema(lambda x, y, rel:
     (x ** y ** Bool) ** rel ** y ** rel
     | rel @ operators(R1, R2, R3, param=x))
 
+# primitive
+select2 = Schema(lambda x, y, rel:
+    (x ** y ** Bool) ** rel ** rel
+    | rel @ operators(R1, R2, R3, param=x)
+    | rel @ operators(R1, R2, R3, param=y)
+)
+
+
 # Join of two unary concepts, like a table join.
-# is join the same as join_with2 eq?
-join = Schema(lambda x, y, z:
-    R2(x, y) ** R2(y, z) ** R2(x, z))
+# primitive
+join = Schema(lambda x, y, z: R2(x, y) ** R2(y, z) ** R2(x, z))
 
 # Join on subset (⨝). Subset a relation to those tuples having an attribute
 # value contained in a collection. Used to be bowtie.
+# primitive
 join_subset = Schema(lambda x, rel:
     rel ** R1(x) ** rel
     | rel @ operators(R1, R2, R3, param=x))
 
+# functions to handle multiple attributes (with 1 key)
+# define: prod3 (pi12 (select2 eq (prod3 (apply1 (compose ((swap apply1) (boolfield x1)) nest2) (ratiofield x2)))))
+join_attr = Schema(lambda x, y, z: R2(x, y) ** R2(x, z) ** R3a(x, y, z))
+get_attrL = Schema(lambda x, y, z: R3a(x, y, z) ** R2(x, y))
+get_attrR = Schema(lambda x, y, z: R3a(x, y, z) ** R2(x, z))
+
+
 # Join (⨝*). Substitute the quality of a quantified relation to some
 # quality of one of its keys. Used to be bowtie*.
+# define: prod3 (apply1 (join_subset (objectregions x2)) (groupbyL pi1 (rationetwork x1)))
 join_key = Schema(lambda x, q1, y, rel, q2:
     R3(x, q1, y) ** rel ** R3(x, q2, y)
     | rel @ [R2(x, q2), R2(y, q2)])
 
+
 # Join with unary function. Generate a unary concept from one other unary
-# concept of the same type. Used to be join_fa.
-join_with1 = Schema(lambda x1, x2, y:
+# concept of the same type. Used to be join_fa/join_with1.
+# define: join (objectregions x) (apply id (pi2 (objectregions x)))
+apply1 = Schema(lambda x1, x2, y:
     (x1 ** x2) ** R2(y, x1) ** R2(y, x2))
 
+
 # Join with binary function (⨝_f). Generate a unary concept from two other
-# unary concepts of the same type. Used to be bowtie_ratio and others.
-join_with2 = Schema(lambda x1, x2, x3, y:
+# unary concepts of the same type. Used to be bowtie_ratio/join_with2 and others.
+# define: pi12 (select2 eq (prod3 (prod conj (boolfield x1) (boolfield x2))))
+apply2 = Schema(lambda x1, x2, x3, y:
     (x1 ** x2 ** x3) ** R2(y, x1) ** R2(y, x2) ** R2(y, x3))
+
 
 # Group by (β). Group quantified relations by the left (right) key,
 # summarizing lists of quality values with the same key value into a new
 # value per key, resulting in a unary core concept relation.
+
+# primitive
 groupbyL = Schema(lambda rel, l, q1, q2, r:
     (rel ** q2) ** R3(l, q1, r) ** R2(l, q2)
     | rel @ [R1(r), R2(r, q1)])
 
+# primitive
 groupbyR = Schema(lambda rel, q2, l, q1, r:
     (rel ** q2) ** R3(l, q1, r) ** R2(r, q2)
     | rel @ [R1(l), R2(l, q1)])
 
-# Group by qualities of unary concepts
-groupby = Schema(lambda x, q, y:
-    (R1(x) ** q) ** R2(x, y) ** R2(y, q))
+# Group by qualities of binary relations
+# example:  groupby count (objectregions x)
+# primitive
+groupby = Schema(lambda l, q, y:
+    (R1(l) ** q) ** R2(l, y) ** R2(y, q))
+
 
 ##############################################################################
 # Generate an algebra out of all signatures defined in this module
