@@ -7,8 +7,8 @@ Module containing the core concept transformation algebra. Usage:
     R(Obj)
 """
 
-from quangis.transformation.type import Operator, Schema, operators, _
-from quangis.transformation.algebra import TransformationAlgebra
+from transformation_algebra.type import Operator, Schema, operators, _
+from transformation_algebra.expr import TransformationAlgebra
 
 
 ##############################################################################
