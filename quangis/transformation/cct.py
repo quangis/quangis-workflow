@@ -168,13 +168,13 @@ nest3 = Schema(lambda x, y, z: x ** y ** z ** R3(x, y, z))
 # primitive
 add = Schema(lambda x: R1(x) ** x ** R1(x))
 # primitive
-get = Schema(lambda x: R1(x) ** x | x @ [Val])
+get = Schema(lambda x: R1(x) ** x | x @ Val)
 # define: groupby reify (nomfield x)
-invert = Schema(lambda x: R2(Loc, x) ** R2(x, Reg) | x @ [Qlt])
+invert = Schema(lambda x: R2(Loc, x) ** R2(x, Reg) | x @ Qlt)
 # define: groupbyL id (join_key (select eq (lTopo (deify (merge (pi2 (nomcoverages x)))) (merge (pi2 (nomcoverages x)))) in) (groupby name (nomcoverages x)))
-revert = Schema(lambda x: R2(x, Reg) ** R2(Loc, x) | x @ [Qlt])
+revert = Schema(lambda x: R2(x, Reg) ** R2(Loc, x) | x @ Qlt)
 # define: join (groupby get (get_attrL (objectregionratios x1))) (get_attrR (objectregionratios x1))
-getamounts = Schema(lambda x: R3a(Obj, Reg, x) ** R2(Reg, x) | x @ [Ratio])
+getamounts = Schema(lambda x: R3a(Obj, Reg, x) ** R2(Reg, x) | x @ Ratio)
 
 
 # Operators on quantified relations
@@ -208,12 +208,12 @@ lVis = R1(Loc) ** R1(Loc) ** R2(Loc, Itv) ** R3(Loc, Bool, Loc)
 
 # define: sum (join_subset (field x2) (deify (region x3)))
 fcont = Schema(lambda v, x, y:
-    (R2(Val, x) ** y) ** R2(Loc, x) ** Reg ** y | x @ [Qlt] | y @ [Qlt])
+    (R2(Val, x) ** y) ** R2(Loc, x) ** Reg ** y | x @ Qlt | y @ Qlt)
 # define: get (pi2 (groupbyR count (select eq (orTopo (objectregions x1) (nest (region x2))) in)))
 ocont = R2(Obj, Reg) ** Reg ** Count
 # define: reify (pi1 (join_subset (field x1) (ratios x2)))
 fcover = Schema(lambda x:
-    R2(Loc, x) ** R1(x) ** Reg | x @ [Qlt])
+    R2(Loc, x) ** R1(x) ** Reg | x @ Qlt)
 # define: merge (pi2 (join_subset (objectregions x1) (objects x2)))
 ocover = R2(Obj, Reg) ** R1(Obj) ** Reg
 
