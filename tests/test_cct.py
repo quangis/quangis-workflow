@@ -108,7 +108,7 @@ class TestCCT(unittest.TestCase):
 
     def test17(self):
         self.parse(
-            "join_with2 ratio (objectratios x) (objectratios y)")
+            "apply2 ratio (objectratios x) (objectratios y)")
 
     def test18(self):
         self.parse(
@@ -148,7 +148,7 @@ class TestCCT(unittest.TestCase):
 
     def test25(self):
         self.parse(
-            "join_with2 ratio (groupbyR size (select eq (lotopo (pi1 (select "
+            "apply2 ratio (groupbyR size (select eq (lotopo (pi1 (select "
             "leq (revert (contour noise)) (ordinal 70))) (select eq "
             "(objectregions muni) (object Utrecht))) in)) (groupbyR size "
             "(select eq (lotopo (deify (merge (pi2 (objectregions muni)))) "
