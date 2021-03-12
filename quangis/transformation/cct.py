@@ -202,7 +202,9 @@ rTopo = R1(Reg) ** R1(Reg) ** R3(Reg, Nom, Reg)
 orTopo = R2(Obj, Reg) ** R1(Reg) ** R3(Obj, Nom, Reg)
 
 # primitive
-nDist = R1(Obj) ** R1(Obj) ** R3(Obj, Ratio, Obj) ** R3(Obj, Ratio, Obj)
+# build network
+nbuild = R3a(Obj, Reg, Ratio) ** R3(Obj, Ratio, Obj)
+nDist = R2(Obj, Reg) ** R2(Obj, Reg) ** R3(Obj, Ratio, Obj) ** R3(Obj, Ratio, Obj)
 lVis = R1(Loc) ** R1(Loc) ** R2(Loc, Itv) ** R3(Loc, Bool, Loc)
 
 
