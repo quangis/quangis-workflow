@@ -331,7 +331,7 @@ join = Schema(lambda x, y, z: R2(x, y) ** R2(y, z) ** R2(x, z))
 # primitive
 join_subset = Schema(lambda x, rel:
     rel ** R1(x) ** rel
-    | rel @ operators(R1, R2, R3, param=x))
+    | rel @ operators(R1, R2, R3, R3a, param=x))
 
 # functions to handle multiple attributes (with 1 key)
 # define: prod3 (pi12 (select2 eq (prod3 (apply1 (compose ((swap apply1) (boolfield x1)) nest2) (ratiofield x2)))))
