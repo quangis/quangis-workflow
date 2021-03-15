@@ -1,8 +1,8 @@
+#!/usr/bin/env python3
 import unittest
 
-from quangis import error
-from quangis.transformation.cct import algebra, \
-    R1, R2, Obj, Ratio
+from transformation_algebra import error
+from cct import algebra, R1, R2, Obj, Ratio
 
 
 class TestCCT(unittest.TestCase):

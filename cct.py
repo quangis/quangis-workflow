@@ -1,7 +1,7 @@
 """
 Module containing the core concept transformation algebra. Usage:
 
-    >>> from quangis.transformation.cct import algebra
+    >>> from cct import algebra
     >>> expr = algebra.parse("pi1 (objects data)")
     >>> print(expr)
     R(Obj)
