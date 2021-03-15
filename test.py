@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 import unittest
-
+import rdflib  # type: ignore
 from transformation_algebra import error
+
 from cct import algebra, R1, R2, Obj, Ratio
 
 
 class TestCCT(unittest.TestCase):
-
     def parse(self, string, result=None):
         if result is None:
             # if the result is unknown, just check if it contains any
@@ -180,6 +180,15 @@ class TestCCT(unittest.TestCase):
             (region x)) (size (pi1 (interpol (pointmeasures temperature) (deify
             (merge (pi2 (select eq (objectregions muni) (object Utrecht))))))))
             """)
+
+
+# Also test algebra expressions from RDF file
+TOOLS = rdflib.Namespace("http://geographicknowledge.de/vocab/GISTools.rdf#")
+path = "ToolDescription_TransformationAlgebra.ttl"
+g = rdflib.Graph()
+g.parse(path, format=rdflib.util.guess_format(path))
+for s, o in g.subject_objects(TOOLS.algebraexpression):
+    setattr(TestCCT, f"test_{s}", lambda x: x.parse(o))
 
 
 if __name__ == '__main__':
