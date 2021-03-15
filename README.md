@@ -7,7 +7,7 @@ project.
 
 It is based on the 
 [transformation-algebra](https://github.com/quangis/transformation_algebra) 
-package developed for this project, which you will need to have installed. :
+package developed for this project, which you will need to have installed:
 
     pip3 install transformation-algebra
 
@@ -20,8 +20,8 @@ Usage example:
     pi1 (objectregions x) : R1(Obj)
 
 
-For tests, you will additionally need the [rdflib]() package and an 
-appropriate `ToolDescription_TransformationAlgebra.ttl` in this directory. To 
-run them:
+For tests, you will additionally need the [rdflib](https://rdflib.dev/) 
+package and an appropriate `ToolDescription_TransformationAlgebra.ttl` in this 
+directory. To run the tests:
 
-    python3 -m unittest tests.py
+    python3 -m unittest test.py
