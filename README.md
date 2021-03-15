@@ -97,10 +97,9 @@ automatically if they are not provided on the command line.
 
 A CCT algebra expression is created for each workflow. This abstracts away 
 over the specific tool annotations, into *types of transformations* in the CCT 
-algebra. The algebra parser can be found 
-[here](https://github.com/simonscheider/QuAnGIS/tree/master/TransformationAlgebra/AlgebraParsers).
-
-*To be implemented.*
+algebra. The transformation algebra library is implemented 
+[here](https://github.com/quangis/transformation_algebra); the CCT algebra 
+itself can be found [here](https://github.com/quangis/cct).
 
 
 

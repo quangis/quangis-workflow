@@ -1,5 +1,0 @@
-"""
-Core concept transformation algebra.
-"""
-
-
