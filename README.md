@@ -21,7 +21,12 @@ Usage example:
 
 
 For tests, you will additionally need the [rdflib](https://rdflib.dev/) 
-package and an appropriate `ToolDescription_TransformationAlgebra.ttl` in this 
-directory. To run the tests:
+package and an appropriate `ToolDescription_TransformationAlgebra.ttl` [1] in 
+this directory. To run the tests:
 
     python3 -m unittest test.py
+
+
+### Notes
+
+1. Internally available at `QuAnGIS/ownpapers/TheoryofGISFunctions/`.
