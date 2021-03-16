@@ -172,14 +172,27 @@ class TestCCT(unittest.TestCase):
             "temperature) (deify (merge (pi2 (select eq (objectregions muni) "
             "(object Utrecht)))))))")
 
+    @unittest.skip("This one seems incorrect.")
     def test28(self):
-        self.parse(
-            """
-            ratio (fcont avg (interpol (pointmeasures temperature) (deify
-            (merge (pi2 (select eq (objectregions muni) (object Utrecht))))))
-            (region x)) (size (pi1 (interpol (pointmeasures temperature) (deify
-            (merge (pi2 (select eq (objectregions muni) (object Utrecht))))))))
-            """)
+        self.parse("""
+        ratio
+            (fcont avg
+                (interpol
+                    (pointmeasures temperature)
+                    (deify (merge (pi2 (
+                        select eq (objectregions muni) (object Utrecht)
+                    ))))
+                )
+                (region x)
+            )
+            (size (pi1
+                (interpol
+                    (pointmeasures temperature)
+                    (deify (merge (pi2 (
+                        select eq (objectregions muni) (object Utrecht)
+                    ))))
+                )
+            ))""")
 
 
 # Also test algebra expressions from RDF file
