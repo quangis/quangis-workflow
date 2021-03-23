@@ -68,6 +68,7 @@ boolfield = R2(Loc, Bool)
 ordfield = R2(Loc, Ord)
 itvfield = R2(Loc, Itv)
 ratiofield = R2(Loc, Ratio)
+locationfield = R2(Loc, Loc)
 object = Obj
 objects = R1(Obj)
 region = Reg
@@ -152,9 +153,9 @@ slope = R2(Loc, Itv) ** R2(Loc, Ratio)
 # primitive
 aspect = R2(Loc, Itv) ** R2(Loc, Ratio)
 #primitive
-flowdirgraph = R2(Loc, Itv) ** R3(Loc, Bool, Loc) #generates a relational field based on main flow direction from a DEM
+flowdirgraph = R2(Loc, Itv) ** R2(Loc, Loc) #generates a location field based on main flow direction from a DEM
 #primitive
-accumulate = R3(Loc, Bool, Loc) ** R2(Loc, R1(Loc)) #accumulates a relational field in terms of its coverage (upstream)
+accumulate = R2(Loc, Loc) ** R2(Loc, R1(Loc)) #accumulates a location field in terms of its coverage (upstream)
 
 
 # Conversions
