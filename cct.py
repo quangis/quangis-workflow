@@ -151,6 +151,10 @@ arealinterpol = R2(Reg, Ratio) ** R1(Reg) ** R2(Reg, Ratio)
 slope = R2(Loc, Itv) ** R2(Loc, Ratio)
 # primitive
 aspect = R2(Loc, Itv) ** R2(Loc, Ratio)
+#primitive
+flowdirgraph = R2(Loc, Itv) ** R3(Loc, Bool, Loc) #generates a relational field based on main flow direction from a DEM
+#primitive
+accumulate = R3(Loc, Bool, Loc) ** R2(Loc, R1(Loc)) #accumulates a relational field in terms of its coverage (upstream)
 
 
 # Conversions
