@@ -1,10 +1,11 @@
 """
 Module containing the core concept transformation algebra. Usage:
 
-    >>> from cct import algebra
-    >>> expr = algebra.parse("pi1 (objects data)")
-    >>> print(expr)
-    R(Obj)
+    >>> from cct import cct
+    >>> cct.parse("pi1 (objects data)")
+    R1(Obj)
+     ├─╼ pi1 : rel ** R1(x) | rel @ [R1(x), R2(x, _), R3(x, _, _)]
+     └─╼ objects data : R1(Obj)
 """
 
 from transformation_algebra import \
@@ -393,4 +394,4 @@ groupby = Ω(lambda l, q, y:
 
 ##############################################################################
 # Generate an algebra out of all definitions in this module
-algebra = TransformationAlgebra.from_dict(globals())
+cct = TransformationAlgebra(**globals())
