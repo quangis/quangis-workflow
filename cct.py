@@ -177,9 +177,9 @@ add = Schema(lambda x: R1(x) ** x ** R1(x))
 # primitive
 get = Schema(lambda x: R1(x) ** x | x @ Val)
 # define: groupby reify (nomfield x)
-invert = Schema(lambda x: R2(Loc, x) ** R2(x, Reg) | x @ Qlt)
+invert = Schema(lambda x: R2(Loc, x) ** R2(x, Reg) | x @ Val)
 # define: groupbyL id (join_key (select eq (lTopo (deify (merge (pi2 (nomcoverages x)))) (merge (pi2 (nomcoverages x)))) in) (groupby name (nomcoverages x)))
-revert = Schema(lambda x: R2(x, Reg) ** R2(Loc, x) | x @ Qlt)
+revert = Schema(lambda x: R2(x, Reg) ** R2(Loc, x) | x @ Val)
 # define: join (groupby get (get_attrL (objectregionratios x1))) (get_attrR (objectregionratios x1))
 getamounts = Schema(lambda x: R3a(Obj, Reg, x) ** R2(Reg, x) | x @ Ratio)
 
@@ -207,11 +207,12 @@ rTopo = R1(Reg) ** R1(Reg) ** R3(Reg, Nom, Reg)
 orTopo = R2(Obj, Reg) ** R1(Reg) ** R3(Obj, Nom, Reg)
 
 # primitive
-# build network
+# Network operations
 nbuild = R3a(Obj, Reg, Ratio) ** R3(Obj, Ratio, Obj)
 nDist = R2(Obj, Reg) ** R2(Obj, Reg) ** R3(Obj, Ratio, Obj) ** R3(Obj, Ratio, Obj)
 lVis = R1(Loc) ** R1(Loc) ** R2(Loc, Itv) ** R3(Loc, Bool, Loc)
-
+gridgraph = R2(Loc, Loc) ** R2(Loc, Ratio) ** R3(Loc, Ratio, Loc)
+lgDist = R3(Loc, Ratio, Loc) ** R1(Loc) ** R1(Loc) **  R3(Loc, Ratio, Loc)
 
 # Amount operations
 
