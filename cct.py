@@ -9,27 +9,27 @@ Module containing the core concept transformation algebra. Usage:
 """
 
 from transformation_algebra import \
-    TypeOperator, operators, _, TransformationAlgebra, Data, Operation
+    Type, operators, _, TransformationAlgebra, Data, Operation
 
 
 ##############################################################################
 # Types and type synonyms
 
-Val = TypeOperator('Val')
-Obj = TypeOperator('Obj', supertype=Val)  # O
-Reg = TypeOperator('Reg', supertype=Val)  # S
-Loc = TypeOperator('Loc', supertype=Val)  # L
-Qlt = TypeOperator('Qlt', supertype=Val)  # Q
-Nom = TypeOperator('Nom', supertype=Qlt)
-Bool = TypeOperator('Bool', supertype=Nom)
-Ord = TypeOperator('Ord', supertype=Nom)
-Itv = TypeOperator('Itv', supertype=Ord)
-Ratio = TypeOperator('Ratio', supertype=Itv)
-Count = TypeOperator('Count', supertype=Ratio)
-R1 = TypeOperator('R1', 1)  # Collections
-R2 = TypeOperator('R2', 2)  # Unary core concepts, 1 key (left)
-R3 = TypeOperator('R3', 3)  # Quantified relation, 2 keys (l & r)
-R3a = TypeOperator('R3a', 3)  # Ternary relation, 1 key (left)
+Val = Type.declare('Val')
+Obj = Type.declare('Obj', supertype=Val)  # O
+Reg = Type.declare('Reg', supertype=Val)  # S
+Loc = Type.declare('Loc', supertype=Val)  # L
+Qlt = Type.declare('Qlt', supertype=Val)  # Q
+Nom = Type.declare('Nom', supertype=Qlt)
+Bool = Type.declare('Bool', supertype=Nom)
+Ord = Type.declare('Ord', supertype=Nom)
+Itv = Type.declare('Itv', supertype=Ord)
+Ratio = Type.declare('Ratio', supertype=Itv)
+Count = Type.declare('Count', supertype=Ratio)
+R1 = Type.declare('R1', params=1)  # Collections
+R2 = Type.declare('R2', params=2)  # Unary core concepts, 1 key (left)
+R3 = Type.declare('R3', params=3)  # Quantified relation, 2 keys (l & r)
+R3a = Type.declare('R3a', params=3)  # Ternary relation, 1 key (left)
 
 SpatialField = R2(Loc, Qlt)
 InvertedField = R2(Qlt, Reg)
