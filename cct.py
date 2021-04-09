@@ -181,9 +181,9 @@ add = Ω(lambda x: R1(x) ** x ** R1(x))
 # primitive
 get = Ω(lambda x: R1(x) ** x | x @ Val)
 # define: groupby reify (nomfield x)
-invert = Ω(lambda x: R2(Loc, x) ** R2(x, Reg) | x @ Qlt)
+invert = Ω(lambda x: R2(Loc, x) ** R2(x, Reg) | x @ Val)
 # define: groupbyL id (join_key (select eq (lTopo (deify (merge (pi2 (nomcoverages x)))) (merge (pi2 (nomcoverages x)))) in) (groupby name (nomcoverages x)))
-revert = Ω(lambda x: R2(x, Reg) ** R2(Loc, x) | x @ Qlt)
+revert = Ω(lambda x: R2(x, Reg) ** R2(Loc, x) | x @ Val)
 # define: join (groupby get (get_attrL (objectregionratios x1))) (get_attrR (objectregionratios x1))
 getamounts = Ω(lambda x: R3a(Obj, Reg, x) ** R2(Reg, x) | x @ Ratio)
 
@@ -211,11 +211,12 @@ rTopo = Ω(R1(Reg) ** R1(Reg) ** R3(Reg, Nom, Reg))
 orTopo = Ω(R2(Obj, Reg) ** R1(Reg) ** R3(Obj, Nom, Reg))
 
 # primitive
-# build network
+# Network operations
 nbuild = Ω(R3a(Obj, Reg, Ratio) ** R3(Obj, Ratio, Obj))
 nDist = Ω(R2(Obj, Reg) ** R2(Obj, Reg) ** R3(Obj, Ratio, Obj) ** R3(Obj, Ratio, Obj))
 lVis = Ω(R1(Loc) ** R1(Loc) ** R2(Loc, Itv) ** R3(Loc, Bool, Loc))
-
+gridgraph = Ω(R2(Loc, Loc) ** R2(Loc, Ratio) ** R3(Loc, Ratio, Loc))
+lgDist = Ω(R3(Loc, Ratio, Loc) ** R1(Loc) ** R1(Loc) ** R3(Loc, Ratio, Loc))
 
 # Amount operations
 
