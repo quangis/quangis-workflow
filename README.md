@@ -9,7 +9,7 @@ It is based on the
 [transformation-algebra](https://github.com/quangis/transformation_algebra) 
 package developed for this project, which you will need to have installed:
 
-    pip3 install transformation-algebra
+    pip3 install 'transformation-algebra>=0.1.0'
 
 Usage example:
 
