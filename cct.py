@@ -120,7 +120,7 @@ count = Ω(R1(Obj) ** Ratio)
 # primitive
 size = Ω(R1(Loc) ** Ratio)
 # define: relunion (regions x)
-#merge = Ω(R1(Reg) ** Reg, derived=lambda x: relunion(x))
+merge = Ω(R1(Reg) ** Reg)
 # primitive
 centroid = Ω(R1(Loc) ** Loc)
 # primitive
@@ -132,13 +132,13 @@ name = Ω(R1(Nom) ** Nom)
 # primitive
 avg = Ω(R2(Val, Itv) ** Itv)
 # primitive
-min = Ω(lambda x: R2(Val, x) ** x | x @ Ord)
+min = Ω(R2(Val, Ord) ** Ord)
 # primitive
-max = Ω(lambda x: R2(Val, x) ** x| x @ Ord)
+max = Ω(R2(Val, Ord) ** Ord)
 # primitive
 sum = Ω(R2(Val, Ratio) ** Ratio)
 # define: nest2 (merge (pi1 (countamounts x1))) (sum (countamounts x1))
-#contentsum = Ω(R2(Reg, Ratio) ** R2(Reg, Ratio))
+contentsum = Ω(R2(Reg, Ratio) ** R2(Reg, Ratio))
 # define: nest2 (name (pi1 (nomcoverages x1))) (merge (pi2(nomcoverages x1)))
 coveragesum = Ω(R2(Nom, Ratio) ** R2(Nom, Ratio))
 
@@ -392,8 +392,11 @@ groupbyR = Ω(lambda rel, q2, l, q1, r:
 groupby = Ω(lambda l, q, y:
     (R1(l) ** q) ** R2(l, y) ** R2(y, q))
 
-merge = Ω(R1(Reg) ** Reg, derived=lambda x: relunion(x))
-contentsum = Ω(R2(Reg, Ratio) ** R2(Reg, Ratio), derived = lambda x1: nest2 (merge (pi1 (x1))) (sum (x1)))
+#merge = Ω(R1(Reg) ** Reg, derived=lambda x: relunion(x))
+#contentsum = Ω(R2(Reg, Ratio) ** R2(Reg, Ratio), derived = lambda x1: nest2 (merge (pi1 (x1))) (sum (x1)))
+
+# define: apply1 (leq (ratioV))(groupbyL (min) (loDist (deify (region)) (x)))
+#extrapol = Ω(R2(Obj, Reg) ** R2(Loc, Bool), derived= lambda x: apply1 (leq (ratioV))(groupbyL (min) (loDist (deify (region)) (x))))  # Buffering, define in terms of Dist
 
 ##############################################################################
 # Generate an algebra out of all definitions in this module
