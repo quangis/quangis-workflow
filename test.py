@@ -3,7 +3,7 @@ import unittest
 import rdflib  # type: ignore
 from transformation_algebra import error
 
-from cct import algebra, R1, R2, Obj, Ratio
+from cct import cct, R1, R2, Obj, Ratio
 
 
 class TestCCT(unittest.TestCase):
@@ -12,12 +12,11 @@ class TestCCT(unittest.TestCase):
             # if the result is unknown, just check if it contains any
             # unresolved variables
             self.assertTrue(
-                not any(algebra.parse(string).type.plain().variables()))
+                not any(cct.parse(string).type.variables()))
         elif isinstance(result, type) and issubclass(result, Exception):
-            self.assertRaises(result, algebra.parse, string)
+            self.assertRaises(result, cct.parse, string)
         else:
-            self.assertEqual(algebra.parse(string).type.plain(),
-                    result.plain())
+            self.assertEqual(cct.parse(string).type, result.instance())
 
     def test_projection(self):
         self.parse(
