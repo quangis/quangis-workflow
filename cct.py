@@ -111,7 +111,8 @@ conj = Ω(Bool ** Bool ** Bool)
 notj = Ω(Bool ** Bool)
 # define: compose2 notj conj
 disj = Ω(Bool ** Bool ** Bool)  # define as not-conjunction
-
+# primitive (=classification table)
+classify = Ω(Itv ** Ord)
 
 # Aggregations of collections
 
@@ -129,7 +130,7 @@ centroid = Ω(R1(Loc) ** Loc)
 name = Ω(R1(Nom) ** Nom)
 
 
-# Statistical operations
+#  Statistical operations
 
 # primitive
 avg = Ω(R2(Val, Itv) ** Itv)
