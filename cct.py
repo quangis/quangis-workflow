@@ -172,6 +172,10 @@ reify = Ω(R1(Loc) ** Reg)
 deify = Ω(Reg ** R1(Loc))
 #primitive: Interpet a name as an object
 objectify = Ω(Nom ** Obj)
+#primitive: Interpret an object as a name
+nominalize = Ω(Obj ** Nom)
+#define: apply nominalize (pi2 (apply objectify (noms x)))
+getobjectnames = Ω(R1(Nom) ** R2(Obj, Nom))
 # primitive
 nest = Ω(lambda x: x ** R1(x))  # Puts values into some unary relation
 # primitive
@@ -227,9 +231,9 @@ fcont = Ω(lambda v, x, y:
     (R2(Val, x) ** y) ** R2(Loc, x) ** Reg ** y | x @ Qlt | y @ Qlt)
 # define: get (pi2 (groupbyR count (select eq (orTopo (objectregions x1) (nest (region x2))) in)))
 ocont = Ω(R2(Obj, Reg) ** Reg ** Count)
-# define: reify (pi1 (join_subset (field x1) (ratios x2)))
+# define: pi1 (join_subset (field x1) (ratios x2))
 fcover = Ω(lambda x:
-    R2(Loc, x) ** R1(x) ** Reg | x @ Qlt)
+    R2(Loc, x) ** R1(x) ** R1(Loc) | x @ Qlt)
 # define: merge (pi2 (join_subset (objectregions x1) (objects x2)))
 ocover = Ω(R2(Obj, Reg) ** R1(Obj) ** Reg)
 
