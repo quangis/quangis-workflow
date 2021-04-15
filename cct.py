@@ -102,9 +102,9 @@ ratio = Ω(Ratio ** Ratio ** Ratio)
 # primitive
 product = Ω(Ratio ** Ratio ** Ratio)
 # primitive
-leq = Ω(Ord ** Ord ** Bool)
+leq = Ω(lambda x: x ** x ** Bool | x @ Ord)
 # primitive
-eq = Ω(Val ** Val ** Bool)
+eq = Ω(Val ** Val ** Bool) 
 # primitive
 conj = Ω(Bool ** Bool ** Bool)
 # primitive
@@ -340,13 +340,13 @@ pi23 = Ω(lambda x, y: R3(_, x, y) ** R2(x, y))
 # primitive
 select = Ω(lambda x, y, rel:
     (x ** y ** Bool) ** rel ** y ** rel
-    | rel @ operators(R1, R2, R3, param=x))
+    | rel @ operators(R1, R2, R3, R3a, param=x))
 
 # primitive
 select2 = Ω(lambda x, y, rel:
     (x ** y ** Bool) ** rel ** rel
-    | rel @ operators(R1, R2, R3, param=x)
-    | rel @ operators(R1, R2, R3, param=y)
+    | rel @ operators(R1, R2, R3, R3a, param=x)
+    | rel @ operators(R1, R2, R3, R3a, param=y)
 )
 
 
