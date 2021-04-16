@@ -31,7 +31,7 @@ class TestCCT(unittest.TestCase):
     def test_select_mismatch(self):
         self.parse(
             "select leq (objectratios xs) (nominal x)",
-            error.SubtypeMismatch)
+            error.ConstraintViolation)
 
     def test01(self):
         self.parse(

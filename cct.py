@@ -99,108 +99,112 @@ rationetwork = Δ(R3(Obj, Ratio, Obj))
 # Derivations
 
 # primitive
-ratio = Ω(Ratio ** Ratio ** Ratio)
+ratio = Ω(lambda x: x ** x ** x | x @ Ratio)
 # primitive
-product = Ω(Ratio ** Ratio ** Ratio)
+product = Ω(lambda x: x ** x ** x | x @ Ratio)
 # primitive
-leq = Ω(lambda x: x ** x ** Bool | x @ Ord)
+leq = Ω(lambda x: x ** x ** Bool | x @ Ord, doc="less than or equal")
 # primitive
-eq = Ω(Val ** Val ** Bool) 
+eq = Ω(lambda x: x ** x ** Bool | x @ Val, doc="equal")
 # primitive
-conj = Ω(Bool ** Bool ** Bool)
+conj = Ω(Bool ** Bool ** Bool, doc="conjunction")
 # primitive
-notj = Ω(Bool ** Bool)
+notj = Ω(Bool ** Bool, doc="logical negation")
 # define: compose2 notj conj
-disj = Ω(Bool ** Bool ** Bool)  # define as not-conjunction
-# primitive (=classification table)
-classify = Ω(Itv ** Ord)
+disj = Ω(type=Bool ** Bool ** Bool, doc="disjunction", derived=lambda x: (compose2 (notj) (conj) (x)))
+# primitive
+classify = Ω(type = lambda x: x ** Ord | x @ Itv, doc="classification table")
 
 # Aggregations of collections
 
 # primitive
-count = Ω(R1(Obj) ** Ratio)
+count = Ω(R1(Obj) ** Ratio, doc="count objects")
 # primitive
-size = Ω(R1(Loc) ** Ratio)
-merge = Ω(R1(Reg) ** Reg,
-    derived=lambda x: relunion(x)
+size = Ω(R1(Loc) ** Ratio, doc="measure size")
+merge = Ω(type=R1(Reg) ** Reg,
+          derived=lambda x: reify(relunion(pi2 (apply (deify) (x)))),
+          doc="merge regions"
 )
-
 # primitive
-centroid = Ω(R1(Loc) ** Loc)
+centroid = Ω(type=R1(Loc) ** Loc, doc="measure centroid")
 # primitive
-name = Ω(R1(Nom) ** Nom)
+name = Ω(type=R1(Nom) ** Nom, doc="combine nominal values")
 
 
 #  Statistical operations
 
 # primitive
-avg = Ω(R2(Val, Itv) ** Itv)
+avg = Ω(type=lambda x, y: R2(x, y) ** y | x @ Val | y @ Itv, doc="average")
 # primitive
-min = Ω(lambda x: R2(Val, x) ** x | x @ Ord)
+min = Ω(type=lambda x, y: R2(x, y) ** y | x @ Val | y @ Ord, doc="minimum")
 # primitive
-max = Ω(lambda x: R2(Val, x) ** x | x @ Ord)
+max = Ω(type=lambda x, y: R2(x, y) ** y | x @ Val | y @ Ord, doc="maximum")
 # primitive
-sum = Ω(R2(Val, Ratio) ** Ratio)
+sum = Ω(type=lambda x, y: R2(x, y) ** y| x @ Val | y @ Ratio, doc="summing up values")
 # define: nest2 (merge (pi1 (countamounts x1))) (sum (countamounts x1))
 contentsum = Ω(
-    type=R2(Reg, Ratio) ** R2(Reg, Ratio),
-    derived=lambda x1: nest2 (merge (pi1 (x1))) (sum (x1))
+    type=lambda x: R2(Reg, x) ** R2(Reg, x) | x @ Ratio,
+    doc="summing up content amounts (regions and their values)",
+    derived=lambda x: nest2 (merge (pi1 (x))) (sum (x))
 )
-
 # define: nest2 (name (pi1 (nomcoverages x1))) (merge (pi2(nomcoverages x1)))
-coveragesum = Ω(R2(Nom, Ratio) ** R2(Nom, Ratio))
+coveragesum = Ω(
+    type = R2(Nom, Reg) ** R2(Nom, Reg),
+    doc="summing up nominal coverages",
+    derived=lambda x: nest2 (name (pi1 (x))) (merge (pi2 (x)))
+)
 
 
 ##########################################################################
 # Geometric transformations
 
 # primitive
-interpol = Ω(R2(Reg, Itv) ** R1(Loc) ** R2(Loc, Itv))
+interpol = Ω(type= lambda x: R2(Reg, x) ** R1(Loc) ** R2(Loc, x) | x @ Itv, doc="spatial point interpolation")
 
 extrapol = Ω(
     type=R2(Obj, Reg) ** R2(Loc, Bool),
-    doc="Buffering, define in terms of Dist",
-    derived=(lambda x:
-        apply1(leq(ratioV), groupbyL(min, loDist(deify(region), x)))
-    )
+    doc="buffering, defined in terms of some distance (given as parameter)",
+    derived=lambda x: apply1 (leq (ratioV), groupbyL (min, loDist (deify (region), x)))
 )
 
 # primitive
-arealinterpol = Ω(R2(Reg, Ratio) ** R1(Reg) ** R2(Reg, Ratio))
+arealinterpol = Ω(
+    type=R2(Reg, Ratio) ** R1(Reg) ** R2(Reg, Ratio),
+    doc="areal interpolation"
+)
 # primitive
-slope = Ω(R2(Loc, Itv) ** R2(Loc, Ratio))
+slope = Ω(type=lambda x: R2(Loc, x) ** R2(Loc, Ratio) | x @ Itv, doc="areal interpolation")
 # primitive
-aspect = Ω(R2(Loc, Itv) ** R2(Loc, Ratio))
+aspect = Ω(type=lambda x: R2(Loc, x) ** R2(Loc, Ratio) | x @ Itv, doc="spatial aspect (cardinal direction) from DEM")
 #primitive
-flowdirgraph = Ω(R2(Loc, Itv) ** R2(Loc, Loc)) #generates a location field based on main flow direction from a DEM
+flowdirgraph = Ω(type=lambda x: R2(Loc, x) ** R2(Loc, Loc) | x @ Itv, doc="flow direction graph from DEM (location field)")
 #primitive
-accumulate = Ω(R2(Loc, Loc) ** R2(Loc, R1(Loc))) #accumulates a location field in terms of its coverage (upstream)
+accumulate = Ω(type=R2(Loc, Loc) ** R2(Loc, R1(Loc)), doc = "finds all locations reachable from a given location")
 
 
 # Conversions
 
 # primitive
-reify = Ω(R1(Loc) ** Reg)
+reify = Ω(type = R1(Loc) ** Reg, doc = "make a region from locations")
 # primitive
-deify = Ω(Reg ** R1(Loc))
-#primitive: Interpet a name as an object
-objectify = Ω(Nom ** Obj)
-#primitive: Interpret an object as a name
-nominalize = Ω(Obj ** Nom)
-#define: apply nominalize (pi2 (apply objectify (noms x)))
-getobjectnames = Ω(R1(Nom) ** R2(Obj, Nom))
+deify = Ω(type = Reg ** R1(Loc), doc = "make locations from a region")
+#primitive
+objectify = Ω(type = Nom ** Obj, doc="interpet a name as an object")
+#primitive
+nominalize = Ω(type = Obj ** Nom, doc="interpet an object as a name")
+getobjectnames = Ω(type = R1(Nom) ** R2(Obj, Nom), doc="make objects from names", derived= lambda x: apply (nominalize) (pi2 (apply (objectify) (x))))
 # primitive
-nest = Ω(lambda x: x ** R1(x))  # Puts values into some unary relation
+nest = Ω(type=lambda x: x ** R1(x), doc="put value in unary relation")
 # primitive
-nest2 = Ω(lambda x, y: x ** y ** R2(x, y))
+nest2 = Ω(type=lambda x, y: x ** y ** R2(x, y), doc="put values in binary relation")
 # primitive
-nest3 = Ω(lambda x, y, z: x ** y ** z ** R3(x, y, z))
+nest3 = Ω(type=lambda x, y, z: x ** y ** z ** R3(x, y, z), doc="put values in ternary relation")
 # primitive
-add = Ω(lambda x: R1(x) ** x ** R1(x))
+add = Ω(type=lambda x: R1(x) ** x ** R1(x), doc="add value to unary relation")
 # primitive
-get = Ω(lambda x: R1(x) ** x | x @ Val)
-# define: groupby reify (nomfield x)
-invert = Ω(lambda x: R2(Loc, x) ** R2(x, Reg) | x @ Val)
+get = Ω(lambda x: R1(x) ** x, doc="get some value from unary relation")
+
+invert = Ω(lambda x: R2(Loc, x) ** R2(x, Reg) | x @ Val, doc="inverts a field, generating a coverage", derived= lambda x: groupby (reify) (x))
 # define: groupbyL id (join_key (select eq (lTopo (deify (merge (pi2 (nomcoverages x)))) (merge (pi2 (nomcoverages x)))) in) (groupby name (nomcoverages x)))
 revert = Ω(lambda x: R2(x, Reg) ** R2(Loc, x) | x @ Val)
 # define: join (groupby get (get_attrL (objectregionratios x1))) (get_attrR (objectregionratios x1))
@@ -298,7 +302,7 @@ set_inters = Ω(lambda rel:
 )
 # primitive
 relunion = Ω(lambda rel:
-    R1(rel) ** rel
+    R1(rel) ** rel | rel @ operators(R1, R2, R3)
 )
 
 # A constructor for quantified relations. prod generates a cartesian product as
