@@ -206,7 +206,8 @@ add = Ω(type=lambda x: R1(x) ** x ** R1(x), doc="add value to unary relation", 
 get = Ω(lambda x: R1(x) ** x, doc="get some value from unary relation", derived=None)
 
 invert = Ω(lambda x: R2(Loc, x) ** R2(x, Reg) | x @ Val, doc="inverts a field, generating a coverage", derived= lambda x: groupby (reify) (x))
-revert = Ω(lambda x: R2(x, Reg) ** R2(Loc, x) | x @ Val, doc="inverts a coverage to a field", derived=lambda x : groupbyL (id) (join_key (select (eq) (lTopo (deify (merge (pi2 (x)))) (merge (pi2 (x)))) (in_)) (groupby (name) (x))))
+revert = Ω(lambda x: R2(x, Reg) ** R2(Loc, x) | x @ Val, doc="inverts a coverage to a field", derived=None#lambda x : groupbyL (id) (join_key (select (eq) (lTopo (deify (merge (pi2 (x)))) (merge (pi2 (x)))) (in_)) (groupby (name) (x)))
+           )
 getamounts = Ω(lambda x: R3a(Obj, Reg, x) ** R2(Reg, x) | x @ Ratio, doc="gets amounts from object based amount qualities", derived=lambda x: join (groupby (get) (get_attrL (x))) (get_attrR (x)))
 
 
@@ -222,11 +223,14 @@ oDist = Ω(R2(Obj, Reg) ** R2(Obj, Reg) ** R3(Obj, Ratio, Obj), doc="computes Eu
 # primitive
 lTopo = Ω(R1(Loc) ** Reg ** R3(Loc, Nom, Reg), doc="detects the topological position of locations on a region (in, out, boundary)", derived=None)
 # define
-loTopo = Ω(R1(Loc) ** R2(Obj, Reg) ** R3(Loc, Nom, Obj), doc="detects the topological position of locations on objects (in, out, boundary)", derived=lambda x,y: prod3 (apply1 (compose (groupbyL (id)) (lTopo (x))) (y)))
+loTopo = Ω(R1(Loc) ** R2(Obj, Reg) ** R3(Loc, Nom, Obj), doc="detects the topological position of locations on objects (in, out, boundary)", derived=None#lambda x,y: prod3 (apply1 (compose (groupbyL (id)) (lTopo (x))) (y))
+           )
+
 # define
 oTopo = Ω(R2(Obj, Reg) ** R2(Obj, Reg) ** R3(Obj, Nom, Obj), doc="detects the topological relations between two sets of objects", derived= lambda x, y: prod3 (apply1 (compose (groupbyR (compose (name) (pi2))) ((swap (loTopo)) (x))) (apply1 (deify) (y))))
 # define
-lrTopo = Ω(R1(Loc) ** R1(Reg) ** R3(Loc, Nom, Reg),doc="detects the topological position of locations on regions (in, out, boundary)", derived = lambda x,y: prod3 (apply (compose (groupbyL (id)) (lTopo (x))) (y)))
+lrTopo = Ω(R1(Loc) ** R1(Reg) ** R3(Loc, Nom, Reg),doc="detects the topological position of locations on regions (in, out, boundary)", derived =None#lambda x,y: prod3 (apply (compose (groupbyL (id_)) (lTopo (x))) (y))
+ )
 # define
 rTopo = Ω(R1(Reg) ** R1(Reg) ** R3(Reg, Nom, Reg), doc="detects the topological relations between two sets of regions", derived= lambda x,y: prod3 (apply (compose (compose (groupbyR (compose (name) (pi2))) ((swap (lrTopo)) (x))) (deify)) (y)))
 # define: prod3 (apply (compose (compose (groupbyR (compose name pi2)) ((swap loTopo) (objectregions x1))) deify) (regions x2))
@@ -278,7 +282,7 @@ swap = Ω(lambda α, β, γ:
 )
 
 # primitive
-id = Ω(lambda α: α ** α)
+id_ = Ω(lambda α: α ** α)
 
 # primitive
 apply = Ω(lambda x, y:
