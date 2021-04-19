@@ -50,6 +50,11 @@ BooleanInvertedField = R2(Bool, Reg)
 objectnominals = Δ(R2(Obj, Nom))
 objectcounts = Δ(R2(Obj, Count))
 
+test = Δ(
+    type=lambda x: x,
+    doc="This is a data input of any type, strictly for testing."
+)
+
 pointmeasures = Δ(R2(Reg, Itv))
 amountpatches = Δ(R2(Reg, Nom))
 countamounts = Δ(R2(Reg, Count))
