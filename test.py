@@ -201,7 +201,10 @@ path = "ToolDescription_TransformationAlgebra.ttl"
 g = rdflib.Graph()
 g.parse(path, format=rdflib.util.guess_format(path))
 for s, o in g.subject_objects(TOOLS.algebraexpression):
-    setattr(TestCCT, f"test_{s}", lambda x: x.parse(o))
+    def f(self):
+        self.assertFalse(any(cct.parse(o).type.variables()))
+
+    setattr(TestCCT, f"test_{s}", f)
 
 
 if __name__ == '__main__':
