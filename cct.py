@@ -118,7 +118,7 @@ classify = Ω(type = Itv ** Ord, doc="classification table", derived=None)
 # Aggregations of collections
 
 # primitive
-count = Ω(R1(Obj) ** Ratio, doc="count objects", derived=None)
+count = Ω(R1(Obj) ** Count, doc="count objects", derived=None)
 # primitive
 size = Ω(R1(Loc) ** Ratio, doc="measure size")
 merge = Ω(type=R1(Reg) ** Reg,
@@ -206,54 +206,55 @@ add = Ω(type=lambda x: R1(x) ** x ** R1(x), doc="add value to unary relation", 
 get = Ω(lambda x: R1(x) ** x, doc="get some value from unary relation", derived=None)
 
 invert = Ω(lambda x: R2(Loc, x) ** R2(x, Reg) | x @ Val, doc="inverts a field, generating a coverage", derived= lambda x: groupby (reify) (x))
-# define: groupbyL id (join_key (select eq (lTopo (deify (merge (pi2 (nomcoverages x)))) (merge (pi2 (nomcoverages x)))) in) (groupby name (nomcoverages x)))
 revert = Ω(lambda x: R2(x, Reg) ** R2(Loc, x) | x @ Val, doc="inverts a coverage to a field", derived=lambda x : groupbyL (id) (join_key (select (eq) (lTopo (deify (merge (pi2 (x)))) (merge (pi2 (x)))) (in_)) (groupby (name) (x))))
-# define: join (groupby get (get_attrL (objectregionratios x1))) (get_attrR (objectregionratios x1))
-getamounts = Ω(lambda x: R3a(Obj, Reg, x) ** R2(Reg, x) | x @ Ratio, derived=None)
+getamounts = Ω(lambda x: R3a(Obj, Reg, x) ** R2(Reg, x) | x @ Ratio, doc="gets amounts from object based amount qualities", derived=lambda x: join (groupby (get) (get_attrL (x))) (get_attrR (x)))
 
 
 # Operators on quantified relations
 
 # primitive
-lDist = Ω(R1(Loc) ** R1(Loc) ** R3(Loc, Ratio, Loc))
-# define: prod3 (apply1 (compose (groupbyL min) (lDist (locs x1))) (apply1 deify (objectregions x2)))
-loDist = Ω(R1(Loc) ** R2(Obj, Reg) ** R3(Loc, Ratio, Obj))
-# define: prod3 (apply1 (compose (groupbyR min) ((swap loDist) (objectregions x1))) (apply1 deify (objectregions x2)))
-oDist = Ω(R2(Obj, Reg) ** R2(Obj, Reg) ** R3(Obj, Ratio, Obj))
+lDist = Ω(R1(Loc) ** R1(Loc) ** R3(Loc, Ratio, Loc),doc="computes Euclidean distances between locations", derived=None)
+# define
+loDist = Ω(R1(Loc) ** R2(Obj, Reg) ** R3(Loc, Ratio, Obj), doc= "computes Euclidean distances between locations and objects", derived = lambda x, y: prod3 (apply1 (compose (groupbyL (min)) (lDist (x))) (apply1 (deify) (y))))
+# define
+oDist = Ω(R2(Obj, Reg) ** R2(Obj, Reg) ** R3(Obj, Ratio, Obj), doc="computes Euclidean distances between objects", derived=lambda x, y: prod3 (apply1 (compose (groupbyR (min)) ((swap (loDist)) (x))) (apply1 (deify) (y))))
 
 # primitive
-lTopo = Ω(R1(Loc) ** Reg ** R3(Loc, Nom, Reg))
-# define: prod3 (apply1 (compose (groupbyL id) (lTopo (locs x1))) (objectregions x2))
-loTopo = Ω(R1(Loc) ** R2(Obj, Reg) ** R3(Loc, Nom, Obj))
-# define: prod3 (apply1 (compose (groupbyR (compose name pi2)) ((swap loTopo) (objectregions x1))) (apply1 deify (objectregions x2)))
-oTopo = Ω(R2(Obj, Reg) ** R2(Obj, Reg) ** R3(Obj, Nom, Obj))
-# define: prod3 (apply (compose (groupbyL id) (lTopo (locs x1))) (regions x2))
-lrTopo = Ω(R1(Loc) ** R1(Reg) ** R3(Loc, Nom, Reg))
-# define: prod3 (apply (compose (compose (groupbyR (compose name pi2)) ((swap lrTopo) (regions x1))) deify) (regions x2))
-rTopo = Ω(R1(Reg) ** R1(Reg) ** R3(Reg, Nom, Reg))
+lTopo = Ω(R1(Loc) ** Reg ** R3(Loc, Nom, Reg), doc="detects the topological position of locations on a region (in, out, boundary)", derived=None)
+# define
+loTopo = Ω(R1(Loc) ** R2(Obj, Reg) ** R3(Loc, Nom, Obj), doc="detects the topological position of locations on objects (in, out, boundary)", derived=lambda x,y: prod3 (apply1 (compose (groupbyL (id)) (lTopo (x))) (y)))
+# define
+oTopo = Ω(R2(Obj, Reg) ** R2(Obj, Reg) ** R3(Obj, Nom, Obj), doc="detects the topological relations between two sets of objects", derived= lambda x, y: prod3 (apply1 (compose (groupbyR (compose (name) (pi2))) ((swap (loTopo)) (x))) (apply1 (deify) (y))))
+# define
+lrTopo = Ω(R1(Loc) ** R1(Reg) ** R3(Loc, Nom, Reg),doc="detects the topological position of locations on regions (in, out, boundary)", derived = lambda x,y: prod3 (apply (compose (groupbyL (id)) (lTopo (x))) (y)))
+# define
+rTopo = Ω(R1(Reg) ** R1(Reg) ** R3(Reg, Nom, Reg), doc="detects the topological relations between two sets of regions", derived= lambda x,y: prod3 (apply (compose (compose (groupbyR (compose (name) (pi2))) ((swap (lrTopo)) (x))) (deify)) (y)))
 # define: prod3 (apply (compose (compose (groupbyR (compose name pi2)) ((swap loTopo) (objectregions x1))) deify) (regions x2))
-orTopo = Ω(R2(Obj, Reg) ** R1(Reg) ** R3(Obj, Nom, Reg))
+orTopo = Ω(R2(Obj, Reg) ** R1(Reg) ** R3(Obj, Nom, Reg), doc="detects the topological relations between a set of objects and a set of regions", derived = lambda x,y: prod3 (apply (compose (compose (groupbyR (compose (name) (pi2))) ((swap (loTopo)) (x))) (deify)) (y)))
 
-# primitive
+
 # Network operations
-nbuild = Ω(R3a(Obj, Reg, Ratio) ** R3(Obj, Ratio, Obj))
-nDist = Ω(R2(Obj, Reg) ** R2(Obj, Reg) ** R3(Obj, Ratio, Obj) ** R3(Obj, Ratio, Obj))
-lVis = Ω(R1(Loc) ** R1(Loc) ** R2(Loc, Itv) ** R3(Loc, Bool, Loc))
-gridgraph = Ω(R2(Loc, Loc) ** R2(Loc, Ratio) ** R3(Loc, Ratio, Loc))
-lgDist = Ω(R3(Loc, Ratio, Loc) ** R1(Loc) ** R1(Loc) ** R3(Loc, Ratio, Loc))
+# primitive
+nbuild = Ω(R3a(Obj, Reg, Ratio) ** R3(Obj, Ratio, Obj), doc="build a network from objects with impedance values", derived = None)
+# primitive
+nDist = Ω(R2(Obj, Reg) ** R2(Obj, Reg) ** R3(Obj, Ratio, Obj) ** R3(Obj, Ratio, Obj), doc="compute network distances between objects", derived = None)
+# primitive
+lVis = Ω(R1(Loc) ** R1(Loc) ** R2(Loc, Itv) ** R3(Loc, Bool, Loc), doc="build a visibility relation between locations using a DEM", derived = None)
+# primitive
+gridgraph = Ω(R2(Loc, Loc) ** R2(Loc, Ratio) ** R3(Loc, Ratio, Loc), doc="build a gridgraph using some location field and some impedance field", derived =None)
+# primitive
+lgDist = Ω(R3(Loc, Ratio, Loc) ** R1(Loc) ** R1(Loc) ** R3(Loc, Ratio, Loc), doc="compute gridgraph distances between locations", derived=None)
 
 # Amount operations
-
-
 fcont = Ω(lambda x, y:
-    (R2(Val, x) ** y) ** R2(Loc, x) ** Reg ** y | x @ Qlt | y @ Qlt, doc="Summarizes the content of a field within a region", derived=lambda f, x, r: f (join_subset (x) (deify (r))))
-# define: get (pi2 (groupbyR count (select eq (orTopo (objectregions x1) (nest (region x2))) in)))
-ocont = Ω(R2(Obj, Reg) ** Reg ** Count)
-# define: pi1 (join_subset (field x1) (ratios x2))
+    (R2(Val, x) ** y) ** R2(Loc, x) ** Reg ** y | x @ Qlt | y @ Qlt, doc="summarizes the content of a field within a region", derived=lambda f, x, r: f (join_subset (x) (deify (r))))
+# define
+ocont = Ω(R2(Obj, Reg) ** Reg ** Count, doc="counts the number of objects within a region", derived= lambda x,y: get (pi2 (groupbyR (count) (select (eq) (orTopo (x) (nest (y))) (in_)))))
+# define
 fcover = Ω(lambda x:
-    R2(Loc, x) ** R1(x) ** R1(Loc) | x @ Qlt)
-# define: merge (pi2 (join_subset (objectregions x1) (objects x2)))
-ocover = Ω(R2(Obj, Reg) ** R1(Obj) ** Reg)
+    R2(Loc, x) ** R1(x) ** R1(Loc) | x @ Qlt, doc="measures the spatial coverage of a field that is constrained to certain field values", derived= lambda x,y: pi1 (join_subset (x) (y)))
+# define
+ocover = Ω(R2(Obj, Reg) ** R1(Obj) ** Reg, doc="measures the spatial coverage of a collection of objects", derived=lambda x,y: merge (pi2 (join_subset (x) (y))))
 
 ###########################################################################
 # Functional and Relational transformations
