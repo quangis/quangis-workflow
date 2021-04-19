@@ -2,11 +2,36 @@
 import unittest
 import rdflib  # type: ignore
 from transformation_algebra import error
+from abc import ABCMeta
 
 from cct import cct, R1, R2, Obj, Ratio
 
 
-class TestCCT(unittest.TestCase):
+class MetaTestCase(ABCMeta):
+    """
+    Add tests for algebra expressions from a tool file.
+    """
+
+    def __init__(cls, name, bases, clsdict):
+        TOOLS = rdflib.Namespace(
+            "http://geographicknowledge.de/vocab/GISTools.rdf#")
+        path = "ToolDescription_TransformationAlgebra.ttl"
+        g = rdflib.Graph()
+        g.parse(path, format=rdflib.util.guess_format(path))
+        cls.tool_expressions = dict(g.subject_objects(TOOLS.algebraexpression))
+
+        def f(x):
+            def test_generic(self):
+                self.assertFalse(any(cct.parse(x).type.variables()))
+            return test_generic
+
+        for tool, expr in cls.tool_expressions.items():
+            setattr(cls, f"test_{tool}", f(expr))
+
+        super(MetaTestCase, cls).__init__(name, bases, clsdict)
+
+
+class TestCCT(unittest.TestCase, metaclass=MetaTestCase):
     def parse(self, string, result=None):
         if result is None:
             pass
@@ -195,16 +220,6 @@ class TestCCT(unittest.TestCase):
             ))""")
 
 
-# Also test algebra expressions from RDF file
-TOOLS = rdflib.Namespace("http://geographicknowledge.de/vocab/GISTools.rdf#")
-path = "ToolDescription_TransformationAlgebra.ttl"
-g = rdflib.Graph()
-g.parse(path, format=rdflib.util.guess_format(path))
-for s, o in g.subject_objects(TOOLS.algebraexpression):
-    def f(self):
-        self.assertFalse(any(cct.parse(o).type.variables()))
-
-    setattr(TestCCT, f"test_{s}", f)
 
 
 if __name__ == '__main__':
