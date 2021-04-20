@@ -211,7 +211,7 @@ add = Ω(type=lambda x: R1(x) ** x ** R1(x), doc="add value to unary relation", 
 get = Ω(lambda x: R1(x) ** x, doc="get some value from unary relation", derived=None)
 
 invert = Ω(lambda x: R2(Loc, x) ** R2(x, Reg) | x @ Val, doc="inverts a field, generating a coverage", derived= lambda x: groupby (reify) (x))
-revert = Ω(lambda x: R2(x, Reg) ** R2(Loc, x) | x @ Val, doc="inverts a coverage to a field", derived=None#lambda x : groupbyL (id) (join_key (select (eq) (lTopo (deify (merge (pi2 (x)))) (merge (pi2 (x)))) (in_)) (groupby (name) (x)))
+revert = Ω(lambda x: R2(x, Reg) ** R2(Loc, x) | x @ Val, doc="inverts a coverage to a field", derived=lambda x : groupbyL (compose (get) (pi1)) (join_key (select (eq) (lTopo (deify (merge (pi2 (x)))) (merge (pi2 (x)))) (in_)) (groupby (get) (x)))
            )
 getamounts = Ω(lambda x: R3a(Obj, Reg, x) ** R2(Reg, x) | x @ Ratio, doc="gets amounts from object based amount qualities", derived=lambda x: join (groupby (get) (get_attrL (x))) (get_attrR (x)))
 
