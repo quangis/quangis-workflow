@@ -146,13 +146,13 @@ min = Ω(type=lambda y: R2(Val, y) ** y | y @ Ord, doc="minimum", derived=None)
 max = Ω(type=lambda y: R2(Val, y) ** y | y @ Ord, doc="maximum", derived=None)
 # primitive
 sum = Ω(type=lambda y: R2(Val, y) ** y | y @ Ratio, doc="summing up values", derived=None)
-# define: nest2 (merge (pi1 (countamounts x1))) (sum (countamounts x1))
+# define
 contentsum = Ω(
     type=lambda x: R2(Reg, x) ** R2(Reg, x) | x @ Ratio,
     doc="summing up content amounts (regions and their values)",
     derived=lambda x: nest2 (merge (pi1 (x))) (sum (x))
 )
-# define: nest2 (name (pi1 (nomcoverages x1))) (merge (pi2(nomcoverages x1)))
+# define
 coveragesum = Ω(
     type = R2(Nom, Reg) ** R2(Nom, Reg),
     doc="summing up nominal coverages",
@@ -228,17 +228,17 @@ oDist = Ω(R2(Obj, Reg) ** R2(Obj, Reg) ** R3(Obj, Ratio, Obj), doc="computes Eu
 # primitive
 lTopo = Ω(R1(Loc) ** Reg ** R3(Loc, Nom, Reg), doc="detects the topological position of locations on a region (in, out, boundary)", derived=None)
 # define
-loTopo = Ω(R1(Loc) ** R2(Obj, Reg) ** R3(Loc, Nom, Obj), doc="detects the topological position of locations on objects (in, out, boundary)", derived=None#lambda x,y: prod3 (apply1 (compose (groupbyL (id)) (lTopo (x))) (y))
+loTopo = Ω(R1(Loc) ** R2(Obj, Reg) ** R3(Loc, Nom, Obj), doc="detects the topological position of locations on objects (in, out, boundary)", derived=lambda x,y: prod3 (apply1 (compose (groupbyL (compose (get) (pi2))) (lTopo ((x)))) (y))
            )
 
 # define
 oTopo = Ω(R2(Obj, Reg) ** R2(Obj, Reg) ** R3(Obj, Nom, Obj), doc="detects the topological relations between two sets of objects", derived= lambda x, y: prod3 (apply1 (compose (groupbyR (compose (name) (pi2))) ((swap (loTopo)) (x))) (apply1 (deify) (y))))
 # define
-lrTopo = Ω(R1(Loc) ** R1(Reg) ** R3(Loc, Nom, Reg),doc="detects the topological position of locations on regions (in, out, boundary)", derived =None#lambda x,y: prod3 (apply (compose (groupbyL (id_)) (lTopo (x))) (y))
+lrTopo = Ω(R1(Loc) ** R1(Reg) ** R3(Loc, Nom, Reg),doc="detects the topological position of locations on regions (in, out, boundary)", derived =lambda x,y: prod3 (apply (compose (groupbyL (compose (get) (pi2))) (lTopo ((x)))) (y))
  )
 # define
 rTopo = Ω(R1(Reg) ** R1(Reg) ** R3(Reg, Nom, Reg), doc="detects the topological relations between two sets of regions", derived= lambda x,y: prod3 (apply (compose (compose (groupbyR (compose (name) (pi2))) ((swap (lrTopo)) (x))) (deify)) (y)))
-# define: prod3 (apply (compose (compose (groupbyR (compose name pi2)) ((swap loTopo) (objectregions x1))) deify) (regions x2))
+# define
 orTopo = Ω(R2(Obj, Reg) ** R1(Reg) ** R3(Obj, Nom, Reg), doc="detects the topological relations between a set of objects and a set of regions", derived = lambda x,y: prod3 (apply (compose (compose (groupbyR (compose (name) (pi2))) ((swap (loTopo)) (x))) (deify)) (y)))
 
 
