@@ -465,7 +465,7 @@ apply2 = Ω(lambda x1, x2, x3, y:
 groupbyL = Ω(lambda rel, l, q1, q2, r:
     (rel ** q2) ** R3(l, q1, r) ** R2(l, q2)
     | rel @ [R1(r), R2(r, q1)],
-             doc= "Group quantified relations by the left key, summarizing lists of quality values with the same key value into a new value per key, resulting in a unary core concept relation.",
+             doc= "Group quantified relations by the left key, summarizing lists of quality values with the same key value into a new value per key, resulting in a unary concept.",
              derived=None
              )
 
@@ -473,7 +473,7 @@ groupbyL = Ω(lambda rel, l, q1, q2, r:
 groupbyR = Ω(lambda rel, q2, l, q1, r:
     (rel ** q2) ** R3(l, q1, r) ** R2(r, q2)
     | rel @ [R1(l), R2(l, q1)],
-            doc= "Group quantified relations by the right key, summarizing lists of quality values with the same key value into a new value per key, resulting in a unary core concept relation.",
+            doc= "Group quantified relations by the right key, summarizing lists of quality values with the same key value into a new value per key, resulting in a unary concept.",
              derived=None
             )
 
