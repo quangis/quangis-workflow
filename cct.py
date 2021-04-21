@@ -273,47 +273,67 @@ ocover = Ω(R2(Obj, Reg) ** R1(Obj) ** Reg, doc="measures the spatial coverage o
 
 # primitive
 compose = Ω(lambda α, β, γ:
-    (β ** γ) ** (α ** β) ** (α ** γ)
+    (β ** γ) ** (α ** β) ** (α ** γ),
+    doc="compose unary functions",
+    derived=None
 )
 
 # primitive
 compose2 = Ω(lambda α, β, γ, δ:
-    (β ** γ) ** (δ ** α ** β) ** (δ ** α ** γ)
+    (β ** γ) ** (δ ** α ** β) ** (δ ** α ** γ),
+    doc="compose binary functions",
+    derived=None
 )
 
 # primitive
 swap = Ω(lambda α, β, γ:
-    (α ** β ** γ) ** (β ** α ** γ)
+    (α ** β ** γ) ** (β ** α ** γ),
+    doc="swap binary function inputs",
+    derived=None
 )
 
 # primitive
-id_ = Ω(lambda α: α ** α)
+id_ = Ω(lambda α: α ** α,
+        doc="identity",
+        derived=None
+        )
 
 # primitive
 apply = Ω(lambda x, y:
-    (x ** y) ** R1(x) ** R2(x, y)
+    (x ** y) ** R1(x) ** R2(x, y),
+    doc="applying a function to a collection",
+    derived=None
 )
 
 
 # Set union and set difference
 
 # define: relunion (add (nest (regions x)) (regions y))
-set_union = Ω(lambda rel:
-    rel ** rel ** rel
+set_union = Ω(
+    type=lambda rel:
+    rel ** rel ** rel,
+    doc="union of two relations",
+    derived = None
 )
 
 # primitive
 set_diff = Ω(lambda rel:
-    rel ** rel ** rel
+    rel ** rel ** rel,
+    doc="difference of two relations",
+    derived = None
 )
 
 # define: set_diff rel1 (set_diff rel1 rel2)
 set_inters = Ω(lambda rel:
-    rel ** rel ** rel
+    rel ** rel ** rel,
+    doc="intersection of two relations",
+    derived = lambda x, y: set_diff (x) (set_diff (x) (y))
 )
 # primitive
 relunion = Ω(lambda rel:
-    R1(rel) ** rel | rel @ operators(R1, R2, R3)
+    R1(rel) ** rel | rel @ operators(R1, R2, R3),
+    doc="union of a set of relations",
+    derived = None
 )
 
 # A constructor for quantified relations. prod generates a cartesian product as
@@ -322,12 +342,16 @@ relunion = Ω(lambda rel:
 # the quantified relation.
 # define: apply1 (compose ((swap apply1) (objectratios x2)) ratio) (ratiofield x1)
 prod = Ω(lambda x, y, z, u, w:
-    (y ** z ** u) ** R2(x, y) ** R2(w, z) ** R2(x, R2(w, u))
+    (y ** z ** u) ** R2(x, y) ** R2(w, z) ** R2(x, R2(w, u)),
+         doc= "A constructor for quantified relations. Prod generates a cartesian product of two relations as a nested binary relation.",
+         derived=lambda f, x, y: apply1 (compose ((swap (apply1)) (y)) (f)) (x)
 )
 
 # primitive
 prod3 = Ω(lambda x, y, z:
-    R2(z, R2(x, y)) ** R3(x, y, z)
+    R2(z, R2(x, y)) ** R3(x, y, z),
+    doc= "prod3 generates a quantified relation from two nested binary relations. The keys of the nested relations become two keys of the quantified relation.",
+        derived=None
 )
 
 # Projection (π). Projects a given relation to one of its attributes, resulting
@@ -336,17 +360,29 @@ prod3 = Ω(lambda x, y, z:
 # primitive
 pi1 = Ω(lambda rel, x:
     rel ** R1(x)
-    | rel @ operators(R1, R2, R3, param=x, at=1))
+    | rel @ operators(R1, R2, R3, param=x, at=1),
+        doc="projects a given relation to the first attribute, resulting in a collection",
+        derived=None
+        )
 # primitive
 pi2 = Ω(lambda rel, x:
     rel ** R1(x)
-    | rel @ operators(R1, R2, R3, param=x, at=2))
+    | rel @ operators(R1, R2, R3, param=x, at=2),
+        doc="projects a given relation to the second attribute, resulting in a collection",
+        derived=None
+        )
 # primitive
-pi3 = Ω(lambda x: R3(_, _, x) ** R1(x))
+pi3 = Ω(lambda x: R3(_, _, x) ** R1(x),
+        doc="projects a given ternary relation to the third attribute, resulting in a collection",
+        derived=None)
 # primitive
-pi12 = Ω(lambda x, y: R3(x, y, _) ** R2(x, y))
+pi12 = Ω(lambda x, y: R3(x, y, _) ** R2(x, y),
+         doc= "projects a given ternary relation to the first two attributes",
+         derived=None)
 # primitive
-pi23 = Ω(lambda x, y: R3(_, x, y) ** R2(x, y))
+pi23 = Ω(lambda x, y: R3(_, x, y) ** R2(x, y),
+        doc= "projects a given ternary relation to the last two attributes",
+         derived=None)
 
 
 # Selection (σ). Selects a subset of the relation using a constraint on
@@ -356,32 +392,41 @@ pi23 = Ω(lambda x, y: R3(_, x, y) ** R2(x, y))
 # primitive
 select = Ω(lambda x, y, rel:
     (x ** y ** Bool) ** rel ** y ** rel
-    | rel @ operators(R1, R2, R3, R3a, param=x))
+    | rel @ operators(R1, R2, R3, R3a, param=x),
+           doc="Selects a subset of a relation using a constraint on one attribute, like equality (eq) or order (leq)",
+           derived=None)
 
 # primitive
 select2 = Ω(lambda x, y, rel:
     (x ** y ** Bool) ** rel ** rel
     | rel @ operators(R1, R2, R3, R3a, param=x)
-    | rel @ operators(R1, R2, R3, R3a, param=y)
+    | rel @ operators(R1, R2, R3, R3a, param=y),
+    doc ="Selects a subset of a relation using a constraint on two attributes, like equality (eq) or order (leq)",
+    derived=None
 )
 
 
 # Join of two unary concepts, like a table join.
 # primitive
-join = Ω(lambda x, y, z: R2(x, y) ** R2(y, z) ** R2(x, z))
+join = Ω(lambda x, y, z: R2(x, y) ** R2(y, z) ** R2(x, z),
+         doc= "Join of two unary concepts, like a table join",
+         derived=None
+         )
 
 # Join on subset (⨝). Subset a relation to those tuples having an attribute
 # value contained in a collection. Used to be bowtie.
 # primitive
 join_subset = Ω(lambda x, rel:
     rel ** R1(x) ** rel
-    | rel @ operators(R1, R2, R3, R3a, param=x))
+    | rel @ operators(R1, R2, R3, R3a, param=x),
+     doc="Subset a relation to those tuples having an attribute value contained in a collection",
+    derived=None)
 
 # functions to handle multiple attributes (with 1 key)
 # define: prod3 (pi12 (select2 eq (prod3 (apply1 (compose ((swap apply1) (boolfield x1)) nest2) (ratiofield x2)))))
-join_attr = Ω(lambda x, y, z: R2(x, y) ** R2(x, z) ** R3a(x, y, z))
-get_attrL = Ω(lambda x, y, z: R3a(x, y, z) ** R2(x, y))
-get_attrR = Ω(lambda x, y, z: R3a(x, y, z) ** R2(x, z))
+join_attr = Ω(lambda x, y, z: R2(x, y) ** R2(x, z) ** R3a(x, y, z), derived=None)
+get_attrL = Ω(lambda x, y, z: R3a(x, y, z) ** R2(x, y), derived=None)
+get_attrR = Ω(lambda x, y, z: R3a(x, y, z) ** R2(x, z), derived=None)
 
 
 # Join (⨝*). Substitute the quality of a quantified relation to some
@@ -389,22 +434,28 @@ get_attrR = Ω(lambda x, y, z: R3a(x, y, z) ** R2(x, z))
 # define: prod3 (apply1 (join_subset (objectregions x2)) (groupbyL pi1 (rationetwork x1)))
 join_key = Ω(lambda x, q1, y, rel, q2:
     R3(x, q1, y) ** rel ** R3(x, q2, y)
-    | rel @ [R2(x, q2), R2(y, q2)])
+    | rel @ [R2(x, q2), R2(y, q2)],
+             doc= "Substitute the quality of a quantified relation to some quality of one of its keys.",
+             derived= None #lambda x, y: prod3 (apply1 (join_subset (y)) (groupbyL (pi1) (x)))
+             )
 
 
 # Join with unary function. Generate a unary concept from one other unary
 # concept of the same type. Used to be join_fa/join_with1.
-# define: join (objectregions x) (apply id (pi2 (objectregions x)))
+# define:
 apply1 = Ω(lambda x1, x2, y:
-    (x1 ** x2) ** R2(y, x1) ** R2(y, x2))
+    (x1 ** x2) ** R2(y, x1) ** R2(y, x2), doc="Join with unary function. Generates a unary concept from one other unary concept using a function",
+    derived=lambda f, y: join (y) (apply (f) (pi2 (y))))
 
 
 # Join with binary function (⨝_f). Generate a unary concept from two other
 # unary concepts of the same type. Used to be bowtie_ratio/join_with2 and others.
-# define: pi12 (select2 eq (prod3 (prod conj (boolfield x1) (boolfield x2))))
+# define
 apply2 = Ω(lambda x1, x2, x3, y:
-    (x1 ** x2 ** x3) ** R2(y, x1) ** R2(y, x2) ** R2(y, x3))
-
+    (x1 ** x2 ** x3) ** R2(y, x1) ** R2(y, x2) ** R2(y, x3),
+           doc="Join with binary function. Generates a unary concept from two other unary concepts of the same type",
+           derived = lambda f, x,y: pi12 (select2 (eq) (prod3 (prod (f) (x) (y))))
+           )
 
 # Group by (β). Group quantified relations by the left (right) key,
 # summarizing lists of quality values with the same key value into a new
@@ -413,18 +464,27 @@ apply2 = Ω(lambda x1, x2, x3, y:
 # primitive
 groupbyL = Ω(lambda rel, l, q1, q2, r:
     (rel ** q2) ** R3(l, q1, r) ** R2(l, q2)
-    | rel @ [R1(r), R2(r, q1)])
+    | rel @ [R1(r), R2(r, q1)],
+             doc= "Group quantified relations by the left key, summarizing lists of quality values with the same key value into a new value per key, resulting in a unary core concept relation.",
+             derived=None
+             )
 
 # primitive
 groupbyR = Ω(lambda rel, q2, l, q1, r:
     (rel ** q2) ** R3(l, q1, r) ** R2(r, q2)
-    | rel @ [R1(l), R2(l, q1)])
+    | rel @ [R1(l), R2(l, q1)],
+            doc= "Group quantified relations by the right key, summarizing lists of quality values with the same key value into a new value per key, resulting in a unary core concept relation.",
+             derived=None
+            )
 
 # Group by qualities of binary relations
 # example:  groupby count (objectregions x)
 # primitive
 groupby = Ω(lambda l, q, y:
-    (R1(l) ** q) ** R2(l, y) ** R2(y, q))
+    (R1(l) ** q) ** R2(l, y) ** R2(y, q),
+            doc= "Group by qualities of binary relations",
+            derived = None
+            )
 
 
 ##############################################################################
