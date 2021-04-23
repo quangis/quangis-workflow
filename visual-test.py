@@ -13,8 +13,8 @@ for s, o in sorted(g.subject_objects(TOOLS.algebraexpression)):
     e = cct.parse(o)
     assert e
     print(s)
-    if any(e.type.variables()):
-        print(e.tree())
-    else:
-        print(e.type)
+    #if any(e.type.variables()):
+    print(e.tree())
+    #else:
+    #    print(e.type)
     print()
