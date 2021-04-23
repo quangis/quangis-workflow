@@ -25,8 +25,14 @@ class MetaTestCase(ABCMeta):
                 self.assertFalse(any(cct.parse(x).type.variables()))
             return test_generic
 
+        def g(x):
+            def test_generic(self):
+                cct.parse(x).primitive()
+            return test_generic
+
         for tool, expr in cls.tool_expressions.items():
             setattr(cls, f"test_{tool}", f(expr))
+            setattr(cls, f"test_{tool}_PRIMITIVE", g(expr))
 
         super(MetaTestCase, cls).__init__(name, bases, clsdict)
 
