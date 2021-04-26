@@ -407,7 +407,7 @@ subset = Ω(lambda x, rel:
     rel ** R1(x) ** rel
     | rel @ operators(R1, R2, R3, R3a, param=x),
      doc="Subset a relation to those tuples having an attribute value contained in a collection",
-    derived=select (inrel))
+     derived=lambda r, c: select (inrel, r, c))
 
 # primitive
 select2 = Ω(lambda x, y, rel:
