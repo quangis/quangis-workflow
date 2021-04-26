@@ -419,14 +419,12 @@ select2 = Ω(lambda x, y, rel:
 )
 
 
-# Join of two unary concepts, like a table join.
+# Join (⨝).Join of two unary concepts, like a table join.
 # primitive
 join = Ω(lambda x, y, z: R2(x, y) ** R2(y, z) ** R2(x, z),
          doc= "Join of two unary concepts, like a table join",
          derived=None
          )
-
-
 
 # functions to handle multiple attributes (with 1 key)
 # define: prod3 (pi12 (select2 eq (prod3 (apply1 (compose ((swap apply1) (boolfield x1)) nest2) (ratiofield x2)))))
@@ -434,16 +432,14 @@ join_attr = Ω(lambda x, y, z: R2(x, y) ** R2(x, z) ** R3a(x, y, z), derived=Non
 get_attrL = Ω(lambda x, y, z: R3a(x, y, z) ** R2(x, y), derived=None)
 get_attrR = Ω(lambda x, y, z: R3a(x, y, z) ** R2(x, z), derived=None)
 
-
-
-# Join (⨝*). Substitute the quality of a quantified relation to some
+# Substitute the quality of a quantified relation to some
 # quality of one of its keys. Used to be bowtie*.
-# define: prod3 (apply1 (subset (objectregions x2)) (groupbyL pi1 (rationetwork x1)))
+# define: #lambda x, y: prod3 (apply1 (subset (y)) (groupbyL (pi1) (x)))
 join_key = Ω(lambda x, q1, y, rel, q2:
     R3(x, q1, y) ** rel ** R3(x, q2, y)
     | rel @ [R2(x, q2), R2(y, q2)],
              doc= "Substitute the quality of a quantified relation to some quality of one of its keys.",
-             derived= None #lambda x, y: prod3 (apply1 (subset (y)) (groupbyL (pi1) (x)))
+             derived= None
              )
 
 # Join with unary function. Generate a unary concept from one other unary
