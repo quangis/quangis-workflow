@@ -199,16 +199,7 @@ objectify = Ω(type = Nom ** Obj, doc="interpet a name as an object", derived=No
 #primitive
 nominalize = Ω(type = Obj ** Nom, doc="interpet an object as a name", derived=None)
 getobjectnames = Ω(type = R1(Nom) ** R2(Obj, Nom), doc="make objects from names", derived= lambda x: apply (nominalize) (pi2 (apply (objectify) (x))))
-# primitive
-nest = Ω(type=lambda x: x ** R1(x), doc="put value in unary relation", derived=None)
-# primitive
-nest2 = Ω(type=lambda x, y: x ** y ** R2(x, y), doc="put values in binary relation", derived=None)
-# primitive
-nest3 = Ω(type=lambda x, y, z: x ** y ** z ** R3(x, y, z), doc="put values in ternary relation", derived=None)
-# primitive
-add = Ω(type=lambda x: R1(x) ** x ** R1(x), doc="add value to unary relation", derived=None)
-# primitive
-get = Ω(lambda x: R1(x) ** x, doc="get some value from unary relation", derived=None)
+
 
 invert = Ω(lambda x: R2(Loc, x) ** R2(x, Reg) | x @ Val, doc="inverts a field, generating a coverage", derived= lambda x: groupby (reify) (x))
 revert = Ω(lambda x: R2(x, Reg) ** R2(Loc, x) | x @ Val, doc="inverts a coverage to a field", derived=lambda x : groupbyL (compose (get) (pi1)) (join_key (select (eq) (lTopo (deify (merge (pi2 (x)))) (merge (pi2 (x)))) (in_)) (groupby (get) (x)))
@@ -256,20 +247,20 @@ lgDist = Ω(R3(Loc, Ratio, Loc) ** R1(Loc) ** R1(Loc) ** R3(Loc, Ratio, Loc), do
 
 # Amount operations
 fcont = Ω(lambda x, y:
-    (R2(Val, x) ** y) ** R2(Loc, x) ** Reg ** y | x @ Qlt | y @ Qlt, doc="summarizes the content of a field within a region", derived=lambda f, x, r: f (join_subset (x) (deify (r))))
+    (R2(Val, x) ** y) ** R2(Loc, x) ** Reg ** y | x @ Qlt | y @ Qlt, doc="summarizes the content of a field within a region", derived=lambda f, x, r: f (subset (x) (deify (r))))
 # define
 ocont = Ω(R2(Obj, Reg) ** Reg ** Count, doc="counts the number of objects within a region", derived= lambda x,y: get (pi2 (groupbyR (count) (select (eq) (orTopo (x) (nest (y))) (in_)))))
 # define
 fcover = Ω(lambda x:
-    R2(Loc, x) ** R1(x) ** R1(Loc) | x @ Qlt, doc="measures the spatial coverage of a field that is constrained to certain field values", derived= lambda x,y: pi1 (join_subset (x) (y)))
+    R2(Loc, x) ** R1(x) ** R1(Loc) | x @ Qlt, doc="measures the spatial coverage of a field that is constrained to certain field values", derived= lambda x,y: pi1 (subset (x) (y)))
 # define
-ocover = Ω(R2(Obj, Reg) ** R1(Obj) ** Reg, doc="measures the spatial coverage of a collection of objects", derived=lambda x,y: merge (pi2 (join_subset (x) (y))))
+ocover = Ω(R2(Obj, Reg) ** R1(Obj) ** Reg, doc="measures the spatial coverage of a collection of objects", derived=lambda x,y: merge (pi2 (subset (x) (y))))
 
 ###########################################################################
 # Functional and Relational transformations
 
 
-# Functional
+# Functional operators
 
 # primitive
 compose = Ω(lambda α, β, γ:
@@ -306,7 +297,20 @@ apply = Ω(lambda x, y:
 )
 
 
-# Set union and set difference
+# Set operations
+
+# primitive
+nest = Ω(type=lambda x: x ** R1(x), doc="put value in unary relation", derived=None)
+# primitive
+nest2 = Ω(type=lambda x, y: x ** y ** R2(x, y), doc="put values in binary relation", derived=None)
+# primitive
+nest3 = Ω(type=lambda x, y, z: x ** y ** z ** R3(x, y, z), doc="put values in ternary relation", derived=None)
+# primitive
+add = Ω(type=lambda x: R1(x) ** x ** R1(x), doc="add value to unary relation", derived=None)
+# primitive
+get = Ω(lambda x: R1(x) ** x, doc="get some value from unary relation", derived=None)
+# primitive
+inrel = Ω(lambda x: x ** R1(x) ** Bool, doc="whether some value is in a relation", derived=None)
 
 # define: relunion (add (nest (regions x)) (regions y))
 set_union = Ω(
@@ -396,6 +400,15 @@ select = Ω(lambda x, y, rel:
            doc="Selects a subset of a relation using a constraint on one attribute, like equality (eq) or order (leq)",
            derived=None)
 
+# Select with subset. Subset a relation to those tuples having an attribute
+# value contained in a collection.
+# primitive
+subset = Ω(lambda x, rel:
+    rel ** R1(x) ** rel
+    | rel @ operators(R1, R2, R3, R3a, param=x),
+     doc="Subset a relation to those tuples having an attribute value contained in a collection",
+    derived=select (inrel))
+
 # primitive
 select2 = Ω(lambda x, y, rel:
     (x ** y ** Bool) ** rel ** rel
@@ -413,14 +426,7 @@ join = Ω(lambda x, y, z: R2(x, y) ** R2(y, z) ** R2(x, z),
          derived=None
          )
 
-# Join on subset (⨝). Subset a relation to those tuples having an attribute
-# value contained in a collection. Used to be bowtie.
-# primitive
-join_subset = Ω(lambda x, rel:
-    rel ** R1(x) ** rel
-    | rel @ operators(R1, R2, R3, R3a, param=x),
-     doc="Subset a relation to those tuples having an attribute value contained in a collection",
-    derived=None)
+
 
 # functions to handle multiple attributes (with 1 key)
 # define: prod3 (pi12 (select2 eq (prod3 (apply1 (compose ((swap apply1) (boolfield x1)) nest2) (ratiofield x2)))))
@@ -429,16 +435,16 @@ get_attrL = Ω(lambda x, y, z: R3a(x, y, z) ** R2(x, y), derived=None)
 get_attrR = Ω(lambda x, y, z: R3a(x, y, z) ** R2(x, z), derived=None)
 
 
+
 # Join (⨝*). Substitute the quality of a quantified relation to some
 # quality of one of its keys. Used to be bowtie*.
-# define: prod3 (apply1 (join_subset (objectregions x2)) (groupbyL pi1 (rationetwork x1)))
+# define: prod3 (apply1 (subset (objectregions x2)) (groupbyL pi1 (rationetwork x1)))
 join_key = Ω(lambda x, q1, y, rel, q2:
     R3(x, q1, y) ** rel ** R3(x, q2, y)
     | rel @ [R2(x, q2), R2(y, q2)],
              doc= "Substitute the quality of a quantified relation to some quality of one of its keys.",
-             derived= None #lambda x, y: prod3 (apply1 (join_subset (y)) (groupbyL (pi1) (x)))
+             derived= None #lambda x, y: prod3 (apply1 (subset (y)) (groupbyL (pi1) (x)))
              )
-
 
 # Join with unary function. Generate a unary concept from one other unary
 # concept of the same type. Used to be join_fa/join_with1.
@@ -446,7 +452,6 @@ join_key = Ω(lambda x, q1, y, rel, q2:
 apply1 = Ω(lambda x1, x2, y:
     (x1 ** x2) ** R2(y, x1) ** R2(y, x2), doc="Join with unary function. Generates a unary concept from one other unary concept using a function",
     derived=lambda f, y: join (y) (apply (f) (pi2 (y))))
-
 
 # Join with binary function (⨝_f). Generate a unary concept from two other
 # unary concepts of the same type. Used to be bowtie_ratio/join_with2 and others.
