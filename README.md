@@ -10,3 +10,6 @@ on an as-needed basis, but pull requests are welcome.
 It is based on version 1.1.5 of APE; the appropriate 
 [jar](https://github.com/sanctuuary/APE/releases/download/v1.1.5/APE-1.1.5-executable.jar) 
 file will be downloaded on first run.
+
+Instructions and tests are unfortunately not provided at the moment. For 
+guidance, see the source code.

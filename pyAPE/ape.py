@@ -50,7 +50,7 @@ ToolsDict = TypedDict('ToolsDict', {
 TypeNode = Dict[URIRef, List[URIRef]]
 
 
-class APE:
+class APE(object):
     """
     An interface to JVM. After initialization, use `.run()` to run APE.
     """
@@ -170,8 +170,7 @@ class Workflow(Graph):
 
         self.root: Node = BNode()
         self.resources: Dict[str, Node] = {}
-
-        self._graph.add((self._wf, RDF.type, WF.Workflow))
+        self.add((self.root, RDF.type, WF.Workflow))
 
         for src in java_wf.getWorkflowInputTypeStates():
             node = self.add_resource(src)
@@ -184,8 +183,8 @@ class Workflow(Graph):
             self,
             mod: nl.uu.cs.ape.sat.core.solutionStructure.ModuleNode) -> Node:
         """
-        Add a blank node representing a tool module to the RDF graph, and return
-        it.
+        Add a blank node representing a tool module to the RDF graph, and
+        return it.
         """
         mod_node = BNode()
         tool_node = URIRef(mod.getNodeLongLabel())
