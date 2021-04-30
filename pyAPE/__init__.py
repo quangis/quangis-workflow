@@ -2,21 +2,9 @@
 This is a wrapper to APE, the Java application that is used for workflow
 synthesis. It interfaces with a JVM.
 """
-# This approach was chosen because we need to:
-# -  run multiple solutions one after another
-# -  get output workflows in RDF format
-#
-# APE's Java API forces us to either:
-# -  switch to Java ourselves, which introduces cognitive load and extra tools
-# in our pipeline;
-# -  use its CLI, which limits our freedom, wastes resources on every run,
-# makes us lose error handling, and requires us to make sure that RDF output
-# capabilities are developed upstream or in our own fork;
-# -  run a JVM bridge, as we have done --- it allows for the most flexibility
 
 import os
 import os.path
-import logging
 import tempfile
 import json
 import jpype
@@ -27,13 +15,9 @@ from rdflib.namespace import Namespace
 from typing import Iterable, Tuple, Dict, List, Union
 from typing_extensions import TypedDict
 
-from quangis.namespace import WF, RDF
-from quangis.semtype import SemType
-from quangis.ontology import Ontology
-
 # We need version 1.1.5's API; lower versions won't work
 CLASS_PATH = os.path.join(
-    os.path.dirname(__file__), '..', '..', 'lib', 'APE-1.1.5-executable.jar')
+    os.path.dirname(__file__), '..', 'lib', 'APE-1.1.5-executable.jar')
 jpype.startJVM(classpath=[CLASS_PATH])
 
 import java.io
@@ -59,15 +43,17 @@ ToolsDict = TypedDict('ToolsDict', {
     'functions': List[ToolDict]
 })
 
+TypeNode = Dict[URIRef, List[URIRef]]
+
 
 class Workflow:
     """
-    A single workflow.
+    A single solution workflow.
     """
 
     def __init__(self, wf: SolutionWorkflow):
         self._wf: Node = BNode()
-        self._graph: Graph = Ontology()
+        self._graph: Graph = Graph()
         self._resources: Dict[str, Node] = {}
 
         self._graph.add((self._wf, RDF.type, WF.Workflow))
@@ -115,30 +101,25 @@ class Workflow:
 
 
 class APE:
-    """
-    Wrapper class for APE.
-    """
+    def __init__(
+            self,
+            taxonomy: Union[str, Graph],
+            tools: Union[str, ToolsDict],
+            namespace: Namespace,
+            tool_root: URIRef,
+            dimensions: List[URIRef],
+            strictToolAnnotations: bool = True):
 
-    def __init__(self,
-                 taxonomy: Union[str, Ontology],
-                 tools: Union[str, ToolsDict],
-                 namespace: Namespace,
-                 tool_root: URIRef,
-                 dimensions: List[URIRef]):
-
-        # If we weren't given a filepath but a Python object, first serialize
+        # Serialize if we weren't given paths
         if isinstance(taxonomy, Graph):
-            fd, taxonomy_file = tempfile.mkstemp(prefix='ape-', suffix='.rdf')
-            logging.debug("Creating taxonomy at {}".format(taxonomy_file))
-            with open(fd, 'wb') as f:
+            fd, taxonomy_file = tempfile.mkstemp(prefix='pyAPE-', suffix='.rdf')
+            with open(fd, 'w') as f:
                 taxonomy.serialize(destination=f, format='xml')
         else:
             taxonomy_file = taxonomy
 
-        # If we weren't given a filepath but a Python object, first serialize
         if isinstance(tools, dict):
-            fd, tools_file = tempfile.mkstemp(prefix='ape-', suffix='.json')
-            logging.debug("Creating tool description at {}".format(tools_file))
+            fd, tools_file = tempfile.mkstemp(prefix='pyAPE-', suffix='.json')
             with open(fd, 'w') as f:
                 json.dump(tools, f)
         else:
@@ -151,31 +132,28 @@ class APE:
             str(tool_root),
             java.util.Arrays.asList(*map(str, dimensions)),
             java.io.File(tools_file),
-            True
+            strictToolAnnotations
         )
         self.ape = nl.uu.cs.ape.sat.APE(self.config)
         self.setup = self.ape.getDomainSetup()
 
-        # Since APE has presumably already read the files, it's safe to delete
-        # them now if necessary
+        # Safe to delete since APE should have read the files now
         if taxonomy is not taxonomy_file:
-            logging.debug("Removing {}".format(taxonomy_file))
             os.remove(taxonomy_file)
         if tools is not tools_file:
-            logging.debug("Removing {}".format(tools_file))
             os.remove(tools_file)
 
     def run(self,
-            inputs: Iterable[SemType],
-            outputs: Iterable[SemType],
+            inputs: Iterable[TypeNode],
+            outputs: Iterable[TypeNode],
             solution_length: Tuple[int, int] = (1, 10),
             solutions: int = 10,
             timeout: int = 600) -> List[Workflow]:
 
-        inp = java.util.Arrays.asList(*(self.type_node(i, False)
-                                        for i in inputs))
-        out = java.util.Arrays.asList(*(self.type_node(o, True)
-                                        for o in outputs))
+        inputs = java.util.Arrays.asList(*(
+            self.type_node(i, False) for i in inputs))
+        outputs = java.util.Arrays.asList(*(
+            self.type_node(o, True) for o in outputs))
 
         config = nl.uu.cs.ape.sat.configuration.APERunConfig\
             .builder()\
@@ -185,8 +163,8 @@ class APE:
             .withSolutionMaxLength(solution_length[1])\
             .withMaxNoSolutions(solutions)\
             .withTimeoutSec(timeout)\
-            .withProgramInputs(inp)\
-            .withProgramOutputs(out)\
+            .withProgramInputs(inputs)\
+            .withProgramOutputs(outputs)\
             .withApeDomainSetup(self.setup)\
             .build()
 
@@ -194,18 +172,19 @@ class APE:
 
         return [
             Workflow(result.get(i))
-            for i in range(0, result.getNumberOfSolutions())
+            for i in range(result.getNumberOfSolutions())
         ]
 
-    def type_node(self,
-                  t: SemType,
-                  is_output: bool = False) -> nl.uu.cs.ape.sat.models.Type:
+    def type_node(
+            self,
+            typenode: TypeNode,
+            is_output: bool = False) -> nl.uu.cs.ape.sat.models.Type:
 
         setup: nl.uu.cs.ape.sat.utils.APEDomainSetup = self.setup
         obj = org.json.JSONObject()
-        for dimension, subclasses in t.to_dict().items():
+        for dimension, classes in typenode.items():
             arr = org.json.JSONArray()
-            for c in subclasses:
+            for c in classes:
                 arr.put(str(c))
             obj.put(str(dimension), arr)
 
