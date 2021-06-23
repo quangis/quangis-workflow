@@ -23,15 +23,16 @@ WF = rdflib.Namespace("http://geographicknowledge.de/vocab/Workflow.rdf#")
 TOOLS = rdflib.Namespace("http://geographicknowledge.de/vocab/GISTools.rdf#")
 
 
-def graph(path: str) -> rdflib.Graph:
-    tools = rdflib.Graph()
-    tools.parse(path, format=rdflib.util.guess_format(path))
-    return tools
+def graph(*paths: str) -> rdflib.Graph:
+    g = rdflib.Graph()
+    for path in paths:
+        g.parse(path, format=rdflib.util.guess_format(path))
+    return g
 
 
 class Workflow(object):
 
-    tools = graph('ToolDescription_TransformationAlgebra.ttl')
+    tools = graph('workflows/ToolDescription_TransformationAlgebra.ttl')
 
     def __init__(self, source: Graph, root: Node):
         self.source: Graph = source
@@ -97,10 +98,27 @@ class Workflow(object):
             for node in graph.subjects(predicate=RDF.type, object=WF.Workflow)]
 
 
-for fn in glob("workflows/**/*_cct.ttl"):
-    print(fn)
-    for wf in Workflow.workflows(graph(fn)):
-        try:
-            wf.expr()
-        except Exception as e:
-            print(e)
+g = graph(
+    "workflows/ToolDescription_TransformationAlgebra.ttl",
+    *glob("workflows/**/*_cct.ttl"))
+
+result = g.query(
+    """
+    SELECT ?wf WHERE {
+        ?wf a wf:Workflow.
+        ?wf wf:edge ?step.
+        ?step wf:output ?output.
+        ?output tools:applicationOf ?tool.
+    }
+    """, initNs={"wf": WF})
+
+for row in result:
+    print(row)
+
+# for fn in glob("workflows/**/*_cct.ttl"):
+#     print(fn)
+#     for wf in Workflow.workflows(graph(fn)):
+#         try:
+#             wf.expr()
+#         except Exception as e:
+#             print(e)

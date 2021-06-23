@@ -9,7 +9,8 @@ Module containing the core concept transformation algebra. Usage:
 """
 
 from transformation_algebra import \
-    Type, operators, _, TransformationAlgebra, Data, Operation
+    Type, operators, _, Data, Operation
+from transformation_algebra.rdf import TransformationAlgebraRDF
 
 
 ##############################################################################
@@ -490,4 +491,5 @@ groupby = Ω(lambda l, q, y:
 
 ##############################################################################
 # Generate an algebra out of all definitions in this module
-cct = TransformationAlgebra(**globals())
+cct = TransformationAlgebraRDF("cct", "CCT")
+cct.add(**globals())
