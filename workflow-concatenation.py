@@ -54,7 +54,7 @@ query_steps = sparql.prepareQuery(
 
         # What is the algebra expression for this step?
         ?step wf:applicationOf ?tool.
-        ?tool tools:algebraexpression ?expression.
+        OPTIONAL { ?tool tools:algebraexpression ?expression. }
 
         # What are the inputs?
         OPTIONAL { ?step wf:input1 ?x1. }
@@ -90,7 +90,7 @@ def construct(g: Graph, workflow: Node) -> None:
 
     # Map every step to its algebra expression and the source nodes/steps it
     # gets its inputs from
-    step_info: Dict[Node, Tuple[Expr, List[Node]]] = dict()
+    step_info: Dict[Node, Tuple[str, Expr, List[Node]]] = dict()
     output_node: Optional[Node] = None
     steps = g.query(query_steps, initBindings={"wf": workflow})
 
@@ -99,29 +99,38 @@ def construct(g: Graph, workflow: Node) -> None:
 
         # Set the output node if we happen to chance upon it
         if step.is_final_output:
-            assert not output_node, "multiple output nodes?"
+            assert not output_node, f"{step.tool} has multiple output nodes"
             output_node = current
+
+        assert step.expression, f"{step.tool} has no algebra expression"
 
         expr = cct.parse(step.expression)
         inputs = [x for x in (step.x1, step.x2, step.x3) if x]
 
-        step_info[current] = (expr, inputs)
+        step_info[current] = (step.tool, expr, inputs)
 
     assert output_node
+
+    for k, v in step_info.items():
+        print(k, v[0], v[2])
 
     stack = [output_node]
     while stack:
         current = stack.pop()
         if current in step_info:
-            expr, inputs = step_info[current]
-            print(expr.type)
-            print(inputs)
+            tool, expr, inputs = step_info[current]
+            # print(tool)
+            # print(expr.type)
+            # print(inputs)
             stack.extend(inputs)
         else:
-            assert current in sources, str(current)
-            print(current)
+            assert current in sources, f"{current}"
+            # print(current)
 
 
 # Produce all workflows
 for workflow in g.subjects(predicate=RDF.type, object=WF.Workflow):
-    construct(g, workflow)
+    try:
+        construct(g, workflow)
+    except AssertionError as e:
+        print("FAILURE: ", e)
