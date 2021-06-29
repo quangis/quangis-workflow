@@ -85,21 +85,23 @@ def workflow_expr(g: Graph, workflow: Node) -> None:
     print()
     print("Current workflow: ", description)
 
-    # Map the output node of every workflow step to the associated algebra
-    # expression + the nodes from which it gets its input
-    step_info: Dict[Node, Tuple[Expr, List[Node]]] = dict()
+    # Finding the individual expressions for each step:
+    # Map the output node of every workflow step to the tool, the associated
+    # algebra expression, and the nodes from which it gets its input
+    step_info: Dict[Node, Tuple[str, Expr, List[Node]]] = dict()
     final_output: Optional[Node] = None
     for step in g.query(query_steps, initBindings={"wf": workflow}):
         assert step.expression, f"{step.tool} has no algebra expression"
         expr = cct.parse(step.expression)
         inputs = [x for x in (step.x1, step.x2, step.x3) if x]
-        step_info[step.output] = expr, inputs
+        step_info[step.output] = step.tool, expr, inputs
 
         if step.is_final_output:
             assert not final_output, f"{step.tool} has multiple final nodes"
             final_output = step.output
     assert final_output, "workflow has no output node"
 
+    # Combining the expressions in RDF format:
     # Map the output node of every workflow step to the output node of an
     # RDF-encoded algebra expression
     root = BNode()
@@ -109,10 +111,13 @@ def workflow_expr(g: Graph, workflow: Node) -> None:
     def f(node: Node) -> Union[URIRef, Tuple[Node, Expr]]:
         if node in sources:
             return node
-        expr, inputs = step_info[node]
+        tool, expr, inputs = step_info[node]
         if node not in cache:
             bindings = {f"x{i}": f(x) for i, x in enumerate(inputs, start=1)}
-            cache[node] = cct.rdf_expr(g, expr, bindings, root)
+            try:
+                cache[node] = cct.rdf_expr(g, root, expr, bindings)
+            except RuntimeError as e:
+                raise RuntimeError(f"While converting tool {tool}: {e}") from e
         return cache[node], expr
 
     f(final_output)
