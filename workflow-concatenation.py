@@ -7,7 +7,7 @@ different.
 from __future__ import annotations
 
 import rdflib  # type: ignore
-from rdflib import Graph
+from rdflib import Graph, BNode, URIRef
 from rdflib.term import Node  # type: ignore
 from rdflib.plugins import sparql
 from glob import glob
@@ -15,7 +15,7 @@ from glob import glob
 from transformation_algebra.expr import Expr
 from cct import cct
 
-from typing import List, Tuple, Optional, Dict
+from typing import List, Tuple, Optional, Dict, Union
 
 RDF = rdflib.Namespace("http://www.w3.org/1999/02/22-rdf-syntax-ns#")
 RDFS = rdflib.Namespace("http://www.w3.org/2000/01/rdf-schema#")
@@ -44,13 +44,13 @@ query_steps = sparql.prepareQuery(
     SELECT
         ?wf
         ?tool
-        ?current_step_output ?is_final_output
+        ?output ?is_final_output
         ?expression
         ?x1 ?x2 ?x3
     WHERE {
         ?wf a wf:Workflow.
         ?wf wf:edge ?step.
-        ?step wf:output ?current_step_output.
+        ?step wf:output ?output.
 
         # What is the algebra expression for this step?
         ?step wf:applicationOf ?tool.
@@ -63,11 +63,11 @@ query_steps = sparql.prepareQuery(
 
         # Is this the final step?
         OPTIONAL {
-            { ?next_step wf:input1 ?current_step_output }
+            { ?next_step wf:input1 ?output }
             UNION
-            { ?next_step wf:input2 ?current_step_output }
+            { ?next_step wf:input2 ?output }
             UNION
-            { ?next_step wf:input3 ?current_step_output }.
+            { ?next_step wf:input3 ?output }.
         }
         BIND (!bound(?next_step) AS ?is_final_output).
     }
@@ -76,7 +76,7 @@ query_steps = sparql.prepareQuery(
 )
 
 
-def construct(g: Graph, workflow: Node) -> None:
+def workflow_expr(g: Graph, workflow: Node) -> None:
     """
     Concatenate workflow expressions and add them to the graph.
     """
@@ -85,52 +85,42 @@ def construct(g: Graph, workflow: Node) -> None:
     print()
     print("Current workflow: ", description)
 
-    # Set of nodes representing source data
-    sources = set(g.objects(subject=workflow, predicate=WF.source))
-
-    # Map every step to its algebra expression and the source nodes/steps it
-    # gets its inputs from
-    step_info: Dict[Node, Tuple[str, Expr, List[Node]]] = dict()
-    output_node: Optional[Node] = None
-    steps = g.query(query_steps, initBindings={"wf": workflow})
-
-    for step in steps:
-        current = step.current_step_output
-
-        # Set the output node if we happen to chance upon it
-        if step.is_final_output:
-            assert not output_node, f"{step.tool} has multiple output nodes"
-            output_node = current
-
+    # Map the output node of every workflow step to the associated algebra
+    # expression + the nodes from which it gets its input
+    step_info: Dict[Node, Tuple[Expr, List[Node]]] = dict()
+    final_output: Optional[Node] = None
+    for step in g.query(query_steps, initBindings={"wf": workflow}):
         assert step.expression, f"{step.tool} has no algebra expression"
-
         expr = cct.parse(step.expression)
         inputs = [x for x in (step.x1, step.x2, step.x3) if x]
+        step_info[step.output] = expr, inputs
 
-        step_info[current] = (step.tool, expr, inputs)
+        if step.is_final_output:
+            assert not final_output, f"{step.tool} has multiple final nodes"
+            final_output = step.output
+    assert final_output, "workflow has no output node"
 
-    assert output_node
+    # Map the output node of every workflow step to the output node of an
+    # RDF-encoded algebra expression
+    root = BNode()
+    sources = set(g.objects(subject=workflow, predicate=WF.source))
+    cache: Dict[Node, Node] = dict()
 
-    for k, v in step_info.items():
-        print(k, v[0], v[2])
+    def f(node: Node) -> Union[URIRef, Tuple[Node, Expr]]:
+        if node in sources:
+            return node
+        expr, inputs = step_info[node]
+        if node not in cache:
+            bindings = {f"x{i}": f(x) for i, x in enumerate(inputs, start=1)}
+            cache[node] = cct.rdf_expr(g, expr, bindings, root)
+        return cache[node], expr
 
-    stack = [output_node]
-    while stack:
-        current = stack.pop()
-        if current in step_info:
-            tool, expr, inputs = step_info[current]
-            # print(tool)
-            # print(expr.type)
-            # print(inputs)
-            stack.extend(inputs)
-        else:
-            assert current in sources, f"{current}"
-            # print(current)
+    f(final_output)
 
 
 # Produce all workflows
 for workflow in g.subjects(predicate=RDF.type, object=WF.Workflow):
     try:
-        construct(g, workflow)
-    except AssertionError as e:
+        workflow_expr(g, workflow)
+    except Exception as e:
         print("FAILURE: ", e)
