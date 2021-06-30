@@ -31,24 +31,16 @@ def graph(*paths: str) -> rdflib.Graph:
     return g
 
 
-g = graph(
-    "workflows/ToolDescription_TransformationAlgebra.ttl",
-    *glob("workflows/**/*_cct.ttl"))
-
-
 """
 A query to obtain all steps of a workflow and the relevant in- and outputs.
 """
 query_steps = sparql.prepareQuery(
     """
     SELECT
-        ?wf
-        ?tool
+        ?tool ?expression
         ?output ?is_final_output
-        ?expression
         ?x1 ?x2 ?x3
     WHERE {
-        ?wf a wf:Workflow.
         ?wf wf:edge ?step.
         ?step wf:output ?output.
 
@@ -75,15 +67,26 @@ query_steps = sparql.prepareQuery(
     initNs={"wf": WF, "tools": TOOLS}
 )
 
+"""
+A query to obtain all workflows and their descriptions.
+"""
+query_workflow = sparql.prepareQuery(
+    """
+    SELECT
+        ?node ?description
+    WHERE {
+        ?node a wf:Workflow.
+        ?node rdfs:comment ?description.
+    } GROUP BY ?node
+    """,
+    initNs={"wf": WF, "rdfs": RDFS}
+)
+
 
 def workflow_expr(g: Graph, workflow: Node) -> None:
     """
     Concatenate workflow expressions and add them to the graph.
     """
-    description = next(g.objects(subject=workflow, predicate=RDFS.comment))
-
-    print()
-    print("Current workflow: ", description)
 
     # Finding the individual expressions for each step:
     # Map the output node of every workflow step to the tool, the associated
@@ -92,7 +95,7 @@ def workflow_expr(g: Graph, workflow: Node) -> None:
     final_output: Optional[Node] = None
     for step in g.query(query_steps, initBindings={"wf": workflow}):
         assert step.expression, f"{step.tool} has no algebra expression"
-        expr = cct.parse(step.expression)
+        expr = cct.parse(step.expression).primitive()
         inputs = [x for x in (step.x1, step.x2, step.x3) if x]
         step_info[step.output] = step.tool, expr, inputs
 
@@ -104,7 +107,6 @@ def workflow_expr(g: Graph, workflow: Node) -> None:
     # Combining the expressions in RDF format:
     # Map the output node of every workflow step to the output node of an
     # RDF-encoded algebra expression
-    root = BNode()
     sources = set(g.objects(subject=workflow, predicate=WF.source))
     cache: Dict[Node, Node] = dict()
 
@@ -115,17 +117,24 @@ def workflow_expr(g: Graph, workflow: Node) -> None:
         if node not in cache:
             bindings = {f"x{i}": f(x) for i, x in enumerate(inputs, start=1)}
             try:
-                cache[node] = cct.rdf_expr(g, root, expr, bindings)
+                cache[node] = cct.rdf_expr(g, workflow, expr, bindings)
             except RuntimeError as e:
-                raise RuntimeError(f"While converting tool {tool}: {e}") from e
+                raise RuntimeError(f"In {tool}: {e}") from e
         return cache[node], expr
 
     f(final_output)
 
 
-# Produce all workflows
-for workflow in g.subjects(predicate=RDF.type, object=WF.Workflow):
+# Produce workflow repository with representation of transformations.
+g = graph(
+    "workflows/ToolDescription_TransformationAlgebra.ttl",
+    *glob("workflows/**/*_cct.ttl"))
+
+for i, workflow in enumerate(g.query(query_workflow), start=1):
     try:
-        workflow_expr(g, workflow)
+        print(f"\nWorkflow {i}: {workflow.description}")
+        workflow_expr(g, workflow.node)
     except Exception as e:
         print("FAILURE: ", e)
+    else:
+        print("SUCCESS.")
