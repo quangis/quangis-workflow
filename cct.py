@@ -491,5 +491,5 @@ groupby = Ω(lambda l, q, y:
 
 ##############################################################################
 # Generate an algebra out of all definitions in this module
-cct = TransformationAlgebraRDF("cct", "CCT")
+cct = TransformationAlgebraRDF("cct", "https://github.com/quangis/cct#")
 cct.add(**globals())

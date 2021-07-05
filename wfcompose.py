@@ -7,13 +7,14 @@ different.
 from __future__ import annotations
 
 import rdflib  # type: ignore
-from rdflib import Graph, BNode, URIRef
+from rdflib import Graph, URIRef
 from rdflib.term import Node  # type: ignore
 from rdflib.plugins import sparql
 from glob import glob
 
 from transformation_algebra.expr import Expr
-from cct import cct
+from cct import cct, R1, R2, R3, Obj, Reg, Loc, Ratio, apply, groupby, ratio, \
+    size, pi1
 
 from typing import List, Tuple, Optional, Dict, Union
 
@@ -138,3 +139,18 @@ for i, workflow in enumerate(g.query(query_workflow), start=1):
         print("FAILURE: ", e)
     else:
         print("SUCCESS.")
+
+print("\nTrying to query!")
+
+# Try workflow 1
+flow_ = (
+    R3(Obj, Reg, Ratio) << ... << apply << ... << (
+        ratio &
+        groupby << ... << (size & pi1) &
+        apply << ... << (size & R2(Obj, Reg))
+    )
+)
+flow = R3(Obj, Reg, Ratio)
+
+for result in cct.query(g, flow):
+    print(result.description)
