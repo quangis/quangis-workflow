@@ -14,6 +14,7 @@ from glob import glob
 from sys import stderr
 
 from transformation_algebra.expr import Expr
+from transformation_algebra.rdf import TA
 from cct import cct, R1, R2, R3, Obj, Reg, Loc, Ratio, apply, groupby, ratio, \
     size, pi1
 
@@ -129,6 +130,7 @@ def workflow_expr(g: Graph, workflow: Node) -> None:
         return cache[node], expr
 
     f(final_output)
+    g.add((workflow, TA.target, cache[final_output]))
 
 
 # Produce workflow repository with representation of transformations.
@@ -147,23 +149,51 @@ for i, workflow in enumerate(g.query(query_workflow), start=1):
     else:
         print("SUCCESS.", file=stderr)
 
-print(g.serialize(format="ttl").decode("utf-8"))
+# print(g.serialize(format="ttl").decode("utf-8"))
 
-exit()
+# exit()
 
 
 print("\nTrying to query!")
 
 
+query_output_types = sparql.prepareQuery(
+    """
+    SELECT
+        ?workflow
+        ?description
+        ?op
+        (group_concat(?param; separator=", ") as ?params)
+    WHERE {
+        { SELECT ?workflow ?description WHERE {
+            ?workflow rdf:type ta:Transformation, wf:Workflow.
+            ?workflow rdfs:comment ?description.
+            } GROUP BY ?workflow
+        }
+        ?workflow ta:target ?output.
+        ?output ta:type ?type.
+        ?type rdf:type ?op.
+        ?type ?paramnum ?param.
+        FILTER (strstarts(str(?paramnum), str(rdf:_))).
+    } GROUP BY ?workflow
+    """,
+    initNs={"wf": WF, "rdf": RDF, "rdfs": RDFS, "ta": TA, "cct": cct.namespace})
+
+
+for result in g.query(query_output_types):
+    print(result.description, result.op, result.params)
+
+exit()
+
 # Try workflow 1
-flow = (
+flow1 = (
     R3(Obj, Reg, Ratio) << ... << apply << ... << (
         ratio &
         groupby << ... << (size & pi1) &
         apply << ... << (size & R2(Obj, Reg))
     )
 )
-flow1 = R3(Obj, Reg, Ratio)
+flow = R3(Obj, Reg, Ratio)
 
 for result in cct.query(g, flow):
     print(result.description)
