@@ -11,6 +11,7 @@ from rdflib import Graph, URIRef
 from rdflib.term import Node  # type: ignore
 from rdflib.plugins import sparql
 from glob import glob
+from sys import stderr
 
 from transformation_algebra.expr import Expr
 from cct import cct, R1, R2, R3, Obj, Reg, Loc, Ratio, apply, groupby, ratio, \
@@ -25,11 +26,15 @@ WF = rdflib.Namespace("http://geographicknowledge.de/vocab/Workflow.rdf#")
 TOOLS = rdflib.Namespace("http://geographicknowledge.de/vocab/GISTools.rdf#")
 
 
-def graph(*paths: str) -> rdflib.Graph:
-    g = rdflib.Graph()
-    for path in paths:
-        g.parse(path, format=rdflib.util.guess_format(path))
-    return g
+def graph(*gs: Union[str, Graph]) -> rdflib.Graph:
+    graph = rdflib.Graph()
+    for g in gs:
+        if isinstance(g, str):
+            graph.parse(g, format=rdflib.util.guess_format(g))
+        else:
+            assert isinstance(g, Graph)
+            graph += g
+    return graph
 
 
 """
@@ -128,29 +133,37 @@ def workflow_expr(g: Graph, workflow: Node) -> None:
 
 # Produce workflow repository with representation of transformations.
 g = graph(
+    cct.vocabulary(),
     "workflows/ToolDescription_TransformationAlgebra.ttl",
     *glob("workflows/**/*_cct.ttl"))
 
+
 for i, workflow in enumerate(g.query(query_workflow), start=1):
     try:
-        print(f"\nWorkflow {i}: {workflow.description}")
+        print(f"\nWorkflow {i}: {workflow.description}", file=stderr)
         workflow_expr(g, workflow.node)
     except Exception as e:
-        print("FAILURE: ", e)
+        print("FAILURE: ", e, file=stderr)
     else:
-        print("SUCCESS.")
+        print("SUCCESS.", file=stderr)
+
+print(g.serialize(format="ttl").decode("utf-8"))
+
+exit()
+
 
 print("\nTrying to query!")
 
+
 # Try workflow 1
-flow_ = (
+flow = (
     R3(Obj, Reg, Ratio) << ... << apply << ... << (
         ratio &
         groupby << ... << (size & pi1) &
         apply << ... << (size & R2(Obj, Reg))
     )
 )
-flow = R3(Obj, Reg, Ratio)
+flow1 = R3(Obj, Reg, Ratio)
 
 for result in cct.query(g, flow):
     print(result.description)
