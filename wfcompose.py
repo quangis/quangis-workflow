@@ -16,7 +16,7 @@ from sys import stderr
 from transformation_algebra.expr import Expr
 from transformation_algebra.rdf import TA
 from cct import cct, R1, R2, R3, R3a, Obj, Reg, Loc, Ratio, apply, groupby, ratio, \
-    size, pi1
+    size, pi1, lTopo
 
 from typing import List, Tuple, Optional, Dict, Union
 
@@ -162,38 +162,55 @@ query_output_types = sparql.prepareQuery(
     SELECT
         ?workflow
         ?description
-        ?op
-        (group_concat(?param; separator=", ") as ?params)
+        ?op ?params
+        ?operations
     WHERE {
-        { SELECT ?workflow ?description WHERE {
+        # Selecting workflows
+        {   SELECT ?workflow ?description WHERE {
             ?workflow rdf:type ta:Transformation, wf:Workflow.
             ?workflow rdfs:comment ?description.
             } GROUP BY ?workflow
         }
-        ?workflow ta:target ?output.
-        ?output ta:type ?type.
-        ?type rdf:type ?op.
-        ?type ?paramnum ?param.
-        FILTER (strstarts(str(?paramnum), str(rdf:_))).
+
+        # Selecting output types
+        {   SELECT ?op (group_concat(?param; separator=", ") as ?params)
+            WHERE {
+                ?workflow ta:target ?output.
+                ?output ta:type ?type.
+                ?type rdf:type ?op.
+                ?type ?paramnum ?param.
+                FILTER (strstarts(str(?paramnum), str(rdf:_))).
+            } GROUP BY ?workflow
+        }
+
+        # Selecting constituent operations
+        {   SELECT (group_concat(?operation; separator=", ") as ?operations)
+            WHERE {
+                ?workflow ta:operation/rdf:type ?operation.
+            } GROUP BY ?workflow
+        }
     } GROUP BY ?workflow
     """,
     initNs={"wf": WF, "rdf": RDF, "rdfs": RDFS, "ta": TA, "cct": cct.namespace})
 
 
-for result in g.query(query_output_types):
-    print(result.description, result.op, result.params)
+# for result in g.query(query_output_types):
+#     print(result.description, result.op, result.params)
+#     print(result.operations)
 
 # exit()
 
 # Try workflow 1
-flow1 = (
-    R3a(Obj, Reg, Ratio) << ... << apply << ... << (
-        ratio &
-        groupby << ... << (size & pi1) &
-        apply << ... << (size & R2(Obj, Reg))
-    )
+# flow = (
+#     R3a(Obj, Reg, Ratio) << ... << apply << ... << (
+#         ratio &
+#         groupby << ... << (size & pi1) &
+#         apply << ... << (size & R2(Obj, Reg))
+#     )
+# )
+flow = (
+    R3a(Obj, Reg, Ratio) << ... << lTopo
 )
-flow = R3a(Obj, Reg, Ratio)
 
 for result in cct.query(g, flow):
     print(result.description)
