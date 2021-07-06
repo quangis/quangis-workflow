@@ -15,7 +15,7 @@ from sys import stderr
 
 from transformation_algebra.expr import Expr
 from transformation_algebra.rdf import TA
-from cct import cct, R1, R2, R3, Obj, Reg, Loc, Ratio, apply, groupby, ratio, \
+from cct import cct, R1, R2, R3, R3a, Obj, Reg, Loc, Ratio, apply, groupby, ratio, \
     size, pi1
 
 from typing import List, Tuple, Optional, Dict, Union
@@ -183,17 +183,17 @@ query_output_types = sparql.prepareQuery(
 for result in g.query(query_output_types):
     print(result.description, result.op, result.params)
 
-exit()
+# exit()
 
 # Try workflow 1
 flow1 = (
-    R3(Obj, Reg, Ratio) << ... << apply << ... << (
+    R3a(Obj, Reg, Ratio) << ... << apply << ... << (
         ratio &
         groupby << ... << (size & pi1) &
         apply << ... << (size & R2(Obj, Reg))
     )
 )
-flow = R3(Obj, Reg, Ratio)
+flow = R3a(Obj, Reg, Ratio)
 
 for result in cct.query(g, flow):
     print(result.description)
