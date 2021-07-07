@@ -26,8 +26,19 @@ GIS = rdflib.Namespace("http://geographicknowledge.de/vocab/GISConcepts.rdf#")
 WF = rdflib.Namespace("http://geographicknowledge.de/vocab/Workflow.rdf#")
 TOOLS = rdflib.Namespace("http://geographicknowledge.de/vocab/GISTools.rdf#")
 
+namespaces = {
+    "rdf": RDF,
+    "rdfs": RDFS,
+    "wf": WF,
+    "tools": TOOLS,
+    "ta": TA,
+    "cct": cct.namespace}
+
 
 def graph(*gs: Union[str, Graph]) -> rdflib.Graph:
+    """
+    Read a graph.
+    """
     graph = rdflib.Graph()
     for g in gs:
         if isinstance(g, str):
@@ -36,6 +47,20 @@ def graph(*gs: Union[str, Graph]) -> rdflib.Graph:
             assert isinstance(g, Graph)
             graph += g
     return graph
+
+
+"""
+A query to obtain all workflows and their descriptions.
+"""
+query_workflow = sparql.prepareQuery(
+    """
+    SELECT
+        ?node ?description
+    WHERE {
+        ?node a wf:Workflow.
+        ?node rdfs:comment ?description.
+    } GROUP BY ?node
+    """, initNs=namespaces)
 
 
 """
@@ -70,24 +95,46 @@ query_steps = sparql.prepareQuery(
         }
         BIND (!bound(?next_step) AS ?is_final_output).
     }
-    """,
-    initNs={"wf": WF, "tools": TOOLS}
-)
+    """, initNs=namespaces)
+
 
 """
-A query to obtain all workflows and their descriptions.
+A query to obtain all operations in a workflow.
 """
-query_workflow = sparql.prepareQuery(
+query_output_types = sparql.prepareQuery(
     """
     SELECT
-        ?node ?description
+        ?workflow
+        ?description
+        ?op ?params
+        ?operations
     WHERE {
-        ?node a wf:Workflow.
-        ?node rdfs:comment ?description.
-    } GROUP BY ?node
-    """,
-    initNs={"wf": WF, "rdfs": RDFS}
-)
+        # Selecting workflows
+        {   SELECT ?workflow ?description WHERE {
+            ?workflow rdf:type ta:Transformation, wf:Workflow.
+            ?workflow rdfs:comment ?description.
+            } GROUP BY ?workflow
+        }
+
+        # Selecting output types
+        {   SELECT ?op (group_concat(?param; separator=", ") as ?params)
+            WHERE {
+                ?workflow ta:target ?output.
+                ?output ta:type ?type.
+                ?type rdf:type ?op.
+                ?type ?paramnum ?param.
+                FILTER (strstarts(str(?paramnum), str(rdf:_))).
+            } GROUP BY ?workflow
+        }
+
+        # Selecting constituent operations
+        {   SELECT (group_concat(?operation; separator=", ") as ?operations)
+            WHERE {
+                ?workflow ta:operation/rdf:type ?operation.
+            } GROUP BY ?workflow
+        }
+    } GROUP BY ?workflow
+    """, initNs=namespaces)
 
 
 def workflow_expr(g: Graph, workflow: Node) -> None:
@@ -96,8 +143,9 @@ def workflow_expr(g: Graph, workflow: Node) -> None:
     """
 
     # Finding the individual expressions for each step:
-    # Map the output node of every workflow step to the tool, the associated
-    # algebra expression, and the nodes from which it gets its input
+    # Map the output node of every workflow step to the tool it uses, the
+    # algebra expression associated to the tool, and the nodes from which it
+    # gets its input
     step_info: Dict[Node, Tuple[str, Expr, List[Node]]] = dict()
     final_output: Optional[Node] = None
     for step in g.query(query_steps, initBindings={"wf": workflow}):
@@ -136,8 +184,8 @@ def workflow_expr(g: Graph, workflow: Node) -> None:
 # Produce workflow repository with representation of transformations.
 g = graph(
     cct.vocabulary(),
-    "workflows/ToolDescription_TransformationAlgebra.ttl",
-    *glob("workflows/**/*_cct.ttl"))
+    "TheoryofGISFunctions/ToolDescription_TransformationAlgebra.ttl",
+    *glob("TheoryofGISFunctions/Scenarios/**/*_cct.ttl"))
 
 
 for i, workflow in enumerate(g.query(query_workflow), start=1):
@@ -152,46 +200,6 @@ for i, workflow in enumerate(g.query(query_workflow), start=1):
 # print(g.serialize(format="ttl").decode("utf-8"))
 
 # exit()
-
-
-print("\nTrying to query!")
-
-
-query_output_types = sparql.prepareQuery(
-    """
-    SELECT
-        ?workflow
-        ?description
-        ?op ?params
-        ?operations
-    WHERE {
-        # Selecting workflows
-        {   SELECT ?workflow ?description WHERE {
-            ?workflow rdf:type ta:Transformation, wf:Workflow.
-            ?workflow rdfs:comment ?description.
-            } GROUP BY ?workflow
-        }
-
-        # Selecting output types
-        {   SELECT ?op (group_concat(?param; separator=", ") as ?params)
-            WHERE {
-                ?workflow ta:target ?output.
-                ?output ta:type ?type.
-                ?type rdf:type ?op.
-                ?type ?paramnum ?param.
-                FILTER (strstarts(str(?paramnum), str(rdf:_))).
-            } GROUP BY ?workflow
-        }
-
-        # Selecting constituent operations
-        {   SELECT (group_concat(?operation; separator=", ") as ?operations)
-            WHERE {
-                ?workflow ta:operation/rdf:type ?operation.
-            } GROUP BY ?workflow
-        }
-    } GROUP BY ?workflow
-    """,
-    initNs={"wf": WF, "rdf": RDF, "rdfs": RDFS, "ta": TA, "cct": cct.namespace})
 
 
 # for result in g.query(query_output_types):
