@@ -137,6 +137,26 @@ query_output_types = sparql.prepareQuery(
     """, initNs=namespaces)
 
 
+"""
+A query to obtain all operations in a workflow.
+"""
+query_operations = sparql.prepareQuery(
+    """
+    SELECT
+        (group_concat(?input; separator=", ") as ?inputs)
+        ?operation
+        (group_concat(?output; separator=", ") as ?outputs)
+    WHERE {
+        ?wf a wf:Workflow, ta:Transformation.
+        ?wf ta:operation ?op.
+        ?op rdf:type/rdfs:label ?operation.
+        ?op ta:input/ta:type/rdfs:label ?input.
+        ?op ta:output ?out.
+        ?out ta:type/rdfs:label ?output.
+    } GROUP BY ?op ?out
+    """, initNs=namespaces)
+
+
 def workflow_expr(g: Graph, workflow: Node) -> None:
     """
     Concatenate workflow expressions and add them to the graph.
@@ -196,6 +216,16 @@ for i, workflow in enumerate(g.query(query_workflow), start=1):
         print("FAILURE: ", e, file=stderr)
     else:
         print("SUCCESS.", file=stderr)
+
+
+for workflow in g.query(query_workflow):
+    print(f"\nWorkflow: {workflow.description}", file=stderr)
+    for node in g.query(query_operations, initBindings={"wf": workflow.node}):
+        print("Operation:", node.operation, file=stderr)
+        print("Input:", node.inputs, file=stderr)
+        print("Outputs:", node.outputs, "\n", file=stderr)
+
+exit()
 
 # print(g.serialize(format="ttl").decode("utf-8"))
 
