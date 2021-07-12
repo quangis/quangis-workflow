@@ -55,10 +55,13 @@ A query to obtain all workflows and their descriptions.
 query_workflow = sparql.prepareQuery(
     """
     SELECT
-        ?node ?description
+        ?node ?description ?output
     WHERE {
         ?node a wf:Workflow.
         ?node rdfs:comment ?description.
+        OPTIONAL {
+            ?node ta:target/ta:type/rdfs:label ?output.
+        }
     } GROUP BY ?node
     """, initNs=namespaces)
 
@@ -95,45 +98,6 @@ query_steps = sparql.prepareQuery(
         }
         BIND (!bound(?next_step) AS ?is_final_output).
     }
-    """, initNs=namespaces)
-
-
-"""
-A query to obtain all operations in a workflow.
-"""
-query_output_types = sparql.prepareQuery(
-    """
-    SELECT
-        ?workflow
-        ?description
-        ?op ?params
-        ?operations
-    WHERE {
-        # Selecting workflows
-        {   SELECT ?workflow ?description WHERE {
-            ?workflow rdf:type ta:Transformation, wf:Workflow.
-            ?workflow rdfs:comment ?description.
-            } GROUP BY ?workflow
-        }
-
-        # Selecting output types
-        {   SELECT ?op (group_concat(?param; separator=", ") as ?params)
-            WHERE {
-                ?workflow ta:target ?output.
-                ?output ta:type ?type.
-                ?type rdf:type ?op.
-                ?type ?paramnum ?param.
-                FILTER (strstarts(str(?paramnum), str(rdf:_))).
-            } GROUP BY ?workflow
-        }
-
-        # Selecting constituent operations
-        {   SELECT (group_concat(?operation; separator=", ") as ?operations)
-            WHERE {
-                ?workflow ta:operation/rdf:type ?operation.
-            } GROUP BY ?workflow
-        }
-    } GROUP BY ?workflow
     """, initNs=namespaces)
 
 
@@ -217,19 +181,19 @@ for i, workflow in enumerate(g.query(query_workflow), start=1):
     else:
         print("SUCCESS.", file=stderr)
 
-
 for workflow in g.query(query_workflow):
-    print(f"\nWorkflow: {workflow.description}", file=stderr)
+    if "Amsterdam" not in workflow.description:
+        continue
+    print(f"\nWorkflow: {workflow.description}")
+    print(f"Final output: {workflow.output}")
     for node in g.query(query_operations, initBindings={"wf": workflow.node}):
-        print("Operation:", node.operation, file=stderr)
-        print("Input:", node.inputs, file=stderr)
-        print("Outputs:", node.outputs, "\n", file=stderr)
+        print("Operation:", node.operation)
+        print("Input:", node.inputs)
+        print("Outputs:", node.outputs, "\n")
+
+g.serialize(format="ttl", destination='everthing.ttl', encoding='utf-8')
 
 exit()
-
-# print(g.serialize(format="ttl").decode("utf-8"))
-
-# exit()
 
 
 # for result in g.query(query_output_types):
