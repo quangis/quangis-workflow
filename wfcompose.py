@@ -15,7 +15,7 @@ from sys import stderr
 from transformation_algebra.expr import Expr
 from transformation_algebra.rdf import TA
 
-from cct.util import namespaces, graph, WF
+from cct.util import namespaces, graph, WF, TOOLS
 from cct import cct, R3a, Obj, Reg, Ratio, lTopo
 
 from typing import List, Tuple, Optional, Dict, Union
@@ -44,16 +44,12 @@ A query to obtain all steps of a workflow and the relevant in- and outputs.
 query_steps = sparql.prepareQuery(
     """
     SELECT
-        ?tool ?expression
+        ?step ?tool
         ?output ?is_final_output
         ?x1 ?x2 ?x3
     WHERE {
         ?wf wf:edge ?step.
-        ?step wf:output ?output.
-
-        # What is the algebra expression for this step?
         ?step wf:applicationOf ?tool.
-        OPTIONAL { ?tool tools:algebraexpression ?expression. }
 
         # What are the inputs?
         OPTIONAL { ?step wf:input1 ?x1. }
@@ -61,6 +57,7 @@ query_steps = sparql.prepareQuery(
         OPTIONAL { ?step wf:input3 ?x3. }
 
         # Is this the final step?
+        ?step wf:output ?output.
         OPTIONAL {
             { ?next_step wf:input1 ?output }
             UNION
@@ -104,15 +101,17 @@ def workflow_expr(g: Graph, workflow: Node) -> None:
     # gets its input
     step_info: Dict[Node, Tuple[str, Expr, List[Node]]] = dict()
     final_output: Optional[Node] = None
-    for step in g.query(query_steps, initBindings={"wf": workflow}):
-        assert step.expression, f"{step.tool} has no algebra expression"
-        expr = cct.parse(step.expression).primitive()
-        inputs = [x for x in (step.x1, step.x2, step.x3) if x]
-        step_info[step.output] = step.tool, expr, inputs
+    for node in g.query(query_steps, initBindings={"wf": workflow}):
+        expr_string: Optional[str] = g.value(subject=node.tool,
+            predicate=TOOLS.algebraexpression, any=False)
+        assert expr_string, f"{node.tool} has no algebra expression"
+        expr = cct.parse(expr_string).primitive()
+        inputs = [x for x in (node.x1, node.x2, node.x3) if x]
+        step_info[node.output] = node.tool, expr, inputs
 
-        if step.is_final_output:
-            assert not final_output, f"{step.tool} has multiple final nodes"
-            final_output = step.output
+        if node.is_final_output:
+            assert not final_output, f"{node.tool} has multiple final nodes"
+            final_output = node.output
     assert final_output, "workflow has no output node"
 
     # Combining the expressions in RDF format:
