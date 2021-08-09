@@ -6,47 +6,19 @@ different.
 
 from __future__ import annotations
 
-import rdflib  # type: ignore
-from rdflib import Graph, URIRef
+from rdflib import Graph, URIRef  # type: ignore
 from rdflib.term import Node  # type: ignore
-from rdflib.plugins import sparql
+from rdflib.plugins import sparql  # type: ignore
 from glob import glob
 from sys import stderr
 
 from transformation_algebra.expr import Expr
 from transformation_algebra.rdf import TA
-from cct import cct, R1, R2, R3, R3a, Obj, Reg, Loc, Ratio, apply, groupby, ratio, \
-    size, pi1, lTopo
+
+from cct.util import namespaces, graph, WF
+from cct import cct, R3a, Obj, Reg, Ratio, lTopo
 
 from typing import List, Tuple, Optional, Dict, Union
-
-RDF = rdflib.Namespace("http://www.w3.org/1999/02/22-rdf-syntax-ns#")
-RDFS = rdflib.Namespace("http://www.w3.org/2000/01/rdf-schema#")
-GIS = rdflib.Namespace("http://geographicknowledge.de/vocab/GISConcepts.rdf#")
-WF = rdflib.Namespace("http://geographicknowledge.de/vocab/Workflow.rdf#")
-TOOLS = rdflib.Namespace("http://geographicknowledge.de/vocab/GISTools.rdf#")
-
-namespaces = {
-    "rdf": RDF,
-    "rdfs": RDFS,
-    "wf": WF,
-    "tools": TOOLS,
-    "ta": TA,
-    "cct": cct.namespace}
-
-
-def graph(*gs: Union[str, Graph]) -> rdflib.Graph:
-    """
-    Read a graph.
-    """
-    graph = rdflib.Graph()
-    for g in gs:
-        if isinstance(g, str):
-            graph.parse(g, format=rdflib.util.guess_format(g))
-        else:
-            assert isinstance(g, Graph)
-            graph += g
-    return graph
 
 
 """
@@ -191,7 +163,7 @@ for workflow in g.query(query_workflow):
         print("Input:", node.inputs)
         print("Outputs:", node.outputs, "\n")
 
-g.serialize(format="ttl", destination='everthing.ttl', encoding='utf-8')
+# g.serialize(format="ttl", destination='everything.ttl', encoding='utf-8')
 
 exit()
 
