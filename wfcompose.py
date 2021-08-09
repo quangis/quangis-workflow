@@ -90,7 +90,7 @@ query_operations = sparql.prepareQuery(
     """, initNs=namespaces)
 
 
-def workflow_expr(g: Graph, workflow: Node) -> None:
+def workflow_expr(workflows: Graph, tools: Graph, workflow: Node) -> None:
     """
     Concatenate workflow expressions and add them to the graph.
     """
@@ -101,8 +101,8 @@ def workflow_expr(g: Graph, workflow: Node) -> None:
     # gets its input
     step_info: Dict[Node, Tuple[str, Expr, List[Node]]] = dict()
     final_output: Optional[Node] = None
-    for node in g.query(query_steps, initBindings={"wf": workflow}):
-        expr_string: Optional[str] = g.value(subject=node.tool,
+    for node in workflows.query(query_steps, initBindings={"wf": workflow}):
+        expr_string: Optional[str] = tools.value(subject=node.tool,
             predicate=TOOLS.algebraexpression, any=False)
         assert expr_string, f"{node.tool} has no algebra expression"
         expr = cct.parse(expr_string).primitive()
@@ -117,7 +117,7 @@ def workflow_expr(g: Graph, workflow: Node) -> None:
     # Combining the expressions in RDF format:
     # Map the output node of every workflow step to the output node of an
     # RDF-encoded algebra expression
-    sources = set(g.objects(subject=workflow, predicate=WF.source))
+    sources = set(workflows.objects(subject=workflow, predicate=WF.source))
     cache: Dict[Node, Node] = dict()
 
     def f(node: Node) -> Union[URIRef, Tuple[Node, Expr]]:
@@ -127,40 +127,49 @@ def workflow_expr(g: Graph, workflow: Node) -> None:
         if node not in cache:
             bindings = {f"x{i}": f(x) for i, x in enumerate(inputs, start=1)}
             try:
-                cache[node] = cct.rdf_expr(g, workflow, expr, bindings)
+                cache[node] = cct.rdf_expr(workflows, workflow, expr, bindings)
             except RuntimeError as e:
                 raise RuntimeError(f"In {tool}: {e}") from e
         return cache[node], expr
 
     f(final_output)
-    g.add((workflow, TA.target, cache[final_output]))
+    workflows.add((workflow, TA.target, cache[final_output]))
 
 
 # Produce workflow repository with representation of transformations.
-g = graph(
-    cct.vocabulary(),
-    "TheoryofGISFunctions/ToolDescription_TransformationAlgebra.ttl",
-    *glob("TheoryofGISFunctions/Scenarios/**/*_cct.ttl"))
+# g = graph(
+#     cct.vocabulary(),
+#     "TheoryofGISFunctions/ToolDescription_TransformationAlgebra.ttl",
+#     *glob("TheoryofGISFunctions/Scenarios/**/*_cct.ttl"))
+
+cct_graph = cct.vocabulary()
+tool_graph = graph(
+    "TheoryofGISFunctions/ToolDescription_TransformationAlgebra.ttl"
+)
+
+for workflow_file in glob("TheoryofGISFunctions/Scenarios/**/*_cct.ttl"):
+    print(f"\nWorkflow {workflow_file}", file=stderr)
+    workflow_graph = graph(workflow_file)
+    workflows = workflow_graph.query(query_workflow)
+    for workflow in workflows:
+        print(workflow.description)
+        try:
+            workflow_expr(workflow_graph, tool_graph, workflow.node)
+        except Exception as e:
+            print("FAILURE: ", e, file=stderr)
+        else:
+            print("SUCCESS.", file=stderr)
 
 
-for i, workflow in enumerate(g.query(query_workflow), start=1):
-    try:
-        print(f"\nWorkflow {i}: {workflow.description}", file=stderr)
-        workflow_expr(g, workflow.node)
-    except Exception as e:
-        print("FAILURE: ", e, file=stderr)
-    else:
-        print("SUCCESS.", file=stderr)
-
-for workflow in g.query(query_workflow):
-    if "Amsterdam" not in workflow.description:
-        continue
-    print(f"\nWorkflow: {workflow.description}")
-    print(f"Final output: {workflow.output}")
-    for node in g.query(query_operations, initBindings={"wf": workflow.node}):
-        print("Operation:", node.operation)
-        print("Input:", node.inputs)
-        print("Outputs:", node.outputs, "\n")
+# for workflow in g.query(query_workflow):
+#     if "Amsterdam" not in workflow.description:
+#         continue
+#     print(f"\nWorkflow: {workflow.description}")
+#     print(f"Final output: {workflow.output}")
+#     for node in g.query(query_operations, initBindings={"wf": workflow.node}):
+#         print("Operation:", node.operation)
+#         print("Input:", node.inputs)
+#         print("Outputs:", node.outputs, "\n")
 
 # g.serialize(format="ttl", destination='everything.ttl', encoding='utf-8')
 
