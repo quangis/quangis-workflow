@@ -10,7 +10,7 @@ from rdflib import Graph, URIRef  # type: ignore
 from rdflib.term import Node  # type: ignore
 from rdflib.plugins import sparql  # type: ignore
 from glob import glob
-from sys import stderr
+from sys import stderr, stdout
 
 from transformation_algebra.expr import Expr
 from transformation_algebra.rdf import TA
@@ -20,6 +20,8 @@ from cct import cct, R3a, Obj, Reg, Ratio, lTopo
 
 from typing import List, Tuple, Optional, Dict, Union
 
+
+print("Preparing queries...", file=stderr)
 
 """
 A query to obtain all workflows and their descriptions.
@@ -90,10 +92,12 @@ query_operations = sparql.prepareQuery(
     """, initNs=namespaces)
 
 
-def workflow_expr(workflows: Graph, tools: Graph, workflow: Node) -> None:
+def workflow_expr(workflows: Graph, tools: Graph, workflow: Node) -> Graph:
     """
-    Concatenate workflow expressions and add them to the graph.
+    Concatenate workflow expressions and add them to a graph.
     """
+
+    output = Graph()
 
     # Finding the individual expressions for each step:
     # Map the output node of every workflow step to the tool it uses, the
@@ -127,20 +131,17 @@ def workflow_expr(workflows: Graph, tools: Graph, workflow: Node) -> None:
         if node not in cache:
             bindings = {f"x{i}": f(x) for i, x in enumerate(inputs, start=1)}
             try:
-                cache[node] = cct.rdf_expr(workflows, workflow, expr, bindings)
+                cache[node] = cct.rdf_expr(g=output, root=workflow,
+                    expr=expr, inputs=bindings)
             except RuntimeError as e:
                 raise RuntimeError(f"In {tool}: {e}") from e
         return cache[node], expr
 
     f(final_output)
-    workflows.add((workflow, TA.target, cache[final_output]))
+    output.add((workflow, TA.target, cache[final_output]))
 
+    return output
 
-# Produce workflow repository with representation of transformations.
-# g = graph(
-#     cct.vocabulary(),
-#     "TheoryofGISFunctions/ToolDescription_TransformationAlgebra.ttl",
-#     *glob("TheoryofGISFunctions/Scenarios/**/*_cct.ttl"))
 
 cct_graph = cct.vocabulary()
 tool_graph = graph(
@@ -148,13 +149,17 @@ tool_graph = graph(
 )
 
 for workflow_file in glob("TheoryofGISFunctions/Scenarios/**/*_cct.ttl"):
+    if "Amsterdam2" not in workflow_file:
+        continue
     print(f"\nWorkflow {workflow_file}", file=stderr)
     workflow_graph = graph(workflow_file)
     workflows = workflow_graph.query(query_workflow)
     for workflow in workflows:
         print(workflow.description)
         try:
-            workflow_expr(workflow_graph, tool_graph, workflow.node)
+            g = workflow_expr(workflow_graph, tool_graph, workflow.node)
+            a = g.serialize(format='ttl', encoding='utf-8').decode()
+            print(a)
         except Exception as e:
             print("FAILURE: ", e, file=stderr)
         else:
@@ -171,10 +176,9 @@ for workflow_file in glob("TheoryofGISFunctions/Scenarios/**/*_cct.ttl"):
 #         print("Input:", node.inputs)
 #         print("Outputs:", node.outputs, "\n")
 
-# g.serialize(format="ttl", destination='everything.ttl', encoding='utf-8')
 
 exit()
-
+# g.serialize(format="ttl", destination='everything.ttl', encoding='utf-8')
 
 # for result in g.query(query_output_types):
 #     print(result.description, result.op, result.params)
