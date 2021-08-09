@@ -10,13 +10,13 @@ from rdflib import Graph, URIRef  # type: ignore
 from rdflib.term import Node  # type: ignore
 from rdflib.plugins import sparql  # type: ignore
 from glob import glob
-from sys import stderr, stdout
+from sys import stderr
 
 from transformation_algebra.expr import Expr
 from transformation_algebra.rdf import TA
 
-from cct.util import namespaces, graph, WF, TOOLS
 from cct import cct, R3a, Obj, Reg, Ratio, lTopo
+from cct.util import namespaces, graph, WF, TOOLS, dot
 
 from typing import List, Tuple, Optional, Dict, Union
 
@@ -155,11 +155,10 @@ for workflow_file in glob("TheoryofGISFunctions/Scenarios/**/*_cct.ttl"):
     workflow_graph = graph(workflow_file)
     workflows = workflow_graph.query(query_workflow)
     for workflow in workflows:
-        print(workflow.description)
+        print(workflow.description, file=stderr)
         try:
             g = workflow_expr(workflow_graph, tool_graph, workflow.node)
-            a = g.serialize(format='ttl', encoding='utf-8').decode()
-            print(a)
+            print(dot(g))
         except Exception as e:
             print("FAILURE: ", e, file=stderr)
         else:
