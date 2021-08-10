@@ -131,8 +131,9 @@ def workflow_expr(workflows: Graph, tools: Graph, workflow: Node) -> Graph:
         if node not in cache:
             bindings = {f"x{i}": f(x) for i, x in enumerate(inputs, start=1)}
             try:
-                cache[node] = cct.rdf_expr(g=output, root=workflow,
-                    expr=expr, inputs=bindings)
+                cache[node] = cct.rdf_expr(output=output, root=workflow,
+                    expr=expr, inputs=bindings, annotate_types=False,
+                    include_labels=True)
             except RuntimeError as e:
                 raise RuntimeError(f"In {tool}: {e}") from e
         return cache[node], expr
