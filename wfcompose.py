@@ -15,8 +15,9 @@ from sys import stderr
 from transformation_algebra.expr import Expr
 from transformation_algebra.rdf import TA
 
-from cct import cct, R3a, Obj, Reg, Ratio, lTopo
-from cct.util import namespaces, graph, WF, TOOLS, dot
+from cct import cct, R2, R3a, Obj, Reg, Ratio, \
+    lTopo, apply, ratio, groupby, size, pi1
+from cct.util import namespaces, graph, WF, TOOLS, dot, ttl
 
 from typing import List, Tuple, Optional, Dict, Union
 
@@ -132,7 +133,7 @@ def workflow_expr(workflows: Graph, tools: Graph, workflow: Node) -> Graph:
             bindings = {f"x{i}": f(x) for i, x in enumerate(inputs, start=1)}
             try:
                 cache[node] = cct.rdf_expr(output=output, root=workflow,
-                    expr=expr, inputs=bindings, annotate_types=False,
+                    expr=expr, inputs=bindings, include_types=True,
                     include_labels=True)
             except RuntimeError as e:
                 raise RuntimeError(f"In {tool}: {e}") from e
@@ -149,19 +150,24 @@ tool_graph = graph(
     "TheoryofGISFunctions/ToolDescription_TransformationAlgebra.ttl"
 )
 
+full_graph = cct_graph + tool_graph
+
 for workflow_file in glob("TheoryofGISFunctions/Scenarios/**/*_cct.ttl"):
-    if "Amsterdam2" not in workflow_file:
+    if "Amsterdam" not in workflow_file:
         continue
     print(f"\nWorkflow {workflow_file}", file=stderr)
     workflow_graph = graph(workflow_file)
+    full_graph += workflow_graph
     workflows = workflow_graph.query(query_workflow)
     for workflow in workflows:
         print(workflow.description, file=stderr)
         try:
             g = workflow_expr(workflow_graph, tool_graph, workflow.node)
-            print(dot(g))
+            full_graph += g
+            # print(dot(g))
         except Exception as e:
             print("FAILURE: ", e, file=stderr)
+            raise
         else:
             print("SUCCESS.", file=stderr)
 
@@ -177,7 +183,7 @@ for workflow_file in glob("TheoryofGISFunctions/Scenarios/**/*_cct.ttl"):
 #         print("Outputs:", node.outputs, "\n")
 
 
-exit()
+# exit()
 # g.serialize(format="ttl", destination='everything.ttl', encoding='utf-8')
 
 # for result in g.query(query_output_types):
@@ -187,16 +193,12 @@ exit()
 # exit()
 
 # Try workflow 1
-# flow = (
-#     R3a(Obj, Reg, Ratio) << ... << apply << ... << (
-#         ratio &
-#         groupby << ... << (size & pi1) &
-#         apply << ... << (size & R2(Obj, Reg))
-#     )
-# )
 flow = (
-    R3a(Obj, Reg, Ratio) << ... << lTopo
+    R3a(Obj, Reg, Ratio) << ... << size
 )
+# flow = (
+#     R3a(Obj, Reg, Ratio)
+# )
 
-for result in cct.query(g, flow):
-    print(result.description)
+for result in cct.query(full_graph, flow):
+    print("Result:", result.description)
