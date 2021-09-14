@@ -96,52 +96,24 @@ query_operations = sparql.prepareQuery(
 def workflow_expr(workflows: Graph, tools: Graph, workflow: Node) -> Graph:
     """
     Concatenate workflow expressions and add them to a graph.
-    """
 
+    """
     output = Graph()
 
-    # Finding the individual expressions for each step:
-    # Map the output node of every workflow step to the tool it uses, the
-    # algebra expression associated to the tool, and the nodes from which it
-    # gets its input
-    step_info: Dict[Node, Tuple[str, Expr, List[Node]]] = dict()
-    final_output: Optional[Node] = None
+    # Find expressions for each step by mapping the output node of each to the
+    # algebra expression associated with the tool, and the input nodes
+    steps: dict[Node, tuple[Expr, list[Node]]] = {}
     for node in workflows.query(query_steps, initBindings={"wf": workflow}):
         expr_string: Optional[str] = tools.value(subject=node.tool,
             predicate=TOOLS.algebraexpression, any=False)
         assert expr_string, f"{node.tool} has no algebra expression"
         expr = cct.parse(expr_string).primitive()
         inputs = [x for x in (node.x1, node.x2, node.x3) if x]
-        step_info[node.output] = node.tool, expr, inputs
+        steps[node.output] = expr, inputs
 
-        if node.is_final_output:
-            assert not final_output, f"{node.tool} has multiple final nodes"
-            final_output = node.output
-    assert final_output, "workflow has no output node"
-
-    # Combining the expressions in RDF format:
-    # Map the output node of every workflow step to the output node of an
-    # RDF-encoded algebra expression
     sources = set(workflows.objects(subject=workflow, predicate=WF.source))
-    cache: Dict[Node, Node] = dict()
 
-    def f(node: Node) -> Union[URIRef, Tuple[Node, Expr]]:
-        if node in sources:
-            return node
-        tool, expr, inputs = step_info[node]
-        if node not in cache:
-            bindings = {f"x{i}": f(x) for i, x in enumerate(inputs, start=1)}
-            try:
-                cache[node] = cct.rdf_expr(output=output, root=workflow,
-                    expr=expr, inputs=bindings, include_types=True,
-                    include_labels=True)
-            except RuntimeError as e:
-                raise RuntimeError(f"In {tool}: {e}") from e
-        return cache[node], expr
-
-    f(final_output)
-    output.add((workflow, TA.target, cache[final_output]))
-
+    cct.rdf_workflow(output, workflow, sources, steps)
     return output
 
 
