@@ -9,8 +9,10 @@ from __future__ import annotations
 from rdflib import Graph, URIRef  # type: ignore
 from rdflib.term import Node  # type: ignore
 from rdflib.plugins import sparql  # type: ignore
+from rdflib.tools.rdf2dot import rdf2dot  # type: ignore
 from glob import glob
 from sys import stderr
+from os.path import basename
 
 from transformation_algebra.expr import Expr
 from transformation_algebra.rdf import TA
@@ -131,10 +133,14 @@ for workflow_file in glob("TheoryofGISFunctions/Scenarios/**/*_cct.ttl"):
     workflow_graph = graph(workflow_file)
     full_graph += workflow_graph
     workflows = workflow_graph.query(query_workflow)
-    for workflow in workflows:
+    for i, workflow in enumerate(workflows):
         print(workflow.description, file=stderr)
         try:
             g = workflow_expr(workflow_graph, tool_graph, workflow.node)
+
+            with open(f"wf_{basename(workflow_file)}{i}.dot", 'w') as f:
+                rdf2dot(g, f)
+
             full_graph += g
             # print(dot(g))
         except Exception as e:
@@ -165,11 +171,12 @@ for workflow_file in glob("TheoryofGISFunctions/Scenarios/**/*_cct.ttl"):
 # exit()
 
 # Try workflow 1
-flow = (
-    R3a(Obj, Reg, Ratio) << ... << size
-)
-# flow = (
-#     R3a(Obj, Reg, Ratio)
+flow = R3a(Obj, Reg, Ratio) << ... << apply << ... << size
+
+# flow = R3a(Obj, Reg, Ratio) << ... << apply << ... << (
+#     ratio &
+#     groupby << ... << (size & pi1) &
+#     apply << ... << (size & R2(Obj, Reg))
 # )
 
 for result in cct.query(full_graph, flow):
