@@ -15,7 +15,7 @@ from sys import stderr
 from os.path import basename
 
 from transformation_algebra.expr import Expr
-from transformation_algebra.rdf import TA
+from transformation_algebra.rdf import TA, TransformationGraph
 
 from cct import cct, R2, R3a, Obj, Reg, Ratio, \
     lTopo, apply, ratio, groupby, size, pi1
@@ -100,7 +100,7 @@ def workflow_expr(workflows: Graph, tools: Graph, workflow: Node) -> Graph:
     Concatenate workflow expressions and add them to a graph.
 
     """
-    output = Graph()
+    output = TransformationGraph(cct, cct.namespace)
 
     # Find expressions for each step by mapping the output node of each to the
     # algebra expression associated with the tool, and the input nodes
@@ -115,11 +115,14 @@ def workflow_expr(workflows: Graph, tools: Graph, workflow: Node) -> Graph:
 
     sources = set(workflows.objects(subject=workflow, predicate=WF.source))
 
-    cct.rdf_workflow(output, workflow, sources, steps)
-    return output
+    output.workflow(workflow, sources, steps)
+    return output.graph
 
 
-cct_graph = cct.vocabulary()
+cct_graph = TransformationGraph(cct, cct.namespace)
+cct_graph.vocabulary()
+cct_graph = cct_graph.graph
+
 tool_graph = graph(
     "TheoryofGISFunctions/ToolDescription_TransformationAlgebra.ttl"
 )
