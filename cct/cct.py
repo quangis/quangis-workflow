@@ -100,393 +100,485 @@ rationetwork = Δ(R3(Obj, Ratio, Obj))
 ###########################################################################
 # Math/stats transformations
 
-Ω = Operation
-
 # Derivations
 
-# primitive
-ratio = Ω(Ratio ** Ratio ** Ratio, derived=None)
-# primitive
-product = Ω(Ratio ** Ratio ** Ratio, derived=None)
-# primitive
-leq = Ω(Ord ** Ord ** Bool, doc="less than or equal", derived=None)
-# primitive
-eq = Ω(Val ** Val ** Bool, doc="equal", derived=None)
-# primitive
-conj = Ω(Bool ** Bool ** Bool, doc="conjunction", derived=None)
-# primitive
-notj = Ω(Bool ** Bool, doc="logical negation", derived=None)
-# define: compose2 notj conj
-disj = Ω(type = Bool ** Bool ** Bool, doc="disjunction", derived=lambda x: (compose2 (notj) (conj) (x)))
-# primitive
-classify = Ω(type = Itv ** Ord, doc="classification table", derived=None)
+ratio = Operation(
+    type=Ratio ** Ratio ** Ratio
+)
+product = Operation(
+    type=Ratio ** Ratio ** Ratio
+)
+leq = Operation(
+    doc="less than or equal",
+    type=Ord ** Ord ** Bool
+)
+eq = Operation(
+    doc="equal",
+    type=Val ** Val ** Bool
+)
+conj = Operation(
+    doc="conjunction",
+    type=Bool ** Bool ** Bool
+)
+notj = Operation(
+    doc="logical negation",
+    type=Bool ** Bool
+)
+disj = Operation(
+    doc="disjunction",
+    type=Bool ** Bool ** Bool,
+    derived=lambda x: compose2(notj, conj, x)
+)
+classify = Operation(
+    doc="classification table",
+    type=Itv ** Ord
+)
 
 # Aggregations of collections
 
-# primitive
-count = Ω(R1(Obj) ** Count, doc="count objects", derived=None)
-# primitive
-size = Ω(R1(Loc) ** Ratio, doc="measure size")
-merge = Ω(type=R1(Reg) ** Reg,
-          derived=lambda x: reify(relunion(pi2 (apply (deify) (x)))),
-          doc="merge regions"
+count = Operation(
+    doc="count objects",
+    type=R1(Obj) ** Count
 )
-# primitive
-centroid = Ω(type=R1(Loc) ** Loc, doc="measure centroid", derived=None)
-# primitive
-name = Ω(type=R1(Nom) ** Nom, doc="combine nominal values", derived=None)
+size = Operation(
+    doc="measure size",
+    type=R1(Loc) ** Ratio
+)
+merge = Operation(
+    doc="merge regions",
+    type=R1(Reg) ** Reg,
+    derived=lambda x: reify(relunion(pi2(apply(deify, x))))
+)
+centroid = Operation(
+    doc="measure centroid",
+    type=R1(Loc) ** Loc
+)
+name = Operation(
+    doc="combine nominal values",
+    type=R1(Nom) ** Nom
+)
 
+# Statistical operations
 
-#  Statistical operations
-
-# primitive
-avg = Ω(type=lambda y: R2(Val, y) ** y | y @ Itv, doc="average", derived=None)
-# primitive
-min = Ω(type=lambda y: R2(Val, y) ** y | y @ Ord, doc="minimum", derived=None)
-# primitive
-max = Ω(type=lambda y: R2(Val, y) ** y | y @ Ord, doc="maximum", derived=None)
-# primitive
-sum = Ω(type=lambda y: R2(Val, y) ** y | y @ Ratio, doc="summing up values", derived=None)
-# define
-contentsum = Ω(
-    type=lambda x: R2(Reg, x) ** R2(Reg, x) | x @ Ratio,
+avg = Operation(
+    doc="average",
+    type=lambda y: R2(Val, y) ** y | y @ Itv
+)
+min = Operation(
+    doc="minimum",
+    type=lambda y: R2(Val, y) ** y | y @ Ord
+)
+max = Operation(
+    doc="maximum",
+    type=lambda y: R2(Val, y) ** y | y @ Ord
+)
+sum = Operation(
+    doc="summing up values",
+    type=lambda y: R2(Val, y) ** y | y @ Ratio
+)
+contentsum = Operation(
     doc="summing up content amounts (regions and their values)",
-    derived=lambda x: nest2 (merge (pi1 (x))) (sum (x))
+    type=lambda x: R2(Reg, x) ** R2(Reg, x) | x @ Ratio,
+    derived=lambda x: nest2(merge(pi1(x)), sum(x))
 )
-# define
-coveragesum = Ω(
-    type = R2(Nom, Reg) ** R2(Nom, Reg),
+coveragesum = Operation(
     doc="summing up nominal coverages",
-    derived=lambda x: nest2 (name (pi1 (x))) (merge (pi2 (x)))
+    type=R2(Nom, Reg) ** R2(Nom, Reg),
+    derived=lambda x: nest2(name(pi1(x)), merge(pi2(x)))
 )
 
 
 ##########################################################################
 # Geometric transformations
 
-# primitive
-interpol = Ω(type= lambda x: R2(Reg, x) ** R1(Loc) ** R2(Loc, x) | x @ Itv, doc="spatial point interpolation", derived=None)
-
-extrapol = Ω(
-    type=R2(Obj, Reg) ** R2(Loc, Bool),
+interpol = Operation(
+    doc="spatial point interpolation",
+    type=lambda x: R2(Reg, x) ** R1(Loc) ** R2(Loc, x) | x @ Itv
+)
+extrapol = Operation(
     doc="buffering, defined in terms of some distance (given as parameter)",
-    derived=lambda x: apply1 (leq (ratioV), groupbyL (min, loDist (deify (region), x)))
+    type=R2(Obj, Reg) ** R2(Loc, Bool),
+    derived=lambda x: apply1(
+        leq(ratioV),
+        groupbyL(min, loDist(deify(region), x)))
 )
-
-# primitive
-arealinterpol = Ω(
-    type=R2(Reg, Ratio) ** R1(Reg) ** R2(Reg, Ratio),
+arealinterpol = Operation(
     doc="areal interpolation",
-    derived=None
+    type=R2(Reg, Ratio) ** R1(Reg) ** R2(Reg, Ratio)
 )
-# primitive
-slope = Ω(type= R2(Loc, Itv) ** R2(Loc, Ratio) , doc="areal interpolation", derived=None)
-# primitive
-aspect = Ω(type= R2(Loc, Itv) ** R2(Loc, Ratio), doc="spatial aspect (cardinal direction) from DEM", derived=None)
-#primitive
-flowdirgraph = Ω(type=R2(Loc, Itv) ** R2(Loc, Loc), doc="flow direction graph from DEM (location field)", derived=None)
-#primitive
-accumulate = Ω(type=R2(Loc, Loc) ** R2(Loc, R1(Loc)), doc = "finds all locations reachable from a given location", derived=None)
-
+slope = Operation(
+    doc="areal interpolation",
+    type=R2(Loc, Itv) ** R2(Loc, Ratio),
+)
+aspect = Operation(
+    doc="spatial aspect (cardinal direction) from DEM",
+    type=R2(Loc, Itv) ** R2(Loc, Ratio),
+)
+flowdirgraph = Operation(
+    doc="flow direction graph from DEM (location field)", 
+    type=R2(Loc, Itv) ** R2(Loc, Loc)
+)
+accumulate = Operation(
+    doc="finds all locations reachable from a given location",
+    type=R2(Loc, Loc) ** R2(Loc, R1(Loc))
+)
 
 # Conversions
 
-# primitive
-reify = Ω(type = R1(Loc) ** Reg, doc = "make a region from locations", derived=None)
-# primitive
-deify = Ω(type = Reg ** R1(Loc), doc = "make locations from a region", derived=None)
-#primitive
-objectify = Ω(type = Nom ** Obj, doc="interpet a name as an object", derived=None)
-#primitive
-nominalize = Ω(type = Obj ** Nom, doc="interpet an object as a name", derived=None)
-getobjectnames = Ω(type = R1(Nom) ** R2(Obj, Nom), doc="make objects from names", derived= lambda x: apply (nominalize) (pi2 (apply (objectify) (x))))
-
-
-invert = Ω(lambda x: R2(Loc, x) ** R2(x, Reg) | x @ Val, doc="inverts a field, generating a coverage", derived= lambda x: groupby (reify) (x))
-revert = Ω(lambda x: R2(x, Reg) ** R2(Loc, x) | x @ Val, doc="inverts a coverage to a field", derived=lambda x : groupbyL (compose (get) (pi1)) (join_key (select (eq) (lTopo (deify (merge (pi2 (x)))) (merge (pi2 (x)))) (in_)) (groupby (get) (x)))
-           )
-getamounts = Ω(lambda x: R3a(Obj, Reg, x) ** R2(Reg, x) | x @ Ratio, doc="gets amounts from object based amount qualities", derived=lambda x: join (groupby (get) (get_attrL (x))) (get_attrR (x)))
-
+reify = Operation(
+    doc="make a region from locations",
+    type=R1(Loc) ** Reg
+)
+deify = Operation(
+    doc="make locations from a region",
+    type=Reg ** R1(Loc)
+)
+objectify = Operation(
+    doc="interpet a name as an object",
+    type=Nom ** Obj
+)
+nominalize = Operation(
+    doc="interpret an object as a name",
+    type=Obj ** Nom
+)
+getobjectnames = Operation(
+    doc="make objects from names",
+    type=R1(Nom) ** R2(Obj, Nom),
+    derived=lambda x: apply(nominalize, pi2(apply(objectify, x)))
+)
+invert = Operation(
+    doc="invert a field, generating a coverage",
+    type=lambda x: R2(Loc, x) ** R2(x, Reg) | x @ Val,
+    derived=lambda x: groupby(reify, x)
+)
+revert = Operation(
+    doc="invert a coverage to a field",
+    type=lambda x: R2(x, Reg) ** R2(Loc, x) | x @ Val,
+    derived=lambda x: groupbyL(
+        compose(get, pi1),
+        join_key(
+            select(eq, lTopo(deify(merge(pi2(x))), merge(pi2(x))), in_),
+            groupby(get, x)
+        )
+    )
+)
+getamounts = Operation(
+    doc="get amounts from object based amount qualities",
+    type=lambda x: R3a(Obj, Reg, x) ** R2(Reg, x) | x @ Ratio,
+    derived=lambda x: join(groupby(get, get_attrL(x)), get_attrR(x))
+)
 
 # Operators on quantified relations
 
-# primitive
-lDist = Ω(R1(Loc) ** R1(Loc) ** R3(Loc, Ratio, Loc),doc="computes Euclidean distances between locations", derived=None)
-# define
-loDist = Ω(R1(Loc) ** R2(Obj, Reg) ** R3(Loc, Ratio, Obj), doc= "computes Euclidean distances between locations and objects", derived = lambda x, y: prod3 (apply1 (compose (groupbyL (min)) (lDist (x))) (apply1 (deify) (y))))
-# define
-oDist = Ω(R2(Obj, Reg) ** R2(Obj, Reg) ** R3(Obj, Ratio, Obj), doc="computes Euclidean distances between objects", derived=lambda x, y: prod3 (apply1 (compose (groupbyR (min)) ((swap (loDist)) (x))) (apply1 (deify) (y))))
-
-# primitive
-lTopo = Ω(R1(Loc) ** Reg ** R3(Loc, Nom, Reg), doc="detects the topological position of locations on a region (in, out, boundary)", derived=None)
-# define
-loTopo = Ω(R1(Loc) ** R2(Obj, Reg) ** R3(Loc, Nom, Obj), doc="detects the topological position of locations on objects (in, out, boundary)", derived=lambda x,y: prod3 (apply1 (compose (groupbyL (compose (get) (pi2))) (lTopo ((x)))) (y))
-           )
-
-# define
-oTopo = Ω(R2(Obj, Reg) ** R2(Obj, Reg) ** R3(Obj, Nom, Obj), doc="detects the topological relations between two sets of objects", derived= lambda x, y: prod3 (apply1 (compose (groupbyR (compose (name) (pi2))) ((swap (loTopo)) (x))) (apply1 (deify) (y))))
-# define
-lrTopo = Ω(R1(Loc) ** R1(Reg) ** R3(Loc, Nom, Reg),doc="detects the topological position of locations on regions (in, out, boundary)", derived =lambda x,y: prod3 (apply (compose (groupbyL (compose (get) (pi2))) (lTopo ((x)))) (y))
+lDist = Operation(
+    doc="computes Euclidean distances between locations",
+    type=R1(Loc) ** R1(Loc) ** R3(Loc, Ratio, Loc)
+)
+loDist = Operation(
+    doc="computes Euclidean distances between locations and objects",
+    type=R1(Loc) ** R2(Obj, Reg) ** R3(Loc, Ratio, Obj),
+    derived=lambda x, y: prod3(apply1(
+        compose(groupbyL(min), lDist(x)),
+        apply1(deify, y)
+    ))
+)
+oDist = Operation(
+    doc="computes Euclidean distances between objects",
+    type=R2(Obj, Reg) ** R2(Obj, Reg) ** R3(Obj, Ratio, Obj),
+    derived=lambda x, y: prod3 (apply1 (compose (groupbyR (min)) ((swap (loDist)) (x))) (apply1 (deify) (y)))
+)
+lTopo = Operation(
+    doc=("detects the topological position of locations "
+         "on a region (in, out, boundary)"),
+    type=R1(Loc) ** Reg ** R3(Loc, Nom, Reg),
+)
+loTopo = Operation(
+    doc=("detects the topological position of locations "
+         "on objects (in, out, boundary)"),
+    type=R1(Loc) ** R2(Obj, Reg) ** R3(Loc, Nom, Obj),
+    derived=lambda x,y: prod3 (apply1 (compose (groupbyL (compose (get) (pi2))) (lTopo ((x)))) (y))
+)
+oTopo = Operation(
+    doc="detects the topological relations between two sets of objects",
+    type=R2(Obj, Reg) ** R2(Obj, Reg) ** R3(Obj, Nom, Obj),
+    derived=lambda x, y: prod3 (apply1 (compose (groupbyR (compose (name) (pi2))) ((swap (loTopo)) (x))) (apply1 (deify) (y))))
+lrTopo = Operation(
+    doc=("detects the topological position of locations "
+         "on regions (in, out, boundary)"),
+    type=R1(Loc) ** R1(Reg) ** R3(Loc, Nom, Reg),
+    derived=lambda x,y: prod3 (apply (compose (groupbyL (compose (get) (pi2))) (lTopo ((x)))) (y))
  )
-# define
-rTopo = Ω(R1(Reg) ** R1(Reg) ** R3(Reg, Nom, Reg), doc="detects the topological relations between two sets of regions", derived= lambda x,y: prod3 (apply (compose (compose (groupbyR (compose (name) (pi2))) ((swap (lrTopo)) (x))) (deify)) (y)))
-# define
-orTopo = Ω(R2(Obj, Reg) ** R1(Reg) ** R3(Obj, Nom, Reg), doc="detects the topological relations between a set of objects and a set of regions", derived = lambda x,y: prod3 (apply (compose (compose (groupbyR (compose (name) (pi2))) ((swap (loTopo)) (x))) (deify)) (y)))
-
+rTopo = Operation(
+    R1(Reg) ** R1(Reg) ** R3(Reg, Nom, Reg),
+    doc="detects the topological relations between two sets of regions",
+    derived= lambda x,y: prod3 (apply (compose (compose (groupbyR (compose (name) (pi2))) ((swap (lrTopo)) (x))) (deify)) (y))
+)
+orTopo = Operation(
+    doc=("detects the topological relations between a set of objects "
+        "and a set of regions"),
+    type=R2(Obj, Reg) ** R1(Reg) ** R3(Obj, Nom, Reg),
+    derived=lambda x,y: prod3 (apply (compose (compose (groupbyR (compose (name) (pi2))) ((swap (loTopo)) (x))) (deify)) (y))
+)
 
 # Network operations
-# primitive
-nbuild = Ω(R3a(Obj, Reg, Ratio) ** R3(Obj, Ratio, Obj), doc="build a network from objects with impedance values", derived = None)
-# primitive
-nDist = Ω(R2(Obj, Reg) ** R2(Obj, Reg) ** R3(Obj, Ratio, Obj) ** R3(Obj, Ratio, Obj), doc="compute network distances between objects", derived = None)
-# primitive
-lVis = Ω(R1(Loc) ** R1(Loc) ** R2(Loc, Itv) ** R3(Loc, Bool, Loc), doc="build a visibility relation between locations using a DEM", derived = None)
-# primitive
-gridgraph = Ω(R2(Loc, Loc) ** R2(Loc, Ratio) ** R3(Loc, Ratio, Loc), doc="build a gridgraph using some location field and some impedance field", derived =None)
-# primitive
-lgDist = Ω(R3(Loc, Ratio, Loc) ** R1(Loc) ** R1(Loc) ** R3(Loc, Ratio, Loc), doc="compute gridgraph distances between locations", derived=None)
+
+nbuild = Operation(
+    doc="build a network from objects with impedance values",
+    type=R3a(Obj, Reg, Ratio) ** R3(Obj, Ratio, Obj)
+)
+nDist = Operation(
+    doc="compute network distances between objects",
+    type=R2(Obj, Reg) ** R2(Obj, Reg)** R3(Obj, Ratio, Obj)
+        ** R3(Obj, Ratio, Obj)
+)
+lVis = Operation(
+    doc="build a visibility relation between locations using a DEM",
+    type=R1(Loc) ** R1(Loc) ** R2(Loc, Itv) ** R3(Loc, Bool, Loc)
+)
+gridgraph = Operation(
+    doc="build a gridgraph using some location field and some impedance field",
+    type=R2(Loc, Loc) ** R2(Loc, Ratio) ** R3(Loc, Ratio, Loc)
+)
+lgDist = Operation(
+    doc="compute gridgraph distances between locations",
+    type=R3(Loc, Ratio, Loc) ** R1(Loc) ** R1(Loc) ** R3(Loc, Ratio, Loc)
+)
 
 # Amount operations
-fcont = Ω(lambda x, y:
-    (R2(Val, x) ** y) ** R2(Loc, x) ** Reg ** y | x @ Qlt | y @ Qlt, doc="summarizes the content of a field within a region", derived=lambda f, x, r: f (subset (x) (deify (r))))
-# define
-ocont = Ω(R2(Obj, Reg) ** Reg ** Count, doc="counts the number of objects within a region", derived= lambda x,y: get (pi2 (groupbyR (count) (select (eq) (orTopo (x) (nest (y))) (in_)))))
-# define
-fcover = Ω(lambda x:
-    R2(Loc, x) ** R1(x) ** R1(Loc) | x @ Qlt, doc="measures the spatial coverage of a field that is constrained to certain field values", derived= lambda x,y: pi1 (subset (x) (y)))
-# define
-ocover = Ω(R2(Obj, Reg) ** R1(Obj) ** Reg, doc="measures the spatial coverage of a collection of objects", derived=lambda x,y: merge (pi2 (subset (x) (y))))
+fcont = Operation(
+    type=lambda x, y: (
+        (R2(Val, x) ** y) ** R2(Loc, x) ** Reg ** y | x @ Qlt | y @ Qlt),
+    doc="summarizes the content of a field within a region",
+    derived=lambda f, x, r: f (subset (x) (deify (r)))
+)
+ocont = Operation(
+    type=R2(Obj, Reg) ** Reg ** Count,
+    doc="counts the number of objects within a region",
+    derived=lambda x,y: get (pi2 (groupbyR (count) (select (eq) (orTopo (x) (nest (y))) (in_))))
+)
+fcover = Operation(
+    doc=("measures the spatial coverage of a field that is constrained "
+         "to certain field values"),
+    type=lambda x: R2(Loc, x) ** R1(x) ** R1(Loc) | x @ Qlt,
+    derived=lambda x,y: pi1 (subset (x) (y))
+)
+ocover = Operation(
+    doc="measures the spatial coverage of a collection of objects",
+    type=R2(Obj, Reg) ** R1(Obj) ** Reg,
+    derived=lambda x,y: merge (pi2 (subset (x) (y)))
+)
 
 ###########################################################################
 # Functional and Relational transformations
 
-
 # Functional operators
 
-# primitive
-compose = Ω(lambda α, β, γ:
-    (β ** γ) ** (α ** β) ** (α ** γ),
+compose = Operation(
     doc="compose unary functions",
+    type=lambda α, β, γ: (β ** γ) ** (α ** β) ** (α ** γ),
     derived=lambda f, g, x: f(g(x))
 )
-
-# primitive
-compose2 = Ω(lambda α, β, γ, δ:
-    (β ** γ) ** (δ ** α ** β) ** (δ ** α ** γ),
+compose2 = Operation(
     doc="compose binary functions",
-    derived=None
+    type=lambda α, β, γ, δ: (β ** γ) ** (δ ** α ** β) ** (δ ** α ** γ)
 )
-
-# primitive
-swap = Ω(lambda α, β, γ:
-    (α ** β ** γ) ** (β ** α ** γ),
+swap = Operation(
     doc="swap binary function inputs",
-    derived=None
+    type=lambda α, β, γ: (α ** β ** γ) ** (β ** α ** γ)
 )
-
-# primitive
-id_ = Ω(lambda α: α ** α,
-        doc="identity",
-        derived=None
-        )
-
-# primitive
-apply = Ω(lambda x, y:
-    (x ** y) ** R1(x) ** R2(x, y),
+id_ = Operation(
+    doc="identity",
+    type=lambda α: α ** α
+)
+apply = Operation(
     doc="applying a function to a collection",
-    derived=None
+    type=lambda x, y: (x ** y) ** R1(x) ** R2(x, y)
 )
-
 
 # Set operations
 
-# primitive
-nest = Ω(type=lambda x: x ** R1(x), doc="put value in unary relation", derived=None)
-# primitive
-nest2 = Ω(type=lambda x, y: x ** y ** R2(x, y), doc="put values in binary relation", derived=None)
-# primitive
-nest3 = Ω(type=lambda x, y, z: x ** y ** z ** R3(x, y, z), doc="put values in ternary relation", derived=None)
-# primitive
-add = Ω(type=lambda x: R1(x) ** x ** R1(x), doc="add value to unary relation", derived=None)
-# primitive
-get = Ω(lambda x: R1(x) ** x, doc="get some value from unary relation", derived=None)
-# primitive
-inrel = Ω(lambda x: x ** R1(x) ** Bool, doc="whether some value is in a relation", derived=None)
+nest = Operation(
+    doc="put value in unary relation",
+    type=lambda x: x ** R1(x)
+)
+nest2 = Operation(
+    doc="put values in binary relation",
+    type=lambda x, y: x ** y ** R2(x, y)
+)
+nest3 = Operation(
+    type=lambda x, y, z: x ** y ** z ** R3(x, y, z),
+    doc="put values in ternary relation"
+)
+add = Operation(
+    doc="add value to unary relation",
+    type=lambda x: R1(x) ** x ** R1(x),
+)
+get = Operation(
+    doc="get some value from unary relation",
+    type=lambda x: R1(x) ** x
+)
+inrel = Operation(
+    doc="whether some value is in a relation",
+    type=lambda x: x ** R1(x) ** Bool,
+)
 
 # define: relunion (add (nest (regions x)) (regions y))
-set_union = Ω(
-    type=lambda rel:
-    rel ** rel ** rel,
+set_union = Operation(
+    type=lambda rel: rel ** rel ** rel,
     doc="union of two relations",
-    derived = None
+    derived=None
 )
 
-# primitive
-set_diff = Ω(lambda rel:
-    rel ** rel ** rel,
+set_diff = Operation(
     doc="difference of two relations",
-    derived = None
+    type=lambda rel: rel ** rel ** rel
 )
-
-# define: set_diff rel1 (set_diff rel1 rel2)
-set_inters = Ω(lambda rel:
-    rel ** rel ** rel,
+set_inters = Operation(
     doc="intersection of two relations",
-    derived = lambda x, y: set_diff (x) (set_diff (x) (y))
+    type=lambda rel: rel ** rel ** rel,
+    derived=lambda x, y: set_diff (x) (set_diff (x) (y))
 )
-# primitive
-relunion = Ω(lambda rel:
-    R1(rel) ** rel | rel @ operators(R1, R2, R3),
+relunion = Operation(
     doc="union of a set of relations",
-    derived = None
+    type=lambda rel: R1(rel) ** rel | rel @ operators(R1, R2, R3)
 )
-
-# A constructor for quantified relations. prod generates a cartesian product as
-# a nested binary relation. prod3 generates a quantified relation from two
-# nested binary relations. The keys of the nested relations become two keys of
-# the quantified relation.
-# define: apply1 (compose ((swap apply1) (objectratios x2)) ratio) (ratiofield x1)
-prod = Ω(lambda x, y, z, u, w:
-    (y ** z ** u) ** R2(x, y) ** R2(w, z) ** R2(x, R2(w, u)),
-         doc= "A constructor for quantified relations. Prod generates a cartesian product of two relations as a nested binary relation.",
-         derived=lambda f, x, y: apply1 (compose ((swap (apply1)) (y)) (f)) (x)
+prod = Operation(
+    doc=("A constructor for quantified relations. Prod generates a cartesian "
+         "product of two relations as a nested binary relation."),
+    type=lambda x, y, z, u, w:
+        (y ** z ** u) ** R2(x, y) ** R2(w, z) ** R2(x, R2(w, u)),
+    derived=lambda f, x, y: apply1 (compose ((swap (apply1)) (y)) (f)) (x)
 )
-
-# primitive
-prod3 = Ω(lambda x, y, z:
-    R2(z, R2(x, y)) ** R3(x, y, z),
-    doc= "prod3 generates a quantified relation from two nested binary relations. The keys of the nested relations become two keys of the quantified relation.",
-        derived=None
+prod3 = Operation(
+    doc=("prod3 generates a quantified relation from two nested binary "
+        "relations. The keys of the nested relations become two keys of "
+        "the quantified relation."),
+    type=lambda x, y, z: R2(z, R2(x, y)) ** R3(x, y, z),
 )
 
 # Projection (π). Projects a given relation to one of its attributes, resulting
 # in a collection. Projection is also possible for multiple attributes.
 
-# primitive
-pi1 = Ω(lambda rel, x:
-    rel ** R1(x)
-    | rel @ operators(R1, R2, R3, param=x, at=1),
-        doc="projects a given relation to the first attribute, resulting in a collection",
-        derived=None
-        )
-# primitive
-pi2 = Ω(lambda rel, x:
-    rel ** R1(x)
-    | rel @ operators(R1, R2, R3, param=x, at=2),
-        doc="projects a given relation to the second attribute, resulting in a collection",
-        derived=None
-        )
-# primitive
-pi3 = Ω(lambda x: R3(_, _, x) ** R1(x),
-        doc="projects a given ternary relation to the third attribute, resulting in a collection",
-        derived=None)
-# primitive
-pi12 = Ω(lambda x, y: R3(x, y, _) ** R2(x, y),
-         doc= "projects a given ternary relation to the first two attributes",
-         derived=None)
-# primitive
-pi23 = Ω(lambda x, y: R3(_, x, y) ** R2(x, y),
-        doc= "projects a given ternary relation to the last two attributes",
-         derived=None)
-
+pi1 = Operation(
+    doc=("projects a given relation to the first attribute, resulting in a "
+         "collection"),
+    type=lambda rel, x:
+        rel ** R1(x) | rel @ operators(R1, R2, R3, param=x, at=1),
+)
+pi2 = Operation(
+    doc=("projects a given relation to the second attribute, resulting in a "
+         "collection"),
+    type=lambda rel, x:
+        rel ** R1(x) | rel @ operators(R1, R2, R3, param=x, at=2),
+    derived=None
+)
+pi3 = Operation(
+    doc=("projects a given ternary relation to the third attribute, resulting "
+         "in a collection"),
+    type=lambda x: R3(_, _, x) ** R1(x)
+)
+pi12 = Operation(
+    doc="projects a given ternary relation to the first two attributes",
+    type=lambda x, y: R3(x, y, _) ** R2(x, y)
+)
+pi23 = Operation(
+    doc="projects a given ternary relation to the last two attributes",
+    type=lambda x, y: R3(_, x, y) ** R2(x, y)
+)
 
 # Selection (σ). Selects a subset of the relation using a constraint on
 # attribute values, like equality (eq) or order (leq). Used to be sigmae
 # and sigmale.
 
-# primitive
-select = Ω(lambda x, y, rel:
-    (x ** y ** Bool) ** rel ** y ** rel
-    | rel @ operators(R1, R2, R3, R3a, param=x),
-           doc="Selects a subset of a relation using a constraint on one attribute, like equality (eq) or order (leq)",
-           derived=None)
-
-# Select with subset. Subset a relation to those tuples having an attribute
-# value contained in a collection.
-# primitive
-subset = Ω(lambda x, rel:
-    rel ** R1(x) ** rel
-    | rel @ operators(R1, R2, R3, R3a, param=x),
-     doc="Subset a relation to those tuples having an attribute value contained in a collection",
-     derived=lambda r, c: select (inrel, r, c))
-
-# primitive
-select2 = Ω(lambda x, y, rel:
-    (x ** y ** Bool) ** rel ** rel
-    | rel @ operators(R1, R2, R3, R3a, param=x)
-    | rel @ operators(R1, R2, R3, R3a, param=y),
-    doc ="Selects a subset of a relation using a constraint on two attributes, like equality (eq) or order (leq)",
-    derived=None
+select = Operation(
+    doc=("Selects a subset of a relation using a constraint on one "
+         "attribute, like equality (eq) or order (leq)"),
+    type=lambda x, y, rel:
+        (x ** y ** Bool) ** rel ** y ** rel \
+        | rel @ operators(R1, R2, R3, R3a, param=x)
+)
+subset = Operation(
+    doc=("Subset a relation to those tuples having an attribute value "
+         "contained in a collection"),
+    type=lambda x, rel:
+        rel ** R1(x) ** rel | rel @ operators(R1, R2, R3, R3a, param=x),
+    derived=lambda r, c: select (inrel, r, c)
 )
 
+select2 = Operation(
+    doc=("Selects a subset of a relation using a constraint on two "
+         "attributes, like equality (eq) or order (leq)"),
+    type=lambda x, y, rel:
+        (x ** y ** Bool) ** rel ** rel
+        | rel @ operators(R1, R2, R3, R3a, param=x)
+        | rel @ operators(R1, R2, R3, R3a, param=y)
+)
 
-# Join (⨝).Join of two unary concepts, like a table join.
-# primitive
-join = Ω(lambda x, y, z: R2(x, y) ** R2(y, z) ** R2(x, z),
-         doc= "Join of two unary concepts, like a table join",
-         derived=None
-         )
+# Join (⨝)
+
+join = Operation(
+    doc="Join of two unary concepts, like a table join",
+    type=lambda x, y, z: R2(x, y) ** R2(y, z) ** R2(x, z)
+)
 
 # functions to handle multiple attributes (with 1 key)
 # define: prod3 (pi12 (select2 eq (prod3 (apply1 (compose ((swap apply1) (boolfield x1)) nest2) (ratiofield x2)))))
-join_attr = Ω(lambda x, y, z: R2(x, y) ** R2(x, z) ** R3a(x, y, z), derived=None)
-get_attrL = Ω(lambda x, y, z: R3a(x, y, z) ** R2(x, y), derived=None)
-get_attrR = Ω(lambda x, y, z: R3a(x, y, z) ** R2(x, z), derived=None)
+join_attr = Operation(
+    type=lambda x, y, z: R2(x, y) ** R2(x, z) ** R3a(x, y, z),
+    derived=None
+)
+get_attrL = Operation(
+    type=lambda x, y, z: R3a(x, y, z) ** R2(x, y),
+    derived=None
+)
+get_attrR = Operation(
+    type=lambda x, y, z: R3a(x, y, z) ** R2(x, z),
+    derived=None
+)
 
-# Substitute the quality of a quantified relation to some
-# quality of one of its keys. Used to be bowtie*.
 # define: #lambda x, y: prod3 (apply1 (subset (y)) (groupbyL (pi1) (x)))
-join_key = Ω(lambda x, q1, y, rel, q2:
-    R3(x, q1, y) ** rel ** R3(x, q2, y)
-    | rel @ [R2(x, q2), R2(y, q2)],
-             doc= "Substitute the quality of a quantified relation to some quality of one of its keys.",
-             derived= None
-             )
+join_key = Operation(
+    doc=("Substitute the quality of a quantified relation to some quality "
+         "of one of its keys."),
+    type=lambda x, q1, y, rel, q2:
+        R3(x, q1, y) ** rel ** R3(x, q2, y) | rel @ [R2(x, q2), R2(y, q2)],
+    derived=None
+)
 
-# Join with unary function. Generate a unary concept from one other unary
-# concept of the same type. Used to be join_fa/join_with1.
-# define:
-apply1 = Ω(lambda x1, x2, y:
-    (x1 ** x2) ** R2(y, x1) ** R2(y, x2), doc="Join with unary function. Generates a unary concept from one other unary concept using a function",
-    derived=lambda f, y: join (y) (apply (f) (pi2 (y))))
+apply1 = Operation(
+    doc=("Join with unary function. Generates a unary concept from one "
+         "other unary concept using a function"),
+    type=lambda x1, x2, y:
+        (x1 ** x2) ** R2(y, x1) ** R2(y, x2),
+    derived=lambda f, y: join (y) (apply (f) (pi2 (y)))
+)
+apply2 = Operation(
+    doc=("Join with binary function. Generates a unary concept from two "
+         "other unary concepts of the same type"),
+    type=lambda x1, x2, x3, y:
+        (x1 ** x2 ** x3) ** R2(y, x1) ** R2(y, x2) ** R2(y, x3),
+    derived=lambda f, x,y: pi12 (select2 (eq) (prod3 (prod (f) (x) (y))))
+)
 
-# Join with binary function (⨝_f). Generate a unary concept from two other
-# unary concepts of the same type. Used to be bowtie_ratio/join_with2 and others.
-# define
-apply2 = Ω(lambda x1, x2, x3, y:
-    (x1 ** x2 ** x3) ** R2(y, x1) ** R2(y, x2) ** R2(y, x3),
-           doc="Join with binary function. Generates a unary concept from two other unary concepts of the same type",
-           derived = lambda f, x,y: pi12 (select2 (eq) (prod3 (prod (f) (x) (y))))
-           )
-
-# Group by (β). Group quantified relations by the left (right) key,
-# summarizing lists of quality values with the same key value into a new
-# value per key, resulting in a unary core concept relation.
-
-# primitive
-groupbyL = Ω(lambda rel, l, q1, q2, r:
-    (rel ** q2) ** R3(l, q1, r) ** R2(l, q2)
-    | rel @ [R1(r), R2(r, q1)],
-             doc= "Group quantified relations by the left key, summarizing lists of quality values with the same key value into a new value per key, resulting in a unary concept.",
-             derived=None
-             )
-
-# primitive
-groupbyR = Ω(lambda rel, q2, l, q1, r:
-    (rel ** q2) ** R3(l, q1, r) ** R2(r, q2)
-    | rel @ [R1(l), R2(l, q1)],
-            doc= "Group quantified relations by the right key, summarizing lists of quality values with the same key value into a new value per key, resulting in a unary concept.",
-             derived=None
-            )
-
-# Group by qualities of binary relations
-# example:  groupby count (objectregions x)
-# primitive
-groupby = Ω(lambda l, q, y:
-    (R1(l) ** q) ** R2(l, y) ** R2(y, q),
-            doc= "Group by qualities of binary relations",
-            derived = None
-            )
+groupbyL = Operation(
+    doc=("Group quantified relations by the left key, summarizing lists "
+         "of quality values with the same key value into a new value per "
+         "key, resulting in a unary concept."),
+    type=lambda rel, l, q1, q2, r:
+        (rel ** q2) ** R3(l, q1, r) ** R2(l, q2) | rel @ [R1(r), R2(r, q1)],
+ )
+groupbyR = Operation(
+    doc=("Group quantified relations by the right key, summarizing lists of "
+         "quality values with the same key value into a new value per key, "
+         "resulting in a unary concept."),
+    type=lambda rel, q2, l, q1, r:
+        (rel ** q2) ** R3(l, q1, r) ** R2(r, q2) | rel @ [R1(l), R2(l, q1)]
+)
+groupby = Operation(
+    doc="Group by qualities of binary relations",
+    type=lambda l, q, y:
+        (R1(l) ** q) ** R2(l, y) ** R2(y, q),
+)
 
 
 ##############################################################################
