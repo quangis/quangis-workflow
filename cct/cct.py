@@ -9,8 +9,8 @@ Module containing the core concept transformation algebra. Usage:
 """
 
 from transformation_algebra import \
-    Type, operators, _, Data, Operation
-from transformation_algebra.rdf import TransformationAlgebraRDF
+    Type, operators, _, Data, Operation, TransformationAlgebra
+from transformation_algebra.rdf import AlgebraNamespace
 
 
 ##############################################################################
@@ -267,7 +267,7 @@ ocover = Ω(R2(Obj, Reg) ** R1(Obj) ** Reg, doc="measures the spatial coverage o
 compose = Ω(lambda α, β, γ:
     (β ** γ) ** (α ** β) ** (α ** γ),
     doc="compose unary functions",
-    derived=None
+    derived=lambda f, g, x: f(g(x))
 )
 
 # primitive
@@ -491,5 +491,7 @@ groupby = Ω(lambda l, q, y:
 
 ##############################################################################
 # Generate an algebra out of all definitions in this module
-cct = TransformationAlgebraRDF("cct", "https://github.com/quangis/cct#")
+cct = TransformationAlgebra()
 cct.add(**globals())
+
+CCT = AlgebraNamespace("https://github.com/quangis/cct#", cct)

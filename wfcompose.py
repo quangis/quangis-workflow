@@ -14,10 +14,12 @@ from glob import glob
 from sys import stderr
 from os.path import basename
 
+from transformation_algebra.type import _
 from transformation_algebra.expr import Expr
-from transformation_algebra.rdf import TA, TransformationGraph
+from transformation_algebra.rdf import TransformationGraph
+from transformation_algebra.query import TransformationQuery
 
-from cct import cct, R2, R3a, Obj, Reg, Ratio, \
+from cct import CCT, cct, R2, R3a, Loc, Obj, Reg, Ratio, \
     lTopo, apply, ratio, groupby, size, pi1
 from cct.util import namespaces, graph, WF, TOOLS, dot, ttl
 
@@ -100,7 +102,7 @@ def workflow_expr(workflows: Graph, tools: Graph, workflow: Node) -> Graph:
     Concatenate workflow expressions and add them to a graph.
 
     """
-    output = TransformationGraph(cct, cct.namespace)
+    output = TransformationGraph(cct, CCT)
 
     # Find expressions for each step by mapping the output node of each to the
     # algebra expression associated with the tool, and the input nodes
@@ -115,13 +117,12 @@ def workflow_expr(workflows: Graph, tools: Graph, workflow: Node) -> Graph:
 
     sources = set(workflows.objects(subject=workflow, predicate=WF.source))
 
-    output.workflow(workflow, sources, steps)
-    return output.graph
+    output.add_workflow(workflow, sources, steps)
+    return output
 
 
-cct_graph = TransformationGraph(cct, cct.namespace)
+cct_graph = TransformationGraph(cct, CCT)
 cct_graph.vocabulary()
-cct_graph = cct_graph.graph
 
 tool_graph = graph(
     "TheoryofGISFunctions/ToolDescription_TransformationAlgebra.ttl"
@@ -130,8 +131,8 @@ tool_graph = graph(
 full_graph = cct_graph + tool_graph
 
 for workflow_file in glob("TheoryofGISFunctions/Scenarios/**/*_cct.ttl"):
-    if "Amsterdam" not in workflow_file:
-        continue
+    # if "Amsterdam" not in workflow_file:
+    #     continue
     print(f"\nWorkflow {workflow_file}", file=stderr)
     workflow_graph = graph(workflow_file)
     full_graph += workflow_graph
@@ -148,7 +149,7 @@ for workflow_file in glob("TheoryofGISFunctions/Scenarios/**/*_cct.ttl"):
             # print(dot(g))
         except Exception as e:
             print("FAILURE: ", e, file=stderr)
-            raise
+            # raise
         else:
             print("SUCCESS.", file=stderr)
 
@@ -165,7 +166,7 @@ for workflow_file in glob("TheoryofGISFunctions/Scenarios/**/*_cct.ttl"):
 
 
 # exit()
-# g.serialize(format="ttl", destination='everything.ttl', encoding='utf-8')
+full_graph.serialize(format="ttl", destination='everything.ttl', encoding='utf-8')
 
 # for result in g.query(query_output_types):
 #     print(result.description, result.op, result.params)
@@ -174,7 +175,7 @@ for workflow_file in glob("TheoryofGISFunctions/Scenarios/**/*_cct.ttl"):
 # exit()
 
 # Try workflow 1
-flow = R3a(Obj, Reg, Ratio) << ... << apply << ... << size
+#flow = R3a(Obj, Reg, Ratio) << ... << apply << ... << size
 
 # flow = R3a(Obj, Reg, Ratio) << ... << apply << ... << (
 #     ratio &
@@ -182,5 +183,15 @@ flow = R3a(Obj, Reg, Ratio) << ... << apply << ... << size
 #     apply << ... << (size & R2(Obj, Reg))
 # )
 
-for result in cct.query(full_graph, flow):
-    print("Result:", result.description)
+noise = TransformationQuery(
+    R3a(Obj, Reg, Ratio), ..., apply, ..., [
+        (ratio),
+        (groupby, ..., [(size), (pi1, R2(Loc, _))]),
+        (apply, ..., [(size), (R2(Obj, Reg))])
+    ],
+    namespace=CCT
+)
+
+
+# for result in full_graph.query(noise.sparql()):
+#     print("Result:", result.description)
