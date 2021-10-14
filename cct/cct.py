@@ -403,15 +403,18 @@ compose = Operation(
 )
 compose2 = Operation(
     doc="compose binary functions",
-    type=lambda α, β, γ, δ: (β ** γ) ** (δ ** α ** β) ** (δ ** α ** γ)
+    type=lambda α, β, γ, δ: (β ** γ) ** (δ ** α ** β) ** (δ ** α ** γ),
+    derived=lambda f, g, x, y: f(g(x, y))
 )
 swap = Operation(
     doc="swap binary function inputs",
-    type=lambda α, β, γ: (α ** β ** γ) ** (β ** α ** γ)
+    type=lambda α, β, γ: (α ** β ** γ) ** (β ** α ** γ),
+    derived=lambda f, x, y: f(y, x)
 )
 id_ = Operation(
     doc="identity",
-    type=lambda α: α ** α
+    type=lambda α: α ** α,
+    derived=lambda x: x
 )
 apply = Operation(
     doc="applying a function to a collection",
@@ -444,14 +447,11 @@ inrel = Operation(
     doc="whether some value is in a relation",
     type=lambda x: x ** R1(x) ** Bool,
 )
-
-# define: relunion (add (nest (regions x)) (regions y))
 set_union = Operation(
-    type=lambda rel: rel ** rel ** rel,
     doc="union of two relations",
-    derived=None
+    type=lambda rel: rel ** rel ** rel,
+    derived=lambda x, y: relunion(add(nest(x), y))
 )
-
 set_diff = Operation(
     doc="difference of two relations",
     type=lambda rel: rel ** rel ** rel
@@ -479,8 +479,7 @@ prod3 = Operation(
     type=lambda x, y, z: R2(z, R2(x, y)) ** R3(x, y, z),
 )
 
-# Projection (π). Projects a given relation to one of its attributes, resulting
-# in a collection. Projection is also possible for multiple attributes.
+# Projection (π)
 
 pi1 = Operation(
     doc=("projects a given relation to the first attribute, resulting in a "
@@ -508,9 +507,7 @@ pi23 = Operation(
     type=lambda x, y: R3(_, x, y) ** R2(x, y)
 )
 
-# Selection (σ). Selects a subset of the relation using a constraint on
-# attribute values, like equality (eq) or order (leq). Used to be sigmae
-# and sigmale.
+# Selection (σ)
 
 select = Operation(
     doc=("Selects a subset of a relation using a constraint on one "
@@ -544,10 +541,12 @@ join = Operation(
 )
 
 # functions to handle multiple attributes (with 1 key)
-# define: prod3 (pi12 (select2 eq (prod3 (apply1 (compose ((swap apply1) (boolfield x1)) nest2) (ratiofield x2)))))
 join_attr = Operation(
     type=lambda x, y, z: R2(x, y) ** R2(x, z) ** R3a(x, y, z),
-    derived=None
+    # derived=lambda x1, x2: prod3(pi12(select2(
+    #     eq,
+    #     prod3(apply1(compose(swap(apply1, x1), nest2), x2))
+    # )))
 )
 get_attrL = Operation(
     type=lambda x, y, z: R3a(x, y, z) ** R2(x, y),
@@ -558,13 +557,12 @@ get_attrR = Operation(
     derived=None
 )
 
-# define: #lambda x, y: prod3 (apply1 (subset (y)) (groupbyL (pi1) (x)))
 join_key = Operation(
     doc=("Substitute the quality of a quantified relation to some quality "
          "of one of its keys."),
     type=lambda x, q1, y, rel, q2:
         R3(x, q1, y) ** rel ** R3(x, q2, y) | rel @ [R2(x, q2), R2(y, q2)],
-    derived=None
+    # derived=lambda x, y: prod3(apply1(subset(y), groupbyL(pi1, x)))
 )
 
 apply1 = Operation(
@@ -588,7 +586,7 @@ groupbyL = Operation(
          "key, resulting in a unary concept."),
     type=lambda rel, l, q1, q2, r:
         (rel ** q2) ** R3(l, q1, r) ** R2(l, q2) | rel @ [R1(r), R2(r, q1)],
- )
+)
 groupbyR = Operation(
     doc=("Group quantified relations by the right key, summarizing lists of "
          "quality values with the same key value into a new value per key, "
