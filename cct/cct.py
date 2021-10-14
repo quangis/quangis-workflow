@@ -224,7 +224,7 @@ aspect = Operation(
     type=R2(Loc, Itv) ** R2(Loc, Ratio),
 )
 flowdirgraph = Operation(
-    doc="flow direction graph from DEM (location field)", 
+    doc="flow direction graph from DEM (location field)",
     type=R2(Loc, Itv) ** R2(Loc, Loc)
 )
 accumulate = Operation(
@@ -522,7 +522,7 @@ select = Operation(
     doc=("Selects a subset of a relation using a constraint on one "
          "attribute, like equality (eq) or order (leq)"),
     type=lambda x, y, rel:
-        (x ** y ** Bool) ** rel ** y ** rel \
+        (x ** y ** Bool) ** rel ** y ** rel
         | rel @ operators(R1, R2, R3, R3a, param=x)
 )
 subset = Operation(

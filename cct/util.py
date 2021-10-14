@@ -4,12 +4,11 @@ Utilities and namespaces.
 
 import rdflib  # type: ignore
 from rdflib import Graph
-from rdflib.tools.rdf2dot import rdf2dot
+from rdflib.tools.rdf2dot import rdf2dot  # type: ignore
 from typing import Union
-import io
 
 from transformation_algebra.rdf import TA
-from cct import cct
+from cct.cct import CCT
 
 RDF = rdflib.Namespace("http://www.w3.org/1999/02/22-rdf-syntax-ns#")
 RDFS = rdflib.Namespace("http://www.w3.org/2000/01/rdf-schema#")
@@ -23,7 +22,7 @@ namespaces = {
     "wf": WF,
     "tools": TOOLS,
     "ta": TA,
-    "cct": cct.namespace}
+    "cct": CCT}
 
 
 def graph(*gs: Union[str, Graph]) -> Graph:
@@ -40,22 +39,17 @@ def graph(*gs: Union[str, Graph]) -> Graph:
     return graph
 
 
-def dot(g: Graph) -> str:
+def write_dot(g: Graph, fn: str, directory="build/") -> None:
     """
     Turn a graph into GraphViz dot syntax. You can pass the output to such
     programs as `xdot` to visualize the RDF graph.
     """
-    # rdf2dot uses deprecated cgi.escape function; this hack solves that
-    import cgi
-    import html
-    stream = io.StringIO()
-    cgi.escape = html.escape  # type: ignore
-    rdf2dot(g, stream)
-    return stream.getvalue()
+    with open(fn + ".dot", 'w') as f:
+        rdf2dot(g, f)
 
 
-def ttl(g: Graph) -> str:
+def write_ttl(g: Graph, fn: str, directory="build/") -> None:
     """
     Turn a graph into ttl syntax.
     """
-    return g.serialize(format='ttl', encoding='utf-8').decode()
+    g.serialize(format="ttl", destination=fn + ".ttl", encoding='utf-8')

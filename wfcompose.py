@@ -6,7 +6,8 @@ different.
 
 from __future__ import annotations
 
-from rdflib import Graph, URIRef  # type: ignore
+from rdflib import Graph  # type: ignore
+from rdflib.namespace import RDF  # type: ignore
 from rdflib.term import Node  # type: ignore
 from rdflib.plugins import sparql  # type: ignore
 from rdflib.tools.rdf2dot import rdf2dot  # type: ignore
@@ -14,36 +15,14 @@ from glob import glob
 from sys import stderr
 from os.path import basename
 
-from transformation_algebra.type import _
 from transformation_algebra.expr import Expr
 from transformation_algebra.rdf import TransformationGraph
-from transformation_algebra.query import TransformationQuery
 
-from cct import CCT, cct, R2, R3a, Loc, Obj, Reg, Ratio, \
-    lTopo, apply, ratio, groupby, size, pi1
-from cct.util import namespaces, graph, WF, TOOLS, dot, ttl
-
-from typing import List, Tuple, Optional, Dict, Union
+from cct.cct import CCT, cct  # type: ignore
+from cct.util import namespaces, graph, WF, TOOLS  # type: ignore
 
 
 print("Preparing queries...", file=stderr)
-
-"""
-A query to obtain all workflows and their descriptions.
-"""
-query_workflow = sparql.prepareQuery(
-    """
-    SELECT
-        ?node ?description ?output
-    WHERE {
-        ?node a wf:Workflow.
-        ?node rdfs:comment ?description.
-        OPTIONAL {
-            ?node ta:target/ta:type/rdfs:label ?output.
-        }
-    } GROUP BY ?node
-    """, initNs=namespaces)
-
 
 """
 A query to obtain all steps of a workflow and the relevant in- and outputs.
@@ -77,39 +56,17 @@ query_steps = sparql.prepareQuery(
     """, initNs=namespaces)
 
 
-"""
-A query to obtain all operations in a workflow.
-"""
-query_operations = sparql.prepareQuery(
-    """
-    SELECT
-        (group_concat(?input; separator=", ") as ?inputs)
-        ?operation
-        (group_concat(?output; separator=", ") as ?outputs)
-    WHERE {
-        ?wf a wf:Workflow, ta:Transformation.
-        ?wf ta:operation ?op.
-        ?op rdf:type/rdfs:label ?operation.
-        ?op ta:input/ta:type/rdfs:label ?input.
-        ?op ta:output ?out.
-        ?out ta:type/rdfs:label ?output.
-    } GROUP BY ?op ?out
-    """, initNs=namespaces)
-
-
 def workflow_expr(workflows: Graph, tools: Graph, workflow: Node) -> Graph:
     """
     Concatenate workflow expressions and add them to a graph.
-
     """
-    output = TransformationGraph(cct, CCT)
 
     # Find expressions for each step by mapping the output node of each to the
     # algebra expression associated with the tool, and the input nodes
     steps: dict[Node, tuple[Expr, list[Node]]] = {}
     for node in workflows.query(query_steps, initBindings={"wf": workflow}):
-        expr_string: Optional[str] = tools.value(subject=node.tool,
-            predicate=TOOLS.algebraexpression, any=False)
+        expr_string = tools.value(
+            node.tool, TOOLS.algebraexpression, any=False)
         assert expr_string, f"{node.tool} has no algebra expression"
         expr = cct.parse(expr_string).primitive()
         inputs = [x for x in (node.x1, node.x2, node.x3) if x]
@@ -117,81 +74,32 @@ def workflow_expr(workflows: Graph, tools: Graph, workflow: Node) -> Graph:
 
     sources = set(workflows.objects(subject=workflow, predicate=WF.source))
 
+    output = TransformationGraph(cct, CCT)
     output.add_workflow(workflow, sources, steps)
     return output
 
 
-cct_graph = TransformationGraph(cct, CCT)
-cct_graph.vocabulary()
+cct_graph = TransformationGraph.vocabulary(cct, CCT)
 
 tool_graph = graph(
     "TheoryofGISFunctions/ToolDescription_TransformationAlgebra.ttl"
 )
 
-full_graph = cct_graph + tool_graph
-
 for workflow_file in glob("TheoryofGISFunctions/Scenarios/**/*_cct.ttl"):
-    # if "Amsterdam" not in workflow_file:
-    #     continue
+
     print(f"\nWorkflow {workflow_file}", file=stderr)
+
     workflow_graph = graph(workflow_file)
-    full_graph += workflow_graph
-    workflows = workflow_graph.query(query_workflow)
-    for i, workflow in enumerate(workflows):
-        print(workflow.description, file=stderr)
-        try:
-            g = workflow_expr(workflow_graph, tool_graph, workflow.node)
+    workflow = workflow_graph.value(None, RDF.type, WF.Workflow, any=False)
 
-            with open(f"wf_{basename(workflow_file)}{i}.dot", 'w') as f:
-                rdf2dot(g, f)
+    try:
+        g = workflow_expr(workflow_graph, tool_graph, workflow)
+    except Exception as e:
+        print("Failure: ", e, file=stderr)
+    else:
+        print("Success!", file=stderr)
 
-            full_graph += g
-            # print(dot(g))
-        except Exception as e:
-            print("FAILURE: ", e, file=stderr)
-            # raise
-        else:
-            print("SUCCESS.", file=stderr)
-
-
-# for workflow in g.query(query_workflow):
-#     if "Amsterdam" not in workflow.description:
-#         continue
-#     print(f"\nWorkflow: {workflow.description}")
-#     print(f"Final output: {workflow.output}")
-#     for node in g.query(query_operations, initBindings={"wf": workflow.node}):
-#         print("Operation:", node.operation)
-#         print("Input:", node.inputs)
-#         print("Outputs:", node.outputs, "\n")
-
-
-# exit()
-full_graph.serialize(format="ttl", destination='everything.ttl', encoding='utf-8')
-
-# for result in g.query(query_output_types):
-#     print(result.description, result.op, result.params)
-#     print(result.operations)
-
-# exit()
-
-# Try workflow 1
-#flow = R3a(Obj, Reg, Ratio) << ... << apply << ... << size
-
-# flow = R3a(Obj, Reg, Ratio) << ... << apply << ... << (
-#     ratio &
-#     groupby << ... << (size & pi1) &
-#     apply << ... << (size & R2(Obj, Reg))
-# )
-
-noise = TransformationQuery(
-    R3a(Obj, Reg, Ratio), ..., apply, ..., [
-        (ratio),
-        (groupby, ..., [(size), (pi1, R2(Loc, _))]),
-        (apply, ..., [(size), (R2(Obj, Reg))])
-    ],
-    namespace=CCT
-)
-
-
-# for result in full_graph.query(noise.sparql()):
-#     print("Result:", result.description)
+        fn = basename(workflow_file)
+        with open(f"wf_{fn}.dot", 'w') as f:
+            rdf2dot(g, f)
+        g.serialize(format="ttl", destination=f"wf_{fn}.ttl", encoding='utf-8')
