@@ -41,6 +41,14 @@ NominalField = R2(Loc, Nom)
 BooleanField = R2(Loc, Bool)
 NominalInvertedField = R2(Nom, Reg)
 BooleanInvertedField = R2(Bool, Reg)
+Contour = R2(Ord, Reg)
+ContourLine = R2(Itv, Reg)
+PointMeasures = R2(Reg, Itv)
+AmountPatches = R2(Reg, Nom)
+BooleanCoverages = R2(Bool, Reg)
+NominalCoverages = R2(Nom, Reg)
+RatioNetwork = R3(Obj, Ratio, Obj)
+
 
 ##############################################################################
 # Data inputs
