@@ -2,6 +2,7 @@
 # files
 *.rdf
 *.ttl
+build/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

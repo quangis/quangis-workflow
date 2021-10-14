@@ -1,32 +1,27 @@
 #!/usr/bin/env python3
 """
-This is a test file for workflow concatenation. Final product will be
-different.
+This file generates transformation graphs for entire workflows, concatenating
+the algebra expressions for each individual use of a tool.
 """
 
 from __future__ import annotations
 
+import os.path
 from rdflib import Graph  # type: ignore
 from rdflib.namespace import RDF  # type: ignore
 from rdflib.term import Node  # type: ignore
 from rdflib.plugins import sparql  # type: ignore
-from rdflib.tools.rdf2dot import rdf2dot  # type: ignore
 from glob import glob
 from sys import stderr
-from os.path import basename
 
 from transformation_algebra.expr import Expr
 from transformation_algebra.rdf import TransformationGraph
 
-from cct.cct import CCT, cct  # type: ignore
-from cct.util import namespaces, graph, WF, TOOLS  # type: ignore
+from cct import CCT, cct  # type: ignore
+from util import write_graph, namespaces, graph, WF, TOOLS  # type: ignore
 
 
-print("Preparing queries...", file=stderr)
-
-"""
-A query to obtain all steps of a workflow and the relevant in- and outputs.
-"""
+# A query to obtain all steps of a workflow and the relevant in- and outputs.
 query_steps = sparql.prepareQuery(
     """
     SELECT
@@ -98,8 +93,4 @@ for workflow_file in glob("TheoryofGISFunctions/Scenarios/**/*_cct.ttl"):
         print("Failure: ", e, file=stderr)
     else:
         print("Success!", file=stderr)
-
-        fn = basename(workflow_file)
-        with open(f"wf_{fn}.dot", 'w') as f:
-            rdf2dot(g, f)
-        g.serialize(format="ttl", destination=f"wf_{fn}.ttl", encoding='utf-8')
+        write_graph(g, os.path.splitext(os.path.basename(workflow_file))[0])
