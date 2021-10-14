@@ -75,6 +75,7 @@ def workflow_expr(workflows: Graph, tools: Graph, workflow: Node) -> Graph:
 
 
 cct_graph = TransformationGraph.vocabulary(cct, CCT)
+write_graph(cct_graph, "cct_vocabulary")
 
 tool_graph = graph(
     "TheoryofGISFunctions/ToolDescription_TransformationAlgebra.ttl"
