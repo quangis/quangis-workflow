@@ -15,7 +15,7 @@ class MetaTestCase(ABCMeta):
     def __init__(cls, name, bases, clsdict):
         TOOLS = rdflib.Namespace(
             "http://geographicknowledge.de/vocab/GISTools.rdf#")
-        path = "ToolDescription_TransformationAlgebra.ttl"
+        path = "TheoryofGISFunctions/ToolDescription_TransformationAlgebra.ttl"
         g = rdflib.Graph()
         g.parse(path, format=rdflib.util.guess_format(path))
         cls.tool_expressions = dict(g.subject_objects(TOOLS.algebraexpression))
