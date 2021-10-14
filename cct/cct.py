@@ -1,3 +1,4 @@
+# type: ignore
 """
 Module containing the core concept transformation algebra. Usage:
 
