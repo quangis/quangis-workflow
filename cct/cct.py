@@ -285,7 +285,10 @@ loDist = Operation(
 oDist = Operation(
     doc="computes Euclidean distances between objects",
     type=R2(Obj, Reg) ** R2(Obj, Reg) ** R3(Obj, Ratio, Obj),
-    derived=lambda x, y: prod3 (apply1 (compose (groupbyR (min)) ((swap (loDist)) (x))) (apply1 (deify) (y)))
+    derived=lambda x, y: prod3(apply1(
+        compose(groupbyR(min), swap(loDist, x)),
+        apply1(deify, y)
+    ))
 )
 lTopo = Operation(
     doc=("detects the topological position of locations "
@@ -296,28 +299,46 @@ loTopo = Operation(
     doc=("detects the topological position of locations "
          "on objects (in, out, boundary)"),
     type=R1(Loc) ** R2(Obj, Reg) ** R3(Loc, Nom, Obj),
-    derived=lambda x,y: prod3 (apply1 (compose (groupbyL (compose (get) (pi2))) (lTopo ((x)))) (y))
+    derived=lambda x, y: prod3(apply1(
+        compose(groupbyL(compose(get, pi2)), lTopo(x)),
+        y
+    ))
 )
 oTopo = Operation(
     doc="detects the topological relations between two sets of objects",
     type=R2(Obj, Reg) ** R2(Obj, Reg) ** R3(Obj, Nom, Obj),
-    derived=lambda x, y: prod3 (apply1 (compose (groupbyR (compose (name) (pi2))) ((swap (loTopo)) (x))) (apply1 (deify) (y))))
+    derived=lambda x, y: prod3(apply1(
+        compose(groupbyR(compose(name, pi2)), swap(loTopo, x)),
+        apply1(deify, y)
+    ))
+)
 lrTopo = Operation(
     doc=("detects the topological position of locations "
          "on regions (in, out, boundary)"),
     type=R1(Loc) ** R1(Reg) ** R3(Loc, Nom, Reg),
-    derived=lambda x,y: prod3 (apply (compose (groupbyL (compose (get) (pi2))) (lTopo ((x)))) (y))
- )
+    derived=lambda x, y: prod3(apply(
+        compose(groupbyL(compose(get, pi2)), lTopo(x)),
+        y
+    ))
+)
 rTopo = Operation(
     R1(Reg) ** R1(Reg) ** R3(Reg, Nom, Reg),
     doc="detects the topological relations between two sets of regions",
-    derived= lambda x,y: prod3 (apply (compose (compose (groupbyR (compose (name) (pi2))) ((swap (lrTopo)) (x))) (deify)) (y))
+    derived=lambda x, y: prod3(apply(
+        compose(
+            compose(groupbyR(compose(name, pi2)), swap(lrTopo, x)),
+            deify),
+        y
+    ))
 )
 orTopo = Operation(
     doc=("detects the topological relations between a set of objects "
         "and a set of regions"),
     type=R2(Obj, Reg) ** R1(Reg) ** R3(Obj, Nom, Reg),
-    derived=lambda x,y: prod3 (apply (compose (compose (groupbyR (compose (name) (pi2))) ((swap (loTopo)) (x))) (deify)) (y))
+    derived=lambda x, y: prod3(apply(
+        compose(compose(groupbyR(compose(name, pi2)), swap(loTopo, x)), deify),
+        y
+    ))
 )
 
 # Network operations
@@ -328,7 +349,7 @@ nbuild = Operation(
 )
 nDist = Operation(
     doc="compute network distances between objects",
-    type=R2(Obj, Reg) ** R2(Obj, Reg)** R3(Obj, Ratio, Obj)
+    type=R2(Obj, Reg) ** R2(Obj, Reg) ** R3(Obj, Ratio, Obj)
         ** R3(Obj, Ratio, Obj)
 )
 lVis = Operation(
@@ -346,26 +367,28 @@ lgDist = Operation(
 
 # Amount operations
 fcont = Operation(
+    doc="summarizes the content of a field within a region",
     type=lambda x, y: (
         (R2(Val, x) ** y) ** R2(Loc, x) ** Reg ** y | x @ Qlt | y @ Qlt),
-    doc="summarizes the content of a field within a region",
-    derived=lambda f, x, r: f (subset (x) (deify (r)))
+    derived=lambda f, x, r: f(subset(x, deify(r)))
 )
 ocont = Operation(
-    type=R2(Obj, Reg) ** Reg ** Count,
     doc="counts the number of objects within a region",
-    derived=lambda x,y: get (pi2 (groupbyR (count) (select (eq) (orTopo (x) (nest (y))) (in_))))
+    type=R2(Obj, Reg) ** Reg ** Count,
+    derived=lambda x, y: get(pi2(
+        groupbyR(count, select(eq, orTopo(x, nest(y)), in_))
+    ))
 )
 fcover = Operation(
     doc=("measures the spatial coverage of a field that is constrained "
          "to certain field values"),
     type=lambda x: R2(Loc, x) ** R1(x) ** R1(Loc) | x @ Qlt,
-    derived=lambda x,y: pi1 (subset (x) (y))
+    derived=lambda x, y: pi1(subset(x, y))
 )
 ocover = Operation(
     doc="measures the spatial coverage of a collection of objects",
     type=R2(Obj, Reg) ** R1(Obj) ** Reg,
-    derived=lambda x,y: merge (pi2 (subset (x) (y)))
+    derived=lambda x, y: merge(pi2(subset(x, y)))
 )
 
 ###########################################################################
@@ -436,7 +459,7 @@ set_diff = Operation(
 set_inters = Operation(
     doc="intersection of two relations",
     type=lambda rel: rel ** rel ** rel,
-    derived=lambda x, y: set_diff (x) (set_diff (x) (y))
+    derived=lambda x, y: set_diff(x, set_diff(x, y))
 )
 relunion = Operation(
     doc="union of a set of relations",
@@ -447,7 +470,7 @@ prod = Operation(
          "product of two relations as a nested binary relation."),
     type=lambda x, y, z, u, w:
         (y ** z ** u) ** R2(x, y) ** R2(w, z) ** R2(x, R2(w, u)),
-    derived=lambda f, x, y: apply1 (compose ((swap (apply1)) (y)) (f)) (x)
+    derived=lambda f, x, y: apply1(compose(swap(apply1, y), f), x)
 )
 prod3 = Operation(
     doc=("prod3 generates a quantified relation from two nested binary "
@@ -470,7 +493,6 @@ pi2 = Operation(
          "collection"),
     type=lambda rel, x:
         rel ** R1(x) | rel @ operators(R1, R2, R3, param=x, at=2),
-    derived=None
 )
 pi3 = Operation(
     doc=("projects a given ternary relation to the third attribute, resulting "
@@ -502,7 +524,7 @@ subset = Operation(
          "contained in a collection"),
     type=lambda x, rel:
         rel ** R1(x) ** rel | rel @ operators(R1, R2, R3, R3a, param=x),
-    derived=lambda r, c: select (inrel, r, c)
+    derived=lambda r, c: select(inrel, r, c)
 )
 
 select2 = Operation(
@@ -550,14 +572,14 @@ apply1 = Operation(
          "other unary concept using a function"),
     type=lambda x1, x2, y:
         (x1 ** x2) ** R2(y, x1) ** R2(y, x2),
-    derived=lambda f, y: join (y) (apply (f) (pi2 (y)))
+    derived=lambda f, y: join(y, apply(f, pi2(y)))
 )
 apply2 = Operation(
     doc=("Join with binary function. Generates a unary concept from two "
          "other unary concepts of the same type"),
     type=lambda x1, x2, x3, y:
         (x1 ** x2 ** x3) ** R2(y, x1) ** R2(y, x2) ** R2(y, x3),
-    derived=lambda f, x,y: pi12 (select2 (eq) (prod3 (prod (f) (x) (y))))
+    derived=lambda f, x, y: pi12(select2(eq, prod3(prod(f, x, y))))
 )
 
 groupbyL = Operation(
