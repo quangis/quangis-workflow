@@ -113,16 +113,3 @@ malaria = TransformationQuery(
     namespace=CCT
 )
 
-
-for k, v in dict(globals()).items():
-    if isinstance(v, TransformationQuery):
-        print()
-        print(k)
-        try:
-            q = v.sparql()
-            with open(f"{k}.rq", 'w') as f:
-                f.write(q)
-        except Exception as e:
-            print(e)
-        else:
-            print("Success.")

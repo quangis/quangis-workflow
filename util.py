@@ -53,3 +53,11 @@ def write_graph(g: Graph, name: str, path="build/") -> None:
 
     g.serialize(format="ttl", destination=os.path.join(path, name + ".ttl"),
         encoding='utf-8')
+
+
+def write_text(name, string, path="build/") -> None:
+    if not os.path.exists(path):
+        os.makedirs(path)
+
+    with open(os.path.join(path, name), 'w') as f:
+        f.write(string)
