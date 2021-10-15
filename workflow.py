@@ -25,11 +25,13 @@ class Workflow(Graph):
         self.sources = set(self.objects(self.root, WF.source))
 
         # map output nodes to input nodes, tools and expressions
+        self.outputs: set[Node] = set()
         self.inputs: dict[Node, list[Node]] = {}
         self.tools: dict[Node, URIRef] = {}
         self.expressions: dict[Node, str] = {}
         for step in self.steps:
             out = self.value(step, WF.output, any=False)
+            self.outputs.add(out)
             self.tools[out] = tool = self.value(
                 step, WF.applicationOf, any=False)
             self.expressions[out] = expr = tools.value(
