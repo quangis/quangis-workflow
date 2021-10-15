@@ -25,6 +25,7 @@ for workflow_file in glob("TheoryofGISFunctions/Scenarios/**/*_cct.ttl"):
     label = Labeller()
     print("".join('*' for _ in range(79)))
     print(workflow.file)
+    print("SOURCES:", [label[i] for i in workflow.sources])
     print("".join('.' for _ in range(79)))
     for out in workflow.outputs:
         print("TOOL:", workflow.tools[out])
