@@ -5,9 +5,11 @@ Utilities and namespaces.
 import os
 import os.path
 import rdflib  # type: ignore
+import itertools
 from rdflib import Graph
 from rdflib.tools.rdf2dot import rdf2dot  # type: ignore
 from transformation_algebra.rdf import TA
+from collections import defaultdict
 from typing import Union
 
 from cct import CCT
@@ -61,3 +63,13 @@ def write_text(name, string, path="build/") -> None:
 
     with open(os.path.join(path, name), 'w') as f:
         f.write(string)
+
+
+class Labeller(defaultdict):
+    """
+    A labeller assigns a fresh name to anything it accesses.
+    """
+
+    def __init__(self, f=lambda x: x):
+        self.enumerator = itertools.count(start=1)
+        super().__init__(lambda: f(next(self.enumerator)))
