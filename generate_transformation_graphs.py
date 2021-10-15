@@ -10,7 +10,6 @@ import os.path
 from rdflib import Graph  # type: ignore
 from rdflib.namespace import RDF  # type: ignore
 from rdflib.term import Node  # type: ignore
-from rdflib.plugins import sparql  # type: ignore
 from glob import glob
 from sys import stderr
 
@@ -18,37 +17,25 @@ from transformation_algebra.expr import Expr
 from transformation_algebra.rdf import TransformationGraph
 
 from cct import CCT, cct  # type: ignore
-from util import write_graph, namespaces, graph, WF, TOOLS  # type: ignore
+from util import write_graph, graph, WF, TOOLS  # type: ignore
 
 
-# A query to obtain all steps of a workflow and the relevant in- and outputs.
-query_steps = sparql.prepareQuery(
+def get_steps(workflows: Graph, tools: Graph, wf: Node
+        ) -> dict[Node, tuple[Expr, list[Node]]]:
     """
-    SELECT
-        ?step ?tool
-        ?output ?is_final_output
-        ?x1 ?x2 ?x3
-    WHERE {
-        ?wf wf:edge ?step.
-        ?step wf:applicationOf ?tool.
-
-        # What are the inputs?
-        OPTIONAL { ?step wf:input1 ?x1. }
-        OPTIONAL { ?step wf:input2 ?x2. }
-        OPTIONAL { ?step wf:input3 ?x3. }
-
-        # Is this the final step?
-        ?step wf:output ?output.
-        OPTIONAL {
-            { ?next_step wf:input1 ?output }
-            UNION
-            { ?next_step wf:input2 ?output }
-            UNION
-            { ?next_step wf:input3 ?output }.
-        }
-        BIND (!bound(?next_step) AS ?is_final_output).
-    }
-    """, initNs=namespaces)
+    Map the output node of each step to an expression and its input nodes.
+    """
+    steps = {}
+    for step in workflows.objects(wf, WF.edge):
+        tool = workflows.value(step, WF.applicationOf, any=False)
+        assert tool, "workflow has an edge without a tool"
+        expr = tools.value(tool, TOOLS.algebraexpression, any=False)
+        assert expr, f"{tool} has no algebra expression"
+        output = workflows.value(step, WF.output, any=False)
+        steps[output] = cct.parse(expr).primitive(), list(filter(bool, (
+            workflows.value(step, p) for p in (WF.input1, WF.input2, WF.input3)
+        )))
+    return steps
 
 
 def workflow_expr(workflows: Graph, tools: Graph, workflow: Node) -> Graph:
@@ -58,15 +45,7 @@ def workflow_expr(workflows: Graph, tools: Graph, workflow: Node) -> Graph:
 
     # Find expressions for each step by mapping the output node of each to the
     # algebra expression associated with the tool, and the input nodes
-    steps: dict[Node, tuple[Expr, list[Node]]] = {}
-    for node in workflows.query(query_steps, initBindings={"wf": workflow}):
-        expr_string = tools.value(
-            node.tool, TOOLS.algebraexpression, any=False)
-        assert expr_string, f"{node.tool} has no algebra expression"
-        expr = cct.parse(expr_string).primitive()
-        inputs = [x for x in (node.x1, node.x2, node.x3) if x]
-        steps[node.output] = expr, inputs
-
+    steps = get_steps(workflows, tools, workflow)
     sources = set(workflows.objects(subject=workflow, predicate=WF.source))
 
     output = TransformationGraph(cct, CCT)
