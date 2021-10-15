@@ -38,38 +38,20 @@ def get_steps(workflows: Graph, tools: Graph, wf: Node
     return steps
 
 
-def workflow_expr(workflows: Graph, tools: Graph, workflow: Node) -> Graph:
-    """
-    Concatenate workflow expressions and add them to a graph.
-    """
-
-    # Find expressions for each step by mapping the output node of each to the
-    # algebra expression associated with the tool, and the input nodes
-    steps = get_steps(workflows, tools, workflow)
-    sources = set(workflows.objects(subject=workflow, predicate=WF.source))
-
-    output = TransformationGraph(cct, CCT)
-    output.add_workflow(workflow, sources, steps)
-    return output
-
-
-cct_graph = TransformationGraph.vocabulary(cct, CCT)
-cct_graph.bind("cct", CCT)
-write_graph(cct_graph, "cct_vocabulary")
-
-tool_graph = graph(
-    "TheoryofGISFunctions/ToolDescription_TransformationAlgebra.ttl"
-)
+tools = graph("TheoryofGISFunctions/ToolDescription_TransformationAlgebra.ttl")
 
 for workflow_file in glob("TheoryofGISFunctions/Scenarios/**/*_cct.ttl"):
 
     print(f"\nWorkflow {workflow_file}", file=stderr)
 
     workflow_graph = graph(workflow_file)
-    workflow = workflow_graph.value(None, RDF.type, WF.Workflow, any=False)
+    wf = workflow_graph.value(None, RDF.type, WF.Workflow, any=False)
 
     try:
-        g = workflow_expr(workflow_graph, tool_graph, workflow)
+        sources = set(workflow_graph.objects(wf, WF.source))
+        steps = get_steps(workflow_graph, tools, wf)
+        g = TransformationGraph(cct, CCT)
+        g.add_workflow(wf, sources, steps)
     except Exception as e:
         print("Failure: ", e, file=stderr)
     else:
