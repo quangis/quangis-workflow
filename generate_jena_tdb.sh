@@ -5,7 +5,7 @@
 set -euo pipefail
 
 # Get Apache Jena binaries if not present yet
-if [ ! -e build/apache-jena-4.2.0.zip ]; then
+if [ ! -e build/apache-jena-4.2.0/ ]; then
     mkdir -p build/
     cd build/
     wget https://dlcdn.apache.org/jena/binaries/apache-jena-4.2.0.zip

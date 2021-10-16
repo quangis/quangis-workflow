@@ -13,8 +13,8 @@ from cct import CCT, R2, R3a, Obj, Reg, Bool, Ratio, Loc, Count, Itv, Nom, Ord, 
 groupby = groupbyR  # Temporary solution
 dist = nDist  # Temporary solution
 
-# 1. What is the proportion of noise ≥ 70dB in Amsterdam?
-noise = TransformationQuery(
+# 1. (Noise) What is the proportion of noise ≥ 70dB in Amsterdam?
+noiseProPortionAmsterdam = TransformationQuery(
     R3a(Obj, Reg, Ratio), ..., apply, [
         (..., ratio),
         (..., groupby, [(..., size), (..., pi1, R2(Loc, _))]),
@@ -23,8 +23,9 @@ noise = TransformationQuery(
     namespace=CCT
 )
 
-# 2. What is the number of inhabitants for each neighbourhood in Utrecht?
-# population = TransformationQuery(
+# 2. (Population) What is the number of inhabitants for each neighbourhood in
+# Utrecht?
+# amountObjectsUtrecht = TransformationQuery(
 #     R3a(Obj, Reg, Count), Choice(
 #         (groupby, [(..., sum), (..., R2(Reg, Count))]),
 #         (groupby, [(..., count), (..., R2(Obj, Reg))])
@@ -32,8 +33,9 @@ noise = TransformationQuery(
 #     namespace=CCT
 # )
 
-# 3. What is the average temperature for each neighbourhood in Utrecht?
-temperature = TransformationQuery(
+# 3. (Temperature) What is the average temperature for each neighbourhood in
+# Utrecht?
+amountFieldUtrecht = TransformationQuery(
     R3a(Obj, Reg, Itv), ..., groupby, [
         (..., avg),
         (..., R2(Loc, Itv))
@@ -58,7 +60,7 @@ hospital_accessibility = TransformationQuery(
 
 # 6. What is the potential of solar power for each rooftop in the Glover Park
 # neighbourhood in Washington DC?
-solar_power = TransformationQuery(
+solar = TransformationQuery(
     R3a(Obj, Reg, Ratio), [
         (..., avg),
         (..., R2(Loc, Ratio), ..., groupby, apply, [
@@ -69,9 +71,9 @@ solar_power = TransformationQuery(
     namespace=CCT
 )
 
-# 7. What is the percentage of rural population within 2km distance to
-# all-season roads in Shikoku, Japan?
-# road_access = TransformationQuery(
+# 7. (Road-Access) What is the percentage of rural population within 2km
+# distance to all-season roads in Shikoku, Japan?
+# infrastructureAccess = TransformationQuery(
 #     R2(Reg, Ratio), [
 #         (..., ratio),
 #         (..., apply, R2(Reg, Count), ..., extrapol)
@@ -79,9 +81,9 @@ solar_power = TransformationQuery(
 #     namespace=CCT
 # )
 
-# 8. Which urban areas are at risk from water depletion in Ogallala (High
-# Plains) Aquifer, US?
-# water_risk = TransformationQuery(
+# 8. (Water-risk) Which urban areas are at risk from water depletion in
+# Ogallala (High Plains) Aquifer, US?
+# aquifer = TransformationQuery(
 #     R3a(Obj, Reg, Nom), [
 #         (..., select, ..., loTopo, ..., pi1, ..., R2(Loc, Nom)),
 #         (..., select, ..., dist, ..., R2(Obj, Reg))
