@@ -216,7 +216,7 @@ arealinterpol = Operation(
     type=R2(Reg, Ratio) ** R1(Reg) ** R2(Reg, Ratio)
 )
 slope = Operation(
-    doc="areal interpolation",
+    doc="slope",
     type=R2(Loc, Itv) ** R2(Loc, Ratio),
 )
 aspect = Operation(
