@@ -3,7 +3,7 @@
 Generate an RDF vocabulary for the operations and types of CCT.
 """
 
-from transformation_algebra.rdf import TransformationGraph
+from transformation_algebra import TransformationGraph
 
 from cct import cct, CCT
 from util import write_graph

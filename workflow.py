@@ -7,7 +7,7 @@ from rdflib.namespace import RDF, RDFS
 from rdflib.term import Node, URIRef
 import rdflib.util
 
-from transformation_algebra.expr import Expr
+from transformation_algebra import Expr
 
 from cct import cct
 from util import WF, TOOLS

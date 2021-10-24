@@ -8,7 +8,7 @@ import rdflib  # type: ignore
 import itertools
 from rdflib import Graph
 from rdflib.tools.rdf2dot import rdf2dot  # type: ignore
-from transformation_algebra.rdf import TA
+from transformation_algebra import TA
 from collections import defaultdict
 from typing import Union
 

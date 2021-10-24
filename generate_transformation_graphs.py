@@ -9,7 +9,7 @@ from __future__ import annotations
 import os.path
 from glob import glob
 from sys import stderr
-from transformation_algebra.rdf import TransformationGraph
+from transformation_algebra import TransformationGraph
 
 from cct import CCT, cct  # type: ignore
 from util import write_graph, graph  # type: ignore

@@ -9,9 +9,8 @@ Module containing the core concept transformation algebra. Usage:
      └─╼ objects data : R1(Obj)
 """
 
-from transformation_algebra import \
-    Type, operators, _, Operator, TransformationAlgebra
-from transformation_algebra.rdf import AlgebraNamespace
+from transformation_algebra import Type, operators, _, Operator, \
+    TransformationAlgebra, TransformationNamespace
 
 
 ##############################################################################
@@ -610,7 +609,6 @@ groupby = Operator(
 
 ##############################################################################
 # Generate an algebra out of all definitions in this module
-cct = TransformationAlgebra()
-cct.add(**globals())
 
-CCT = AlgebraNamespace("https://github.com/quangis/cct#", cct)
+cct = TransformationAlgebra(**globals())
+CCT = TransformationNamespace("https://github.com/quangis/cct#", cct)

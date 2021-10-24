@@ -3,7 +3,7 @@
 This file generates a SPARQL query for every transformation query.
 """
 
-from transformation_algebra.query import TransformationQuery
+from transformation_algebra import TransformationQuery
 
 from util import write_text
 import queries
