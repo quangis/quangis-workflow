@@ -8,7 +8,7 @@ from transformation_algebra.type import _
 from transformation_algebra.query import TransformationQuery
 from cct import CCT, R2, R3a, Obj, Reg, Bool, Ratio, Loc, Count, Itv, Nom, Ord, \
     apply, ratio, groupbyR, size, pi1, count, avg, min, nDist, extrapol, \
-    product, select, loTopo, lgDist, max, flowdirgraph, accumulate, sum
+    product, select, loTopo, oDist, lgDist, max, flowdirgraph, accumulate, sum
 
 groupby = groupbyR  # Temporary solution
 dist = nDist  # Temporary solution
@@ -47,26 +47,28 @@ amountFieldUtrecht = TransformationQuery(
 hospital_accessibility = TransformationQuery(
     R3a(Obj, Reg, Ratio), ..., groupby, [
         (..., min),
-        (..., dist, R2(Obj, Reg))
+        (..., nDist),
+        (..., R2(Obj, Reg))
     ],
     namespace=CCT
 )
 
 # 5. What is the impact of roads on deforestation in the Amazon rainforest?
 # deforestation = TransformationQuery(
-#     R2(Bool, Ratio), ..., size, pi1, ..., extrapol, R2(Obj, Reg),
+#     R2(Bool, Ratio), [
+#         (..., size, pi1, ..., extrapol, R2(Obj, Reg)),
+#         (..., size, pi1, ..., R2(Loc, Nom))
+#     ],
 #     namespace=CCT
 # )
 
 # 6. What is the potential of solar power for each rooftop in the Glover Park
 # neighbourhood in Washington DC?
 solar = TransformationQuery(
-    R3a(Obj, Reg, Ratio), [
+    R3a(Obj, Reg, Ratio), ..., groupby, [
         (..., avg),
-        (..., R2(Loc, Ratio), ..., groupby, apply, [
-            (..., size),
-            (..., product)
-        ])
+        (..., R2(Loc, Ratio)),
+        (..., R2(Obj, Reg))
     ],
     namespace=CCT
 )
@@ -76,7 +78,10 @@ solar = TransformationQuery(
 # infrastructureAccess = TransformationQuery(
 #     R2(Reg, Ratio), [
 #         (..., ratio),
-#         (..., apply, R2(Reg, Count), ..., extrapol)
+#         (..., R2(Reg, Ratio), ..., [
+#             (..., extrapol, R2(Obj, Reg)),
+#             (..., R2(Reg, Count))
+#         ])
 #     ],
 #     namespace=CCT
 # )
@@ -84,9 +89,11 @@ solar = TransformationQuery(
 # 8. (Water-risk) Which urban areas are at risk from water depletion in
 # Ogallala (High Plains) Aquifer, US?
 # aquifer = TransformationQuery(
-#     R3a(Obj, Reg, Nom), [
-#         (..., select, ..., loTopo, ..., pi1, ..., R2(Loc, Nom)),
-#         (..., select, ..., dist, ..., R2(Obj, Reg))
+#     R3a(Obj, Reg, Nom), ..., [
+#         (..., select, ..., loTopo, [
+#             (..., pi1, ..., R2(Loc, Nom)),
+#             (..., select, ..., oDist, ..., R2(Obj, Reg))
+#         ])
 #     ],
 #     namespace=CCT
 # )
@@ -95,10 +102,10 @@ solar = TransformationQuery(
 floods = TransformationQuery(
     R2(Ord, Ratio), ..., groupby, [
         (..., size),
-        (..., R2(Loc, Ord), groupby, ..., accumulate, flowdirgraph, ..., [
-            (..., lgDist),
+        (..., R2(Loc, Ord), ..., groupby, [
             (..., max),
-            (..., R2(Loc, Itv))
+            (..., accumulate, ..., flowdirgraph, ..., R2(Loc, Itv)),
+            (..., lgDist)
         ])
     ],
     namespace=CCT
@@ -110,8 +117,10 @@ malaria = TransformationQuery(
     R3a(Obj, Reg, Ratio), [
         (..., ratio),
         (..., R2(Obj, Count)),
-        (..., R2(Obj, Count), groupby, ..., sum, R2(Reg, Count))
+        (..., R2(Obj, Count), groupby, [
+            (..., sum),
+            (..., R2(Reg, Count))
+        ])
     ],
     namespace=CCT
 )
-
