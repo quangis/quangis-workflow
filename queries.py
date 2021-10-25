@@ -57,7 +57,7 @@ hospital_accessibility = TransformationQuery(
 # deforestation = TransformationQuery(
 #     R2(Bool, Ratio), [
 #         (..., size, pi1, ..., extrapol, R2(Obj, Reg)),
-#         (..., size, pi1, ..., R2(Loc, Nom))
+#         (..., size, pi1, ..., R2(Loc, _))
 #     ],
 #     namespace=CCT
 # )
