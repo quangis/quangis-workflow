@@ -9,28 +9,28 @@ Module containing the core concept transformation algebra. Usage:
      └─╼ objects data : R1(Obj)
 """
 
-from transformation_algebra import Type, operators, _, Operator, \
-    TransformationAlgebra, TransformationNamespace
+from transformation_algebra import Type, with_parameters, _, Operator, \
+    Language, LanguageNamespace
 
 
 ##############################################################################
 # Types and type synonyms
 
-Val = Type.declare('Val')
-Obj = Type.declare('Obj', supertype=Val)  # O
-Reg = Type.declare('Reg', supertype=Val)  # S
-Loc = Type.declare('Loc', supertype=Val)  # L
-Qlt = Type.declare('Qlt', supertype=Val)  # Q
-Nom = Type.declare('Nom', supertype=Qlt)
-Bool = Type.declare('Bool', supertype=Nom)
-Ord = Type.declare('Ord', supertype=Nom)
-Itv = Type.declare('Itv', supertype=Ord)
-Ratio = Type.declare('Ratio', supertype=Itv)
-Count = Type.declare('Count', supertype=Ratio)
-R1 = Type.declare('R1', params=1)  # Collections
-R2 = Type.declare('R2', params=2)  # Unary core concepts, 1 key (left)
-R3 = Type.declare('R3', params=3)  # Quantified relation, 2 keys (l & r)
-R3a = Type.declare('R3a', params=3)  # Ternary relation, 1 key (left)
+Val = Type.declare()
+Obj = Type.declare(supertype=Val)  # O
+Reg = Type.declare(supertype=Val)  # S
+Loc = Type.declare(supertype=Val)  # L
+Qlt = Type.declare(supertype=Val)  # Q
+Nom = Type.declare(supertype=Qlt)
+Bool = Type.declare(supertype=Nom)
+Ord = Type.declare(supertype=Nom)
+Itv = Type.declare(supertype=Ord)
+Ratio = Type.declare(supertype=Itv)
+Count = Type.declare(supertype=Ratio)
+R1 = Type.declare(params=1)  # Collections
+R2 = Type.declare(params=2)  # Unary core concepts, 1 key (left)
+R3 = Type.declare(params=3)  # Quantified relation, 2 keys (l & r)
+R3a = Type.declare(params=3)  # Ternary relation, 1 key (left)
 
 SpatialField = R2(Loc, Qlt)
 InvertedField = R2(Qlt, Reg)
@@ -115,80 +115,80 @@ product = Operator(
     type=Ratio ** Ratio ** Ratio
 )
 leq = Operator(
-    doc="less than or equal",
+    "less than or equal",
     type=Ord ** Ord ** Bool
 )
 eq = Operator(
-    doc="equal",
+    "equal",
     type=Val ** Val ** Bool
 )
 conj = Operator(
-    doc="conjunction",
+    "conjunction",
     type=Bool ** Bool ** Bool
 )
 notj = Operator(
-    doc="logical negation",
+    "logical negation",
     type=Bool ** Bool
 )
 disj = Operator(
-    doc="disjunction",
+    "disjunction",
     type=Bool ** Bool ** Bool,
     define=lambda x: compose2(notj, conj, x)
 )
 classify = Operator(
-    doc="classification table",
+    "classification table",
     type=Itv ** Ord
 )
 
 # Aggregations of collections
 
 count = Operator(
-    doc="count objects",
+    "count objects",
     type=R1(Obj) ** Count
 )
 size = Operator(
-    doc="measure size",
+    "measure size",
     type=R1(Loc) ** Ratio
 )
 merge = Operator(
-    doc="merge regions",
+    "merge regions",
     type=R1(Reg) ** Reg,
     define=lambda x: reify(relunion(pi2(apply(deify, x))))
 )
 centroid = Operator(
-    doc="measure centroid",
+    "measure centroid",
     type=R1(Loc) ** Loc
 )
 name = Operator(
-    doc="combine nominal values",
+    "combine nominal values",
     type=R1(Nom) ** Nom
 )
 
 # Statistical operations
 
 avg = Operator(
-    doc="average",
+    "average",
     type=lambda y: R2(Val, y) ** y | y @ Itv
 )
 min = Operator(
-    doc="minimum",
+    "minimum",
     type=lambda y: R2(Val, y) ** y | y @ Ord
 )
 max = Operator(
-    doc="maximum",
+    "maximum",
     type=lambda y: R2(Val, y) ** y | y @ Ord
 )
 sum = Operator(
-    doc="summing up values",
+    "summing up values",
     type=lambda y: R2(Val, y) ** y | y @ Ratio
 )
 contentsum = Operator(
-    doc="summing up content amounts (regions and their values)",
+    "summing up content amounts (regions and their values)",
     type=lambda x: R2(Reg, x) ** R2(Reg, x) | x @ Ratio,
     define=lambda x: nest2(merge(pi1(x)), sum(x))
 )
 coveragesum = Operator(
-    doc="summing up nominal coverages",
+    "summing up nominal coverages",
     type=R2(Nom, Reg) ** R2(Nom, Reg),
     define=lambda x: nest2(name(pi1(x)), merge(pi2(x)))
 )
@@ -198,67 +198,67 @@ coveragesum = Operator(
 # Geometric transformations
 
 interpol = Operator(
-    doc="spatial point interpolation",
+    "spatial point interpolation",
     type=lambda x: R2(Reg, x) ** R1(Loc) ** R2(Loc, x) | x @ Itv
 )
 extrapol = Operator(
-    doc="buffering, defined in terms of some distance (given as parameter)",
+    "buffering, defined in terms of some distance (given as parameter)",
     type=R2(Obj, Reg) ** R2(Loc, Bool),
     define=lambda x: apply1(
         leq(ratioV),
         groupbyL(min, loDist(deify(region), x)))
 )
 arealinterpol = Operator(
-    doc="areal interpolation",
+    "areal interpolation",
     type=R2(Reg, Ratio) ** R1(Reg) ** R2(Reg, Ratio)
 )
 slope = Operator(
-    doc="slope",
+    "slope",
     type=R2(Loc, Itv) ** R2(Loc, Ratio),
 )
 aspect = Operator(
-    doc="spatial aspect (cardinal direction) from DEM",
+    "spatial aspect (cardinal direction) from DEM",
     type=R2(Loc, Itv) ** R2(Loc, Ratio),
 )
 flowdirgraph = Operator(
-    doc="flow direction graph from DEM (location field)",
+    "flow direction graph from DEM (location field)",
     type=R2(Loc, Itv) ** R2(Loc, Loc)
 )
 accumulate = Operator(
-    doc="finds all locations reachable from a given location",
+    "finds all locations reachable from a given location",
     type=R2(Loc, Loc) ** R2(Loc, R1(Loc))
 )
 
 # Conversions
 
 reify = Operator(
-    doc="make a region from locations",
+    "make a region from locations",
     type=R1(Loc) ** Reg
 )
 deify = Operator(
-    doc="make locations from a region",
+    "make locations from a region",
     type=Reg ** R1(Loc)
 )
 objectify = Operator(
-    doc="interpet a name as an object",
+    "interpet a name as an object",
     type=Nom ** Obj
 )
 nominalize = Operator(
-    doc="interpret an object as a name",
+    "interpret an object as a name",
     type=Obj ** Nom
 )
 getobjectnames = Operator(
-    doc="make objects from names",
+    "make objects from names",
     type=R1(Nom) ** R2(Obj, Nom),
     define=lambda x: apply(nominalize, pi2(apply(objectify, x)))
 )
 invert = Operator(
-    doc="invert a field, generating a coverage",
+    "invert a field, generating a coverage",
     type=lambda x: R2(Loc, x) ** R2(x, Reg) | x @ Val,
     define=lambda x: groupby(reify, x)
 )
 revert = Operator(
-    doc="invert a coverage to a field",
+    "invert a coverage to a field",
     type=lambda x: R2(x, Reg) ** R2(Loc, x) | x @ Val,
     define=lambda x: groupbyL(
         compose(get, pi1),
@@ -269,7 +269,7 @@ revert = Operator(
     )
 )
 getamounts = Operator(
-    doc="get amounts from object based amount qualities",
+    "get amounts from object based amount qualities",
     type=lambda x: R3a(Obj, Reg, x) ** R2(Reg, x) | x @ Ratio,
     define=lambda x: join(groupby(get, get_attrL(x)), get_attrR(x))
 )
@@ -277,11 +277,11 @@ getamounts = Operator(
 # Operators on quantified relations
 
 lDist = Operator(
-    doc="computes Euclidean distances between locations",
+    "computes Euclidean distances between locations",
     type=R1(Loc) ** R1(Loc) ** R3(Loc, Ratio, Loc)
 )
 loDist = Operator(
-    doc="computes Euclidean distances between locations and objects",
+    "computes Euclidean distances between locations and objects",
     type=R1(Loc) ** R2(Obj, Reg) ** R3(Loc, Ratio, Obj),
     define=lambda x, y: prod3(apply1(
         compose(groupbyL(min), lDist(x)),
@@ -289,7 +289,7 @@ loDist = Operator(
     ))
 )
 oDist = Operator(
-    doc="computes Euclidean distances between objects",
+    "computes Euclidean distances between objects",
     type=R2(Obj, Reg) ** R2(Obj, Reg) ** R3(Obj, Ratio, Obj),
     define=lambda x, y: prod3(apply1(
         compose(groupbyR(min), swap(loDist, x)),
@@ -297,13 +297,13 @@ oDist = Operator(
     ))
 )
 lTopo = Operator(
-    doc=("detects the topological position of locations "
-         "on a region (in, out, boundary)"),
+    "detects the topological position of locations on a region (in, out, "
+    "boundary)",
     type=R1(Loc) ** Reg ** R3(Loc, Nom, Reg),
 )
 loTopo = Operator(
-    doc=("detects the topological position of locations "
-         "on objects (in, out, boundary)"),
+    "detects the topological position of locations on objects (in, out, "
+    "boundary)",
     type=R1(Loc) ** R2(Obj, Reg) ** R3(Loc, Nom, Obj),
     define=lambda x, y: prod3(apply1(
         compose(groupbyL(compose(get, pi2)), lTopo(x)),
@@ -311,7 +311,7 @@ loTopo = Operator(
     ))
 )
 oTopo = Operator(
-    doc="detects the topological relations between two sets of objects",
+    "detects the topological relations between two sets of objects",
     type=R2(Obj, Reg) ** R2(Obj, Reg) ** R3(Obj, Nom, Obj),
     define=lambda x, y: prod3(apply1(
         compose(groupbyR(compose(name, pi2)), swap(loTopo, x)),
@@ -319,8 +319,8 @@ oTopo = Operator(
     ))
 )
 lrTopo = Operator(
-    doc=("detects the topological position of locations "
-         "on regions (in, out, boundary)"),
+    "detects the topological position of locations on regions (in, out, "
+    "boundary)",
     type=R1(Loc) ** R1(Reg) ** R3(Loc, Nom, Reg),
     define=lambda x, y: prod3(apply(
         compose(groupbyL(compose(get, pi2)), lTopo(x)),
@@ -328,7 +328,7 @@ lrTopo = Operator(
     ))
 )
 rTopo = Operator(
-    doc="detects the topological relations between two sets of regions",
+    "detects the topological relations between two sets of regions",
     type=R1(Reg) ** R1(Reg) ** R3(Reg, Nom, Reg),
     define=lambda x, y: prod3(apply(
         compose(
@@ -338,8 +338,8 @@ rTopo = Operator(
     ))
 )
 orTopo = Operator(
-    doc=("detects the topological relations between a set of objects "
-        "and a set of regions"),
+    "detects the topological relations between a set of objects and a set of "
+    "regions",
     type=R2(Obj, Reg) ** R1(Reg) ** R3(Obj, Nom, Reg),
     define=lambda x, y: prod3(apply(
         compose(compose(groupbyR(compose(name, pi2)), swap(loTopo, x)), deify),
@@ -350,20 +350,20 @@ orTopo = Operator(
 # Network operations
 
 nbuild = Operator(
-    doc="build a network from objects with impedance values",
+    "build a network from objects with impedance values",
     type=R3a(Obj, Reg, Ratio) ** R3(Obj, Ratio, Obj)
 )
 nDist = Operator(
-    doc="compute network distances between objects",
+    "compute network distances between objects",
     type=R2(Obj, Reg) ** R2(Obj, Reg) ** R3(Obj, Ratio, Obj)
         ** R3(Obj, Ratio, Obj)
 )
 lVis = Operator(
-    doc="build a visibility relation between locations using a DEM",
+    "build a visibility relation between locations using a DEM",
     type=R1(Loc) ** R1(Loc) ** R2(Loc, Itv) ** R3(Loc, Bool, Loc)
 )
 gridgraph = Operator(
-    doc="build a gridgraph using some location field and some impedance field",
+    "build a gridgraph using some location field and some impedance field",
     type=R2(Loc, Loc) ** R2(Loc, Ratio) ** R3(Loc, Ratio, Loc)
 )
 lgDist = Operator(
@@ -373,26 +373,26 @@ lgDist = Operator(
 
 # Amount operations
 fcont = Operator(
-    doc="summarizes the content of a field within a region",
+    "summarizes the content of a field within a region",
     type=lambda x, y: (
         (R2(Val, x) ** y) ** R2(Loc, x) ** Reg ** y | x @ Qlt | y @ Qlt),
     define=lambda f, x, r: f(subset(x, deify(r)))
 )
 ocont = Operator(
-    doc="counts the number of objects within a region",
+    "counts the number of objects within a region",
     type=R2(Obj, Reg) ** Reg ** Count,
     define=lambda x, y: get(pi2(
         groupbyR(count, select(eq, orTopo(x, nest(y)), in_))
     ))
 )
 fcover = Operator(
-    doc=("measures the spatial coverage of a field that is constrained "
-         "to certain field values"),
+    "measures the spatial coverage of a field that is constrained to certain "
+    "field values",
     type=lambda x: R2(Loc, x) ** R1(x) ** R1(Loc) | x @ Qlt,
     define=lambda x, y: pi1(subset(x, y))
 )
 ocover = Operator(
-    doc="measures the spatial coverage of a collection of objects",
+    "measures the spatial coverage of a collection of objects",
     type=R2(Obj, Reg) ** R1(Obj) ** Reg,
     define=lambda x, y: merge(pi2(subset(x, y)))
 )
@@ -403,77 +403,77 @@ ocover = Operator(
 # Functional operators
 
 compose = Operator(
-    doc="compose unary functions",
+    "compose unary functions",
     type=lambda α, β, γ: (β ** γ) ** (α ** β) ** (α ** γ),
     define=lambda f, g, x: f(g(x))
 )
 compose2 = Operator(
-    doc="compose binary functions",
+    "compose binary functions",
     type=lambda α, β, γ, δ: (β ** γ) ** (δ ** α ** β) ** (δ ** α ** γ),
     define=lambda f, g, x, y: f(g(x, y))
 )
 swap = Operator(
-    doc="swap binary function inputs",
+    "swap binary function inputs",
     type=lambda α, β, γ: (α ** β ** γ) ** (β ** α ** γ),
     define=lambda f, x, y: f(y, x)
 )
 id_ = Operator(
-    doc="identity",
+    "identity",
     type=lambda α: α ** α,
     define=lambda x: x
 )
 apply = Operator(
-    doc="applying a function to a collection",
+    "applying a function to a collection",
     type=lambda x, y: (x ** y) ** R1(x) ** R2(x, y)
 )
 
 # Set operations
 
 nest = Operator(
-    doc="put value in unary relation",
+    "put value in unary relation",
     type=lambda x: x ** R1(x)
 )
 nest2 = Operator(
-    doc="put values in binary relation",
+    "put values in binary relation",
     type=lambda x, y: x ** y ** R2(x, y)
 )
 nest3 = Operator(
-    type=lambda x, y, z: x ** y ** z ** R3(x, y, z),
-    doc="put values in ternary relation"
+    "put values in ternary relation",
+    type=lambda x, y, z: x ** y ** z ** R3(x, y, z)
 )
 add = Operator(
-    doc="add value to unary relation",
+    "add value to unary relation",
     type=lambda x: R1(x) ** x ** R1(x),
 )
 get = Operator(
-    doc="get some value from unary relation",
+    "get some value from unary relation",
     type=lambda x: R1(x) ** x
 )
 inrel = Operator(
-    doc="whether some value is in a relation",
+    "whether some value is in a relation",
     type=lambda x: x ** R1(x) ** Bool,
 )
 set_union = Operator(
-    doc="union of two relations",
+    "union of two relations",
     type=lambda rel: rel ** rel ** rel,
     define=lambda x, y: relunion(add(nest(x), y))
 )
 set_diff = Operator(
-    doc="difference of two relations",
+    "difference of two relations",
     type=lambda rel: rel ** rel ** rel
 )
 set_inters = Operator(
-    doc="intersection of two relations",
+    "intersection of two relations",
     type=lambda rel: rel ** rel ** rel,
     define=lambda x, y: set_diff(x, set_diff(x, y))
 )
 relunion = Operator(
-    doc="union of a set of relations",
-    type=lambda rel: R1(rel) ** rel | rel @ operators(R1, R2, R3)
+    "union of a set of relations",
+    type=lambda rel: R1(rel) ** rel | rel @ with_parameters(R1, R2, R3)
 )
 prod = Operator(
-    doc=("A constructor for quantified relations. Prod generates a cartesian "
-         "product of two relations as a nested binary relation."),
+    "A constructor for quantified relations. Prod generates a cartesian "
+    "product of two relations as a nested binary relation.",
     type=lambda x, y, z, u, w:
         (y ** z ** u) ** R2(x, y) ** R2(w, z) ** R2(x, R2(w, u)),
     define=lambda f, x, y: apply1(compose(swap(apply1, y), f), x)
@@ -488,61 +488,61 @@ prod3 = Operator(
 # Projection (π)
 
 pi1 = Operator(
-    doc=("projects a given relation to the first attribute, resulting in a "
-         "collection"),
+    "projects a given relation to the first attribute, resulting in a "
+    "collection",
     type=lambda rel, x:
-        rel ** R1(x) | rel @ operators(R1, R2, R3, param=x, at=1),
+        rel ** R1(x) | rel @ with_parameters(R1, R2, R3, param=x, at=1),
 )
 pi2 = Operator(
-    doc=("projects a given relation to the second attribute, resulting in a "
-         "collection"),
+    "projects a given relation to the second attribute, resulting in a "
+    "collection",
     type=lambda rel, x:
-        rel ** R1(x) | rel @ operators(R1, R2, R3, param=x, at=2),
+        rel ** R1(x) | rel @ with_parameters(R1, R2, R3, param=x, at=2),
 )
 pi3 = Operator(
-    doc=("projects a given ternary relation to the third attribute, resulting "
-         "in a collection"),
+    "projects a given ternary relation to the third attribute, resulting "
+    "in a collection",
     type=lambda x: R3(_, _, x) ** R1(x)
 )
 pi12 = Operator(
-    doc="projects a given ternary relation to the first two attributes",
+    "projects a given ternary relation to the first two attributes",
     type=lambda x, y: R3(x, y, _) ** R2(x, y)
 )
 pi23 = Operator(
-    doc="projects a given ternary relation to the last two attributes",
+    "projects a given ternary relation to the last two attributes",
     type=lambda x, y: R3(_, x, y) ** R2(x, y)
 )
 
 # Selection (σ)
 
 select = Operator(
-    doc=("Selects a subset of a relation using a constraint on one "
-         "attribute, like equality (eq) or order (leq)"),
+    "Selects a subset of a relation using a constraint on one attribute, like "
+    "equality (eq) or order (leq)",
     type=lambda x, y, rel:
         (x ** y ** Bool) ** rel ** y ** rel
-        | rel @ operators(R1, R2, R3, R3a, param=x)
+        | rel @ with_parameters(R1, R2, R3, R3a, param=x)
 )
 subset = Operator(
-    doc=("Subset a relation to those tuples having an attribute value "
-         "contained in a collection"),
+    "Subset a relation to those tuples having an attribute value contained in "
+    "a collection",
     type=lambda x, rel:
-        rel ** R1(x) ** rel | rel @ operators(R1, R2, R3, R3a, param=x),
+        rel ** R1(x) ** rel | rel @ with_parameters(R1, R2, R3, R3a, param=x),
     define=lambda r, c: select(inrel, r, c)
 )
 
 select2 = Operator(
-    doc=("Selects a subset of a relation using a constraint on two "
-         "attributes, like equality (eq) or order (leq)"),
+    "Selects a subset of a relation using a constraint on two attributes, "
+    "like equality (eq) or order (leq)",
     type=lambda x, y, rel:
         (x ** y ** Bool) ** rel ** rel
-        | rel @ operators(R1, R2, R3, R3a, param=x)
-        | rel @ operators(R1, R2, R3, R3a, param=y)
+        | rel @ with_parameters(R1, R2, R3, R3a, param=x)
+        | rel @ with_parameters(R1, R2, R3, R3a, param=y)
 )
 
 # Join (⨝)
 
 join = Operator(
-    doc="Join of two unary concepts, like a table join",
+    "Join of two unary concepts, like a table join",
     type=lambda x, y, z: R2(x, y) ** R2(y, z) ** R2(x, z)
 )
 
@@ -564,44 +564,44 @@ get_attrR = Operator(
 )
 
 join_key = Operator(
-    doc=("Substitute the quality of a quantified relation to some quality "
-         "of one of its keys."),
+    "Substitute the quality of a quantified relation to some quality of one "
+    "of its keys.",
     type=lambda x, q1, y, rel, q2:
         R3(x, q1, y) ** rel ** R3(x, q2, y) | rel @ [R2(x, q2), R2(y, q2)],
     # define=lambda x, y: prod3(apply1(subset(y), groupbyL(pi1, x)))
 )
 
 apply1 = Operator(
-    doc=("Join with unary function. Generates a unary concept from one "
-         "other unary concept using a function"),
+    "Join with unary function. Generates a unary concept from one other "
+    "unary concept using a function",
     type=lambda x1, x2, y:
         (x1 ** x2) ** R2(y, x1) ** R2(y, x2),
     define=lambda f, y: join(y, apply(f, pi2(y)))
 )
 apply2 = Operator(
-    doc=("Join with binary function. Generates a unary concept from two "
-         "other unary concepts of the same type"),
+    "Join with binary function. Generates a unary concept from two other "
+    "unary concepts of the same type"),
     type=lambda x1, x2, x3, y:
         (x1 ** x2 ** x3) ** R2(y, x1) ** R2(y, x2) ** R2(y, x3),
     define=lambda f, x, y: pi12(select2(eq, prod3(prod(f, x, y))))
 )
 
 groupbyL = Operator(
-    doc=("Group quantified relations by the left key, summarizing lists "
-         "of quality values with the same key value into a new value per "
-         "key, resulting in a unary concept."),
+    "Group quantified relations by the left key, summarizing lists of "
+    "quality values with the same key value into a new value per key, "
+    "resulting in a unary concept.",
     type=lambda rel, l, q1, q2, r:
         (rel ** q2) ** R3(l, q1, r) ** R2(l, q2) | rel @ [R1(r), R2(r, q1)],
 )
 groupbyR = Operator(
-    doc=("Group quantified relations by the right key, summarizing lists of "
-         "quality values with the same key value into a new value per key, "
-         "resulting in a unary concept."),
+    "Group quantified relations by the right key, summarizing lists of "
+    "quality values with the same key value into a new value per key, "
+    "resulting in a unary concept.",
     type=lambda rel, q2, l, q1, r:
         (rel ** q2) ** R3(l, q1, r) ** R2(r, q2) | rel @ [R1(l), R2(l, q1)]
 )
 groupby = Operator(
-    doc="Group by qualities of binary relations",
+    "Group by qualities of binary relations",
     type=lambda l, q, y:
         (R1(l) ** q) ** R2(l, y) ** R2(y, q),
 )
@@ -610,5 +610,6 @@ groupby = Operator(
 ##############################################################################
 # Generate an algebra out of all definitions in this module
 
-cct = TransformationAlgebra(**globals())
-CCT = TransformationNamespace("https://github.com/quangis/cct#", cct)
+cct = Language()
+cct.add_scope(globals())
+CCT = LanguageNamespace("https://github.com/quangis/cct#", cct)
