@@ -580,7 +580,7 @@ apply1 = Operator(
 )
 apply2 = Operator(
     "Join with binary function. Generates a unary concept from two other "
-    "unary concepts of the same type"),
+    "unary concepts of the same type",
     type=lambda x1, x2, x3, y:
         (x1 ** x2 ** x3) ** R2(y, x1) ** R2(y, x2) ** R2(y, x3),
     define=lambda f, x, y: pi12(select2(eq, prod3(prod(f, x, y))))
