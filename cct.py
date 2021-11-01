@@ -10,27 +10,27 @@ Module containing the core concept transformation algebra. Usage:
 """
 
 from transformation_algebra import Type, with_parameters, _, Operator, \
-    Language, LanguageNamespace
+    Language, LanguageNamespace, TypeOperator
 
 
 ##############################################################################
 # Types and type synonyms
 
-Val = Type.declare()
-Obj = Type.declare(supertype=Val)  # O
-Reg = Type.declare(supertype=Val)  # S
-Loc = Type.declare(supertype=Val)  # L
-Qlt = Type.declare(supertype=Val)  # Q
-Nom = Type.declare(supertype=Qlt)
-Bool = Type.declare(supertype=Nom)
-Ord = Type.declare(supertype=Nom)
-Itv = Type.declare(supertype=Ord)
-Ratio = Type.declare(supertype=Itv)
-Count = Type.declare(supertype=Ratio)
-R1 = Type.declare(params=1)  # Collections
-R2 = Type.declare(params=2)  # Unary core concepts, 1 key (left)
-R3 = Type.declare(params=3)  # Quantified relation, 2 keys (l & r)
-R3a = Type.declare(params=3)  # Ternary relation, 1 key (left)
+Val = TypeOperator()
+Obj = TypeOperator(supertype=Val)  # O
+Reg = TypeOperator(supertype=Val)  # S
+Loc = TypeOperator(supertype=Val)  # L
+Qlt = TypeOperator(supertype=Val)  # Q
+Nom = TypeOperator(supertype=Qlt)
+Bool = TypeOperator(supertype=Nom)
+Ord = TypeOperator(supertype=Nom)
+Itv = TypeOperator(supertype=Ord)
+Ratio = TypeOperator(supertype=Itv)
+Count = TypeOperator(supertype=Ratio)
+R1 = TypeOperator(params=1)  # Collections
+R2 = TypeOperator(params=2)  # Unary core concepts, 1 key (left)
+R3 = TypeOperator(params=3)  # Quantified relation, 2 keys (l & r)
+R3a = TypeOperator(params=3)  # Ternary relation, 1 key (left)
 
 SpatialField = R2(Loc, Qlt)
 InvertedField = R2(Qlt, Reg)
