@@ -6,6 +6,7 @@ from rdflib import Graph
 from rdflib.namespace import RDF, RDFS
 from rdflib.term import Node, URIRef
 import rdflib.util
+from typing import Union
 
 from transformation_algebra import Expr
 
@@ -46,5 +47,19 @@ class Workflow(Graph):
     def format(self) -> dict[Node, tuple[Expr, list[Node]]]:
         return {
             output: (cct.parse(self.expressions[output]).primitive(), inputs)
+            for output, inputs in self.inputs.items()
+        }
+
+    def format2(self) -> dict[Expr, list[Union[Node, Expr]]]:
+        """
+        Map expressions to their inputs.
+        """
+        expressions: dict[Node, Expr] = {
+            node: cct.parse(expr).primitive()
+            for node, expr in self.expressions.items()
+        }
+
+        return {
+            expressions[output]: list(expressions.get(i, i) for i in inputs)
             for output, inputs in self.inputs.items()
         }
