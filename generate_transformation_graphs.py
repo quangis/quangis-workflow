@@ -10,6 +10,7 @@ import os.path
 from glob import glob
 from sys import stderr
 from transformation_algebra import TransformationGraph
+from transformation_algebra.graph import SourceError
 
 from cct import CCT, cct  # type: ignore
 from util import write_graph, graph  # type: ignore
@@ -23,7 +24,21 @@ for workflow_file in glob("TheoryofGISFunctions/Scenarios/**/*_cct.ttl"):
         print(f"\nWorkflow {workflow_file}", file=stderr)
         workflow = Workflow(workflow_file, tools)
         g = TransformationGraph(cct, CCT)
-        g.add_workflow(workflow.root, workflow.sources, workflow.format())
+
+        node2expr = {
+            node: cct.parse(expr).primitive()
+            for node, expr in workflow.expressions.items()
+        }
+
+        g.add_workflow(workflow.root, {
+            node2expr[output]: list(node2expr.get(i, i) for i in inputs)
+            for output, inputs in workflow.inputs.items()
+        })
+    except SourceError as e:
+        expr2node = {v: k for k, v in node2expr.items()}
+        print("Failure while attaching the output of tool",
+            workflow.tools[expr2node[e.attachment]], "!",
+            e, file=stderr)
     except Exception as e:
         print("Failure: ", e, file=stderr)
     else:

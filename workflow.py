@@ -30,36 +30,19 @@ class Workflow(Graph):
         self.inputs: dict[Node, list[Node]] = {}
         self.tools: dict[Node, URIRef] = {}
         self.expressions: dict[Node, str] = {}
+
         for step in self.steps:
             out = self.value(step, WF.output, any=False)
             self.outputs.add(out)
+
             self.tools[out] = tool = self.value(
                 step, WF.applicationOf, any=False)
+            assert tool, "workflow has an edge without a tool"
+
             self.expressions[out] = expr = tools.value(
                 tool, TOOLS.algebraexpression, any=False)
+            assert expr, f"{tool} has no algebra expression"
+
             self.inputs[out] = list(filter(bool, (
                 self.value(step, p) for p in (WF.input1, WF.input2, WF.input3)
             )))
-
-            assert tool, "workflow has an edge without a tool"
-            assert expr, f"{tool} has no algebra expression"
-
-    def format(self) -> dict[Node, tuple[Expr, list[Node]]]:
-        return {
-            output: (cct.parse(self.expressions[output]).primitive(), inputs)
-            for output, inputs in self.inputs.items()
-        }
-
-    def format2(self) -> dict[Expr, list[Union[Node, Expr]]]:
-        """
-        Map expressions to their inputs.
-        """
-        expressions: dict[Node, Expr] = {
-            node: cct.parse(expr).primitive()
-            for node, expr in self.expressions.items()
-        }
-
-        return {
-            expressions[output]: list(expressions.get(i, i) for i in inputs)
-            for output, inputs in self.inputs.items()
-        }
