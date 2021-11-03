@@ -9,6 +9,7 @@ from __future__ import annotations
 import os.path
 from glob import glob
 from sys import stderr
+from rdflib.namespace import RDFS
 from transformation_algebra import TransformationGraph
 from transformation_algebra.graph import SourceError
 
@@ -30,6 +31,7 @@ for workflow_file in glob("TheoryofGISFunctions/Scenarios/**/*_cct.ttl"):
             for node, expr in workflow.expressions.items()
         }
 
+        g.add((workflow.root, RDFS.comment, workflow.description))
         g.add_workflow(workflow.root, {
             node2expr[output]: list(node2expr.get(i, i) for i in inputs)
             for output, inputs in workflow.inputs.items()
