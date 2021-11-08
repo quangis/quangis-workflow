@@ -5,7 +5,7 @@ Python.
 """
 
 from transformation_algebra.type import _
-from transformation_algebra.query import TransformationQuery
+from transformation_algebra.query import TransformationQuery, Choice
 from cct import CCT, R2, R3a, Obj, Reg, Bool, Ratio, Loc, Count, Itv, Nom, Ord, \
     apply, ratio, groupbyR, size, pi1, count, avg, min, nDist, extrapol, \
     product, select, loTopo, oDist, lgDist, max, flowdirgraph, accumulate, sum
@@ -25,13 +25,13 @@ noiseProPortionAmsterdam = TransformationQuery((
 
 # 2. (Population) What is the number of inhabitants for each neighbourhood in
 # Utrecht?
-# amountObjectsUtrecht = TransformationQuery((
-#     R3a(Obj, Reg, Count), Choice(
-#         (groupby, [(..., sum), (..., R2(Reg, Count))]),
-#         (groupby, [(..., count), (..., R2(Obj, Reg))])
-#     )),
-#     namespace=CCT
-# )
+amountObjectsUtrecht = TransformationQuery((
+    R3a(Obj, Reg, Count), Choice(
+        (groupby, [(..., sum), (..., R2(Reg, Count))]),
+        (groupby, [(..., count), (..., R2(Obj, Reg))])
+    )),
+    namespace=CCT
+)
 
 # 3. (Temperature) What is the average temperature for each neighbourhood in
 # Utrecht?
