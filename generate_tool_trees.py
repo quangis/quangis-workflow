@@ -18,9 +18,8 @@ from workflow import Workflow
 
 tools = graph("TheoryofGISFunctions/ToolDescription_TransformationAlgebra.ttl")
 
-with open(f"build/tools.txt", 'w') as f:
+with open("build/tools.txt", 'w') as f:
     for tool, expr in tools[:TOOLS.algebraexpression:]:
         print(tool, file=f)
         print(cct.parse(expr).tree(), file=f)
         print(file=f)
-
