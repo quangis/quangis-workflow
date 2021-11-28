@@ -26,6 +26,7 @@ this directory. To run the tests:
 
     python3 -m unittest test.py
 
+`rdflib` is not powerful enough to handle the workflow store in-memory, so you will need an external triple store. For open-source options, see [BlazeGraph](https://blazegraph.com/) or [Apache Jena](https://jena.apache.org/) ([Virtuoso](https://virtuoso.openlinksw.com/) seems to have an issue with property paths).
 
 ### Notes
 
