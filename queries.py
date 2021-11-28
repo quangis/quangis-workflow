@@ -53,12 +53,12 @@ hospital_accessibility = Query(CCT,
 )
 
 # 5. What is the impact of roads on deforestation in the Amazon rainforest?
-# deforestation = Query(CCT,
-#     [R2(Bool, Ratio), AND(
-#         [..., size, pi1, ..., extrapol, R2(Obj, Reg)],
-#         [..., size, pi1, ..., R2(Loc, _)]
-#     )]
-# )
+deforestation = Query(CCT,
+    [R2(Bool, Ratio), AND(
+        [..., size, pi1, ..., extrapol, R2(Obj, Reg)],
+        [..., size, pi1, ..., R2(Loc, _)]
+    )]
+)
 
 # 6. What is the potential of solar power for each rooftop in the Glover Park
 # neighbourhood in Washington DC?
@@ -72,26 +72,26 @@ solar = Query(CCT,
 
 # 7. (Road-Access) What is the percentage of rural population within 2km
 # distance to all-season roads in Shikoku, Japan?
-# infrastructureAccess = Query(CCT,
-#     [R2(Reg, Ratio), AND(
-#         [..., ratio],
-#         [..., R2(Reg, Ratio), ..., AND(
-#             [..., extrapol, R2(Obj, Reg)],
-#             [..., R2(Reg, Count)]
-#         )]
-#     )]
-# )
+infrastructureAccess = Query(CCT,
+    [R2(Reg, Ratio), AND(
+        [..., ratio],
+        [..., R2(Reg, Ratio), ..., AND(
+            [..., extrapol, R2(Obj, Reg)],
+            [..., R2(Reg, Count)]
+        )]
+    )]
+)
 
 # 8. (Water-risk) Which urban areas are at risk from water depletion in
 # Ogandala (High Plains) Aquifer, US?
-# aquifer = Query(CCT,
-#     [R3a(Obj, Reg, Nom), ..., AND(
-#         [..., select, ..., loTopo, AND(
-#             [..., pi1, ..., R2(Loc, Nom)],
-#             [..., select, ..., oDist, ..., R2(Obj, Reg)]
-#         ]))
-#     ])
-# )
+aquifer = Query(CCT,
+    [R3a(Obj, Reg, Nom), ..., AND(
+        [..., select, ..., loTopo, AND(
+            [..., pi1, ..., R2(Loc, Nom)],
+            [..., select, ..., oDist, ..., R2(Obj, Reg)]
+        )]
+    )]
+)
 
 # 9. What is the stream runoff during a predicted rainstorm in Vermont, US?
 floods = Query(CCT,
