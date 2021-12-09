@@ -1,8 +1,10 @@
+from ..cct import AND, R3a, R1, R2, Obj, Reg, Nom, Ord, Count, Ratio, Loc, Bool  # type: ignore
+
 # R3a(Obj, Ord, Reg)  # urbanization
 # R3a(Obj, Ratio, Reg)  # chochomoku
 # R2(Obj, Reg)  # roads
 
-[R(Ratio), ..., AND(
+[R1(Ratio), ..., AND(
 
     # rural_pop2
     [R3a(Obj, Ratio, Reg), R2(Obj, Reg), AND(
@@ -18,14 +20,14 @@
     [R2(Reg, Ratio), ..., AND(
 
         # rural_clip
-        [R2(Reg, Ratio), R2(Obj, Reg), R3a(Obj, Ord, Reg)]
+        [R2(Reg, Ratio), R2(Obj, Reg), R3a(Obj, Ord, Reg)],
 
         # roads_buffer
-        [R(Reg), R2(Obj, Reg)]
+        [R1(Reg), R2(Obj, Reg)]
     )]
 )]
 
-#------------------------------------
+# ------------------------------------
 # simon:
 
 # count amount ratio
@@ -57,4 +59,4 @@
         # roads_buffer
         [..., R2(Loc, Bool), ..., R2(Obj, Reg, Nom)]
     )]
-]
+)]

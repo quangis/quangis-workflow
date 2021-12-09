@@ -1,3 +1,5 @@
+from ..cct import AND, R3a, R2, R3, Obj, Reg, Nom, Ratio, Loc  # type: ignore
+
 # hospitalsNear
 
 # input R3a(Obj, Nom, Reg)  # roads
@@ -10,7 +12,7 @@
     R2(Obj, Loc)
 )]
 
-#--------------------------------------------
+# --------------------------------------------
 # hospitalsNetwork
 
 # input R3a(Obj, Nom, Reg)  # roads
@@ -23,7 +25,7 @@
     R2(Obj, Loc)
 )]
 
-#------------------
+# ------------------
 # simon:
 # hospitalsNear
 

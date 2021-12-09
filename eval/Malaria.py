@@ -1,3 +1,5 @@
+from ..cct import AND, R3a, R2, Obj, Reg, Nom, Count, Ratio  # type: ignore
+
 # R3a(Obj, Nom, Reg)  # countries
 # R3a(Obj, Nom, Reg)  # adminRegions
 # R2(Reg, Ratio)  # population
@@ -22,13 +24,13 @@
         )]
     )],
 
-    #adminIncidence2
+    # adminIncidence2
     R2(Obj, Ratio)
-]
+)]
 
 # simon
 
-[ R3a(Obj, Reg, Ratio), ..., AND(
+[R3a(Obj, Reg, Ratio), ..., AND(
 
     # popAdminDRC
     [R3a(Obj, Reg, Count), ..., AND(
@@ -42,5 +44,4 @@
 
     # adminIncidence2
     [R3a(Obj, Reg, Count), ..., R2(Obj, Count)]
-)
-]
+)]

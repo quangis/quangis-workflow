@@ -1,3 +1,5 @@
+from ..cct import AND, R3a, R1, R2, Obj, Reg, Nom, Ratio, Loc, Bool  # type: ignore
+
 # Eric
 # R3a(Obj, Nom, Reg)  # roads
 # R2(Obj, Nom, Reg)  # planned
@@ -8,30 +10,30 @@
     # Erasedbuffer2
     [R2(Reg, Ratio), ..., AND(
 
-        #plannedroadbuffer
-        [R(Reg), R(Reg)],
+        # plannedroadbuffer
+        [R1(Reg), R1(Reg)],
 
-        #deforested
-        R(Reg)
-    ],
+        # deforested
+        R1(Reg)
+    )],
 
     # areaPercentage
     [..., AND(
 
         # roadsBuffer2
-        [R2(Reg, Ratio), R(Reg),  R3a(Obj, Nom, Reg)],
+        [R2(Reg, Ratio), R1(Reg), R3a(Obj, Nom, Reg)],
 
         # deforestedRoadArea
         [..., AND(
 
-            #deforested
+            # deforested
             R3a(Obj, Nom, Reg),
 
-            #roadsbuffer
-            [R(Reg),  R3a(Obj, Nom, Reg)]
+            # roadsbuffer
+            [R1(Reg), R3a(Obj, Nom, Reg)]
         )]
     )]
-]
+)]
 
 # Simon
 # R3a(Obj, Reg, Nom)  # roads
@@ -55,6 +57,8 @@
             [..., R2(Loc, Bool)],  # deforested area
             [..., R2(Loc, Bool), ..., R3a(Obj, Reg, Nom)]  # roads buffer
         )],
-        [R1(Loc), ..., R2(Loc, Bool), ..., R3a(Obj, Reg, Nom)]  # region of roads buffer
+
+        # region of roads buffer
+        [R1(Loc), ..., R2(Loc, Bool), ..., R3a(Obj, Reg, Nom)]
     )]
 )]

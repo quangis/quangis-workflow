@@ -1,9 +1,11 @@
+from ..cct import AND, R3a, R2, R3, Obj, Reg, Nom, Ratio, Ord, Loc, Itv  # type: ignore
+
 # flood prediction
 
 # input: dem: R2(L, Itv)
-# input: pour point: R3a(Obj, Reg, Nom) 
+# input: pour point: R3a(Obj, Reg, Nom)
 
-[R2(Ord, Ratio), ..., R2(Ord, Reg), ..., R2(L, Ratio), AND(
-    [..., R3(L, Ratio, L), ..., R2(L, Itv)],
-    [..., R2(Reg, Nom), ...,  R3a(Obj, Reg, Nom)]
+[R2(Ord, Ratio), ..., R2(Ord, Reg), ..., R2(Loc, Ratio), AND(
+    [..., R3(Loc, Ratio, Loc), ..., R2(Loc, Itv)],
+    [..., R2(Reg, Nom), ..., R3a(Obj, Reg, Nom)]
 )]

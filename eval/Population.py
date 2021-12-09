@@ -1,3 +1,5 @@
+from ..cct import AND, R3a, R2, Obj, Reg, Nom, Count  # type: ignore
+
 # number of people in neighborhoods
 
 # input cbsneighborhoods: R3a(Obj, Reg, Nom)
@@ -7,4 +9,3 @@
     [..., R2(Obj, Reg), ..., R3a(Obj, Reg, Nom)],
     [..., R2(Reg, Count)]
 )]
-
