@@ -4,7 +4,7 @@ from ..cct import AND, R3a, R1, R2, Obj, Reg, Nom, Ord, Count, Ratio, Loc, Bool 
 # R3a(Obj, Ratio, Reg)  # chochomoku
 # R2(Obj, Reg)  # roads
 
-[R1(Ratio), ..., AND(
+eval_infrastructure_eric = [R1(Ratio), ..., AND(
 
     # rural_pop2
     [R3a(Obj, Ratio, Reg), R2(Obj, Reg), AND(
@@ -31,7 +31,7 @@ from ..cct import AND, R3a, R1, R2, Obj, Reg, Nom, Ord, Count, Ratio, Loc, Bool 
 # simon:
 
 # count amount ratio
-[R2(Reg, Ratio), ..., AND(
+eval_infrastructure_simon = [R2(Reg, Ratio), ..., AND(
 
     # rural clip and summing contentamount (rural_pop1)
     (R2(Reg, Count), ..., R3a(Obj, Reg, Count), ..., AND(

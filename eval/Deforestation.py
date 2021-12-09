@@ -5,7 +5,7 @@ from ..cct import AND, R3a, R1, R2, Obj, Reg, Nom, Ratio, Loc, Bool  # type: ign
 # R2(Obj, Nom, Reg)  # planned
 # R3a(Obj, Nom, Reg)  # deforested
 
-[R2(Reg, Ratio), ..., AND(
+eval_deforestation_eric = [R2(Reg, Ratio), ..., AND(
 
     # Erasedbuffer2
     [R2(Reg, Ratio), ..., AND(
@@ -41,7 +41,7 @@ from ..cct import AND, R3a, R1, R2, Obj, Reg, Nom, Ratio, Loc, Bool  # type: ign
 # R2(Loc, Bool) # deforested area
 
 # size of deforested area within buffer area
-[R2(Bool, Ratio), ..., AND(
+eval_deforestation_simon = [R2(Bool, Ratio), ..., AND(
 
     # erased buffer
     [R2(Loc, Bool), ..., AND(

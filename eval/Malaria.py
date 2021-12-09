@@ -6,7 +6,7 @@ from ..cct import AND, R3a, R2, Obj, Reg, Nom, Count, Ratio  # type: ignore
 # R2(Obj, Ratio)  # countryIncidence
 # R2(Obj, Ratio)  # adminIncidence
 
-[R2(Obj, Ratio), ..., AND(
+eval_malaria_eric = [R2(Obj, Ratio), ..., AND(
     # adminDRC3
     [..., AND(
 
@@ -30,7 +30,7 @@ from ..cct import AND, R3a, R2, Obj, Reg, Nom, Count, Ratio  # type: ignore
 
 # simon
 
-[R3a(Obj, Reg, Ratio), ..., AND(
+eval_malaria_simon = [R3a(Obj, Reg, Ratio), ..., AND(
 
     # popAdminDRC
     [R3a(Obj, Reg, Count), ..., AND(

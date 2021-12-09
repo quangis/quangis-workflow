@@ -7,7 +7,7 @@ from ..cct import AND, R3a, R2, R3, Obj, Reg, Nom, Ratio, Loc  # type: ignore
 # input: R3(Obj, Ratio, Reg)
 # output: R3a(Obj, Nom, Reg)
 
-[R3a(Obj, Nom, Reg), ..., AND(
+eval_aquifer_eric = [R3a(Obj, Nom, Reg), ..., AND(
     # UrbanAreas3
     [..., AND(
 
@@ -35,7 +35,7 @@ from ..cct import AND, R3a, R2, R3, Obj, Reg, Nom, Ratio, Loc  # type: ignore
 # input: R2(Nom, Reg) #precipitation coverage
 # input: R2(Nom, Reg) #irrigation coverage
 
-[R3a(Obj, Reg, Nom), ..., AND(
+eval_aquifer_simon = [R3a(Obj, Reg, Nom), ..., AND(
     [..., R2(Obj, Reg), ..., R3a(Obj, Reg, Nom)],  # urban areas
     [..., R2(Obj, Reg), ..., R3a(Obj, Reg, Nom)],  # aquifer
     [..., R2(Loc, Nom), ..., R2(Nom, Reg)],  # precipitation coverage
