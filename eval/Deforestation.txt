@@ -1,0 +1,54 @@
+#Eric
+R3a(Obj,Nom,Reg) #roads
+R2(Obj,Nom,Reg)  #planned
+R3a(Obj,Nom,Reg) #deforested
+
+R2(Reg,Ratio),...,AND(
+	#Erasedbuffer2
+	R2(Reg,Ratio),...,AND(
+		#plannedroadbuffer
+		(R(Reg),R(Reg)),
+		#deforested
+		R(Reg)
+	),
+
+	#areaPercentage
+	(...,AND(
+		#roadsBuffer2
+		(R2(Reg,Ratio),R(Reg), R3a(Obj,Nom,Reg)),
+		#deforestedRoadArea
+		(...,AND(
+			#deforested
+			R3a(Obj,Nom,Reg),
+			#roadsbuffer
+			(R(Reg), R3a(Obj,Nom,Reg))
+		)
+	)
+)
+		
+#-----------------------------	
+#Simon
+R3a(Obj,Reg,Nom) #roads
+R3a(Obj,Reg,Nom)  #planned
+R2(Loc,Bool) #deforested area
+
+R2(Bool,Ratio),...,  #size of deforested area within buffer area
+[
+	(R2(Loc,Bool),...,#erased buffer
+		[
+		(...,R2(Loc,Bool)), 			#deforested area
+		(R2(Loc,Bool),...,R3a(Obj,Reg,Nom))	#planned road buffer
+		]
+	), 
+	(R2(Bool,Ratio),..., #proportion 
+		[
+		(R1(Loc),...,R2(Loc,Bool), #deforested region within buffer
+			[
+			(...,R2(Loc,Bool)), #deforested area
+			(...,R2(Loc,Bool),...,R3a(Obj,Reg,Nom)) #roads buffer
+			]
+		),
+		(R1(Loc),...,R2(Loc,Bool),...,R3a(Obj,Reg,Nom)) #region of roads buffer
+		]
+	)
+]
