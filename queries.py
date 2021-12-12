@@ -20,7 +20,7 @@ dist: Operators = OR(nDist, loDist, lgDist, lDist, oDist)
 noiseProPortionAmsterdam = Query(CCT,
     [R3a(Obj, Reg, Ratio), apply, AND(
         ratio,
-        [groupby, AND(size, [[pi1, R2(Loc, _)]])],
+        [groupby, AND(size, (pi1, R2(Loc, _)))],
         [apply, AND(size, R2(Obj, Reg))]
     )]
 )
