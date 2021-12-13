@@ -57,6 +57,6 @@ eval_infrastructure_simon = [R2(Reg, Ratio), ..., AND(
         )],
 
         # roads_buffer
-        [..., R2(Loc, Bool), ..., R2(Obj, Reg, Nom)]
+        [..., R2(Loc, Bool), ..., R3a(Obj, Reg, Nom)]
     )]
 )]
