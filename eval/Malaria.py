@@ -6,15 +6,15 @@ from ..cct import AND, R3a, R2, Obj, Reg, Nom, Count, Ratio  # type: ignore
 # R2(Obj, Ratio)  # countryIncidence
 # R2(Obj, Ratio)  # adminIncidence
 
-eval_malaria_eric = [R2(Obj, Ratio), ..., AND(
+eval_malaria_eric = [R2(Obj, Ratio), AND(
     # adminDRC3
-    [..., AND(
+    [AND(
 
         # adminDRC2
         R3a(Obj, Nom, Reg),
 
         # popAdminDRC
-        [R3a(Obj, Ratio, Reg), ..., AND(
+        [R3a(Obj, Ratio, Reg), AND(
 
             # population
             R2(Reg, Ratio),
@@ -30,10 +30,10 @@ eval_malaria_eric = [R2(Obj, Ratio), ..., AND(
 
 # simon
 
-eval_malaria_simon = [R3a(Obj, Reg, Ratio), ..., AND(
+eval_malaria_simon = [R3a(Obj, Reg, Ratio), AND(
 
     # popAdminDRC
-    [R3a(Obj, Reg, Count), ..., AND(
+    [R3a(Obj, Reg, Count), AND(
 
         # population on cells
         R2(Reg, Count),
@@ -43,5 +43,5 @@ eval_malaria_simon = [R3a(Obj, Reg, Ratio), ..., AND(
     )],
 
     # adminIncidence2
-    [R3a(Obj, Reg, Count), ..., R2(Obj, Count)]
+    [R3a(Obj, Reg, Count), R2(Obj, Count)]
 )]

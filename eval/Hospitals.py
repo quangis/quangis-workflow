@@ -6,7 +6,7 @@ from ..cct import AND, R3a, R2, R3, Obj, Reg, Nom, Ratio, Loc  # type: ignore
 # input R2(Obj, Loc)  # hospital points
 # input R2(Obj, Loc)  # incident location
 
-eval_hospitalsnear_eric = [R2(Obj, Loc), ..., AND(
+eval_hospitalsnear_eric = [R2(Obj, Loc), AND(
     R3a(Obj, Nom, Reg),
     R2(Obj, Loc),
     R2(Obj, Loc)
@@ -19,7 +19,7 @@ eval_hospitalsnear_eric = [R2(Obj, Loc), ..., AND(
 # input R2(Obj, Loc)  # hospital points
 # input R2(Obj,  Loc)  # incident location
 
-eval_hospitalsnetwork_eric = [R2(Obj, Nom), ..., R3a(Obj, Nom, Obj), AND(
+eval_hospitalsnetwork_eric = [R2(Obj, Nom), R3a(Obj, Nom, Obj), AND(
     R3a(Obj, Nom, Reg),
     R2(Obj, Loc),
     R2(Obj, Loc)
@@ -32,9 +32,9 @@ eval_hospitalsnetwork_eric = [R2(Obj, Nom), ..., R3a(Obj, Nom, Obj), AND(
 # input R3a(Obj, Reg, Nom)  # hospital points
 # input R3a(Obj, Reg, Nom)  # incident location
 
-eval_hospitalsnear_simon = [R2(Obj, Ratio), ..., R3(Obj, Ratio, Obj), AND(
-    [..., R3a(Obj, Reg, Nom)],
-    [..., R3a(Obj, Reg, Nom)]
+eval_hospitalsnear_simon = [R2(Obj, Ratio), R3(Obj, Ratio, Obj), AND(
+    [R3a(Obj, Reg, Nom)],
+    [R3a(Obj, Reg, Nom)]
 )]
 
 
@@ -44,8 +44,8 @@ eval_hospitalsnear_simon = [R2(Obj, Ratio), ..., R3(Obj, Ratio, Obj), AND(
 # input R3a(Obj, Reg, Nom)  # Hospital points
 # input R3a(Obj, Reg, Nom)  # Incident location
 
-eval_hospitalsnetwork_simon = [R2(Obj, Ratio), ..., R3(Obj, Ratio, Obj), AND(
-    [..., R3a(Obj, Reg, Nom)],
-    [..., R3a(Obj, Reg, Nom)],
-    [..., R3a(Obj, Reg, Nom)]
+eval_hospitalsnetwork_simon = [R2(Obj, Ratio), R3(Obj, Ratio, Obj), AND(
+    [R3a(Obj, Reg, Nom)],
+    [R3a(Obj, Reg, Nom)],
+    [R3a(Obj, Reg, Nom)]
 )]

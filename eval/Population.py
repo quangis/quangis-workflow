@@ -5,7 +5,7 @@ from ..cct import AND, R3a, R2, Obj, Reg, Nom, Count  # type: ignore
 # input cbsneighborhoods: R3a(Obj, Reg, Nom)
 # input cbsvierkant: R2(Reg, Count)
 
-eval_population = [R3a(Obj, Reg, Count), ..., R2(Obj, Count), AND(
-    [..., R2(Obj, Reg), ..., R3a(Obj, Reg, Nom)],
-    [..., R2(Reg, Count)]
+eval_population = [R3a(Obj, Reg, Count), R2(Obj, Count), AND(
+    [R2(Obj, Reg), R3a(Obj, Reg, Nom)],
+    [R2(Reg, Count)]
 )]
