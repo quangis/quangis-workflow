@@ -611,4 +611,4 @@ groupby = Operator(
 # Generate an algebra out of all definitions in this module
 
 cct = Language(globals())
-CCT = LanguageNamespace("https://github.com/quangis/cct#", cct)
+cct._namespace = CCT = LanguageNamespace("https://github.com/quangis/cct#", cct)

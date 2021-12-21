@@ -11,7 +11,7 @@ from glob import glob
 from sys import stderr
 from rdflib.namespace import RDFS
 from transformation_algebra import TransformationGraph
-from transformation_algebra.graph import SourceError
+from transformation_algebra.expr import SourceError
 
 from cct import CCT, cct  # type: ignore
 from util import write_graph, graph  # type: ignore
@@ -24,7 +24,7 @@ for workflow_file in glob("TheoryofGISFunctions/Scenarios/**/*_cct.ttl"):
     try:
         print(f"\nWorkflow {workflow_file}", file=stderr)
         workflow = Workflow(workflow_file, tools)
-        g = TransformationGraph(cct, CCT)
+        g = TransformationGraph(cct)
 
         node2expr = {
             node: cct.parse(expr).primitive()
