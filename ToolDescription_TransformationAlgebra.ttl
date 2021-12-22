@@ -1,0 +1,877 @@
+@prefix wf: <http://geographicknowledge.de/vocab/Workflow.rdf#>.
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>.
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
+@prefix tools: <http://geographicknowledge.de/vocab/GISTools.rdf#>.
+@prefix ccd: <http://geographicknowledge.de/vocab/CoreConceptData.rdf#>.
+@prefix exm: <http://geographicknowledge.de/vocab/ExtensiveMeasures.rdf#>.
+
+
+###Algebra expressions: in the following algebra expressions, x1, x2, x3, etc denote input variables corresponding to wf:input1, wf:input2, wf:input3. Also, the order of inputs in wf:source for supertools corresponds to this order.
+
+### Scenario: Hospitals (hospitalsNetwork.ttl, hospitalsNear.ttl) 
+### Source: https://pro.arcgis.com/en/pro-app/latest/help/analysis/networks/closest-facility-tutorial.htm
+#-------------------------------
+
+##catchment area analysis on spatial network
+tools:closestfacilityanalysis   
+    wf:edge _:wf20_1, _:wf20_2, _:wf20_3, _:wf20_4;
+    wf:source _:in_roads, _:in_goals, _:in_origins.		
+	_:wf20_1  wf:applicationOf <https://pro.arcgis.com/en/pro-app/latest/tool-reference/network-analyst/make-closest-facility-analysis-layer.htm>;
+		wf:input1 _:in_roads	;
+		wf:output _:out201. 	
+	_:wf20_2  wf:applicationOf <https://pro.arcgis.com/en/pro-app/latest/tool-reference/network-analyst/add-locations.htm>;
+			wf:input1 _:out201	;
+			wf:input2 _:in_goals ;
+			wf:output _:out202.
+	_:wf20_3  wf:applicationOf <https://pro.arcgis.com/en/pro-app/latest/tool-reference/network-analyst/add-locations.htm>;
+			wf:input1 _:out202	;
+			wf:input2 _:in_origins ;
+			wf:output _:out203.
+	_:wf20_4  wf:applicationOf <https://pro.arcgis.com/en/pro-app/latest/tool-reference/network-analyst/solve.htm>;
+			wf:input1 _:out203	;			
+			wf:output _:out204.
+#selects the distance to the closest goal object on a line network 			
+tools:closestfacilityanalysis  rdfs:label "Selects the distance to the closest goal object on a line network";
+	wf:input1 [ a ccd:NetworkQ, ccd:LineA, ccd:RatioA ];
+	wf:input2 [ a ccd:ObjectQ, ccd:PointA ];
+	wf:input3 [ a ccd:ObjectQ, ccd:PointA ]; #Events?
+    wf:output [ a ccd:ObjectQ, ccd:PointA, ccd:RatioA ];
+    tools:algebraexpression	"join_attr (get_attrL (objectregionnominals x2)) (groupbyL min (nDist (get_attrL (objectregionnominals x2)) (get_attrL (objectregionnominals x3)) (rationetwork x1)))".
+
+#Builds ratio network from line objects
+<https://pro.arcgis.com/en/pro-app/latest/tool-reference/network-analyst/build-network.htm> rdfs:label "Builds ratio network from line objects";
+	wf:input1 [ a ccd:ObjectQ, ccd:LineA, ccd:RatioA ];
+	wf:output [ a ccd:NetworkQ, ccd:LineA, ccd:RatioA ];
+	tools:algebraexpression "nbuild (objectregionratios x1)".
+	
+#Near tool, to seach for the closest objects using Euclidean distance
+<https://pro.arcgis.com/en/pro-app/latest/tool-reference/analysis/generate-near-table.htm> tools:implements tools:nearPointObjects.
+tools:nearPointObjects rdfs:label "Near tool, to seach for the closest objects using Euclidean distance";
+	wf:input1  [ a ccd:ObjectQ, ccd:PointA ];
+	wf:input2 [ a ccd:ObjectQ, ccd:PointA ];
+	wf:output [ a ccd:ObjectQ, ccd:PointA, ccd:RatioA ];
+	tools:algebraexpression "join_attr (get_attrL (objectregionnominals x1)) (groupbyL min (oDist (get_attrL (objectregionnominals x1)) (get_attrL (objectregionnominals x2))))".
+
+
+### Scenario: Malaria (malaria.ttl)
+### Source: https://learn.arcgis.com/en/projects/monitor-malaria-epidemics/
+#-------------------------------
+
+##Feature class to feature class (=Select)
+<https://pro.arcgis.com/en/pro-app/latest/tool-reference/conversion/feature-class-to-feature-class.htm>
+tools:implements tools:FC2FCObjectTess.
+#### Object selection variant by id
+tools:FC2FCObjectTess rdfs:label "Object selection by id";   
+	wf:input1 [ a ccd:ObjectQ, ccd:VectorTessellationA ];
+    wf:output [ a ccd:ObjectQ, ccd:PlainVectorRegionA ];
+    tools:algebraexpression	"subset (objectregionnominals x1) (objects)".
+
+##Merge object parts into single object
+<https://pro.arcgis.com/en/pro-app/latest/tool-reference/data-management/dissolve.htm>
+tools:implements tools:MergeObjects.
+tools:MergeObjects rdfs:label "Merges object parts into single objects based on object identifiers stored as names";
+	wf:input1 [ a ccd:ObjectQ, ccd:VectorTessellationA, ccd:NominalA ];
+    wf:output [ a ccd:ObjectQ, ccd:VectorTessellationA , ccd:NominalA];
+    tools:algebraexpression	"join_attr (groupby (compose merge (compose pi2 (subset (get_attrL (objectregionnominals x1))))) (apply1 objectify (get_attrR (objectregionnominals x1)))) (getobjectnames (pi2 (get_attrR (objectregionnominals x1))))".
+    
+    
+#Zonal statistics: sum of count amounts
+tools:ZonalStatisticsSumCount rdfs:label "Sums up count amounts (given as raster) into object regions";
+    wf:input1 [ a ccd:AmountQ, ccd:Raster, ccd:CountA ];
+    wf:input2 [ a ccd:ObjectQ, ccd:VectorRegionA ];
+    wf:output [ a ccd:ObjectQ, ccd:VectorRegionA, ccd:CountA ];
+    tools:algebraexpression #"groupby_avg bowtie* sigmae lotopo pi1 field x objectregions y in field x".
+    "join_attr (get_attrL (objectregionnominals x2)) (groupbyL sum (join_key (orTopo (get_attrL (objectregionnominals x2)) (pi1 (countamounts x1))) (countamounts x1)))".
+
+##Make table from excel
+tools:JoinFromTable tools:implements tools:LoadAmountonObjects ;   
+    wf:edge _:wf10_1, _:wf10_2;
+    wf:source _:in10_1, _:in10_2.		
+	_:wf10_1  wf:applicationOf <https://pro.arcgis.com/en/pro-app/tool-reference/conversion/excel-to-table.htm>;
+		wf:input1 _:in10_1	;
+		wf:output _:out10. 	
+	_:wf10_2  wf:applicationOf <https://pro.arcgis.com/en/pro-app/tool-reference/data-management/join-field.htm>;
+			wf:input1 _:in10_2	;
+			wf:input2 _:out10 ;
+			wf:output _:out10_2.				
+tools:LoadAmountonObjects  rdfs:label "Loads object based count amounts from excel and joins them with vector objects";
+	wf:input1 [ a ccd:ObjectQ, ccd:CountA ];
+	wf:input2 [ a ccd:ObjectQ, ccd:VectorRegionA  ];
+	wf:output [ a ccd:ObjectQ, ccd:VectorRegionA, ccd:CountA ];
+	tools:algebraexpression "join_attr (get_attrL(objectregionattr x2)) (objectcounts x1)".
+
+#Calculate new attribute: Object Content proportion OA/OA
+tools:CalculateObjectVectorCountAmountRatio rdfs:label "Calculates the ratio of two count vector amounts on objects.";
+wf:input1 [ a  ccd:ObjectQ,  ccd:VectorRegionA, ccd:CountA ];
+wf:input2 [ a  ccd:ObjectQ,  ccd:VectorRegionA,  ccd:CountA];
+wf:output [ a ccd:ObjectQ,  ccd:VectorRegionA,  exm:IRA];
+tools:algebraexpression "join_attr (get_attrL (objectregioncounts x1)) (apply2 (ratio) (get_attrR (objectregioncounts x1)) (get_attrR (objectregioncounts x2)))".
+
+
+
+### Scenario: PredictFloods (Floods.ttl)
+### Source: https://learn.arcgis.com/en/projects/predict-floods-with-unit-hydrographs/
+#-------------------------------
+
+# 1: generate flow velocity raster from flow accumulation (sum of area upstream) and slope. 
+
+# 2: con and con : constrain velocity raster to min and max velocity. Then invert velocity (to get a weight). Then estimate flow length (time) to the outflow point for each raster cell based on velocity weight and direction raster. 
+
+# 3: reclassify time into intervals to get isochrone raster.  Summary table and convert area per 30 minutes to area per second. unit hydrograph: drainage area per second.
+
+#Flow direction raster
+<https://pro.arcgis.com/en/pro-app/latest/tool-reference/spatial-analyst/flow-direction.htm> rdfs:label "computes a grid graph of flow directions from a DEM";
+	wf:input1 [ a ccd:FieldRaster, ccd:IntervalA]; ## DEM	
+	wf:output [ a ccd:FieldRaster, ccd:RatioA];
+	tools:algebraexpression "flowdirgraph (itvfield x1)".
+
+#Flow direction accumulation
+<https://pro.arcgis.com/en/pro-app/latest/tool-reference/spatial-analyst/flow-accumulation.htm> rdfs:label "accumulates flow directions into areas reachable downstream";
+	wf:input1 [ a ccd:FieldRaster, ccd:RatioA]; ##needs to be a direction 	
+	wf:output [ a ccd:FieldRaster, ccd:RatioA];
+	tools:algebraexpression "apply1 size (accumulate (locationfield x1))".
+
+#Slope computation
+<https://pro.arcgis.com/en/pro-app/latest/tool-reference/spatial-analyst/slope.htm>  rdfs:label "Computes slopes of a DEM";
+	wf:input1 [ a ccd:FieldRaster, ccd:IntervalA]; ## DEM	
+	wf:output [ a ccd:FieldRaster, ccd:RatioA];
+	tools:algebraexpression "slope (itvfield x1)".
+
+#Method for flow velocities
+tools:VelocityField 
+wf:edge _:wf44_4, _:wf44_5; 
+	wf:source _:slope,_:acc;   
+    rdfs:label "Computes a water flow velocity raster from slope * accumulation area".
+#### Select by attribute is always followed by copying features 
+	#This computes SquareRoot("slope") * SquareRoot("flow_accumulation")
+_:wf44_4 wf:applicationOf <https://pro.arcgis.com/en/pro-app/latest/tool-reference/spatial-analyst/raster-calculator.htm>  ;
+	wf:input1 _:slope;
+	wf:input2 _:acc;
+	wf:output _:slopearea.
+	#This second step computes 0.1 * ("Stowe_slope_area_term" / [Mean slope-area term]). It needs looking up of parameter [Mean slope-area term].
+_:wf44_5 wf:applicationOf <https://pro.arcgis.com/en/pro-app/latest/tool-reference/spatial-analyst/raster-calculator.htm>  ;
+	wf:input1 _:slopearea;	
+	wf:output _:velocity.
+tools:VelocityField tools:implements tools:VelocityFieldDEM.
+tools:VelocityFieldDEM rdfs:label "Computes velocity field from DEM";
+	wf:input1 [ a ccd:FieldRaster, ccd:RatioA]; ## 	slope
+	wf:input2 [ a ccd:FieldRaster, ccd:RatioA]; ## 	accumulation area
+	wf:output [ a ccd:FieldRaster, ccd:RatioA];
+	tools:algebraexpression "apply2 product (ratiofield x1) (ratiofield x2)".
+
+
+#Con with leq/gte
+tools:con1 rdfs:label "Cuts a field raster conditional on less than some value";
+	wf:input1 [ a ccd:FieldRaster, ccd:RatioA]; ## raster	
+	wf:output [ a ccd:FieldRaster, ccd:RatioA];
+	tools:algebraexpression "select leq (ratiofield x1) (ratioV)".
+
+### local map algebra transformation invert
+<https://pro.arcgis.com/en/pro-app/tool-reference/spatial-analyst/raster-calculator.htm> tools:implements tools:LocalMapAlgebraInvert.
+tools:LocalMapAlgebraInvert rdfs:label "Builds and executes a Local Map Algebra expression that inverts rasters with a ratio level";
+    wf:input1 [ a ccd:FieldRaster, ccd:RatioA ];    
+    wf:output [ a ccd:FieldRaster, ccd:RatioA ];
+   tools:algebraexpression "apply1 (ratio ratioV) (ratiofield x1)".
+
+#Snap point to raster
+<https://pro.arcgis.com/en/pro-app/latest/tool-reference/spatial-analyst/snap-pour-point.htm> rdfs:label "Snaps a pour point to a raster to generate a raster showing the pour point";
+		wf:input1 [a ccd:ObjectQ, ccd:PointA ]; #Snap pour point to river (Distance: 60m)
+		wf:input2 [a ccd:FieldRaster, ccd:RatioA ]; # flow accumulation raster
+		wf:output [a ccd:FieldQ, ccd:Raster, ccd:PlainNominalA];
+		tools:algebraexpression "join (revert (get_attrL (objectregionnominals x1))) (get_attrR (objectregionnominals x1))". #This is a simplification that ignores flow accumulation, but just generates a nominal patch from an object nominal
+		
+ <https://pro.arcgis.com/en/pro-app/latest/tool-reference/spatial-analyst/watershed.htm> rdfs:label "Given a flow direction raster and a pour point raster, generates a watershed raster";
+		wf:input1 [ a ccd:FieldRaster, ccd:RatioA]; #flow direction raster
+		wf:input2 [a ccd:FieldQ, ccd:Raster, ccd:PlainNominalA]; # pour point raster
+		wf:output [a ccd:FieldQ, ccd:Raster, ccd:PlainNominalA]; #watershed raster, gives a different watershed id for each pour point		
+		tools:algebraexpression "revert (join (invert (nomfield x2))(invert (apply1 reify (accumulate (locationfield x1)))))".
+		
+<https://pro.arcgis.com/en/pro-app/latest/tool-reference/spatial-analyst/extract-by-mask.htm> rdfs:label "Extract raster by the extent of another (field) raster";
+		wf:input1 [ a ccd:FieldRaster, ccd:RatioA]; #Flow directions by watershed mask
+		wf:input2 [a ccd:FieldRaster];	
+		wf:output [ a ccd:FieldRaster, ccd:RatioA];
+		tools:algebraexpression "subset (locationfield x1) (pi1 (nomfield x2))".
+
+<https://pro.arcgis.com/en/pro-app/latest/tool-reference/spatial-analyst/flow-length.htm> rdfs:label "Calculate the upstream or downstream distance, or weighted distance (=time), along the flow path for each cell.";
+		wf:input1 [ a ccd:FieldRaster, ccd:RatioA ]; #Impedance Weight raster (e.g. 1/velocity raster)
+		wf:input2  [ a ccd:FieldRaster, ccd:RatioA];  #Flow direction raster;
+		wf:output [ a ccd:FieldRaster, ccd:RatioA];  #Flow time raster.
+		tools:algebraexpression "groupbyL max (relunion (pi2 (apply2 (lgDist (gridgraph (locationfield x2) (ratiofield x1))) (apply nest (pi1 (locationfield x2))) (accumulate (locationfield x2)))))".
+
+<https://pro.arcgis.com/en/pro-app/latest/tool-reference/spatial-analyst/reclassify.htm> tools:implements tools:RasterToIsoRaster.
+tools:RasterToIsoRaster rdfs:label "Converts an interval field raster into an ordinal raster.";
+    wf:input1 [ a ccd:FieldRaster, ccd:IntervalA ];
+    wf:output [ a ccd:FieldRaster, ccd:PlainOrdinalA ];
+    tools:algebraexpression "apply1 classify (itvfield x1)".
+
+
+#Method for summarizing raster coverages
+tools:RasterCoverage tools:implements tools:CreateUnitHydrograph; 
+wf:edge _:wf55_1, _:wf55_2, _:wf55_3; 
+	wf:source _:fieldraster;   
+    rdfs:label "Computes coverage (size) from a raster table for each raster value".
+_:wf55_1 wf:applicationOf <https://pro.arcgis.com/en/pro-app/latest/tool-reference/conversion/table-to-table.htm>  ;
+	wf:input1 _:fieldraster;	
+	wf:output _:rastertable.	
+_:wf55_2 wf:applicationOf <https://pro.arcgis.com/en/pro-app/latest/tool-reference/data-management/add-field.htm>  ;
+	wf:input1 _:rastertable;	
+	wf:output _:rastertable2.	
+_:wf55_3 wf:applicationOf <https://pro.arcgis.com/en/pro-app/latest/tool-reference/data-management/calculate-field.htm>  ;
+	wf:input1 _:rastertable2;	
+	wf:output _:rastertable3.	
+
+tools:CreateUnitHydrograph  rdfs:label "Creates a unit hydrograph from an isochrones raster based on isochrone interval. This is a table that indicates for each time interval an areal coverage";
+	wf:input1 [ a ccd:FieldRaster, ccd:OrdinalA]; ## 	
+	wf:output [ a ccd:AmountQ, ccd:LayerA, ccd:RatioA];
+	tools:algebraexpression "apply1 ((swap ratio) ratioV) (groupby size (ordfield x1))".
+
+
+
+### Scenario: AquiferDepletion (aquifer.ttl)
+### Source: https://learn.arcgis.com/en/projects/find-areas-at-risk-from-aquifer-depletion/
+#-------------------------------
+
+#### Select features
+tools:FullSelectFeatures tools:implements tools:SelectFeaturesByObjectPlainRegionObjects, tools:SelectFeaturesCoverageToExistenceVector ;
+    wf:edge _:wf111_1, _:wf111_2; 
+	wf:source _:in111;   
+    rdfs:label "Query to select items from layers using attribut values".
+#### Select by attribute is always followed by copying features 
+_:wf111_1 wf:applicationOf <https://pro.arcgis.com/en/pro-app/latest/help/mapping/navigation/select-features-using-attributes.htm> ;
+		wf:input1 _:in111;
+		wf:output _:out111.
+_:wf111_2 wf:applicationOf <https://pro.arcgis.com/en/pro-app/latest/tool-reference/conversion/feature-class-to-feature-class.htm>  ;
+	wf:input1 _:out111;
+		wf:output _:out112.
+
+tools:SelectFeaturesByObjectPlainRegionObjects rdfs:label "Select region objects by id";
+	wf:input1 [ a ccd:ObjectQ, ccd:PlainVectorRegionA]; ## 	
+	wf:output [ a ccd:ObjectQ, ccd:PlainVectorRegionA];
+	tools:algebraexpression "subset (objectregionnominals x1) (objects)".
+
+tools:SelectFeaturesCoverageToExistenceVector rdfs:label "Select patches of a coverage by attribute";
+    wf:input1 [ a ccd:Coverage ];
+    wf:output [ a ccd:FieldQ, ccd:PlainVectorRegionA ];
+    tools:algebraexpression	"revert (select eq (nomcoverages x1) (nominal))".
+
+
+
+
+### Scenario:  SolarPowerPotential (solar.ttl)
+### Source: https://learn.arcgis.com/en/projects/estimate-solar-power-potential/
+#-------------------------------
+
+<https://pro.arcgis.com/en/pro-app/latest/tool-reference/3d-analyst/aspect.htm> rdfs:label "Derives the aspect of a digital elevation model";
+	wf:input1 [ a ccd:FieldRaster, ccd:IntervalA]; ## 	
+	wf:output [ a ccd:FieldRaster, ccd:RatioA];
+	tools:algebraexpression "aspect (itvfield x1)".
+	
+### local map algebra divide
+<https://pro.arcgis.com/en/pro-app/tool-reference/spatial-analyst/raster-calculator.htm> tools:implements tools:LocalMapAlgebraDivide.
+tools:LocalMapAlgebraDivide rdfs:label "Builds and executes a Local Map Algebra expression that divides rasters by a ratio number";
+    wf:input1 [ a ccd:FieldRaster, ccd:RatioA ];    
+    wf:output [ a ccd:FieldRaster, ccd:RatioA ];
+   tools:algebraexpression "apply1 ((swap ratio) (ratioV)) (ratiofield x1)".
+	
+<https://pro.arcgis.com/en/pro-app/latest/tool-reference/spatial-analyst/con-.htm> tools:implements tools:con1, tools:con2, tools:con3.
+tools:con2 rdfs:label "Cuts a field raster conditional on (the coverage of) another field raster that is less than some value";
+	wf:input1 [ a ccd:FieldRaster, ccd:RatioA]; ## conditional raster, less than some value	
+	wf:input2 [ a ccd:FieldRaster, ccd:RatioA]; ## field raster	to be cut
+	wf:output [ a ccd:FieldRaster, ccd:RatioA];
+	tools:algebraexpression "subset (ratiofield x2) (pi1 (select leq (ratiofield x1) (ratioV)))".
+	
+tools:con3 rdfs:label "Cuts a field raster conditional on (the coverage of) another field raster, and adds another field raster for those locations outside of the coverage";
+	wf:input1 [ a ccd:FieldRaster, ccd:RatioA]; ## conditional raster, less than some value	
+	wf:input2 [ a ccd:FieldRaster, ccd:RatioA]; ## field raster	to be cut for inside
+	wf:input3 [ a ccd:FieldRaster, ccd:RatioA]; ## field raster	to be cut for outside
+	wf:output [ a ccd:FieldRaster, ccd:RatioA];
+	tools:algebraexpression "set_union (subset (ratiofield x2) (pi1 (select leq (ratiofield x1) (ratioV))))(subset (ratiofield x3) (pi1 (select eq (lTopo (pi1 (ratiofield x3)) (reify (pi1 (select leq (ratiofield x1) (ratioV))))) out)))".	
+
+tools:AddandCalculateAttribute tools:implements tools:CalculateObjectSpatialAmount, tools:CalculateProd;
+wf:edge _:wf300_1, _:wf300_2; 
+	wf:source _:wf300_1;   
+    rdfs:label "Add an attribute and calculate value based on one other attribute".
+_:wf300_1 wf:applicationOf <https://pro.arcgis.com/en/pro-app/latest/tool-reference/data-management/add-field.htm> ;
+	wf:input1  _:in3001;	
+	wf:output  _:out3001.	
+_:wf300_2 wf:applicationOf <https://pro.arcgis.com/en/pro-app/tool-reference/data-management/calculate-field.htm> ;
+	wf:input1  _:out3001;	
+	wf:output  _:out300.
+
+##Uses calculate field to obtain an extensive amount on objects from an average
+tools:CalculateObjectSpatialAmount rdfs:label "Calculates an amount from an object ratio quality (representating an intensive measure) using the object's area. For example, the amount of radiation falling on a building using the mean radiation and the building's area";
+wf:input1 [ a  ccd:ObjectQ, ccd:VectorRegionA, exm:IRA ];
+wf:output [ a ccd:ObjectQ, ccd:VectorRegionA, exm:ERA];
+#join_attr (get_attrL (objectregionratios x1)) (
+tools:algebraexpression "join_attr (get_attrL (objectregionratios x1)) (apply2 (product) (get_attrR (objectregionratios x1)) (apply1 (compose size deify)(get_attrL (objectregionratios x1))))".
+
+tools:CalculateProd rdfs:label "Calculates some product of ratio scaled object attribute with some ratio value.";
+wf:input1 [ a  ccd:ObjectQ, ccd:VectorRegionA, ccd:RatioA ];
+wf:output [ a ccd:ObjectQ, ccd:VectorRegionA, ccd:RatioA];
+tools:algebraexpression "join_attr (get_attrL (objectregionratios x1)) (apply1 (product ratioV) (get_attrR (objectregionratios x1)))".
+
+tools:ZonalStatisticsMeanRatio  rdfs:label "Calculates the average value of a field raster within the zones given by object regions. Outcome is intensive.";
+    wf:input2 [ a ccd:ObjectQ, ccd:PlainVectorRegionA ];
+    wf:input1 [ a ccd:FieldRaster, ccd:RatioA ];
+    wf:output [ a ccd:ObjectQ, ccd:PlainVectorRegionA, exm:IRA ];
+    tools:algebraexpression #"groupby_avg bowtie* sigmae lotopo pi1 field x objectregions y in field x".
+    #"join_attr (get_attrL (objectregionnominals x2)) (apply1 (fcont (avg) (field x1)) (get_attrL (objectregionnominals x2)))".
+    "join_attr (get_attrL (objectregionnominals x2))  (groupbyR avg (join_key (select eq (loTopo (pi1(field x1)) (get_attrL (objectregionnominals x2))) in) (field x1)))".
+    
+
+
+
+
+### Scenario: InfrastructureAccess (InfrastructureAccess.ttl)
+### Source: https://learn.arcgis.com/en/projects/estimate-access-to-infrastructure/
+#-------------------------------
+
+##Summary statistics for amounts
+<https://pro.arcgis.com/en/pro-app/latest/tool-reference/analysis/summary-statistics.htm> tools:implements tools:ObjectSummaryStatisticsAmount, tools:SummaryStatisticsAmount.
+tools:ObjectSummaryStatisticsAmount rdfs:label "Sums the amount values of an object layer into a sum";
+	wf:input1 [ a ccd:ObjectQ, ccd:VectorRegionA, ccd:CountA]; ## 	
+	wf:output [ a ccd:AmountQ, ccd:VectorRegionA, ccd:CountA];
+	tools:algebraexpression "contentsum (getamounts (objectregionratios x1))".
+tools:SummaryStatisticsAmount rdfs:label "Sums the amount values of a count amount layer into a sum";
+	wf:input1 [ a ccd:AmountQ, ccd:VectorRegionA, ccd:CountA]; ## 	
+	wf:output [ a ccd:AmountQ, ccd:VectorRegionA, ccd:CountA];
+	tools:algebraexpression "contentsum (ratioamounts x1)".
+	
+<https://pro.arcgis.com/en/pro-app/tool-reference/data-management/clip.htm> tools:implements tools:ClipObject2Object.
+tools:ClipObject2Object rdfs:label "Clips some object polygons to the extent of an object layer. We assume here that objects exactly coincide (otherwise clip would cut objects).";
+    wf:input1 [ a ccd:ObjectQ, ccd:PlainVectorRegionA, ccd:CountA ]; ## objects to be clipped
+    wf:input2 [ a ccd:ObjectQ, ccd:PlainVectorRegionA ]; ##to the regions of these objects
+    wf:output [ a ccd:ObjectQ, ccd:PlainVectorRegionA, ccd:CountA ];
+    tools:algebraexpression "subset (objectregioncounts x1) (pi1 (select eq (oTopo (get_attrL (objectregioncounts x1)) (get_attrL (objectregionnominals x2))) in))".
+
+
+tools:CalculatePartialAmounts tools:implements tools:CalculatePartialAmountsfromObjects;
+    wf:edge _:wf01_0, _:wf01_1, _:wf01_2, _:wf01_3; 
+	wf:source _:in011, _:in012. 	
+_:wf01_0 wf:applicationOf <https://pro.arcgis.com/en/pro-app/tool-reference/data-management/clip.htm>;
+	wf:input1 _:in011;
+	wf:inputw _:in012;
+	wf:output _:out011.
+_:wf01_1 wf:applicationOf <https://pro.arcgis.com/en/pro-app/latest/tool-reference/data-management/add-fields.htm> ;
+	wf:input1 _:out011;
+	wf:output _:out012.
+_:wf01_2 wf:applicationOf <https://pro.arcgis.com/en/pro-app/tool-reference/data-management/calculate-field.htm> ;
+	wf:input1  _:out012;	
+	wf:output  _:out013.	
+_:wf01_3 wf:applicationOf <https://pro.arcgis.com/en/pro-app/tool-reference/data-management/calculate-field.htm> ;
+	wf:input1  _:out013;	
+	wf:output  _:out014.
+
+##CalculatePartialAmounts: Calculates a set of portions from a set of object based count amounts using some boolean vector field. Only the portions that are within the true value of the boolean field are considered. This is an areal interpolation problem, which is solved by first generating area proportions and then multiplying them with the count amount.
+tools:CalculatePartialAmountsfromObjects rdfs:label "Clips some object vector with some count amounts to the extent of a field layer (e.g. a buffer) and interpolates partial count amounts R(Reg, Ratio) based on area percentage.";
+    wf:input1 [ a ccd:ObjectQ, ccd:VectorRegionA, ccd:CountA ];
+    wf:input2 [ a ccd:FieldQ, ccd:VectorRegionA, ccd:BooleanA ];
+    wf:output [ a ccd:AmountQ, ccd:VectorRegionA, ccd:CountA];
+    tools:algebraexpression "arealinterpol (getamounts (objectregioncounts x1)) (pi2 (groupbyR (reify) (select eq (loTopo (fcover (boolfield x2) (nest true)) (get_attrL (objectregioncounts x1))) in)))".
+
+
+### Scenario: Deforestation (deforestation.ttl)
+### Source: https://learn.arcgis.com/en/projects/predict-deforestation-in-the-amazon-rain-forest/
+#-------------------------------
+
+##Select object by extent
+<https://pro.arcgis.com/en/pro-app/latest/tool-reference/analysis/select.htm> tools:implements tools:SelectObjectbyExtent.
+tools:SelectObjectbyExtent rdfs:label "Select object vector by extent. Extent remains implicit.";
+	wf:input1 [ a ccd:ObjectQ, ccd:VectorA ];
+    wf:output [ a ccd:ObjectQ, ccd:VectorA ];
+    tools:algebraexpression	"subset (objectregionnominals x1) (pi3 (select eq (loTopo (deify (region)) (get_attrL (objectregionnominals x1))) in))".
+
+##Buffer (interpreted as vector representation of boolean field)
+<https://pro.arcgis.com/en/pro-app/latest/tool-reference/analysis/buffer.htm> tools:implements tools:ObjectBuffer.
+tools:ObjectBuffer rdfs:label "Buffers some object vector and returns the buffer as a boolean field R(Loc, Bool)";
+	wf:input1 [ a ccd:ObjectQ, ccd:VectorA ];
+    wf:output [ a ccd:FieldQ, ccd:PlainVectorRegionA, ccd:BooleanA ];
+    tools:algebraexpression	"extrapol (get_attrL (objectregionnominals x1))".
+    
+##Clip vector fields
+<https://pro.arcgis.com/en/pro-app/tool-reference/data-management/clip.htm> tools:implements tools:ClipNomFieldVector2Extent,tools:ClipBoolFieldVector2Extent .
+tools:ClipNomFieldVector2Extent rdfs:label "Clips some nominal field vector to the region where a boolean field vector is true.";
+    wf:input1 [ a ccd:FieldQ,  ccd:VectorRegionA ];
+    wf:input2 [ a ccd:FieldQ, ccd:VectorRegionA, ccd:BooleanA ];
+    wf:output [ a ccd:FieldQ,  ccd:VectorRegionA ];
+    tools:algebraexpression "subset (nomfield x1) (fcover (boolfield x2) (nest true))".
+tools:ClipBoolFieldVector2Extent rdfs:label "Clips some boolean field vector to the region where a boolean field vector is true.";
+    wf:input1 [ a ccd:FieldQ,  ccd:VectorRegionA, ccd:BooleanA];
+    wf:input2 [ a ccd:FieldQ, ccd:VectorRegionA, ccd:BooleanA ];
+    wf:output [ a ccd:FieldQ,  ccd:VectorRegionA, ccd:BooleanA ];
+    tools:algebraexpression "subset (boolfield x1) (fcover (boolfield x2) (nest true))".
+    
+##CalculateAreaMeasure: This is an abbreviated workflow for calculating area based measures with attributes
+tools:CalculateAreaMeasure tools:implements tools:CalculateVectorFieldAreaPercentage,  tools:CalculateVectorFieldPartialArea, tools:CalculateCountAmountRatio,  tools:CalculateObjectVectorCountAmountRatio, tools:CalculateObjectAttrRatio;
+    wf:edge _:wf11_1, _:wf11_2; 
+	wf:source _:in111, _:in112. 
+_:wf11_1 wf:applicationOf <https://pro.arcgis.com/en/pro-app/latest/tool-reference/data-management/add-field.htm> ;
+	wf:input1 _:in111;
+	wf:output _:out111.
+_:wf11_2 wf:applicationOf <https://pro.arcgis.com/en/pro-app/tool-reference/data-management/calculate-field.htm> ;
+	wf:input1  _:out111;
+	wf:input2  _:in112;
+	wf:output  _:out112.	
+
+##The assumption is here is that fields are represented by single polygons and area measures are implicitly added. The area measure of the second layer is manually taken over into the calculation. The result is a single measure, though stored into a table with a single polygon.
+
+#Substance Coverage proportions SC/SC
+tools:CalculateVectorFieldAreaPercentage rdfs:label "Calculates an area ratio (amount) of the size of the extent of the second boolean field with respect to the extent of the first boolean field, both represented by vector layers.";
+wf:input1 [ a  ccd:FieldQ,  ccd:VectorRegionA, ccd:BooleanA ];
+wf:input2 [ a  ccd:FieldQ,  ccd:VectorRegionA, ccd:BooleanA];
+wf:output [ a  ccd:AmountQ,  ccd:VectorRegionA,  exm:IRA];
+tools:algebraexpression "nest2 true (ratio (size (fcover (boolfield x1) (nest true))) (size (fcover (boolfield x2) (nest true))))".
+
+#Substance Coverage SC
+tools:CalculateVectorFieldPartialArea rdfs:label "Calculates a partial area measure by multiplying an area proportion with the size of the extent of a vector field.";
+wf:input1 [ a  ccd:FieldQ,  ccd:VectorRegionA ]; #field whose extent is interpreted as a Substance Coverage SC
+wf:input2 [ a  ccd:AmountQ,  ccd:VectorRegionA,  exm:IRA];#Substance Coverage proportion SC/SC
+wf:output [ a ccd:AmountQ,  ccd:VectorRegionA,  exm:ERA];
+tools:algebraexpression "apply1 (product (size (pi1 (nomfield x1)))) (boolratio x2)".
+
+#Object Content proportion OA/OA
+tools:CalculateCountAmountRatio rdfs:label "Calculates the ratio of two count vector amounts.";
+wf:input1 [ a  ccd:AmountQ,  ccd:VectorRegionA, ccd:CountA ];
+wf:input2 [ a  ccd:AmountQ,  ccd:VectorRegionA,  ccd:CountA];
+wf:output [ a ccd:AmountQ,  ccd:VectorRegionA,  exm:IRA];
+tools:algebraexpression "apply2 (ratio) (ratioamounts x1) (ratioamounts x2)".
+
+##Erase Vector fields
+<https://pro.arcgis.com/en/pro-app/latest/tool-reference/analysis/erase.htm> tools:implements tools:EraseFieldExtentfromFieldVector.
+tools:EraseFieldExtentfromFieldVector rdfs:label "Erases the coverage of a boolean field vector (second input) from a field vector (first input)";
+  	wf:input1 [ a ccd:FieldQ,  ccd:PlainVectorRegionA ];
+    wf:input2 [ a ccd:FieldQ, ccd:VectorRegionA, ccd:BooleanA ];
+    wf:output [ a ccd:FieldQ,  ccd:PlainVectorRegionA];
+    tools:algebraexpression "subset (nomfield x1) (pi1 (select eq (lTopo (pi1 (nomfield x1)) (reify (fcover (boolfield x2) (nest true)))) out))".
+
+
+### Scenario: Population (AmountsObjectsUtrecht.ttl)
+### Source: own
+#-------------------------------
+
+#### Select layer by attribute
+tools:FullSelectLayerByAttribute tools:implements tools:SelectLayerByObjectPointObjects,  tools:SelectLayerByObjectLineObjects,  tools:SelectLayerByObjectPlainRegionObjects,tools:SelectLayerByObjectTessObjects, 
+tools:SelectLayerByAttributePointObjects,  tools:SelectLayerByAttributeLineObjects,  tools:SelectLayerByAttributePlainRegionObjects,tools:SelectLayerByAttributeTessObjects, tools:SelectLayerByRatioPointObjects,  tools:SelectLayerByRatioLineObjects,  tools:SelectLayerByRatioPlainRegionObjects,tools:SelectLayerByRatioTessObjects,
+tools:SelectLayerContourToExistenceVector,tools:SelectLayerCoverageToExistenceVector;
+    wf:edge _:wf1_1, _:wf1_2; 
+	wf:source _:in11;   
+    rdfs:label "a SQL query to select features matching a selection criteria.You build a query expression to generate the subset. You can query a dataset based on a field in a layer or a table. Using this selection a new Feature dataset is created with only the selected features using the Copy Features tool. This feature dataset represents all the area's that denounce the presence of a certain criteria".
+#### Select by attribute is always followed by copy features (treated as one tool in the annotation
+_:wf1_1 wf:applicationOf <https://pro.arcgis.com/en/pro-app/tool-reference/data-management/select-layer-by-attribute.htm> ;
+		wf:input1 _:in11;
+		wf:output _:out11.
+_:wf1_2 wf:applicationOf <https://pro.arcgis.com/en/pro-app/tool-reference/data-management/copy-features.htm>  ;
+	wf:input1 _:out11;
+		wf:output _:out12.
+		
+
+#### Object selection variant by id
+tools:SelectLayerByObjectPointObjects    
+	wf:input1 [ a ccd:ObjectQ, ccd:PointA ];
+    wf:output [ a ccd:ObjectQ, ccd:PointA, ccd:BooleanA ];
+    tools:algebraexpression	"subset (objectregionnominals x1) (objects)".
+    
+#### Object selection variant by id
+tools:SelectLayerByObjectLineObjects    
+	wf:input1 [ a ccd:ObjectQ, ccd:LineA ];
+    wf:output [ a ccd:ObjectQ, ccd:LineA, ccd:BooleanA ];
+    tools:algebraexpression	"subset (objectregionnominals x1) (objects)".
+    
+#### Object selection variant by id
+tools:SelectLayerByObjectPlainRegionObjects    
+	wf:input1 [ a ccd:ObjectQ, ccd:PlainVectorRegionA ];
+    wf:output [ a ccd:ObjectQ, ccd:PlainVectorRegionA, ccd:BooleanA ];
+    tools:algebraexpression	"subset (objectregionnominals x1) (objects)".
+
+#### Object selection variant by id
+tools:SelectLayerByObjectTessObjects    
+	wf:input1 [ a ccd:ObjectQ, ccd:VectorTessellationA ];
+    wf:output [ a ccd:ObjectQ, ccd:PlainVectorRegionA, ccd:BooleanA ];
+    tools:algebraexpression	"subset (objectregionnominals x1) (objects)".
+
+#### Object selection variant, needs a nominal attribute
+tools:SelectLayerByAttributePointObjects    
+	wf:input1 [ a ccd:ObjectQ, ccd:PointA, ccd:NominalA ];
+    wf:output [ a ccd:ObjectQ, ccd:PointA, ccd:NominalA];
+    tools:algebraexpression	"subset (objectregionnominals x1) (noms)".
+    
+#### Object selection variant, needs a nominal attribute
+tools:SelectLayerByAttributeLineObjects    
+	wf:input1 [ a ccd:ObjectQ, ccd:LineA, ccd:NominalA ];
+    wf:output [ a ccd:ObjectQ, ccd:LineA, ccd:NominalA ];
+    tools:algebraexpression	"subset (objectregionnominals x1) (noms)".
+    
+#### Object selection variant, needs a nominal attribute
+tools:SelectLayerByAttributePlainRegionObjects    
+	wf:input1 [ a ccd:ObjectQ, ccd:PlainVectorRegionA, ccd:NominalA ];
+    wf:output [ a ccd:ObjectQ, ccd:PlainVectorRegionA, ccd:NominalA ];
+    tools:algebraexpression	"subset (objectregionnominals x1) (noms)".
+
+#### Object selection variant, needs a nominal attribute
+tools:SelectLayerByAttributeTessObjects    
+	wf:input1 [ a ccd:ObjectQ, ccd:VectorTessellationA, ccd:NominalA ];
+    wf:output [ a ccd:ObjectQ, ccd:PlainVectorRegionA, ccd:NominalA ];
+    tools:algebraexpression	"subset (objectregionnominals x1) (noms)".
+
+#### Object selection variant, needs a ratio attribute
+tools:SelectLayerByRatioPointObjects    
+	wf:input1 [ a ccd:ObjectQ, ccd:PointA, ccd:RatioA ];
+    wf:output [ a ccd:ObjectQ, ccd:PointA, ccd:RatioA ];
+    tools:algebraexpression	"subset (objectregionratios x1) (ratios)".
+    
+#### Object selection variant, needs a ratio attribute
+tools:SelectLayerByRatioLineObjects    
+	wf:input1 [ a ccd:ObjectQ, ccd:LineA, ccd:RatioA ];
+    wf:output [ a ccd:ObjectQ, ccd:LineA, ccd:RatioA  ];
+    tools:algebraexpression	"subset (objectregionratios x1) (ratios)".
+    
+#### Object selection variant, needs a ratio attribute
+tools:SelectLayerByRatioPlainRegionObjects    
+	wf:input1 [ a ccd:ObjectQ, ccd:PlainVectorRegionA, ccd:RatioA ];
+    wf:output [ a ccd:ObjectQ, ccd:PlainVectorRegionA, ccd:RatioA ];
+    tools:algebraexpression	"subset (objectregionratios x1) (ratios)".
+
+#### Object selection variant, needs a ratio attribute
+tools:SelectLayerByRatioTessObjects    
+	wf:input1 [ a ccd:ObjectQ, ccd:VectorTessellationA, ccd:RatioA ];
+    wf:output [ a ccd:ObjectQ, ccd:PlainVectorRegionA, ccd:RatioA ];
+    tools:algebraexpression	"subset (objectregionratios x1) (ratios)".
+
+
+#### Object selection variant vith gteq, needs a ratio attribute
+tools:SelectLayerByRatioGEQPlainRegionObjects    
+	wf:input1 [ a ccd:ObjectQ, ccd:PlainVectorRegionA, ccd:RatioA ];
+    wf:output [ a ccd:ObjectQ, ccd:PlainVectorRegionA, ccd:RatioA ];
+    tools:algebraexpression	"select (compose2 notj leq) (objectregionratios x1) (ratioV)".
+
+
+#### Contour to Existence Vector (select a contour map greater than some ordinal value)
+tools:SelectLayerContourToExistenceVector 
+    wf:input1 [ a ccd:Contour ];
+    wf:output [ a ccd:FieldQ, ccd:PlainVectorRegionA, ccd:OrdinalA ];
+    tools:algebraexpression	"revert (select (compose2 notj leq) (contour x1) (ordinal))".
+
+#### Coverage to Existence Vector
+
+tools:SelectLayerCoverageToExistenceVector 
+    wf:input1 [ a ccd:Coverage ];
+    wf:output [ a ccd:FieldQ, ccd:PlainVectorRegionA ];
+    tools:algebraexpression	"revert (select eq (nomcoverages x1) (nominal))".
+
+
+    
+#### Select layer by location
+tools:FullSelectLayerByLocation tools:implements tools:SelectLayerByLocationPointObjects, tools:SelectLayerByLocationLineObjects ,tools:SelectLayerByLocationPlainRegionObjects ,tools:SelectLayerByLocationTessObjects, tools:SelectLayerByLocationPlainRegionObjectsFieldDist, tools:SelectLayerByLocationPlainRegionObjectsDist   ;
+    wf:edge _:wf2_1, _:wf2_2; 
+	wf:source _:in211, _:in212. 
+_:wf2_1 wf:applicationOf <https://pro.arcgis.com/en/pro-app/tool-reference/data-management/select-layer-by-location.htm> ;
+	wf:input1 _:in211;
+	wf:input2 _:in212;
+	wf:output _:out21.
+_:wf2_1 wf:applicationOf <https://pro.arcgis.com/en/pro-app/tool-reference/data-management/copy-features.htm> ;
+	wf:input1  _:out21;
+	wf:output  _:out22.	   
+
+
+#### Object selection variant
+tools:SelectLayerByLocationPointObjects    
+	wf:input1 [ a ccd:ObjectQ, ccd:PointA ];
+	wf:input2 [ a ccd:ObjectQ, ccd:VectorA ];
+    wf:output [ a ccd:ObjectQ, ccd:PointA ];
+    tools:algebraexpression	"subset (objectregionnominals x1) (pi1 (select eq (oTopo (get_attrL (objectregionnominals x1)) (get_attrL (objectregionnominals x2))) in))".
+    
+#### Object selection variant
+tools:SelectLayerByLocationLineObjects    
+	wf:input1 [ a ccd:ObjectQ, ccd:LineA ];
+	wf:input2 [ a ccd:ObjectQ, ccd:VectorA  ];
+    wf:output [ a ccd:ObjectQ, ccd:LineA ];
+     tools:algebraexpression	"subset (objectregionnominals x1) (pi1 (select eq (oTopo (get_attrL (objectregionnominals x1)) (get_attrL (objectregionnominals x2))) in))".
+    
+#### Object selection variant
+tools:SelectLayerByLocationPlainRegionObjects    
+	wf:input1 [ a ccd:ObjectQ, ccd:PlainVectorRegionA ];
+	wf:input2 [ a ccd:ObjectQ, ccd:VectorA ];
+    wf:output [ a ccd:ObjectQ, ccd:PlainVectorRegionA ];
+     tools:algebraexpression	"subset (objectregionnominals x1) (pi1 (select eq (oTopo (get_attrL (objectregionnominals x1)) (get_attrL (objectregionnominals x2))) in))".
+     
+#### Object selection variant with distance
+tools:SelectLayerByLocationPlainRegionObjectsDist   
+	wf:input1 [ a ccd:ObjectQ, ccd:PlainVectorRegionA ];
+	wf:input2 [ a ccd:ObjectQ, ccd:VectorA ];
+    wf:output [ a ccd:ObjectQ, ccd:PlainVectorRegionA ];
+     tools:algebraexpression	"subset (objectregionnominals x1) (pi1 (select leq (oDist (get_attrL (objectregionnominals x1)) (get_attrL (objectregionnominals x2))) (ratioV)))".
+     
+#### Object selection variant with vector field patches
+tools:SelectLayerByLocationPlainRegionObjectsFieldDist   
+	wf:input1 [ a ccd:ObjectQ, ccd:PlainVectorRegionA ];
+	wf:input2 [ a ccd:FieldQ, ccd:VectorRegionA ];
+    wf:output [ a ccd:ObjectQ, ccd:PlainVectorRegionA ];
+     tools:algebraexpression	"subset (objectregionnominals x1) (pi3 (select eq (loTopo  (pi1 (nomfield x2)) (get_attrL (objectregionnominals x1))) in))".
+
+#### Object selection variant
+tools:SelectLayerByLocationTessObjects    
+	wf:input1 [ a ccd:ObjectQ, ccd:VectorTessellationA ];
+	wf:input2 [ a ccd:ObjectQ, ccd:VectorA ];
+    wf:output [ a ccd:ObjectQ, ccd:VectorTessellationA ];
+     tools:algebraexpression	"subset (objectregionnominals x1) (pi1 (select eq (oTopo (get_attrL (objectregionnominals x1)) (get_attrL (objectregionnominals x2))) in))".
+
+
+#### Spatial join
+
+######### Spatial join with sum rule
+# with JOIN_ONE_TO_ONE parameter, with Merge_RULe sum for Ratio data.
+<https://pro.arcgis.com/en/pro-app/tool-reference/analysis/spatial-join.htm> tools:implements tools:SpatialJoinSumTessRatio.
+tools:SpatialJoinSumTessRatio rdfs:label "Sums the attributes at ratio measurement level from one feature to another based on the spatial relation";
+    wf:input1 [ a ccd:ObjectQ, ccd:VectorA, exm:ERA ];
+    wf:input2 [ a ccd:ObjectQ, ccd:VectorTessellationA ];
+    wf:output [ a ccd:ObjectQ, ccd:VectorTessellationA, exm:ERA ];
+    tools:algebraexpression	"join_attr (get_attrL (objectregionnominals x2)) (join (get_attrL (objectregionnominals x2)) (groupbyR (sum) (join_key (select eq (rTopo (pi2 (get_attrL (objectregionratios x1))) (pi2 (get_attrL (objectregionnominals x2)))) in) (getamounts (objectregionratios x1)))))".
+
+# with JOIN_ONE_TO_ONE parameter, with Merge_RULe sum for Count data.
+<https://pro.arcgis.com/en/pro-app/tool-reference/analysis/spatial-join.htm> tools:implements tools:SpatialJoinSumTessCount.
+tools:SpatialJoinSumTessCount rdfs:label "Sums the attributes at Count measurement level from one feature to another based on the spatial relation";
+    wf:input1 [ a ccd:ObjectQ, ccd:VectorA, ccd:CountA ];
+    wf:input2 [ a ccd:ObjectQ, ccd:VectorTessellationA ];
+    wf:output [ a ccd:ObjectQ, ccd:VectorTessellationA, ccd:CountA ];
+    tools:algebraexpression	"join_attr (get_attrL (objectregionnominals x2)) (join (get_attrL (objectregionnominals x2)) (groupbyR (sum) (join_key (select eq (rTopo (pi2 (get_attrL (objectregioncounts x1))) (pi2 (get_attrL (objectregionnominals x2)))) in) (getamounts (objectregioncounts x1)))))".
+
+
+######### Spatial join with sum rule with vector amounts
+# with JOIN_ONE_TO_ONE parameter, with Merge_RULe sum for Ratio data.
+<https://pro.arcgis.com/en/pro-app/tool-reference/analysis/spatial-join.htm> tools:implements tools:SpatialJoinAmountSumTessRatio.
+tools:SpatialJoinAmountSumTessRatio rdfs:label "Sums the attributes at ratio measurement level from one feature to another based on the spatial relation";
+    wf:input1 [ a ccd:AmountQ, ccd:VectorRegionA, exm:ERA ];
+    wf:input2 [ a ccd:ObjectQ, ccd:VectorTessellationA ];
+    wf:output [ a ccd:ObjectQ, ccd:VectorTessellationA, exm:ERA ];
+    tools:algebraexpression	"join_attr (get_attrL (objectregionnominals x2)) (join (get_attrL (objectregionnominals x2)) (groupbyR (sum) (join_key (select eq (rTopo (pi1 (ratioamounts x1)) (pi2 (get_attrL (objectregionnominals x2)))) in) (ratioamounts x1))))".
+
+# with JOIN_ONE_TO_ONE parameter, with Merge_RULe sum for Count data.
+<https://pro.arcgis.com/en/pro-app/tool-reference/analysis/spatial-join.htm> tools:implements tools:SpatialJoinAmountSumTessCount.
+tools:SpatialJoinAmountSumTessCount rdfs:label "Sums the attributes at Count measurement level from one feature to another based on the spatial relation";
+    wf:input1 [ a ccd:AmountQ, ccd:VectorRegionA, ccd:CountA ];
+    wf:input2 [ a ccd:ObjectQ, ccd:VectorTessellationA ];
+    wf:output [ a ccd:ObjectQ, ccd:VectorTessellationA, ccd:CountA ];
+    tools:algebraexpression	"join_attr (get_attrL (objectregionnominals x2)) (join (get_attrL (objectregionnominals x2)) (groupbyR (sum) (join_key (select eq (rTopo (pi1 (countamounts x1)) (pi2 (get_attrL (objectregionnominals x2)))) in) (countamounts x1))))".
+
+
+#### spatial join with mean rule
+# with JOIN_ONE_TO_ONE parameter, with Merge_RULe mean for interval data.
+<https://pro.arcgis.com/en/pro-app/tool-reference/analysis/spatial-join.htm> tools:implements tools:SpatialJoinMeanTessInterval.
+tools:SpatialJoinMeanTessInterval rdfs:label "Averages the attributes at interval measurement level from one feature to another based on the spatial relation";
+    wf:input1 [ a ccd:ObjectQ, ccd:VectorA, ccd:IntervalA ];
+    wf:input2 [ a ccd:ObjectQ, ccd:VectorTessellationA ];
+    wf:output [ a ccd:ObjectQ, ccd:VectorTessellationA, ccd:IntervalA ];
+    tools:algebraexpression	"join_attr (get_attrL (objectregionnominals x2)) (join (get_attrL (objectregionnominals x2)) (groupbyR (avg) (join_key (select eq (rTopo (pi2 (get_attrL (objectregionratios x1))) (pi2 (get_attrL (objectregionnominals x2)))) in) (getamounts (objectregionratios x1)))))".
+    
+# with JOIN_ONE_TO_ONE parameter, with Merge_RULe mean for Ratio data.
+<https://pro.arcgis.com/en/pro-app/tool-reference/analysis/spatial-join.htm> tools:implements tools:SpatialJoinMeanTessRatio.
+tools:SpatialJoinMeanTessRatio rdfs:label "Averages the attributes at Ratio measurement level from one feature to another based on the spatial relation";
+    wf:input1 [ a ccd:ObjectQ, ccd:VectorA, ccd:RatioA ];
+    wf:input2 [ a ccd:ObjectQ, ccd:VectorTessellationA ];
+    wf:output [ a ccd:ObjectQ, ccd:VectorTessellationA, ccd:RatioA ];
+    tools:algebraexpression	"join_attr (get_attrL (objectregionnominals x2)) (join (get_attrL (objectregionnominals x2)) (groupbyR (avg) (join_key (select eq (rTopo (pi2 (get_attrL (objectregionratios x1))) (pi2 (get_attrL (objectregionnominals x2)))) in) (getamounts (objectregionratios x1)))))".
+
+# with JOIN_ONE_TO_ONE parameter, with Merge_RULe mean for Count data.
+<https://pro.arcgis.com/en/pro-app/tool-reference/analysis/spatial-join.htm> tools:implements tools:SpatialJoinMeanTessCount.
+tools:SpatialJoinMeanTessCount rdfs:label "Averages the attributes at Count measurement level from one feature to another based on the spatial relation";
+    wf:input1 [ a ccd:ObjectQ, ccd:VectorA, ccd:CountA ];
+    wf:input2 [ a ccd:ObjectQ, ccd:VectorTessellationA ];
+    wf:output [ a ccd:ObjectQ, ccd:VectorTessellationA, ccd:CountA ];
+    tools:algebraexpression	"join_attr (get_attrL (objectregionnominals x2)) (join (get_attrL (objectregionnominals x2)) (groupbyR (avg) (join_key (select eq (rTopo (pi2 (get_attrL (objectregioncounts x1))) (pi2 (get_attrL (objectregionnominals x2)))) in) (getamounts (objectregioncounts x1)))))".
+    
+#### spatial join with the count rule
+# with JOIN_ONE_TO_ONE parameter and with Merge_RULe count.
+<https://pro.arcgis.com/en/pro-app/tool-reference/analysis/spatial-join.htm> tools:implements tools:SpatialJoinCountTess.
+tools:SpatialJoinCountTess rdfs:label "Counts the number of features from one feature to another based on the spatial relation";
+    wf:input1 [ a ccd:ObjectQ, ccd:VectorA ];
+    wf:input2 [ a ccd:ObjectQ, ccd:VectorTessellationA ];
+    wf:output [ a ccd:ObjectQ, ccd:VectorTessellationA, ccd:CountA ];
+    tools:algebraexpression	"join_attr (get_attrL (objectregionnominals x2)) (apply1 (ocont (get_attrL (objectregionnominals x1))) (get_attrL (objectregionnominals x2)))".
+
+
+### Scenario: Noise (noisePortionAmsterdam.ttl, noiseProPortionAmsterdam.ttl (=raster version), noiseProPortionAmsterdam2.ttl (= vector version))
+### Source: own
+#-------------------------------
+
+#Noise portion
+
+<https://pro.arcgis.com/en/pro-app/tool-reference/data-management/clip.htm> tools:implements tools:ClipFieldRaster2ObjectExtent.
+tools:ClipFieldRaster2ObjectExtent rdfs:label "Clips some interval scaled field raster to the extent of an object layer.";
+    wf:input1 [ a ccd:FieldRaster, ccd:OrdinalA ];
+    wf:input2 [ a ccd:ObjectVector ];
+    wf:output [ a ccd:FieldRaster, ccd:OrdinalA];
+    tools:algebraexpression #"bowtie field x deify merge pi2 objectregions x".
+    "subset (ordfield x1) (deify (ocover (get_attrL (objectregionnominals x2)) (pi1 (get_attrL (objectregionnominals x2)))))".
+    
+<https://pro.arcgis.com/en/pro-app/tool-reference/conversion/raster-to-polygon.htm> tools:implements tools:RegionFromRasterExtent.
+tools:RegionFromRasterExtent rdfs:label "Make a region layer from the extent of a raster. Measures the coverage of a nominal field.";
+    wf:input1 [ a ccd:FieldRaster, ccd:NominalA ];    
+    wf:output [ a ccd:AmountQ, ccd:VectorRegionA, ccd:NominalA ];
+    tools:algebraexpression "nest2 (name (noms)) (reify (fcover (nomfield x1) (noms)))".
+
+#Noise proportion (raster)
+
+#<https://pro.arcgis.com/en/pro-app/tool-reference/conversion/polygon-to-raster.htm>
+###Field Polygon to raster
+<https://pro.arcgis.com/en/pro-app/tool-reference/conversion/polygon-to-raster.htm> tools:implements tools:CoverageToNominalFieldRaster.
+tools:CoverageToNominalFieldRaster rdfs:label "Converts Field polygons to nominal field Rasters";
+    wf:input1 [ a ccd:Coverage, ccd:PlainNominalA ];
+    wf:output [ a ccd:FieldRaster, ccd:PlainNominalA ];
+    tools:algebraexpression	"revert (nomcoverages x1)".
+
+
+<https://pro.arcgis.com/en/pro-app/tool-reference/conversion/polygon-to-raster.htm> tools:implements tools:ContourToFieldRaster.
+tools:ContourToFieldRaster rdfs:label "Converts contour maps to field Rasters";
+    wf:input1 [ a ccd:Contour ];
+    wf:output [ a ccd:FieldRaster, ccd:PlainOrdinalA ];
+    tools:algebraexpression	"revert (contour x1)".
+    
+#<https://pro.arcgis.com/en/pro-app/tool-reference/spatial-analyst/raster-calculator.htm>  
+
+### local map algebra with only a single input layer
+<https://pro.arcgis.com/en/pro-app/tool-reference/spatial-analyst/raster-calculator.htm> tools:implements tools:LocalMapAlgebraSubOrder, tools:LocalMapAlgebraSubRatio.
+tools:LocalMapAlgebraSubOrder rdfs:label "Builds and executes a Local Map Algebra expression (smaller than or greater than some number) using Python syntax using rasters with an ordinal level";
+    wf:input1 [ a ccd:FieldRaster, ccd:OrdinalA ];    
+    wf:output [ a ccd:FieldRaster, ccd:OrdinalA ];
+   tools:algebraexpression "select (compose2 notj leq) (ordfield x1) (ordinal)".
+   
+### local map algebra transformation with ratio field
+tools:LocalMapAlgebraSubRatio rdfs:label "Builds and executes a Local Map Algebra expression (less than or equal to some number) using Python syntax using rasters with a ratio level";
+    wf:input1 [ a ccd:FieldRaster, ccd:RatioA ];    
+    wf:output [ a ccd:FieldRaster, ccd:RatioA ];
+   tools:algebraexpression "select (compose2 notj leq) (field x1) (ratioV)".
+
+tools:RasterToContour tools:implements tools:RasterToContourInterval;
+    wf:edge _:wf3_1, _:wf3_2; 
+	wf:source _:in31. 
+_:wf3_1 wf:applicationOf <https://pro.arcgis.com/en/pro-app/tool-reference/spatial-analyst/reclassify.htm> ;
+	wf:input1 _:in31;
+	wf:output _:out31.
+_:wf3_1 wf:applicationOf <https://pro.arcgis.com/en/pro-app/tool-reference/conversion/raster-to-polygon.htm> ;
+	wf:input1  _:out31;
+	wf:output  _:out32.	
+
+tools:RasterToContourInterval rdfs:label "Converts a field raster to a Contour dataset. The raster is first reclassified to an ordinal raster, and then converted to a polygon layer.";
+    wf:input1 [ a ccd:FieldRaster, ccd:IntervalA ];
+    wf:output [ a ccd:Contour, ccd:PlainOrdinalA ];
+    tools:algebraexpression "invert (apply1 classify (itvfield x1))".
+
+#<https://pro.arcgis.com/en/pro-app/tool-reference/spatial-analyst/zonal-statistics-as-table.htm>+<https://pro.arcgis.com/en/pro-app/tool-reference/data-management/join-field.htm>
+
+tools:ZonalStatistics tools:implements tools:ZonalStatisticsSize, tools:ZonalStatisticsMeanInterval, tools:ZonalStatisticsMeanRatio, tools:ZonalStatisticsSumCount ;    
+    wf:edge _:wf4_1, _:wf4_2; 
+	wf:source _:in411, _:in412. 
+_:wf4_1 wf:applicationOf <https://pro.arcgis.com/en/pro-app/tool-reference/spatial-analyst/zonal-statistics-as-table.htm> ;
+	wf:input1 _:in411;
+	wf:input2 _:in412;
+	wf:output _:out41.
+_:wf4_1 wf:applicationOf <https://pro.arcgis.com/en/pro-app/tool-reference/data-management/join-field.htm> ;
+	wf:input1  _:out41;
+	wf:input2 _:in412;
+	wf:output  _:out42.	    
+    
+tools:ZonalStatisticsSize rdfs:label "Measures the size of the coverage of a given field raster inside object regions.";
+	wf:input1 [ a ccd:FieldRaster, ccd:NominalA ];
+	wf:input2 [ a ccd:ObjectQ, ccd:VectorRegionA ];
+    wf:output [ a ccd:ObjectQ, ccd:VectorRegionA, exm:ERA ];
+tools:algebraexpression "join_attr (get_attrL (objectregionnominals x2)) (groupbyR (size) (select eq (loTopo (fcover (nomfield x1) (noms)) (get_attrL (objectregionnominals x2))) in))". 
+
+#<https://pro.arcgis.com/en/pro-app/tool-reference/data-management/add-geometry-attributes.htm>
+<https://pro.arcgis.com/en/pro-app/tool-reference/data-management/add-geometry-attributes.htm> tools:implements tools:AddObjectVectorRegionArea.
+tools:AddObjectVectorRegionArea rdfs:label "Adds an area attribute to an object vector region layer.";
+wf:input1 [ a  ccd:ObjectQ, ccd:VectorRegionA ];
+wf:output [ a ccd:ObjectQ, ccd:VectorRegionA, exm:ERA];
+tools:algebraexpression "join_attr (get_attrL (objectregionnominals x1))(apply1 (compose size deify) (get_attrL (objectregionnominals x1)))".
+
+
+#<https://pro.arcgis.com/en/pro-app/tool-reference/data-management/calculate-field.htm>
+ tools:CalculateObjectAttrRatio rdfs:label "Calculates ratios of two ratio scaled object attributes.";
+wf:input1 [ a  ccd:ObjectQ, ccd:VectorRegionA, exm:ERA ];
+wf:input2 [ a  ccd:ObjectQ, ccd:VectorRegionA, exm:ERA ];
+wf:output [ a ccd:ObjectQ, ccd:VectorRegionA, exm:IRA];
+tools:algebraexpression "join_attr (get_attrL (objectregionratios x1)) (apply2 ratio (get_attrR (objectregionratios x1)) (get_attrR (objectregionratios x2)))".
+
+
+### noise proportion (vector version)
+
+#this tool computes the coverage of a field inside object region by first intersecting and then dissolving  and joining, to obtain the area covered by the field inside the object region
+tools:IntersectDissolve tools:implements tools:IntersectDissolveField2Object ;    
+    wf:edge _:wf8_1, _:wf8_2; 
+	wf:source _:in81, _:in82. 
+_:wf8_1 wf:applicationOf <https://pro.arcgis.com/en/pro-app/tool-reference/analysis/intersect.htm> ;
+	wf:input1 _:in81;
+	wf:input2 _:in82;
+	wf:output _:out81.
+_:wf8_2 wf:applicationOf <https://pro.arcgis.com/en/pro-app/tool-reference/data-management/Dissolve.htm> ;
+	wf:input1  _:out81;
+	wf:output  _:out82.	
+_:wf8_3 wf:applicationOf <https://pro.arcgis.com/en/pro-app/tool-reference/data-management/join-field.htm> ;
+	wf:input1  _:out82;
+	wf:input2 _:in82;
+	wf:output  _:out82.	 	
+
+##Coverage of vector field in object
+tools:IntersectDissolveField2Object rdfs:label "Intersects a field vector with an object vector and then dissolves the result into the object to measure the areal coverage of the field inside the object.";
+	wf:input1 [ a ccd:FieldQ, ccd:VectorRegionA ];
+    wf:input2 [ a ccd:ObjectQ,  ccd:VectorRegionA ];    
+    wf:output [ a ccd:ObjectQ,  ccd:VectorRegionA, exm:ERA ];
+    tools:algebraexpression "join_attr (get_attrL (objectregionattr x2)) (groupbyR (size) (select eq (loTopo (fcover (nomfield x1) (noms)) (get_attrL (objectregionattr x2))) in))". 
+
+
+
+### Scenario: Temperature (amountFieldUtrecht.ttl)
+### Source: own
+#-------------------------------
+
+tools:MakeLayerFromTable tools:implements tools:MakePointMeasuresFromTable ;   
+    wf:edge _:wf5_1, _:wf5_2, _:wf5_3,_:wf5_4;
+    wf:source _:in51.
+    
+  	_:wf5_1  wf:applicationOf <https://pro.arcgis.com/en/pro-app/tool-reference/data-management/make-xy-event-layer.htm>;
+		wf:input1 _:in51;	
+		wf:output _:out51.
+		
+	_:wf5_2  wf:applicationOf <https://pro.arcgis.com/en/pro-app/tool-reference/data-management/project.htm>;
+		wf:input1 _:out51	;
+		wf:output _:out52.
+		
+	_:wf5_3  wf:applicationOf <https://pro.arcgis.com/en/pro-app/tool-reference/conversion/excel-to-table.htm>;
+		wf:input1 _:in51	;
+		wf:output _:temp. 	
+		
+	_:wf5_4  wf:applicationOf <https://pro.arcgis.com/en/pro-app/tool-reference/data-management/join-field.htm>;
+		wf:input1 _:out52	;
+		wf:input2 _:temp ;
+		wf:output _:out53.	 
+    
+tools:MakePointMeasuresFromTable rdfs:label "Makes a layer of pointmeasures from some XY table.";
+wf:input1 [ a  ccd:PointMeasures, ccd:IntervalA ];
+wf:output [ a  ccd:PointMeasures, ccd:IntervalA ];
+tools:algebraexpression "pointmeasures x1" .
+
+
+<https://pro.arcgis.com/en/pro-app/tool-reference/spatial-analyst/idw.htm> tools:implements tools:IDWInterval. 
+tools:IDWInterval rdfs:label "Standard point interpolation for interval measurements.";
+    wf:input1 [ a ccd:PointMeasures, ccd:IntervalA ];
+    wf:output [ a ccd:FieldRaster, ccd:IntervalA ];
+tools:algebraexpression "interpol (pointmeasures x1) (deify (region))".
+
+<https://pro.arcgis.com/en/pro-app/tool-reference/spatial-analyst/kriging.htm> tools:implements tools:KrigingInterval. 
+tools:KrigingInterval rdfs:label "Kriging point interpolation for interval measurements.";
+    wf:input1 [ a ccd:PointMeasures, ccd:IntervalA ];
+    wf:output [ a ccd:FieldRaster, ccd:IntervalA ];
+tools:algebraexpression "interpol (pointmeasures x1) (deify (region))".
+
+#Zonal Statistics
+tools:ZonalStatisticsMeanInterval  rdfs:label "Calculates the average value of a field raster within the zones of a lattice.";
+    wf:input2 [ a ccd:ObjectQ, ccd:VectorTessellationA ];
+    wf:input1 [ a ccd:FieldRaster, ccd:IntervalA ];
+    wf:output [ a ccd:ObjectQ, ccd:VectorTessellationA, ccd:IntervalA ];
+    tools:algebraexpression #"groupby_avg bowtie* sigmae lotopo pi1 field x objectregions y in field x".
+    "join_attr (get_attrL (objectregionnominals x2)) (apply1 (fcont (avg) (itvfield x1)) (get_attrL (objectregionnominals x2)))".
+
+
+
+    
+    
+   

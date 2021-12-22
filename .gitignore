@@ -1,7 +1,5 @@
 # We don't want to commit ontologies to this repository, since they are output
 # files
-*.rdf
-*.ttl
 build/
 
 # Byte-compiled / optimized / DLL files
