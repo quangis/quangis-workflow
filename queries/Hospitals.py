@@ -1,5 +1,5 @@
-from transformation_algebra import Query
-from ..cct import CCT, AND, R3a, R2, R3, Obj, Reg, Nom, Ratio, Loc  # type: ignore
+from transformation_algebra.query import Query, AND
+from cct import CCT, R3a, R2, R3, Obj, Reg, Nom, Ratio, Loc  # type: ignore
 
 # hospitalsNear
 

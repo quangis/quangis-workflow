@@ -1,5 +1,5 @@
-from transformation_algebra import Query
-from ..cct import CCT, AND, R3a, R1, R2, Obj, Reg, Nom, Ord, Count, Ratio, Loc, Bool  # type: ignore
+from transformation_algebra.query import Query, AND
+from cct import CCT, R3a, R1, R2, Obj, Reg, Nom, Ord, Count, Ratio, Loc, Bool  # type: ignore
 
 # R3a(Obj, Ord, Reg)  # urbanization
 # R3a(Obj, Ratio, Reg)  # chochomoku

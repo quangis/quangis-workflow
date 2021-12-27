@@ -1,5 +1,5 @@
-from transformation_algebra import Query
-from ..cct import CCT, AND, R3a, R2, Obj, Reg, Nom, Loc, Itv  # type: ignore
+from transformation_algebra.query import Query, AND
+from cct import CCT, R3a, R2, Obj, Reg, Nom, Loc, Itv  # type: ignore
 
 # average temperature in Utrecht
 

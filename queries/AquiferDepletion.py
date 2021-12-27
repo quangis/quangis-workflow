@@ -1,6 +1,5 @@
-from transformation_algebra import Query
-
-from ..cct import CCT, AND, R3a, R2, R3, Obj, Reg, Nom, Ratio, Loc  # type: ignore
+from transformation_algebra.query import Query, AND
+from cct import CCT, R3a, R2, R3, Obj, Reg, Nom, Ratio, Loc  # type: ignore
 
 # Eric
 # input: R3a(Obj, Nom, Reg)
@@ -11,21 +10,21 @@ from ..cct import CCT, AND, R3a, R2, R3, Obj, Reg, Nom, Ratio, Loc  # type: igno
 
 eval_aquifer_eric = Query(CCT, [R3a(Obj, Nom, Reg), AND(
     # UrbanAreas3
-    [AND(
+    AND(
 
         # UrbanAreas2
-        [AND(
+        AND(
 
             # aquifer2
             [R2(Obj, Reg), R3a(Obj, Nom, Reg)],
 
             # urbanAreas
             R3a(Obj, Nom, Reg)
-        )],
+        ),
 
         # precipitation2
         R2(Ratio, Reg)
-    )],
+    ),
 
     # irrigation2
     R3(Obj, Ratio, Reg)

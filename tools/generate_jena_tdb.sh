@@ -3,6 +3,7 @@
 # <https://jena.apache.org/documentation/tdb/> is a convenient way to locally
 # test them without having to manipulate a SPARQL endpoint yet.
 set -euo pipefail
+cd "$(dirname $(realpath $0))"/.. # cwd is project root directory
 
 # Get Apache Jena binaries if not present yet
 if [ ! -e build/apache-jena-4.2.0/ ]; then

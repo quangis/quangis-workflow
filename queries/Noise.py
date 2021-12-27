@@ -1,11 +1,11 @@
-from transformation_algebra import Query
-from ..cct import CCT, AND, R3a, R2, Obj, Reg, Nom, Ratio, Ord, Loc  # type: ignore
+from transformation_algebra.query import Query, AND
+from cct import CCT, R3a, R2, Obj, Reg, Nom, Ratio, Ord, Loc  # type: ignore
 
 # noisePortionAmsterdam
 
 eval_noisePortionAmsterdam = Query(CCT, [R2(Ord, Reg), R2(Loc, Ord), AND(
     [R2(Loc, Ord), R2(Ord, Reg)],
-    [R3a(Obj, Reg, Nom)]
+    R3a(Obj, Reg, Nom)
 )])
 
 # noiseProPortionAmsterdam:
