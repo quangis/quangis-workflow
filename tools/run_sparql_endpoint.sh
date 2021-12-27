@@ -25,10 +25,17 @@ if [ ! -e apache-jena-fuseki-$VER/ ]; then
 fi
 cd -
 
-# Build TDB
-rm -rf build/tdb/
-mkdir -p build/tdb/
-build/apache-jena-$VER/bin/tdb1.xloader --loc build/tdb/ build/*.ttl
+# (Re-)build TDB if not yet present or if any graph has changed
+if
+    [ ! -e "build/tdb/" ] ||
+    [ ! -z "$(find build/ -maxdepth 1 -iname '*.ttl' -newer build/tdb/)" ]
+then
+    rm -rf build/tdb/
+    mkdir -p build/tdb/
+    build/apache-jena-$VER/bin/tdb1.xloader --loc build/tdb/ build/*.ttl
+else
+    echo "No change in graphs, not rebuilding TDB." >& 2
+fi
 
 # Run the Fuseki server with the TDB we just built
 build/apache-jena-fuseki-$VER/fuseki-server \
