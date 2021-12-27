@@ -1,10 +1,11 @@
-from ..cct import AND, R3a, R1, R2, Obj, Reg, Nom, Ord, Count, Ratio, Loc, Bool  # type: ignore
+from transformation_algebra import Query
+from ..cct import CCT, AND, R3a, R1, R2, Obj, Reg, Nom, Ord, Count, Ratio, Loc, Bool  # type: ignore
 
 # R3a(Obj, Ord, Reg)  # urbanization
 # R3a(Obj, Ratio, Reg)  # chochomoku
 # R2(Obj, Reg)  # roads
 
-eval_infrastructure_eric = [R1(Ratio), AND(
+eval_infrastructure_eric = Query(CCT, [R1(Ratio), AND(
 
     # rural_pop2
     [R3a(Obj, Ratio, Reg), R2(Obj, Reg), AND(
@@ -25,13 +26,13 @@ eval_infrastructure_eric = [R1(Ratio), AND(
         # roads_buffer
         [R1(Reg), R2(Obj, Reg)]
     )]
-)]
+)])
 
 # ------------------------------------
 # simon:
 
 # count amount ratio
-eval_infrastructure_simon = [R2(Reg, Ratio), AND(
+eval_infrastructure_simon = Query(CCT, [R2(Reg, Ratio), AND(
 
     # rural clip and summing contentamount (rural_pop1)
     (R2(Reg, Count), R3a(Obj, Reg, Count), AND(
@@ -59,4 +60,4 @@ eval_infrastructure_simon = [R2(Reg, Ratio), AND(
         # roads_buffer
         [R2(Loc, Bool), R3a(Obj, Reg, Nom)]
     )]
-)]
+)])

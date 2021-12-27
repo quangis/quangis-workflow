@@ -1,4 +1,5 @@
-from ..cct import AND, R3a, R2, Obj, Reg, Nom, Ratio, Loc, Itv  # type: ignore
+from transformation_algebra import Query
+from ..cct import CCT, AND, R3a, R2, Obj, Reg, Nom, Ratio, Loc, Itv  # type: ignore
 
 # solar power potential of rooftops
 
@@ -7,7 +8,7 @@ from ..cct import AND, R3a, R2, Obj, Reg, Nom, Ratio, Loc, Itv  # type: ignore
 # inputs: buildings: R3a(Obj, Reg, Nom)
 
 # usable radiation per building
-eval_solar = [R3a(Obj, Reg, Ratio), R2(Obj, Ratio), AND(
+eval_solar = Query(CCT, [R3a(Obj, Reg, Ratio), R2(Obj, Ratio), AND(
 
     # average radiation
     [R2(Obj, Ratio), AND(
@@ -24,4 +25,4 @@ eval_solar = [R3a(Obj, Reg, Ratio), R2(Obj, Ratio), AND(
 
     # usable building area size
     [R2(Obj, Ratio), R3a(Obj, Reg, Nom)]
-)]
+)])

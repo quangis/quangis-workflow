@@ -1,11 +1,13 @@
-from ..cct import AND, R3a, R1, R2, Obj, Reg, Nom, Ratio, Loc, Bool  # type: ignore
+from transformation_algebra import Query
+
+from ..cct import CCT, AND, R3a, R1, R2, Obj, Reg, Nom, Ratio, Loc, Bool  # type: ignore
 
 # Eric
 # R3a(Obj, Nom, Reg)  # roads
 # R2(Obj, Nom, Reg)  # planned
 # R3a(Obj, Nom, Reg)  # deforested
 
-eval_deforestation_eric = [R2(Reg, Ratio), AND(
+eval_deforestation_eric = Query(CCT, [R2(Reg, Ratio), AND(
 
     # Erasedbuffer2
     [R2(Reg, Ratio), AND(
@@ -33,7 +35,7 @@ eval_deforestation_eric = [R2(Reg, Ratio), AND(
             [R1(Reg), R3a(Obj, Nom, Reg)]
         )]
     )]
-)]
+)])
 
 # Simon
 # R3a(Obj, Reg, Nom)  # roads
@@ -41,7 +43,7 @@ eval_deforestation_eric = [R2(Reg, Ratio), AND(
 # R2(Loc, Bool) # deforested area
 
 # size of deforested area within buffer area
-eval_deforestation_simon = [R2(Bool, Ratio), AND(
+eval_deforestation_simon = Query(CCT, [R2(Bool, Ratio), AND(
 
     # erased buffer
     [R2(Loc, Bool), AND(
@@ -61,4 +63,4 @@ eval_deforestation_simon = [R2(Bool, Ratio), AND(
         # region of roads buffer
         [R1(Loc), R2(Loc, Bool), R3a(Obj, Reg, Nom)]
     )]
-)]
+)])

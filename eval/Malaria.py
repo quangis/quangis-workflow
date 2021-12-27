@@ -1,4 +1,5 @@
-from ..cct import AND, R3a, R2, Obj, Reg, Nom, Count, Ratio  # type: ignore
+from transformation_algebra import Query
+from ..cct import CCT, AND, R3a, R2, Obj, Reg, Nom, Count, Ratio  # type: ignore
 
 # R3a(Obj, Nom, Reg)  # countries
 # R3a(Obj, Nom, Reg)  # adminRegions
@@ -6,7 +7,7 @@ from ..cct import AND, R3a, R2, Obj, Reg, Nom, Count, Ratio  # type: ignore
 # R2(Obj, Ratio)  # countryIncidence
 # R2(Obj, Ratio)  # adminIncidence
 
-eval_malaria_eric = [R2(Obj, Ratio), AND(
+eval_malaria_eric = Query(CCT, [R2(Obj, Ratio), AND(
     # adminDRC3
     [AND(
 
@@ -26,11 +27,11 @@ eval_malaria_eric = [R2(Obj, Ratio), AND(
 
     # adminIncidence2
     R2(Obj, Ratio)
-)]
+)])
 
 # simon
 
-eval_malaria_simon = [R3a(Obj, Reg, Ratio), AND(
+eval_malaria_simon = Query(CCT, [R3a(Obj, Reg, Ratio), AND(
 
     # popAdminDRC
     [R3a(Obj, Reg, Count), AND(
@@ -44,4 +45,4 @@ eval_malaria_simon = [R3a(Obj, Reg, Ratio), AND(
 
     # adminIncidence2
     [R3a(Obj, Reg, Count), R2(Obj, Count)]
-)]
+)])
