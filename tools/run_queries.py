@@ -3,9 +3,10 @@
 """
 
 import sys
-from pathlib import Path
 import importlib.machinery
 import importlib.util
+from pathlib import Path
+from rdflib import Graph
 
 from transformation_algebra.query import Query
 
@@ -33,9 +34,29 @@ def extract_queries(query_dir: Path = project_dir / 'queries') \
         for variant in dir(module):
             query = getattr(module, variant)
             if isinstance(query, Query):
-                print(name, variant)
                 result[name, variant] = query
     return result
 
 
-extract_queries()
+wfgraph = Graph(store='SPARQLStore')
+wfgraph.open("http://localhost:3030/name")
+
+for (workflow, variant), query in extract_queries().items():
+    if workflow != "Noise":
+        continue
+    print(workflow, variant)
+    wfgraph.query(
+        query.sparql()
+    )
+
+# result = graph.query("""
+#     PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+#     PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+#     PREFIX ta: <https://github.com/quangis/transformation-algebra#>
+#     PREFIX cct: <https://github.com/quangis/cct#>
+#     SELECT ?s WHERE {?s rdf:type ta:Transformation. }
+# """)
+
+# for line in result:
+#     print(line)
+
