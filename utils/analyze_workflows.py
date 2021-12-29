@@ -12,15 +12,13 @@ from rdflib.term import Node
 
 from config import root_path, build_path
 from cct import cct  # type: ignore
-from util import graph  # type: ignore
 from workflow import Workflow
 
-tools = graph("TheoryofGISFunctions/ToolDescription_TransformationAlgebra.ttl")
 
 for workflow_file in root_path.glob(
         "TheoryofGISFunctions/Scenarios/**/*_cct.ttl"):
     try:
-        workflow = Workflow(workflow_file, tools)
+        workflow = Workflow(workflow_file)
         name = os.path.splitext(os.path.basename(workflow_file))[0]
         print(name)
 

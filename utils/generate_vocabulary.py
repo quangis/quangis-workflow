@@ -10,7 +10,4 @@ from cct import cct
 
 vocab = TransformationGraph(cct)
 vocab.add_vocabulary()
-vocab.serialize(
-    build_path / 'cct.ttl',
-    format='ttl', encoding='utf-8'
-)
+vocab.serialize(build_path / 'cct.ttl', format='ttl', encoding='utf-8')

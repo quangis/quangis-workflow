@@ -6,16 +6,16 @@ from rdflib import Graph
 from rdflib.namespace import RDF, RDFS
 from rdflib.term import Node, URIRef
 import rdflib.util
-from typing import Union
-
-from transformation_algebra import Expr
 
 from cct import cct
-from util import WF, TOOLS
+from config import root_path, WF, TOOLS
+
+tools: Graph = Graph()
+tools.parse(root_path / 'rdf' / 'tools.ttl', format='ttl')
 
 
 class Workflow(Graph):
-    def __init__(self, fn: str, tools: Graph):
+    def __init__(self, fn: str):
         super().__init__()
         self.parse(fn, format=rdflib.util.guess_format(fn))
 

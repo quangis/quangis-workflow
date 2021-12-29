@@ -4,20 +4,12 @@
 
 from __future__ import annotations
 
-import sys
 import importlib.machinery
 import importlib.util
-from pathlib import Path
 from rdflib import Graph
-
 from transformation_algebra.query import Query
 
-root_dir = Path(__file__).parent.parent
-query_dir = root_dir / 'queries'
-build_dir = root_dir / 'build'
-
-sys.path.append(str(root_dir))
-build_dir.mkdir(parents=True, exist_ok=True)
+from config import root_path, query_path, build_path
 
 
 def extract_queries() -> dict[tuple[str, str], Query]:
@@ -27,7 +19,7 @@ def extract_queries() -> dict[tuple[str, str], Query]:
     # Perhaps overengineered but makes it simple to add and change queries in
     # dedicated modules
     result: dict[tuple[str, str], Query] = dict()
-    for fp in query_dir.iterdir():
+    for fp in query_path.iterdir():
         if not fp.suffix == '.py':
             continue
         name = fp.stem
@@ -52,7 +44,7 @@ for (scenario, variant), query in extract_queries().items():
     print('\033[1m', scenario, '\033[0m', variant)
 
     # Print query to file for inspection
-    with open(build_dir / f"{scenario}_{variant}.rq", 'w') as f:
+    with open(build_path / f"{scenario}_{variant}.rq", 'w') as f:
         f.write(query.sparql())
 
     for i, line in enumerate(wfgraph.query(query.sparql()), start=1):
