@@ -36,17 +36,28 @@ def extract_queries() -> dict[tuple[str, str], Query]:
 wfgraph = Graph(store='SPARQLStore')
 wfgraph.open("http://localhost:3030/name")
 
+try:
+    if wfgraph:
+        pass
+except ValueError:
+    print("There was an issue with the graph store; not running the queries")
+    wfgraph = None
+
+
 for (scenario, variant), query in extract_queries().items():
     if variant != "query":
         continue
     print('\033[1m', scenario, '\033[0m', variant)
 
     # Print query to file for inspection
-    with open(build_path / f"{scenario}_{variant}.rq", 'w') as f:
+    path = build_path / f"{scenario}_{variant}.rq"
+    print("Building", path.name)
+    with open(path, 'w') as f:
         f.write(query.sparql())
 
-    for i, line in enumerate(wfgraph.query(query.sparql()), start=1):
-        print(i, line.description)
+    if wfgraph:
+        for i, line in enumerate(wfgraph.query(query.sparql()), start=1):
+            print(i, line.description)
 
 # result = graph.query("""
 #     PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
