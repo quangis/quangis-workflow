@@ -1,9 +1,11 @@
 # Hospitals
 # 4. What is the travel distance to the nearest hospital in California?
 
+from config import REPO  # type: ignore
 from transformation_algebra.query import Query, AND
 from cct import CCT, R3a, R2, R3, Obj, Reg, Nom, Ratio, Loc, groupbyLR, min, nDist  # type: ignore
 
+workflows = {REPO.HospitalsNetwork, REPO.HospitalsNear}
 
 query = Query(CCT,
     [R3a(Obj, Reg, Ratio), groupbyLR, AND(

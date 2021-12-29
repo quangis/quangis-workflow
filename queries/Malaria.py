@@ -2,8 +2,11 @@
 # 10. What is the malaria incidence rate per 1000 inhabitants in the Democratic
 # Republic of the Congo?
 
+from config import REPO  # type: ignore
 from transformation_algebra.query import Query, AND
 from cct import CCT, R3a, R2, Obj, Reg, Nom, Count, Ratio, ratio, sum, groupbyLR  # type: ignore
+
+workflows = {REPO.Malaria}
 
 malaria = Query(CCT,
     [R3a(Obj, Reg, Ratio), AND(

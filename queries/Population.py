@@ -1,9 +1,11 @@
-# Population / amountObjectsUtrecht
+# Population
 # 2. What is the number of inhabitants for each neighbourhood in Utrecht?
 
+from config import REPO  # type: ignore
 from transformation_algebra.query import Query, AND, OR
 from cct import CCT, R3a, R2, Obj, Reg, Nom, Count, groupbyLR, sum, count  # type: ignore
 
+workflows = {REPO.AmountObjectsUtrecht}
 
 query = Query(CCT,
     [R3a(Obj, Reg, Count), groupbyLR, OR(

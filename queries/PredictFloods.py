@@ -1,8 +1,11 @@
 # Floods
 # 9. What is the stream runoff during a predicted rainstorm in Vermont, US?
 
+from config import REPO  # type: ignore
 from transformation_algebra.query import Query, AND
 from cct import CCT, R3a, R2, R3, Obj, Reg, Nom, Ratio, Ord, Loc, Itv, groupbyLR, size, max, accumulate, flowdirgraph, lgDist  # type: ignore
+
+workflows = {REPO.Floods}
 
 query = Query(CCT,
     [R2(Ord, Ratio), groupbyLR, AND(

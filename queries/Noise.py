@@ -1,10 +1,15 @@
 # Noise
 # 1. What is the proportion of noise ≥ 70dB in Amsterdam?
 
+from config import REPO  # type: ignore
 from transformation_algebra.type import _
 from transformation_algebra.query import Query, AND, LINKED
 from cct import CCT, R3a, R2, Obj, Reg, Nom, Ratio, Ord, Loc, apply, ratio, groupbyLR, size, pi1  # type: ignore
 
+workflows = {
+    REPO.NoisePortionAmsterdam,
+    REPO.NoiseProPortionAmsterdam,
+    REPO.NoiseProPortionAmsterdam2}
 
 query = Query(CCT,
     [R3a(Obj, Reg, Ratio), apply, AND(

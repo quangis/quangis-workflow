@@ -1,10 +1,12 @@
-# Road-Access / infrastructureAccess
+# Road-Access
 # 7. What is the percentage of rural population within 2km distance to
 # all-season roads in Shikoku, Japan?
 
+from config import REPO  # type: ignore
 from transformation_algebra.query import Query, AND
 from cct import CCT, R3a, R1, R2, Obj, Reg, Nom, Ord, Count, Ratio, Loc, Bool, ratio, extrapol  # type: ignore
 
+workflows = {REPO.InfrastructureAccess}
 
 query = Query(CCT,
     [R2(Reg, Ratio), AND(

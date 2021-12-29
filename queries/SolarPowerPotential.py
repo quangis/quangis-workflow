@@ -2,9 +2,11 @@
 # 6. What is the potential of solar power for each rooftop in the Glover Park
 # neighbourhood in Washington DC?
 
+from config import REPO  # type: ignore
 from transformation_algebra.query import Query, AND, OR
 from cct import CCT, R3a, R2, Obj, Reg, Nom, Ratio, Loc, Itv, groupbyLR, avg  # type: ignore
 
+workflows = {REPO.SolarPowerPotential}
 
 query = Query(CCT,
     [R3a(Obj, Reg, Ratio), groupbyLR, OR(

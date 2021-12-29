@@ -23,6 +23,7 @@ workflow_paths = list(root_path.glob(
 GIS = Namespace('http://geographicknowledge.de/vocab/GISConcepts.rdf#')
 WF = Namespace('http://geographicknowledge.de/vocab/Workflow.rdf#')
 TOOLS = Namespace('http://geographicknowledge.de/vocab/GISTools.rdf#')
+REPO = Namespace('https://example.com/#')
 
 # Make sure the modules in the project root will be found
 sys.path.append(str(root_path))

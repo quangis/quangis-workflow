@@ -1,10 +1,12 @@
 # Deforestation
 # 5. What is the impact of roads on deforestation in the Amazon rainforest?
 
+from config import REPO  # type: ignore
 from transformation_algebra.type import _
 from transformation_algebra.query import Query, AND
 from cct import CCT, R3a, R1, R2, Obj, Reg, Nom, Ratio, Loc, Bool, size, extrapol, pi1  # type: ignore
 
+workflows = {REPO.Deforestation}
 
 query = Query(CCT,
     [R2(Bool, Ratio), AND(

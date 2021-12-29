@@ -1,10 +1,12 @@
-# Water-risk / aquifer
+# Water-risk
 # 8. Which urban areas are at risk from water depletion in Ogandala (High
 # Plains) Aquifer, US?
 
+from config import REPO  # type: ignore
 from transformation_algebra.query import Query, AND
 from cct import CCT, R3a, R2, R3, Obj, Reg, Nom, Ratio, Loc, select, pi1, oDist, loTopo  # type: ignore
 
+workflows = {REPO.Aquifer}
 
 query = Query(CCT,
     [R3a(Obj, Reg, Nom), select, loTopo, AND(

@@ -1,9 +1,11 @@
-# Temperature / amountFieldUtrecht
+# Temperature
 # 3. What is the average temperature for each neighbourhood in Utrecht?
 
+from config import REPO  # type: ignore
 from transformation_algebra.query import Query, AND
 from cct import CCT, R3a, R2, Obj, Reg, Nom, Loc, Itv, groupbyLR, avg  # type: ignore
 
+workflows = {REPO.AmountFieldUtrecht}
 
 query = Query(CCT,
     [R3a(Obj, Reg, Itv), groupbyLR, AND(
