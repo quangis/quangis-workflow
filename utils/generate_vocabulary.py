@@ -5,8 +5,8 @@ Generate an RDF vocabulary for the operations and types of CCT.
 
 from transformation_algebra import TransformationGraph
 
-from config import build_path
-from cct import cct
+from config import build_path  # type: ignore
+from cct import cct  # type: ignore
 
 vocab = TransformationGraph(cct)
 vocab.add_vocabulary()

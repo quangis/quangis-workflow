@@ -2,24 +2,23 @@
 Workflow graph class that's easier to work with.
 """
 
-from rdflib import Graph
-from rdflib.namespace import RDF, RDFS
-from rdflib.term import Node, URIRef
-import rdflib.util
+from pathlib import Path
+from rdflib import Graph  # type: ignore
+from rdflib.namespace import RDF, RDFS  # type: ignore
+from rdflib.term import Node, URIRef  # type: ignore
 
-from cct import cct
-from config import root_path, WF, TOOLS
+from config import tools_path, WF, TOOLS  # type: ignore
 
 tools: Graph = Graph()
-tools.parse(root_path / 'rdf' / 'tools.ttl', format='ttl')
+tools.parse(tools_path, format='ttl')
 
 
 class Workflow(Graph):
-    def __init__(self, fn: str):
+    def __init__(self, path: Path):
         super().__init__()
-        self.parse(fn, format=rdflib.util.guess_format(fn))
+        self.parse(path, format='ttl')
 
-        self.file = fn
+        self.path = path
         self.root = self.value(None, RDF.type, WF.Workflow, any=False)
         self.description = self.value(self.root, RDFS.comment)
         self.steps = set(self.objects(self.root, WF.edge))
@@ -43,6 +42,7 @@ class Workflow(Graph):
                 tool, TOOLS.algebraexpression, any=False)
             assert expr, f"{tool} has no algebra expression"
 
-            self.inputs[out] = list(filter(bool, (
-                self.value(step, p) for p in (WF.input1, WF.input2, WF.input3)
-            )))
+            self.inputs[out] = [node
+                for pred in (WF.input1, WF.input2, WF.input3)
+                if (node := self.value(step, pred))
+            ]

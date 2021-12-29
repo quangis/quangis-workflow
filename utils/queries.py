@@ -6,10 +6,10 @@ from __future__ import annotations
 
 import importlib.machinery
 import importlib.util
-from rdflib import Graph
+from rdflib import Graph  # type: ignore
 from transformation_algebra.query import Query
 
-from config import root_path, query_path, build_path
+from config import query_paths, build_path  # type: ignore
 
 
 def extract_queries() -> dict[tuple[str, str], Query]:
@@ -19,11 +19,9 @@ def extract_queries() -> dict[tuple[str, str], Query]:
     # Perhaps overengineered but makes it simple to add and change queries in
     # dedicated modules
     result: dict[tuple[str, str], Query] = dict()
-    for fp in query_path.iterdir():
-        if not fp.suffix == '.py':
-            continue
-        name = fp.stem
-        loader = importlib.machinery.SourceFileLoader(name, str(fp))
+    for path in query_paths:
+        name = path.stem
+        loader = importlib.machinery.SourceFileLoader(name, str(path))
         spec = importlib.util.spec_from_loader(name, loader)
         assert spec
         module = importlib.util.module_from_spec(spec)
