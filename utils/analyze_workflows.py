@@ -1,30 +1,33 @@
 #!/usr/bin/env python3
 """
-This file generates transformation graphs for entire workflows, concatenating
-the algebra expressions for each individual use of a tool.
+This file generates a textual analysis of each workflow.
 """
 
 from __future__ import annotations
 
 import os.path
-from glob import glob
-from sys import stderr
-from transformation_algebra import TransformationGraph
+import itertools
+from collections import defaultdict
+from rdflib.term import Node
 
-from cct import CCT, cct  # type: ignore
-from util import graph, Labeller  # type: ignore
+from config import root_path, build_path
+from cct import cct  # type: ignore
+from util import graph  # type: ignore
 from workflow import Workflow
-
 
 tools = graph("TheoryofGISFunctions/ToolDescription_TransformationAlgebra.ttl")
 
-for workflow_file in glob("TheoryofGISFunctions/Scenarios/**/*_cct.ttl"):
+for workflow_file in root_path.glob(
+        "TheoryofGISFunctions/Scenarios/**/*_cct.ttl"):
     try:
         workflow = Workflow(workflow_file, tools)
         name = os.path.splitext(os.path.basename(workflow_file))[0]
         print(name)
-        label = Labeller()
-        with open(f"build/{name}.txt", 'w') as f:
+
+        counter = itertools.count(start=1)
+        label: dict[Node, int] = defaultdict(lambda: next(counter))
+
+        with open(build_path / (name + ".txt"), 'w') as f:
             print("SOURCES:", [label[i] for i in workflow.sources], file=f)
             for out in workflow.outputs:
                 print(file=f)
