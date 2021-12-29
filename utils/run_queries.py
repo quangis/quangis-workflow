@@ -53,31 +53,41 @@ def result(actual: set, expected: set,
 wfgraph = Graph(store='SPARQLStore')
 wfgraph.open("http://localhost:3030/name")
 
+# Varying options to try
+option_variants = {
+    "order": {"by_order": True},
+    "justtypes": {"by_types": True, "by_order": False}
+}
 for scenario, variant, expected_workflows, query in extract_queries():
     if variant != "query":
         continue
 
-    print(f'\033[1m\033[4m{scenario}\033[0m', variant)
+    for optname, options in option_variants.items():
 
-    # Print query to file for inspection
-    path = build_path / f"{scenario}_{variant}.rq"
-    # print("Building", path.name)
-    with open(path, 'w') as f:
-        f.write(query.sparql())
+        query2 = Query(query.namespace, query.flow, **options)
 
-    try:
-        results = wfgraph.query(query.sparql())
-        positives = set(r.workflow for r in results)
+        print(f'\033[1m\033[4m{scenario}\033[0m', variant, optname)
 
-        false_pos = (positives - expected_workflows)
-        false_neg = (expected_workflows - positives)
-        correct = positives - false_pos - false_neg
+        # Print query to file for inspection
+        path = build_path / f"{scenario}_{variant}_{optname}.rq"
+        # print("Building", path.name)
+        with open(path, 'w') as f:
+            f.write(query2.sparql())
 
-        print("Correct:", result(correct, expected_workflows))
-        print("False positives:", result(false_pos, set()))
-        print("Missing:", result(false_neg, set()))
+        # Run the query
+        try:
+            results = wfgraph.query(query2.sparql())
+            positives = set(r.workflow for r in results)
 
-    except ValueError:
-        print("Not firing queries, since the server is down.")
+            false_pos = (positives - expected_workflows)
+            false_neg = (expected_workflows - positives)
+            correct = positives - false_pos - false_neg
 
-    print()
+            print("Correct:", result(correct, expected_workflows))
+            print("False positives:", result(false_pos, set()))
+            print("Missing:", result(false_neg, set()))
+
+        except ValueError:
+            print("Not firing queries, since the server is down.")
+
+        print()
