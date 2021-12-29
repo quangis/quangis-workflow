@@ -18,7 +18,7 @@ from workflow import Workflow  # type: ignore
 
 for wf_path in workflow_paths:
     try:
-        path = build_path / (wf_path.stem + ".graph.ttl")
+        path = build_path / (wf_path.stem + ".ttl")
         print("Building", path.name, file=stderr)
         wf = Workflow(wf_path)
 

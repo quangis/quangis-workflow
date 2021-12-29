@@ -10,7 +10,7 @@ from rdflib import Namespace  # type: ignore
 
 root_path = Path(__file__).parent.parent
 build_path = root_path / 'build'
-tools_path = root_path / 'rdf' / 'tools.ttl'
+tools_path = root_path / 'tools' / 'tools.ttl'
 query_paths = list(root_path.glob("queries/*.py"))
 workflow_paths = list(root_path.glob("Scenarios/**/*_cct.ttl"))
 
