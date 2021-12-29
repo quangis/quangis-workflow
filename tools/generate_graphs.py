@@ -6,17 +6,20 @@ the algebra expressions for each individual use of a tool.
 
 from __future__ import annotations
 
+import sys
 from pathlib import Path
 from sys import stderr
 from rdflib.namespace import RDFS
 from transformation_algebra import TransformationGraph
 from transformation_algebra.expr import SourceError
 
+root_path = Path(__file__).parent.parent
+sys.path.append(str(root_path))
+
 from cct import cct  # type: ignore
 from util import write_graph, graph  # type: ignore
 from workflow import Workflow
 
-root_path = Path(__file__).parent
 
 tools_path = root_path / "rdf" / "tools.ttl"
 tools = graph(str(tools_path))
@@ -26,13 +29,13 @@ for scenario_path in root_path.glob(
     try:
         print(f"\nWorkflow {scenario_path.name}", file=stderr)
         workflow = Workflow(scenario_path, tools)
-        g = TransformationGraph(cct)
 
         node2expr = {
             node: cct.parse(expr).primitive()
             for node, expr in workflow.expressions.items()
         }
 
+        g = TransformationGraph(cct)
         g.add((workflow.root, RDFS.comment, workflow.description))
         g.add_workflow(workflow.root, {
             node2expr[output]: list(node2expr.get(i, i) for i in inputs)

@@ -2,6 +2,8 @@
 """
 """
 
+from __future__ import annotations
+
 import sys
 import importlib.machinery
 import importlib.util
@@ -10,12 +12,15 @@ from rdflib import Graph
 
 from transformation_algebra.query import Query
 
-project_dir = Path(__file__).parent.parent
-sys.path.append(str(project_dir))
+root_dir = Path(__file__).parent.parent
+query_dir = root_dir / 'queries'
+build_dir = root_dir / 'build'
+
+sys.path.append(str(root_dir))
+build_dir.mkdir(parents=True, exist_ok=True)
 
 
-def extract_queries(query_dir: Path = project_dir / 'queries') \
-        -> dict[tuple[str, str], Query]:
+def extract_queries() -> dict[tuple[str, str], Query]:
     """
     Extract queries defined in modules.
     """
@@ -23,9 +28,9 @@ def extract_queries(query_dir: Path = project_dir / 'queries') \
     # dedicated modules
     result: dict[tuple[str, str], Query] = dict()
     for fp in query_dir.iterdir():
-        name = fp.stem
         if not fp.suffix == '.py':
             continue
+        name = fp.stem
         loader = importlib.machinery.SourceFileLoader(name, str(fp))
         spec = importlib.util.spec_from_loader(name, loader)
         assert spec
@@ -41,10 +46,15 @@ def extract_queries(query_dir: Path = project_dir / 'queries') \
 wfgraph = Graph(store='SPARQLStore')
 wfgraph.open("http://localhost:3030/name")
 
-for (workflow, variant), query in extract_queries().items():
-    if workflow != "full":
+for (scenario, variant), query in extract_queries().items():
+    if scenario != "full":
         continue
-    print('\033[1m', workflow, '\033[0m', variant)
+    print('\033[1m', scenario, '\033[0m', variant)
+
+    # Print query to file for inspection
+    with open(build_dir / f"{scenario}_{variant}.rq", 'w') as f:
+        f.write(query.sparql())
+
     for i, line in enumerate(wfgraph.query(query.sparql()), start=1):
         print(i, line.description)
 
