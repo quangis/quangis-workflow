@@ -26,14 +26,14 @@ You can then clone this repository and use it.
 
 The types and operators of the CCT transformation algebra are defined in 
 [cct.py](cct.py). Descriptions of GIS tools in terms of expressions of the CCT 
-algebra are contained in [rdf/tools.ttl](rdf/tools.ttl).
+algebra are contained in [tools/tools.ttl](tools/tools.ttl).
 
 
 #### Generating transformation graphs
 
 [utils/generate_graphs.py](utils/generate_graphs.py) generates `.ttl` files 
 that represent the transformation graphs for workflows that have been described 
-in terms of applications of the GIS tools of [tools.ttl](rdf/tools.ttl). Such 
+in terms of applications of the GIS tools of [tools.ttl](tools/tools.ttl). Such 
 workflows are internally available at 
 `ownpapers/TheoryofGISFunctions/Scenarios/`; for the script to work, that 
 `Scenarios/` directory should be copied or symlinked in the project root.
