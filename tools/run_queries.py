@@ -42,12 +42,11 @@ wfgraph = Graph(store='SPARQLStore')
 wfgraph.open("http://localhost:3030/name")
 
 for (workflow, variant), query in extract_queries().items():
-    if workflow != "Noise":
+    if workflow != "full":
         continue
-    print(workflow, variant)
-    wfgraph.query(
-        query.sparql()
-    )
+    print('\033[1m', workflow, '\033[0m', variant)
+    for i, line in enumerate(wfgraph.query(query.sparql()), start=1):
+        print(i, line.description)
 
 # result = graph.query("""
 #     PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
