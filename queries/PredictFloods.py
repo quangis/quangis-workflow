@@ -1,5 +1,22 @@
+# Floods
+# 9. What is the stream runoff during a predicted rainstorm in Vermont, US?
+
 from transformation_algebra.query import Query, AND
-from cct import CCT, R3a, R2, R3, Obj, Reg, Nom, Ratio, Ord, Loc, Itv  # type: ignore
+from cct import CCT, R3a, R2, R3, Obj, Reg, Nom, Ratio, Ord, Loc, Itv, groupbyLR, size, max, accumulate, flowdirgraph, lgDist  # type: ignore
+
+query = Query(CCT,
+    [R2(Ord, Ratio), groupbyLR, AND(
+        size,
+        [R2(Loc, Ord), groupbyLR, AND(
+            max,
+            [accumulate, flowdirgraph, R2(Loc, Itv)],
+            lgDist
+        )]
+    )]
+)
+
+
+# Evaluation #################################################################
 
 # flood prediction
 

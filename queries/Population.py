@@ -1,5 +1,18 @@
-from transformation_algebra.query import Query, AND
-from cct import CCT, R3a, R2, Obj, Reg, Nom, Count  # type: ignore
+# Population / amountObjectsUtrecht
+# 2. What is the number of inhabitants for each neighbourhood in Utrecht?
+
+from transformation_algebra.query import Query, AND, OR
+from cct import CCT, R3a, R2, Obj, Reg, Nom, Count, groupbyLR, sum, count  # type: ignore
+
+
+query = Query(CCT,
+    [R3a(Obj, Reg, Count), groupbyLR, OR(
+        AND(sum, R2(Reg, Count)),
+        AND(count, R2(Obj, Reg))
+    )]
+)
+
+# Evaluation #################################################################
 
 # number of people in neighborhoods
 

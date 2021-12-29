@@ -37,7 +37,7 @@ wfgraph = Graph(store='SPARQLStore')
 wfgraph.open("http://localhost:3030/name")
 
 for (scenario, variant), query in extract_queries().items():
-    if scenario != "full":
+    if variant != "query":
         continue
     print('\033[1m', scenario, '\033[0m', variant)
 

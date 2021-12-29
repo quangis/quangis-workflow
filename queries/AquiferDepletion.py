@@ -1,5 +1,20 @@
+# Water-risk / aquifer
+# 8. Which urban areas are at risk from water depletion in Ogandala (High
+# Plains) Aquifer, US?
+
 from transformation_algebra.query import Query, AND
-from cct import CCT, R3a, R2, R3, Obj, Reg, Nom, Ratio, Loc  # type: ignore
+from cct import CCT, R3a, R2, R3, Obj, Reg, Nom, Ratio, Loc, select, pi1, oDist, loTopo  # type: ignore
+
+
+query = Query(CCT,
+    [R3a(Obj, Reg, Nom), select, loTopo, AND(
+        [pi1, R2(Loc, Nom)],
+        [select, oDist, R2(Obj, Reg)]
+    )]
+)
+
+
+# Evaluation #################################################################
 
 # Eric
 # input: R3a(Obj, Nom, Reg)

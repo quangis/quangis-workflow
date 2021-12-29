@@ -9,8 +9,9 @@ Module containing the core concept transformation algebra. Usage:
      └─╼ objects data : R1(Obj)
 """
 
-from transformation_algebra import Type, with_parameters, _, Operator, \
+from transformation_algebra import with_parameters, _, Operator, \
     Language, LanguageNamespace, TypeOperator
+from transformation_algebra.query import OR, Operators
 
 
 ##############################################################################
@@ -612,3 +613,7 @@ groupby = Operator(
 
 cct = Language(globals())
 cct._namespace = CCT = LanguageNamespace("https://github.com/quangis/cct#", cct)
+
+
+groupbyLR: Operators = OR(groupbyR, groupbyL)
+dist: Operators = OR(nDist, loDist, lgDist, lDist, oDist)

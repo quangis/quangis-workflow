@@ -1,5 +1,23 @@
+# Road-Access / infrastructureAccess
+# 7. What is the percentage of rural population within 2km distance to
+# all-season roads in Shikoku, Japan?
+
 from transformation_algebra.query import Query, AND
-from cct import CCT, R3a, R1, R2, Obj, Reg, Nom, Ord, Count, Ratio, Loc, Bool  # type: ignore
+from cct import CCT, R3a, R1, R2, Obj, Reg, Nom, Ord, Count, Ratio, Loc, Bool, ratio, extrapol  # type: ignore
+
+
+query = Query(CCT,
+    [R2(Reg, Ratio), AND(
+        ratio,
+        [R2(Reg, Ratio), AND(
+            [extrapol, R2(Obj, Reg)],
+            R2(Reg, Count)
+        )]
+    )]
+)
+
+
+# Evaluation #################################################################
 
 # R3a(Obj, Ord, Reg)  # urbanization
 # R3a(Obj, Ratio, Reg)  # chochomoku
