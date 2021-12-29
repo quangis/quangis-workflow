@@ -1,6 +1,5 @@
-# We don't want to commit ontologies to this repository, since they are output
-# files
 build/
+run/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
