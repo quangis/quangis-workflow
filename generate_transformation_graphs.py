@@ -6,24 +6,26 @@ the algebra expressions for each individual use of a tool.
 
 from __future__ import annotations
 
-import os.path
-from glob import glob
+from pathlib import Path
 from sys import stderr
 from rdflib.namespace import RDFS
 from transformation_algebra import TransformationGraph
 from transformation_algebra.expr import SourceError
 
-from cct import CCT, cct  # type: ignore
+from cct import cct  # type: ignore
 from util import write_graph, graph  # type: ignore
 from workflow import Workflow
 
+root_path = Path(__file__).parent
 
-tools = graph("TheoryofGISFunctions/ToolDescription_TransformationAlgebra.ttl")
+tools_path = root_path / "rdf" / "tools.ttl"
+tools = graph(str(tools_path))
 
-for workflow_file in glob("TheoryofGISFunctions/Scenarios/**/*_cct.ttl"):
+for scenario_path in root_path.glob(
+        "TheoryofGISFunctions/Scenarios/**/*_cct.ttl"):
     try:
-        print(f"\nWorkflow {workflow_file}", file=stderr)
-        workflow = Workflow(workflow_file, tools)
+        print(f"\nWorkflow {scenario_path.name}", file=stderr)
+        workflow = Workflow(scenario_path, tools)
         g = TransformationGraph(cct)
 
         node2expr = {
@@ -45,4 +47,4 @@ for workflow_file in glob("TheoryofGISFunctions/Scenarios/**/*_cct.ttl"):
         print("Failure: ", e, file=stderr)
     else:
         print("Success!", file=stderr)
-        write_graph(g, os.path.splitext(os.path.basename(workflow_file))[0])
+        write_graph(g, scenario_path.stem)
