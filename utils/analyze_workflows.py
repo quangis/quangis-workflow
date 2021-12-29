@@ -1,7 +1,11 @@
 #!/usr/bin/env python3
 """
-This file generates a textual analysis of each workflow, as well as a
-simplified graph.
+This file generates files that should help debug problems.
+
+-   A GraphViz graph of the CCT vocabulary.
+-   A textual analysis of each workflow.
+-   Two GraphViz graphs of each workflow: one where primitives have been
+    expanded and one where they haven't.
 """
 
 from __future__ import annotations
@@ -17,6 +21,14 @@ from transformation_algebra.graph import TransformationGraph
 from config import build_path, workflow_paths  # type: ignore
 from cct import cct  # type: ignore
 from workflow import Workflow  # type: ignore
+
+
+def write_vocabulary(path: Path):
+    print('Building', path.name, file=stderr)
+    vocab = TransformationGraph(cct)
+    vocab.add_vocabulary()
+    with open(path, 'w') as f:
+        rdf2dot(vocab, f)
 
 
 def write_tools_text(wf: Workflow, path: Path):
@@ -51,6 +63,7 @@ def write_graph(wf: Workflow, path: Path, primitive: bool = False):
         rdf2dot(g, f)
 
 
+write_vocabulary(build_path / "cct.dot")
 for path in workflow_paths:
     try:
         wf = Workflow(path)
