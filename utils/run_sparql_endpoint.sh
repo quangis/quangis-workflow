@@ -27,8 +27,9 @@ cd -
 
 # (Re-)build TDB if not yet present or if any graph has changed
 if
-    [ ! -e "build/tdb/" ] ||
-    [ ! -z "$(find build/ -maxdepth 1 -iname '*.ttl' -newer build/tdb/)" ]
+    true
+    # [ ! -e "build/tdb/" ] 
+    # || [ ! -z "$(find build/ -maxdepth 1 -iname '*.ttl' -newer build/tdb/)" ]
 then
     rm -rf build/tdb/
     mkdir -p build/tdb/
