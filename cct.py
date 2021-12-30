@@ -14,8 +14,7 @@ from transformation_algebra import with_parameters, _, Operator, \
 from transformation_algebra.query import OR, Operators
 
 
-##############################################################################
-# Types and type synonyms
+# Types ######################################################################
 
 Val = TypeOperator()
 Obj = TypeOperator(supertype=Val)  # O
@@ -33,26 +32,50 @@ R2 = TypeOperator(params=2)  # Unary core concepts, 1 key (left)
 R3 = TypeOperator(params=3)  # Quantified relation, 2 keys (l & r)
 R3a = TypeOperator(params=3)  # Ternary relation, 1 key (left)
 
+
+# Type synonyms ##############################################################
+# Types with a synonym are also *canonical*, in that they get a defined node in
+# the vocabulary.
+
+Objects = R1(Obj)
+Locations = R1(Loc)
+Regions = R1(Reg)
+QuantityValues = R1(Val)
+Nominals = R1(Nom)
+Booleans = R1(Bool)
+Ordinals = R1(Ord)
+Intervals = R1(Itv)
+Ratios = R1(Ratio)
+Counts = R1(Count)
+
 SpatialField = R2(Loc, Qlt)
-InvertedField = R2(Qlt, Reg)
-FieldSample = R2(Reg, Qlt)
-ObjectExtent = R2(Obj, Reg)
-ObjectQuality = R2(Obj, Qlt)
 NominalField = R2(Loc, Nom)
 BooleanField = R2(Loc, Bool)
-NominalInvertedField = R2(Nom, Reg)
-BooleanInvertedField = R2(Bool, Reg)
+OrdinalField = R2(Loc, Ord)
+IntervalField = R2(Loc, Itv)
+RatioField = R2(Loc, Ratio)
+CountField = R2(Loc, Count)
+
+FieldSpace = FieldSample = R2(Reg, Qlt)
+AmountPatches = R2(Reg, Nom)
+PointMeasures = R2(Reg, Itv)
+
+InvertedField = R2(Qlt, Reg)
+NominalCoverages = NominalInvertedField = R2(Nom, Reg)
+BooleanCoverages = BooleanInvertedField = R2(Bool, Reg)
 Contour = R2(Ord, Reg)
 ContourLine = R2(Itv, Reg)
-PointMeasures = R2(Reg, Itv)
-AmountPatches = R2(Reg, Nom)
-BooleanCoverages = R2(Bool, Reg)
-NominalCoverages = R2(Nom, Reg)
-RatioNetwork = R3(Obj, Ratio, Obj)
+
+ObjectExtent = ObjectSpace = R2(Obj, Reg)
+
+ObjectQuality = R2(Obj, Qlt)
+RelationalField = R3(Loc, Qlt, Loc)
+SpatialNetwork = R3(Obj, Qlt, Obj)
 
 
-##############################################################################
-# Data inputs
+# Data inputs ################################################################
+# These are deprecated and will be removed in a future version, in favour of
+# inline typing (`1 : Type` or `~Type`).
 
 # Reintroducing these for now to make sure the tests still work
 objectnominals = Operator(type=R2(Obj, Nom))
@@ -104,8 +127,8 @@ nominal = Operator(type=Nom)
 true = Operator(type=Bool)
 rationetwork = Operator(type=R3(Obj, Ratio, Obj))
 
-###########################################################################
-# Math/stats transformations
+
+# Math/stats transformations ##############################################
 
 # Derivations
 
@@ -195,8 +218,7 @@ coveragesum = Operator(
 )
 
 
-##########################################################################
-# Geometric transformations
+# Geometric transformations ##############################################
 
 interpol = Operator(
     "spatial point interpolation",
@@ -398,8 +420,7 @@ ocover = Operator(
     define=lambda x, y: merge(pi2(subset(x, y)))
 )
 
-###########################################################################
-# Functional and Relational transformations
+# Functional and relational transformations ###############################
 
 # Functional operators
 
@@ -608,12 +629,14 @@ groupby = Operator(
 )
 
 
-##############################################################################
-# Generate an algebra out of all definitions in this module
-
-cct = Language(globals())
-cct._namespace = CCT = LanguageNamespace("https://github.com/quangis/cct#", cct)
-
+# Generalized operators ######################################################
+# These cannot be used in an expression, but they can be used in queries.
 
 groupbyLR: Operators = OR(groupbyR, groupbyL)
 dist: Operators = OR(nDist, loDist, lgDist, lDist, oDist)
+
+
+# Language definition ########################################################
+
+cct = Language(scope=locals())
+cct._namespace = CCT = LanguageNamespace("https://github.com/quangis/cct#", cct)
