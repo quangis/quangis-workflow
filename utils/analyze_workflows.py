@@ -25,7 +25,7 @@ from workflow import Workflow  # type: ignore
 
 def write_taxonomy(path: Path):
     print('Building', path.name, file=stderr)
-    vocab = TransformationGraph(cct, minimal=True)
+    vocab = TransformationGraph(cct, minimal=True, with_labels=True)
     vocab.add_taxonomy()
     with open(path, 'w') as f:
         rdf2dot(vocab, f)
