@@ -4,11 +4,11 @@
 from config import REPO  # type: ignore
 from transformation_algebra.type import _
 from transformation_algebra.query import Query, AND
-from cct import CCT, R3a, R1, R2, Obj, Reg, Nom, Ratio, Loc, Bool, size, extrapol, pi1  # type: ignore
+from cct import cct, R3a, R1, R2, Obj, Reg, Nom, Ratio, Loc, Bool, size, extrapol, pi1  # type: ignore
 
 workflows = {REPO.Deforestation}
 
-query = Query(CCT,
+query = Query(cct,
     [R2(Bool, Ratio), AND(
         [size, pi1, extrapol, R2(Obj, Reg)],
         [size, pi1, R2(Loc, _)]
@@ -23,7 +23,7 @@ query = Query(CCT,
 # R2(Obj, Nom, Reg)  # planned
 # R3a(Obj, Nom, Reg)  # deforested
 
-eval_deforestation_eric = Query(CCT, [R2(Reg, Ratio), AND(
+eval_deforestation_eric = Query(cct, [R2(Reg, Ratio), AND(
 
     # Erasedbuffer2
     [R2(Reg, Ratio), AND(
@@ -59,7 +59,7 @@ eval_deforestation_eric = Query(CCT, [R2(Reg, Ratio), AND(
 # R2(Loc, Bool) # deforested area
 
 # size of deforested area within buffer area
-eval_deforestation_simon = Query(CCT, [R2(Bool, Ratio), AND(
+eval_deforestation_simon = Query(cct, [R2(Bool, Ratio), AND(
 
     # erased buffer
     [R2(Loc, Bool), AND(

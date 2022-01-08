@@ -4,11 +4,11 @@
 
 from config import REPO  # type: ignore
 from transformation_algebra.query import Query, AND
-from cct import CCT, R3a, R1, R2, Obj, Reg, Nom, Ord, Count, Ratio, Loc, Bool, ratio, extrapol  # type: ignore
+from cct import cct, R3a, R1, R2, Obj, Reg, Nom, Ord, Count, Ratio, Loc, Bool, ratio, extrapol  # type: ignore
 
 workflows = {REPO.InfrastructureAccess}
 
-query = Query(CCT,
+query = Query(cct,
     [R2(Reg, Ratio), AND(
         ratio,
         [R2(Reg, Ratio), AND(
@@ -25,7 +25,7 @@ query = Query(CCT,
 # R3a(Obj, Ratio, Reg)  # chochomoku
 # R2(Obj, Reg)  # roads
 
-eval_infrastructure_eric = Query(CCT, [R1(Ratio), AND(
+eval_infrastructure_eric = Query(cct, [R1(Ratio), AND(
 
     # rural_pop2
     [R3a(Obj, Ratio, Reg), R2(Obj, Reg), AND(
@@ -52,7 +52,7 @@ eval_infrastructure_eric = Query(CCT, [R1(Ratio), AND(
 # simon:
 
 # count amount ratio
-eval_infrastructure_simon = Query(CCT, [R2(Reg, Ratio), AND(
+eval_infrastructure_simon = Query(cct, [R2(Reg, Ratio), AND(
 
     # rural clip and summing contentamount (rural_pop1)
     (R2(Reg, Count), R3a(Obj, Reg, Count), AND(

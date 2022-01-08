@@ -3,11 +3,11 @@
 
 from config import REPO  # type: ignore
 from transformation_algebra.query import Query, AND
-from cct import CCT, R3a, R2, R3, Obj, Reg, Nom, Ratio, Ord, Loc, Itv, groupbyLR, size, max, accumulate, flowdirgraph, lgDist  # type: ignore
+from cct import cct, R3a, R2, R3, Obj, Reg, Nom, Ratio, Ord, Loc, Itv, groupbyLR, size, max, accumulate, flowdirgraph, lgDist  # type: ignore
 
 workflows = {REPO.Floods}
 
-query = Query(CCT,
+query = Query(cct,
     [R2(Ord, Ratio), groupbyLR, AND(
         size,
         [R2(Loc, Ord), groupbyLR, AND(
@@ -26,7 +26,7 @@ query = Query(CCT,
 # input: dem: R2(L, Itv)
 # input: pour point: R3a(Obj, Reg, Nom)
 
-eval_flood = Query(CCT, [R2(Ord, Ratio), R2(Ord, Reg), R2(Loc, Ratio), AND(
+eval_flood = Query(cct, [R2(Ord, Ratio), R2(Ord, Reg), R2(Loc, Ratio), AND(
     [R3(Loc, Ratio, Loc), R2(Loc, Itv)],
     [R2(Reg, Nom), R3a(Obj, Reg, Nom)]
 )])

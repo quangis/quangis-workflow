@@ -3,11 +3,11 @@
 
 from config import REPO  # type: ignore
 from transformation_algebra.query import Query, AND, OR
-from cct import CCT, R3a, R2, Obj, Reg, Nom, Count, groupbyLR, sum, count  # type: ignore
+from cct import cct, R3a, R2, Obj, Reg, Nom, Count, groupbyLR, sum, count  # type: ignore
 
 workflows = {REPO.AmountObjectsUtrecht}
 
-query = Query(CCT,
+query = Query(cct,
     [R3a(Obj, Reg, Count), groupbyLR, OR(
         AND(sum, R2(Reg, Count)),
         AND(count, R2(Obj, Reg))
@@ -21,7 +21,7 @@ query = Query(CCT,
 # input cbsneighborhoods: R3a(Obj, Reg, Nom)
 # input cbsvierkant: R2(Reg, Count)
 
-eval_population = Query(CCT, [R3a(Obj, Reg, Count), R2(Obj, Count), AND(
+eval_population = Query(cct, [R3a(Obj, Reg, Count), R2(Obj, Count), AND(
     [R2(Obj, Reg), R3a(Obj, Reg, Nom)],
     [R2(Reg, Count)]
 )])

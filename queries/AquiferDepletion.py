@@ -4,11 +4,11 @@
 
 from config import REPO  # type: ignore
 from transformation_algebra.query import Query, AND
-from cct import CCT, R3a, R2, R3, Obj, Reg, Nom, Ratio, Loc, select, pi1, oDist, loTopo  # type: ignore
+from cct import cct, R3a, R2, R3, Obj, Reg, Nom, Ratio, Loc, select, pi1, oDist, loTopo  # type: ignore
 
 workflows = {REPO.Aquifer}
 
-query = Query(CCT,
+query = Query(cct,
     [R3a(Obj, Reg, Nom), select, loTopo, AND(
         [pi1, R2(Loc, Nom)],
         [select, oDist, R2(Obj, Reg)]
@@ -25,7 +25,7 @@ query = Query(CCT,
 # input: R3(Obj, Ratio, Reg)
 # output: R3a(Obj, Nom, Reg)
 
-eval_aquifer_eric = Query(CCT, [R3a(Obj, Nom, Reg), AND(
+eval_aquifer_eric = Query(cct, [R3a(Obj, Nom, Reg), AND(
     # UrbanAreas3
     AND(
 
@@ -53,7 +53,7 @@ eval_aquifer_eric = Query(CCT, [R3a(Obj, Nom, Reg), AND(
 # input: R2(Nom, Reg) #precipitation coverage
 # input: R2(Nom, Reg) #irrigation coverage
 
-eval_aquifer_simon = Query(CCT, [R3a(Obj, Reg, Nom), AND(
+eval_aquifer_simon = Query(cct, [R3a(Obj, Reg, Nom), AND(
     [R2(Obj, Reg), R3a(Obj, Reg, Nom)],  # urban areas
     [R2(Obj, Reg), R3a(Obj, Reg, Nom)],  # aquifer
     [R2(Loc, Nom), R2(Nom, Reg)],  # precipitation coverage

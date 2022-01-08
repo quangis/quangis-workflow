@@ -59,12 +59,12 @@ option_variants = {
     "justtypes": {"by_types": True, "by_order": False}
 }
 for scenario, variant, expected_workflows, query in extract_queries():
-    if variant != "query":
+    if variant == "query":
         continue
 
     for optname, options in option_variants.items():
 
-        query2 = Query(query.namespace, query.flow, **options)
+        query2 = Query(query.language, query.flow, **options)
 
         print(f'\033[1m\033[4m{scenario}\033[0m', variant, optname)
 

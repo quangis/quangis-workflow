@@ -23,10 +23,10 @@ from cct import cct  # type: ignore
 from workflow import Workflow  # type: ignore
 
 
-def write_vocabulary(path: Path):
+def write_taxonomy(path: Path):
     print('Building', path.name, file=stderr)
-    vocab = TransformationGraph(cct)
-    vocab.add_vocabulary()
+    vocab = TransformationGraph(cct, minimal=True)
+    vocab.add_taxonomy()
     with open(path, 'w') as f:
         rdf2dot(vocab, f)
 
@@ -63,7 +63,7 @@ def write_graph(wf: Workflow, path: Path, primitive: bool = False):
         rdf2dot(g, f)
 
 
-write_vocabulary(build_path / "cct.dot")
+write_taxonomy(build_path / "cct_taxonomy.dot")
 for path in workflow_paths:
     try:
         wf = Workflow(path)

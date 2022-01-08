@@ -4,11 +4,11 @@
 
 from config import REPO  # type: ignore
 from transformation_algebra.query import Query, AND
-from cct import CCT, R3a, R2, Obj, Reg, Nom, Count, Ratio, ratio, sum, groupbyLR  # type: ignore
+from cct import cct, R3a, R2, Obj, Reg, Nom, Count, Ratio, ratio, sum, groupbyLR  # type: ignore
 
 workflows = {REPO.Malaria}
 
-malaria = Query(CCT,
+malaria = Query(cct,
     [R3a(Obj, Reg, Ratio), AND(
         ratio,
         R2(Obj, Count),
@@ -28,7 +28,7 @@ malaria = Query(CCT,
 # R2(Obj, Ratio)  # countryIncidence
 # R2(Obj, Ratio)  # adminIncidence
 
-eval_malaria_eric = Query(CCT, [R2(Obj, Ratio), AND(
+eval_malaria_eric = Query(cct, [R2(Obj, Ratio), AND(
     # adminDRC3
     AND(
 
@@ -52,7 +52,7 @@ eval_malaria_eric = Query(CCT, [R2(Obj, Ratio), AND(
 
 # simon
 
-eval_malaria_simon = Query(CCT, [R3a(Obj, Reg, Ratio), AND(
+eval_malaria_simon = Query(cct, [R3a(Obj, Reg, Ratio), AND(
 
     # popAdminDRC
     [R3a(Obj, Reg, Count), AND(
