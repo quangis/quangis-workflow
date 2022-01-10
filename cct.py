@@ -72,6 +72,9 @@ ObjectQuality = R2(Obj, Qlt)
 RelationalField = R3(Loc, Qlt, Loc)
 SpatialNetwork = R3(Obj, Qlt, Obj)
 
+TernaryRelation1 = R3a(Obj, Qlt, Obj)
+TernaryRelation2 = R3a(Obj, Reg, Qlt)
+TernaryRelation3 = R3a(Obj, Qlt, Reg)
 
 # Data inputs ################################################################
 # These are deprecated and will be removed in a future version, in favour of

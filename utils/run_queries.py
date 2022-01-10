@@ -55,11 +55,11 @@ wfgraph.open("http://localhost:3030/name")
 
 # Varying options to try
 option_variants = {
-    "order": {"by_order": True},
+    "order": {"by_types": True, "by_order": True},
     "justtypes": {"by_types": True, "by_order": False}
 }
 for scenario, variant, expected_workflows, query in extract_queries():
-    if variant == "query":
+    if variant != "query":
         continue
 
     for optname, options in option_variants.items():

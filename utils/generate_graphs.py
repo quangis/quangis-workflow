@@ -15,6 +15,9 @@ from config import build_path, workflow_paths  # type: ignore
 from cct import cct  # type: ignore
 from workflow import Workflow  # type: ignore
 
+vocab = TransformationGraph(cct)
+vocab.add_vocabulary()
+vocab.serialize(build_path / "cct.ttl", format='ttl', encoding='utf-8')
 
 for wf_path in workflow_paths:
     try:
@@ -28,7 +31,6 @@ for wf_path in workflow_paths:
         }
 
         g = TransformationGraph(cct)
-        g.add((wf.root, RDFS.comment, wf.description))
         g.add_workflow(wf.root, {
             node2expr[output]: list(node2expr.get(i, i) for i in inputs)
             for output, inputs in wf.inputs.items()
