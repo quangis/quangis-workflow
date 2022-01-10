@@ -2,6 +2,10 @@
 """
 """
 
+# https://openpyxl.readthedocs.io/en/stable/usage.html#write-a-workbook
+# Query Variant Options {Workflows}
+# ?     ?       ?       1 1 0 1 1
+
 from __future__ import annotations
 
 import importlib.machinery
@@ -10,8 +14,12 @@ from rdflib import Graph  # type: ignore
 from transformation_algebra.query import Query
 from typing import Iterator
 from rdflib.term import Node
+from openpyxl import Workbook
+from openpyxl.formatting import Rule
+from openpyxl.styles import Font, PatternFill, Border
+from openpyxl.styles.differential import DifferentialStyle
 
-from config import query_paths, build_path  # type: ignore
+from config import query_paths, build_path, REPO  # type: ignore
 
 
 def extract_queries() -> Iterator[tuple[str, str, set[Node], Query]]:
@@ -55,12 +63,27 @@ wfgraph.open("http://localhost:3030/name")
 
 # Varying options to try
 option_variants = {
-    "order": {"by_types": True, "by_order": True},
-    "justtypes": {"by_types": True, "by_order": False}
+    "ordered": {"by_types": True, "by_order": True},
+    "types": {"by_types": True, "by_order": False}
 }
-for scenario, variant, expected_workflows, query in extract_queries():
-    if variant != "query":
-        continue
+
+queries = list(q for q in extract_queries() if q[1] == 'query')
+all_workflows: list[Node] = list(
+    set.union(*(expected for (_, _, expected, _) in queries))
+)
+
+wb = Workbook()
+header = ["Scenario", "Variant", "Options"] + [
+    str(wf)[len(REPO):] for wf in all_workflows]
+
+sheet_actual = wb.active
+sheet_actual.title = "Actual"
+sheet_actual.append(header)
+
+font_wrong = Font(color="FF0000")
+row = 1
+
+for scenario, variant, expected_workflows, query in queries:
 
     for optname, options in option_variants.items():
 
@@ -79,6 +102,15 @@ for scenario, variant, expected_workflows, query in extract_queries():
             results = wfgraph.query(query2.sparql())
             positives = set(r.workflow for r in results)
 
+            # Write to spreadsheet
+            row += 1
+            sheet_actual.append([scenario, variant, optname])
+            for col, wf in enumerate(all_workflows, start=4):
+                cell = sheet_actual.cell(row, col, "1" if wf in positives else "0")
+                if (wf in positives) ^ (wf in expected_workflows):
+                    cell.font = font_wrong
+
+            # Write to terminal
             false_pos = (positives - expected_workflows)
             false_neg = (expected_workflows - positives)
             correct = positives - false_pos - false_neg
@@ -91,3 +123,13 @@ for scenario, variant, expected_workflows, query in extract_queries():
             print("Not firing queries, since the server is down.")
 
         print()
+
+sheet_expected = wb.create_sheet(title="Expected")
+sheet_expected.append(header)
+for scenario, variant, expected_workflows, _ in queries:
+    for optname in option_variants.keys():
+        sheet_expected.append([scenario, variant, optname] + [
+            "1" if wf in expected_workflows else "0" for wf in all_workflows
+        ])
+
+wb.save(filename=build_path / "results.xlsx")
