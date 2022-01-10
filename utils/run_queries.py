@@ -67,7 +67,11 @@ option_variants = {
     "types": {"by_types": True, "by_order": False}
 }
 
-queries = list(q for q in extract_queries() if q[1] == 'query')
+queries = list(
+    (scenario, variant, expected, query)
+    for scenario, variant, expected, query in extract_queries()
+    if (variant != "eval_aquifer_simon" and variant != "eval_solar")
+)
 all_workflows: list[Node] = list(
     set.union(*(expected for (_, _, expected, _) in queries))
 )
