@@ -48,6 +48,8 @@ Intervals = R1(Itv)
 Ratios = R1(Ratio)
 Counts = R1(Count)
 
+QualityRelation = R2(Qlt, Qlt)
+
 SpatialField = R2(Loc, Qlt)
 NominalField = R2(Loc, Nom)
 BooleanField = R2(Loc, Bool)
