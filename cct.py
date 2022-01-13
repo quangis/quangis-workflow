@@ -645,5 +645,4 @@ dist: Operators = OR(nDist, loDist, lgDist, lDist, oDist)
 
 # Language definition ########################################################
 
-cct = Language(scope=locals())
-cct._namespace = CCT = LanguageNamespace("https://github.com/quangis/cct#", cct)
+cct = Language(scope=locals(), namespace="https://github.com/quangis/cct#")
