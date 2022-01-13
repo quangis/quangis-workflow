@@ -11,6 +11,7 @@ Module containing the core concept transformation algebra. Usage:
 
 from transformation_algebra import with_parameters, _, Operator, \
     Language, LanguageNamespace, TypeOperator
+from transformation_algebra.type import TypeAlias
 from transformation_algebra.query import OR, Operators
 
 
@@ -37,46 +38,47 @@ R3a = TypeOperator(params=3)  # Ternary relation, 1 key (left)
 # Types with a synonym are also *canonical*, in that they get a defined node in
 # the vocabulary.
 
-Objects = R1(Obj)
-Locations = R1(Loc)
-Regions = R1(Reg)
-QuantityValues = R1(Qlt)
-Nominals = R1(Nom)
-Booleans = R1(Bool)
-Ordinals = R1(Ord)
-Intervals = R1(Itv)
-Ratios = R1(Ratio)
-Counts = R1(Count)
+Objects = TypeAlias(R1(Obj))
+Locations = TypeAlias(R1(Loc))
+Regions = TypeAlias(R1(Reg))
+QuantityValues = TypeAlias(R1(Qlt))
+Nominals = TypeAlias(R1(Nom))
+Booleans = TypeAlias(R1(Bool))
+Ordinals = TypeAlias(R1(Ord))
+Intervals = TypeAlias(R1(Itv))
+Ratios = TypeAlias(R1(Ratio))
+Counts = TypeAlias(R1(Count))
 
-QualityRelation = R2(Qlt, Qlt)
+QualityRelation = TypeAlias(R2(Qlt, Qlt))
 
-SpatialField = R2(Loc, Qlt)
-NominalField = R2(Loc, Nom)
-BooleanField = R2(Loc, Bool)
-OrdinalField = R2(Loc, Ord)
-IntervalField = R2(Loc, Itv)
-RatioField = R2(Loc, Ratio)
-CountField = R2(Loc, Count)
+SpatialField = TypeAlias(R2(Loc, Qlt))
+NominalField = TypeAlias(R2(Loc, Nom))
+BooleanField = TypeAlias(R2(Loc, Bool))
+OrdinalField = TypeAlias(R2(Loc, Ord))
+IntervalField = TypeAlias(R2(Loc, Itv))
+RatioField = TypeAlias(R2(Loc, Ratio))
+CountField = TypeAlias(R2(Loc, Count))
 
-FieldSpace = FieldSample = R2(Reg, Qlt)
-AmountPatches = R2(Reg, Nom)
-PointMeasures = R2(Reg, Itv)
+FieldSample = TypeAlias(R2(Reg, Qlt))
+AmountPatches = TypeAlias(R2(Reg, Nom))
+PointMeasures = TypeAlias(R2(Reg, Itv))
 
-InvertedField = R2(Qlt, Reg)
-NominalCoverages = NominalInvertedField = R2(Nom, Reg)
-BooleanCoverages = BooleanInvertedField = R2(Bool, Reg)
-Contour = R2(Ord, Reg)
-ContourLine = R2(Itv, Reg)
+Coverages = TypeAlias(R2(Qlt, Reg))
+NominalCoverages = TypeAlias(R2(Nom, Reg))
+BooleanCoverages = TypeAlias(R2(Bool, Reg))
+Contour = TypeAlias(R2(Ord, Reg))
+ContourLine = TypeAlias(R2(Itv, Reg))
 
-ObjectExtent = ObjectSpace = R2(Obj, Reg)
+ObjectExtent = TypeAlias(R2(Obj, Reg))
 
-ObjectQuality = R2(Obj, Qlt)
-RelationalField = R3(Loc, Qlt, Loc)
-SpatialNetwork = R3(Obj, Qlt, Obj)
+ObjectQuality = TypeAlias(R2(Obj, Qlt))
+RelationalField = TypeAlias(R3(Loc, Qlt, Loc))
+SpatialNetwork = TypeAlias(R3(Obj, Qlt, Obj))
 
-TernaryRelation1 = R3a(Obj, Qlt, Obj)
-TernaryRelation2 = R3a(Obj, Reg, Qlt)
-TernaryRelation3 = R3a(Obj, Qlt, Reg)
+TernaryRelation1 = TypeAlias(R3a(Obj, Qlt, Obj))
+TernaryRelation2 = TypeAlias(R3a(Obj, Reg, Qlt))
+TernaryRelation3 = TypeAlias(R3a(Obj, Qlt, Reg))
+
 
 # Data inputs ################################################################
 # These are deprecated and will be removed in a future version, in favour of
