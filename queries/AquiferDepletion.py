@@ -44,7 +44,7 @@ eval_aquifer_eric = Query(cct, [R3a(Obj, Nom, Reg), AND(
     ),
 
     # irrigation2
-    R3(Obj, Ratio, Reg)
+    R3a(Obj, Ratio, Reg)
 )])
 
 # Simon

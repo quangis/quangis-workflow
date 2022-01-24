@@ -24,11 +24,11 @@ query = Query(cct,
 # input R2(Obj, Loc)  # hospital points
 # input R2(Obj, Loc)  # incident location
 
-eval_hospitalsnear_eric = Query(cct, [R2(Obj, Loc), AND(
-    R3a(Obj, Nom, Reg),
-    R2(Obj, Loc),
-    R2(Obj, Loc)
-)])
+# eval_hospitalsnear_eric = Query(cct, [R2(Obj, Loc), AND(
+#     R3a(Obj, Nom, Reg),
+#     R2(Obj, Loc),
+#     R2(Obj, Loc)
+# )])
 
 # --------------------------------------------
 # hospitalsNetwork
@@ -37,11 +37,11 @@ eval_hospitalsnear_eric = Query(cct, [R2(Obj, Loc), AND(
 # input R2(Obj, Loc)  # hospital points
 # input R2(Obj,  Loc)  # incident location
 
-eval_hospitalsnetwork_eric = Query(cct, [R2(Obj, Nom), R3a(Obj, Nom, Obj), AND(
-    R3a(Obj, Nom, Reg),
-    R2(Obj, Loc),
-    R2(Obj, Loc)
-)])
+# eval_hospitalsnetwork_eric = Query(cct, [R2(Obj, Nom), R3a(Obj, Nom, Obj), AND(
+#     R3a(Obj, Nom, Reg),
+#     R2(Obj, Loc),
+#     R2(Obj, Loc)
+# )])
 
 # ------------------
 # simon:
