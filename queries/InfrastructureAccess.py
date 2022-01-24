@@ -3,7 +3,7 @@
 # all-season roads in Shikoku, Japan?
 
 from config import REPO  # type: ignore
-from transformation_algebra.query import Query, AND
+from transformation_algebra.query import Query, AND, STEP
 from cct import cct, R3a, R1, R2, Obj, Reg, Nom, Ord, Count, Ratio, Loc, Bool, ratio, extrapol  # type: ignore
 
 workflows = {REPO.InfrastructureAccess}
@@ -55,7 +55,7 @@ eval_infrastructure_eric = Query(cct, [R1(Ratio), AND(
 eval_infrastructure_simon = Query(cct, [R2(Reg, Ratio), AND(
 
     # rural clip and summing contentamount (rural_pop1)
-    (R2(Reg, Count), R3a(Obj, Reg, Count), AND(
+    STEP(R2(Reg, Count), R3a(Obj, Reg, Count), AND(
 
         # chochomoku
         [R3a(Obj, Reg, Count)],

@@ -63,8 +63,8 @@ wfgraph.open("http://localhost:3030/name")
 
 # Varying options to try
 option_variants = {
-    "ordered": {"by_types": True, "by_order": True},
-    "types": {"by_types": True, "by_order": False}
+    "ordered": {"by_types": True, "by_chronology": True},
+    "types": {"by_types": True, "by_chronology": False}
 }
 
 queries = list(
@@ -91,19 +91,19 @@ for scenario, variant, expected_workflows, query in queries:
 
     for optname, options in option_variants.items():
 
-        query2 = Query(query.language, query.flow, **options)
-
         print(f'\033[1m\033[4m{scenario}\033[0m', variant, optname)
+
+        sparql = query.sparql(**options)
 
         # Print query to file for inspection
         path = build_path / f"{scenario}_{variant}_{optname}.rq"
         # print("Building", path.name)
         with open(path, 'w') as f:
-            f.write(query2.sparql())
+            f.write(sparql)
 
         # Run the query
         try:
-            results = wfgraph.query(query2.sparql())
+            results = wfgraph.query(sparql)
             positives = set(r.workflow for r in results)
 
             # Write to spreadsheet
