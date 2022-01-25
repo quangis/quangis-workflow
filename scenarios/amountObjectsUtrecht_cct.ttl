@@ -1,0 +1,39 @@
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>.
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+@prefix xml: <http://www.w3.org/XML/1998/namespace>.
+@prefix wf: <http://geographicknowledge.de/vocab/Workflow.rdf#>.
+@prefix tools: <http://geographicknowledge.de/vocab/GISTools.rdf#>.
+@prefix arcpro: <https://pro.arcgis.com/en/pro-app/tool-reference/>.
+@prefix pdok: <https://www.pdok.nl/introductie/-/article/>.
+@prefix repo: <https://example.com/#>.
+
+# @author: Simon Scheider
+
+
+# Workflow amounts of people in Utrecht
+# Workflow metadata (result and data sources)
+repo:AmountObjectsUtrecht a wf:Workflow;
+	rdfs:comment "What is the number of people for each neighborhood in Utrecht?"@en;
+	rdfs:comment "What is the distribution of people across neighborhoods in Utrecht?"@en;
+	wf:source pdok:cbs-gebiedsindelingen; #municipalities
+	wf:source pdok:cbs-wijken-en-buurten; #neighborhoodregions
+	wf:source pdok:cbs-vierkantstatistieken; #peoplecounts
+	wf:edge _:wf1_1, _:wf1_3, _:wf1_5.
+
+# Workflow nodes
+_:wf1_1 wf:applicationOf tools:SelectLayerByObjectTessObjects;
+		wf:input1 pdok:cbs-gebiedsindelingen;
+		wf:output _:utrecht.
+		
+_:wf1_3 wf:applicationOf tools:SelectLayerByLocationTessObjects ;
+		wf:input1 pdok:cbs-wijken-en-buurten;
+		wf:input2 _:utrecht;				
+		wf:output _:neighborhoodsutrecht.
+		
+_:wf1_5 wf:applicationOf tools:SpatialJoinAmountSumTessCount;
+		wf:input1 pdok:cbs-vierkantstatistieken;
+		wf:input2 _:neighborhoodsutrecht;
+		wf:output _:countneighborhoodsutrecht.
+
+

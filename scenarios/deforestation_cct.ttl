@@ -1,0 +1,64 @@
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>.
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+@prefix xml: <http://www.w3.org/XML/1998/namespace>.
+@prefix wf: <http://geographicknowledge.de/vocab/Workflow.rdf#>.
+@prefix tools: <http://geographicknowledge.de/vocab/GISTools.rdf#>.
+@prefix arcpro: <https://pro.arcgis.com/en/pro-app/tool-reference/>.
+@prefix  rfdata: <https://learn.arcgis.com/en/projects/predict-deforestation-in-the-amazon-rain-forest/>.
+@prefix dbo: <https://dbpedia.org/ontology/>. 
+@prefix dct: <http://purl.org/dc/terms/>.
+@prefix repo: <https://example.com/#>.
+
+
+# @author: Eric Top, Simon Scheider
+
+
+
+# Workflow Deforestation
+# Workflow metadata (result and data sources)
+repo:Deforestation a wf:Workflow;
+	rdfs:comment "What area is potentially deforested within 5.5 km of a planned road in the Amazon rainforest?"@en;	
+	dct:subject "Out: Ratio, In: R(Obj, Reg), In: R(Obj, Reg), In: R(Loc, Bool)";
+	dbo:abstract "The Amazon rain forest spans nine countries and millions of square kilometers. Due to deforestation, current estimates indicate only about 80 percent of the original rain forest remains. In this lesson, you'll use ArcGIS Pro to create a map of deforestation in the Brazilian state of Rondonia. Then, you'll predict how much deforestation would be caused by a road proposed to be built across the state. Your workflow requires a wide variety of data, feature editing, and analysis tools. You'll also learn how to share your results as an informative print map.";	
+	wf:source rfdata:roads; #existing road file Amazon
+	wf:source rfdata:planned; #planned road
+	wf:source rfdata:deforested;	#Deforested area (polygon)	
+	wf:edge _:wf1_1, _:wf1_2, _:wf1_3, _:wf1_4,  _:wf1_6, _:wf1_7, _:wf1_8.
+
+# Workflow nodes
+
+_:wf1_1  wf:applicationOf tools:SelectObjectbyExtent;
+		wf:input1 rfdata:roads; #select existing roads within window	
+		wf:output _:roadsSelectForBuffer.
+		
+_:wf1_2  wf:applicationOf tools:ObjectBuffer;
+		wf:input1 _:roadsSelectForBuffer; #Generate buffers for existing roads	
+		wf:output _:roadsBuffer.
+
+_:wf1_3  wf:applicationOf tools:ClipBoolFieldVector2Extent;
+		wf:input1 rfdata:deforested; #deforested area	
+		wf:input2 _:roadsBuffer; #Clips deforested area	with roads buffer
+		wf:output _:deforestedRoadArea.
+
+_:wf1_4  wf:applicationOf tools:CalculateVectorFieldAreaPercentage;
+		wf:input1 _:roadsBuffer;  #area of buffers	
+		wf:input2 _:deforestedRoadArea; #deforested area
+		wf:output _:areaPercentage.	 #area percentage of current deforestation (summary of nominal field areas)	
+
+_:wf1_6  wf:applicationOf tools:ObjectBuffer;
+		wf:input1 rfdata:planned; #planned roads	
+		wf:output _:plannedRoadBuffer.
+
+_:wf1_7  wf:applicationOf tools:EraseFieldExtentfromFieldVector;
+		wf:input1 _:plannedRoadBuffer; #from	
+		wf:input2 rfdata:deforested; #erase features
+		wf:output _:erasedBuffer.
+		
+_:wf1_8  wf:applicationOf tools:CalculateVectorFieldPartialArea;
+		wf:input1 _:erasedBuffer; #area of buffers	
+		wf:input2 _:areaPercentage; #deforested area ratio
+		wf:output _:predictedDeforestation.	 #area of predicted deforestation		
+		
+		
+		

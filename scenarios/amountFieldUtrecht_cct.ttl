@@ -1,0 +1,49 @@
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>.
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+@prefix xml: <http://www.w3.org/XML/1998/namespace>.
+@prefix wf: <http://geographicknowledge.de/vocab/Workflow.rdf#>.
+@prefix tools: <http://geographicknowledge.de/vocab/GISTools.rdf#>.
+@prefix arcpro: <https://pro.arcgis.com/en/pro-app/tool-reference/>.
+@prefix pdok: <https://www.pdok.nl/introductie/-/article/>.
+@prefix repo: <https://example.com/#>.
+
+# @author: Simon Scheider
+
+
+
+# Workflow amounts of temperature in Utrecht
+# Workflow metadata (result and data sources)
+repo:AmountFieldUtrecht a wf:Workflow;
+	rdfs:comment "What is the average temperature for each neighborhood in Utrecht?"@en;
+	rdfs:comment "What is the distribution of temperature in Utrecht across neighborhoods?"@en;
+	wf:source pdok:cbs-gebiedsindelingen; #municipalities
+	wf:source pdok:cbs-wijken-en-buurten; #CBS neighborhoodregions
+	wf:source pdok:cbs-vierkantstatistieken;	#CBS grid statistics
+	wf:source <http://projects.knmi.nl/klimatologie/daggegevens/selectie.cgi>; #KNMI weather stations
+	wf:edge _:wf2_1, _:wf2_5, _:wf2_6, _:wf2_8, _:wf2_10.
+
+# Workflow nodes
+
+_:wf2_1  wf:applicationOf tools:MakePointMeasuresFromTable;
+		wf:input1 <http://projects.knmi.nl/klimatologie/daggegevens/selectie.cgi>; #KNMI weather stations		
+		wf:output _:knmi_shp2.	
+		
+_:wf2_5  wf:applicationOf tools:IDWInterval;
+		wf:input1 _:knmi_shp2	;
+		wf:output _:tempraster. 		
+
+_:wf2_6  wf:applicationOf tools:SelectLayerByObjectTessObjects;
+		wf:input1 pdok:cbs-gebiedsindelingen;				
+		wf:output _:utrecht_shp.	
+		
+_:wf2_8  wf:applicationOf tools:SelectLayerByLocationTessObjects;
+		wf:input1 pdok:cbs-wijken-en-buurten	;
+		wf:input2 _:utrecht_shp ;		
+		wf:output _:utrecht_buurten. 
+
+_:wf2_10  wf:applicationOf tools:ZonalStatisticsMeanInterval;
+		wf:input1 _:tempraster	;
+		wf:input2 _:utrecht_buurten;		
+		wf:output _:utrecht_buurten_agg_temp. 
+		

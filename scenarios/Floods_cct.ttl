@@ -1,0 +1,92 @@
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>.
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+@prefix xml: <http://www.w3.org/XML/1998/namespace>.
+@prefix wf: <http://geographicknowledge.de/vocab/Workflow.rdf#>.
+@prefix tools: <http://geographicknowledge.de/vocab/GISTools.rdf#>.
+@prefix arcpro: <https://pro.arcgis.com/en/pro-app/tool-reference/>.
+@prefix  rfdata: <https://learn.arcgis.com/en/projects/predict-floods-with-unit-hydrographs/>.
+@prefix dbo: <https://dbpedia.org/ontology/>. 
+@prefix dct: <http://purl.org/dc/terms/>.
+@prefix repo: <https://example.com/#>.
+
+# @author: Eric Top, Simon Scheider
+
+
+
+# Workflow amounts of temperature in Utrecht
+# Workflow metadata (result and data sources)
+repo:Floods a wf:Workflow;
+	rdfs:comment "Which areas are susceptible to flooding in Vermont during a predicted rainstorm?"@en;	
+	dct:subject "";
+	dbo:abstract " Stowe, a small Vermont town of nearly 5,000 residents, suffered considerably when the remnants of Hurricane Irene stuck the Green Mountain region in August 2011. The Little River overflowed and washed out roads, bridges, and culverts. Wanting to learn from the tragedy, Stowe officials discovered that they had precious little information involving flood prediction. They turned to hydrographs, which are line graphs determining how much water a stream will discharge during a rainstorm. In this lesson, you'll create those hydrographs.";	
+	wf:source rfdata:stoweDem; #Vermont as a digital surface model (Raster)
+	wf:source rfdata:pourPoint; #Point of measurement for the unit hydrograph
+	wf:edge _:wf1_1, _:wf1_3, _:wf1_4, _:wf1_5, _:wf1_6, _:wf1_7, _:wf1_8, _:wf1_9, _:wf1_10, _:wf1_11, _:wf1_12, _:wf1_13, _:wf1_14.
+
+# Workflow nodes
+
+#Find Velocity Weight raster
+
+_:wf1_1 wf:applicationOf <https://pro.arcgis.com/en/pro-app/latest/tool-reference/spatial-analyst/slope.htm>;
+		wf:input1 rfdata:stoweDem; #Calculate slopes in Glover	
+		wf:output _:stoweSlope.
+
+_:wf1_3 wf:applicationOf tools:VelocityFieldDEM;
+		wf:input1 _:stoweSlope; #Calculate slope-area term (Maidment et al. equation) <SquareRoot("Stowe_slope") * SquareRoot("Stowe_flow_accumulation")>
+		wf:input2 _:accumulation;
+		wf:output _:stoweVelocity.
+	
+_:wf1_4 wf:applicationOf tools:con1;
+		wf:input1 _:stoweVelocity; #Set a lower bound of 0.02
+		wf:output _:stoweVelocity2.
+
+_:wf1_5 wf:applicationOf tools:con1;
+		wf:input1 _:stoweVelocity2; #Set an upper bound of 2
+		wf:output _:stoweVelocity3.		
+
+_:wf1_6 wf:applicationOf tools:LocalMapAlgebraInvert;
+		wf:input1 _:stoweVelocity3; #Create a weight (impedance) grid < 1/"%wf_Stowe_Velocity%">
+		wf:output _:stoweWeight.		
+
+#Flow direction, accumulation and watershed (This part is new since second workflow)
+
+_:wf1_7 wf:applicationOf <https://pro.arcgis.com/en/pro-app/latest/tool-reference/spatial-analyst/flow-direction.htm>;
+		wf:input1 rfdata:stoweDem; #Get directions of water flow
+		wf:output _:direction.
+		
+_:wf1_8 wf:applicationOf <https://pro.arcgis.com/en/pro-app/latest/tool-reference/spatial-analyst/flow-accumulation.htm>;
+		wf:input1 _:direction; #Get accumulations of water flow
+		wf:output _:accumulation.
+		
+_:wf1_9 wf:applicationOf <https://pro.arcgis.com/en/pro-app/latest/tool-reference/spatial-analyst/snap-pour-point.htm>;
+		wf:input1 rfdata:pourPoint; #Snap pour point to river (Distance: 60m)
+		wf:input2 _:accumulation;
+		wf:output _:snappedPoint.
+		
+_:wf1_10 wf:applicationOf <https://pro.arcgis.com/en/pro-app/latest/tool-reference/spatial-analyst/watershed.htm>;
+		wf:input1 _:direction; #Get watershed
+		wf:input2 _:snappedPoint;
+		wf:output _:watershed.
+		
+#Continues the same as old workflow from here
+
+_:wf1_11 wf:applicationOf <https://pro.arcgis.com/en/pro-app/latest/tool-reference/spatial-analyst/extract-by-mask.htm>;
+		wf:input1 _:direction; #Extract flow directions by watershed mask
+		wf:input2 _:watershed;	
+		wf:output _:flowDirections.
+		
+_:wf1_12 wf:applicationOf <https://pro.arcgis.com/en/pro-app/latest/tool-reference/spatial-analyst/flow-length.htm>;
+		wf:input1 _:stoweWeight; #Calculate the upstream or downstream distance, or weighted distance, along the flow path for each cell. This is 
+		wf:input2 _:flowDirections;
+		wf:output _:stoweTime.
+		
+_:wf1_13 wf:applicationOf tools:RasterToIsoRaster;
+		wf:input1 _:stoweTime; #Reclassify flow time values to specific ranges (Isochrones raster)
+		wf:output _:stoweIsochrones.
+		
+_:wf1_14 wf:applicationOf tools:CreateUnitHydrograph;
+		wf:input1 _:stoweIsochrones; #Convert to unit hydrograph
+		wf:output _:stoweTable.	
+
+		

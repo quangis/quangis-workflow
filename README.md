@@ -32,11 +32,9 @@ algebra are contained in [tools/tools.ttl](tools/tools.ttl).
 #### Generating transformation graphs
 
 [utils/generate_graphs.py](utils/generate_graphs.py) generates `.ttl` files 
-that represent the transformation graphs for workflows that have been described 
-in terms of applications of the GIS tools of [tools.ttl](tools/tools.ttl). Such 
-workflows are internally available at 
-`ownpapers/TheoryofGISFunctions/Scenarios/`; for the script to work, that 
-`Scenarios/` directory should be copied or symlinked in the project root.
+that represent the transformation graphs for the workflows as they are 
+described in [scenarios/](scenarios), which are in turn described in terms of 
+the GIS tools of [tools.ttl](tools/tools.ttl).
 
 
 #### Serving a SPARQL endpoint
