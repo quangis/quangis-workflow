@@ -6,7 +6,7 @@
 @prefix tools: <http://geographicknowledge.de/vocab/GISTools.rdf#>.
 @prefix arcpro: <https://pro.arcgis.com/en/pro-app/tool-reference/>.
 @prefix  rfdata: <https://learn.arcgis.com/en/projects/monitor-malaria-epidemics/>.
-@prefix dbo: <https://dbpedia.org/ontology/>. 
+@prefix dbo: <https://dbpedia.org/ontology/>.
 @prefix dct: <http://purl.org/dc/terms/>.
 @prefix repo: <https://example.com/#>.
 
@@ -17,38 +17,38 @@
 # Workflow amounts of temperature in Utrecht
 # Workflow metadata (result and data sources)
 repo:Malaria a wf:Workflow;
-	rdfs:comment "What areas have the highest malaria incidence rate in the Democratic Republic of the Congo between 2010-2015?"@en;	
-	dct:subject "";
-	dbo:abstract " You are a member of the Ministry of Public Health for the Democratic Republic of the Congo assigned to monitor progress on eradicating malaria and reporting on the United Nations Sustainable Development Goal (SDG) #3 Good Health and Well-Being. To gather intelligence on where prevention and aid are most needed, and to calculate the incidence rate per 1,000 for SDG reporting, you'll use Esri's Living Atlas layers and the Malaria Atlas Project's incidence reports to map the spatial and temporal distribution from 2000-2015.";		
-	wf:source rfdata:adminRegions; #Vector polygons of all administrative regions (e.g. province in NL) in the world.
-	wf:source rfdata:population; 		#Raster with estimate of the populations in the world in 2016	
-	wf:source rfdata:adminIncidence; 	#Excel table with yearly incidence rates of malaria between 2000 and 2015 in administrative regions.
-	wf:edge _:wf2_1, _:wf2_2, _:wf2_3, _:wf2_5, _:wf2_7.
+    rdfs:comment "What areas have the highest malaria incidence rate in the Democratic Republic of the Congo between 2010-2015?"@en;
+    dct:subject "";
+    dbo:abstract " You are a member of the Ministry of Public Health for the Democratic Republic of the Congo assigned to monitor progress on eradicating malaria and reporting on the United Nations Sustainable Development Goal (SDG) #3 Good Health and Well-Being. To gather intelligence on where prevention and aid are most needed, and to calculate the incidence rate per 1,000 for SDG reporting, you'll use Esri's Living Atlas layers and the Malaria Atlas Project's incidence reports to map the spatial and temporal distribution from 2000-2015.";
+    wf:source rfdata:adminRegions; #Vector polygons of all administrative regions (e.g. province in NL) in the world.
+    wf:source rfdata:population;        #Raster with estimate of the populations in the world in 2016
+    wf:source rfdata:adminIncidence;    #Excel table with yearly incidence rates of malaria between 2000 and 2015 in administrative regions.
+    wf:edge _:wf2_1, _:wf2_2, _:wf2_3, _:wf2_5, _:wf2_7.
 
 # Workflow nodes
 
 # Incidence rate of malaria in the administrative regions of DRC
 
 _:wf2_1 wf:applicationOf tools:FC2FCObjectTess;
-		wf:input1 rfdata:adminRegions; #Extract the data of the Democratic Republic of the Congo.
-		wf:output _:adminDRC1.
-		
+    wf:input1 rfdata:adminRegions; #Extract the data of the Democratic Republic of the Congo.
+    wf:output _:adminDRC1.
+
 _:wf2_2  wf:applicationOf tools:MergeObjects;
-		wf:input1 _:adminDRC1; #Dissolve admin polygons by name. 	
-		wf:output _:adminDRC2.
-		
+    wf:input1 _:adminDRC1; #Dissolve admin polygons by name.
+    wf:output _:adminDRC2.
+
 _:wf2_3 wf:applicationOf tools:ZonalStatisticsSumCount;
-		wf:input2 _:adminDRC2;		
-		wf:input1 rfdata:population; #Sum raster of population values inside Congo administrative polygons. Join standalone table with DRC admin data.
-		wf:output _:popAdminDRC.
-		
+    wf:input2 _:adminDRC2;
+    wf:input1 rfdata:population; #Sum raster of population values inside Congo administrative polygons. Join standalone table with DRC admin data.
+    wf:output _:popAdminDRC.
+
 _:wf2_5 wf:applicationOf tools:LoadAmountonObjects;
-		wf:input1 rfdata:adminIncidence; #Convert excel to ArcGIS Pro table	and join with admin data	
-		wf:input2 _:popAdminDRC;		
-		wf:output _:adminDRC4.
+    wf:input1 rfdata:adminIncidence; #Convert excel to ArcGIS Pro table and join with admin data
+    wf:input2 _:popAdminDRC;
+    wf:output _:adminDRC4.
 
 _:wf2_7 wf:applicationOf tools:CalculateObjectVectorCountAmountRatio;
-		wf:input1 _:popAdminDRC;
-		wf:input2 _:adminDRC4; #Add multiple fields for incidence rates in 2000, 2005, 2010 and 2015.		
-		wf:output _:adminDRC6. # e.g.: <round((!F2000!/!SUM!)*1000,0)>
-		
+    wf:input1 _:popAdminDRC;
+    wf:input2 _:adminDRC4; #Add multiple fields for incidence rates in 2000, 2005, 2010 and 2015.
+    wf:output _:adminDRC6. # e.g.: <round((!F2000!/!SUM!)*1000,0)>
+

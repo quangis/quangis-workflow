@@ -15,30 +15,30 @@
 # Workflow noise portion in Amsterdam
 # Workflow metadata (result and data sources)
 repo:NoisePortionAmsterdam a wf:Workflow;
-	rdfs:comment "Where in Amsterdam is noise more intense than 70 dB?"@en;	
-	rdfs:comment "What is the region of Amsterdam where noise is more intense than 70 dB?"@en;
-	wf:source pdok:cbs-gebiedsindelingen; #municipalities	
-	wf:source <https://maps.amsterdam.nl/geluid>;	#Amsterdam noise map
-	wf:edge _:wf3_1, _:wf3_2, _:wf3_4, _:wf3_5, _:wf3_6.
-	
+    rdfs:comment "Where in Amsterdam is noise more intense than 70 dB?"@en;
+    rdfs:comment "What is the region of Amsterdam where noise is more intense than 70 dB?"@en;
+    wf:source pdok:cbs-gebiedsindelingen; #municipalities
+    wf:source <https://maps.amsterdam.nl/geluid>;   #Amsterdam noise map
+    wf:edge _:wf3_1, _:wf3_2, _:wf3_4, _:wf3_5, _:wf3_6.
+
 _:wf3_1 wf:applicationOf tools:ContourToFieldRaster;
-		wf:input1 <https://maps.amsterdam.nl/geluid>; #noise map	
-		wf:output _:noise_raster.
-		
+    wf:input1 <https://maps.amsterdam.nl/geluid>; #noise map
+    wf:output _:noise_raster.
+
 _:wf3_2  wf:applicationOf tools:SelectLayerByObjectTessObjects;
-		wf:input1 pdok:cbs-gebiedsindelingen;				
-		wf:output _:amsterdam_shp.	
-		
+    wf:input1 pdok:cbs-gebiedsindelingen;
+    wf:output _:amsterdam_shp.
+
 _:wf3_4  wf:applicationOf tools:ClipFieldRaster2ObjectExtent;
-		wf:input2 _:amsterdam_shp;
-		wf:input1 _:noise_raster;			
-		wf:output _:noise_amsterdam.
-		
+    wf:input2 _:amsterdam_shp;
+    wf:input1 _:noise_raster;
+    wf:output _:noise_amsterdam.
+
 _:wf3_5  wf:applicationOf tools:LocalMapAlgebraSubOrder;
-		wf:input1 _:noise_amsterdam;				
-		wf:output _:noisy_amsterdam.
-		
+    wf:input1 _:noise_amsterdam;
+    wf:output _:noisy_amsterdam.
+
 _:wf3_6  wf:applicationOf tools:RegionFromRasterExtent;
-		wf:input1 _:noisy_amsterdam;				
-		wf:output _:noisy_amsterdam_shp.		
-		
+    wf:input1 _:noisy_amsterdam;
+    wf:output _:noisy_amsterdam_shp.
+
