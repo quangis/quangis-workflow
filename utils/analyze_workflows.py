@@ -14,11 +14,12 @@ from sys import stderr
 import itertools
 from pathlib import Path
 from collections import defaultdict
-from rdflib.term import Node  # type: ignore
+from rdflib.term import Node, Literal  # type: ignore
+from rdflib.namespace import RDFS  # type: ignore
 from rdflib.tools.rdf2dot import rdf2dot  # type: ignore
 from transformation_algebra.graph import TransformationGraph
 
-from config import build_path, workflow_paths  # type: ignore
+from config import build_path, workflow_paths, TOOLS  # type: ignore
 from cct import cct  # type: ignore
 from workflow import Workflow  # type: ignore
 
@@ -59,6 +60,13 @@ def write_graph(wf: Workflow, path: Path, primitive: bool = False):
         node2expr[output]: list(node2expr.get(i, i) for i in inputs)
         for output, inputs in wf.inputs.items()
     })
+
+    # Annotate the expression nodes that correspond with output nodes of a tool
+    # with said tool
+    for output, tool in wf.tools.items():
+        g.add((g.expr_nodes[node2expr[output]], RDFS.comment,
+            Literal(tool[len(TOOLS):])))
+
     with open(path, 'w') as f:
         rdf2dot(g, f)
 
