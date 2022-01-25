@@ -30,7 +30,7 @@ for wf_path in workflow_paths:
             for node, expr in wf.expressions.items()
         }
 
-        g = TransformationGraph(cct)
+        g = TransformationGraph(cct, with_noncanonical_types=False)
         g.add_workflow(wf.root, {
             node2expr[output]: list(node2expr.get(i, i) for i in inputs)
             for output, inputs in wf.inputs.items()
