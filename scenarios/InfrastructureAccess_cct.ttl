@@ -30,38 +30,43 @@ repo:InfrastructureAccess a wf:Workflow;
 #Calculate rural population
 
 _:wf1_1 wf:applicationOf tools:SelectLayerByAttributeTessObjects ;
-    wf:input1 rfdata:urbanization; #select rural from different urbanization grade areas
-    #Create new layer from selected rural areas
+    wf:input1 rfdata:urbanization;
+    rdfs:comment "select rural from different urbanization grade areas and create new layer from them";
     wf:output _:rural.
 
 _:wf1_3 wf:applicationOf tools:ClipObject2Object;
     wf:input1 rfdata:chochomoku;
-    wf:input2 _:rural; #Clip SCCM regions by rural areas
+    wf:input2 _:rural;
+    rdfs:comment "clip SCCM regions by rural areas";
     wf:output _:rural_clip.
 
 _:wf1_4 wf:applicationOf tools:ObjectSummaryStatisticsAmount;
-    wf:input1 _:rural_clip; #Sum the total population (2015)
+    wf:input1 _:rural_clip;
+    rdfs:comment "sum the total population (2015)";
     wf:output _:rural_pop1.
 
 #Calculate rural population within road buffer
 
 _:wf1_7 wf:applicationOf tools:ObjectBuffer;
-    wf:input1 rfdata:roads; #Buffer roads with 2km distance
+    wf:input1 rfdata:roads;
+    rdfs:comment "buffer roads within 2km distance";
     wf:output _:roads_buffer.
 
 _:wf1_8 wf:applicationOf tools:CalculatePartialAmountsfromObjects;
     wf:input1 _:rural_clip;
-    wf:input2 _:roads_buffer;#Clip rural areas with the roads buffer
-     #Estimate the total population that is within the buffer of 2km
+    wf:input2 _:roads_buffer;
+    rdfs:comment "clip rural areas with the roads buffer and estimate the total population that is within the buffer of 2km";
     wf:output _:rural_2km4.
 
 _:wf1_12 wf:applicationOf tools:SummaryStatisticsAmount;
-    wf:input1 _:rural_2km4; #Sum the total population that is within the buffer of 2km (i.e. has access to infrastructure)
+    wf:input1 _:rural_2km4;
+    rdfs:comment "sum the total population that is within the buffer of 2km (i.e. has access to infrastructure)";
     wf:output _:rural_access1.
 
 
 _:wf1_6 wf:applicationOf tools:CalculateCountAmountRatio;
-    wf:input1 _:rural_pop1; #Calcuate the percentage of population living within 2km of infrastructure
+    wf:input1 _:rural_pop1;
     wf:input2 _:rural_access1;
+    rdfs:comment "calcuate the percentage of population living within 2km of infrastructure";
     wf:output _:rural_pop2.
 

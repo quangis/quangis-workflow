@@ -20,22 +20,23 @@ repo:HospitalsNetwork a wf:Workflow;
     rdfs:comment "Which hospital is closest to the incidents within a two minutes drive?"@en;
     dct:subject "";
     dbo:abstract "The closest facility solver finds one or more facilities that are closest to an incident based on travel time or travel distance and outputs the best routes as driving directions between the incidents and the chosen facilities. In this tutorial, you'll use this tool to find the closest hospital to an accident. Finding a closest facility can be associated with a local network dataset or a network service hosted in ArcGIS Online or ArcGIS Enterprise. ";
-    wf:source rfdata:roads; #Road line network in San Francisco.
-    wf:source rfdata:hospitals; #Point locations of hospitals in San Francisco.
-    wf:source rfdata:incident;      #Geocoded location point of 2350 Pine St, San Francisco, where an incident occurred.
+    wf:source rfdata:roads; # Road line network in San Francisco.
+    wf:source rfdata:hospitals; # Point locations of hospitals in San Francisco.
+    wf:source rfdata:incident; # Geocoded location point of 2350 Pine St, San Francisco, where an incident occurred.
     wf:edge _:wf1_0, _:wf1_1.
 
 # Workflow nodes
 
-#Builds network data file from roads file
+# Builds network data file from roads file
 _:wf1_0 wf:applicationOf <https://pro.arcgis.com/en/pro-app/latest/tool-reference/network-analyst/build-network.htm>;
     wf:input1 rfdata:roads;
     wf:output _:networkdata.
 
 # Distance to the closest hospital from each incident
 _:wf1_1 wf:applicationOf tools:closestfacilityanalysis;
-    wf:input1 _:networkdata; #Find the closest facilities (goals) for each origin
-    wf:input2 rfdata:hospitals; #Goals
-    wf:input3 rfdata:incident; #origins
+    wf:input1 _:networkdata;
+    wf:input2 rfdata:hospitals; # goals
+    wf:input3 rfdata:incident; # origins
+    rdfs:comment "find the closest facilities (goals) for each origin";
     wf:output _:objectswithdistances.
 

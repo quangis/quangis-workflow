@@ -29,22 +29,26 @@ repo:Deforestation a wf:Workflow;
 # Workflow nodes
 
 _:wf1_1  wf:applicationOf tools:SelectObjectbyExtent;
-    wf:input1 rfdata:roads; #select existing roads within window
+    wf:input1 rfdata:roads;
+    rdfs:comment "select existing roads within window";
     wf:output _:roadsSelectForBuffer.
 
 _:wf1_2  wf:applicationOf tools:ObjectBuffer;
-    wf:input1 _:roadsSelectForBuffer; #Generate buffers for existing roads
+    wf:input1 _:roadsSelectForBuffer;
+    rdfs:comment "generate buffers for existing roads";
     wf:output _:roadsBuffer.
 
 _:wf1_3  wf:applicationOf tools:ClipBoolFieldVector2Extent;
-    wf:input1 rfdata:deforested; #deforested area
-    wf:input2 _:roadsBuffer; #Clips deforested area with roads buffer
+    wf:input1 rfdata:deforested;
+    wf:input2 _:roadsBuffer;
+    rdfs:comment "clip deforested area with roads buffer";
     wf:output _:deforestedRoadArea.
 
 _:wf1_4  wf:applicationOf tools:CalculateVectorFieldAreaPercentage;
     wf:input1 _:roadsBuffer;  #area of buffers
     wf:input2 _:deforestedRoadArea; #deforested area
-    wf:output _:areaPercentage.  #area percentage of current deforestation (summary of nominal field areas)
+    rdfs:comment "area percentage of current deforestation (summary of nominal field areas)";
+    wf:output _:areaPercentage.
 
 _:wf1_6  wf:applicationOf tools:ObjectBuffer;
     wf:input1 rfdata:planned; #planned roads
@@ -53,10 +57,12 @@ _:wf1_6  wf:applicationOf tools:ObjectBuffer;
 _:wf1_7  wf:applicationOf tools:EraseFieldExtentfromFieldVector;
     wf:input1 _:plannedRoadBuffer; #from
     wf:input2 rfdata:deforested; #erase features
+    rdfs:comment "erase features";
     wf:output _:erasedBuffer.
 
 _:wf1_8  wf:applicationOf tools:CalculateVectorFieldPartialArea;
     wf:input1 _:erasedBuffer; #area of buffers
     wf:input2 _:areaPercentage; #deforested area ratio
+    rdfs:comment "area of predicted deforestation from buffers in deforested area";
     wf:output _:predictedDeforestation.  #area of predicted deforestation
 

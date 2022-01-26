@@ -19,7 +19,7 @@ from rdflib.namespace import RDFS  # type: ignore
 from rdflib.tools.rdf2dot import rdf2dot  # type: ignore
 from transformation_algebra.graph import TransformationGraph
 
-from config import build_path, workflow_paths, TOOLS  # type: ignore
+from config import build_path, workflow_paths, WF, TOOLS  # type: ignore
 from cct import cct  # type: ignore
 from workflow import Workflow  # type: ignore
 
@@ -64,8 +64,14 @@ def write_graph(wf: Workflow, path: Path, primitive: bool = False):
     # Annotate the expression nodes that correspond with output nodes of a tool
     # with said tool
     for output, tool in wf.tools.items():
+        g.add((g.expr_nodes[node2expr[output]], RDFS.comment, Literal(
+            "using " + tool[len(TOOLS):]
+        )))
+    for output, comment in wf.comment.items():
         g.add((g.expr_nodes[node2expr[output]], RDFS.comment,
-            Literal(tool[len(TOOLS):])))
+            Literal(comment)))
+
+    g.add((g.expr_nodes[node2expr[wf.output]], RDFS.comment, Literal("output tool")))
 
     with open(path, 'w') as f:
         rdf2dot(g, f)

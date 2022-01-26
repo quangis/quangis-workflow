@@ -29,29 +29,35 @@ repo:Aquifer a wf:Workflow;
 # Workflow nodes
 
 _:wf1_1  wf:applicationOf tools:SelectFeaturesByObjectPlainRegionObjects;
-    wf:input1 rfdata:aquifer; #Select Oogallala aquifer
+    wf:input1 rfdata:aquifer;
+    rdfs:comment "select Oogallala aquifer";
     wf:output _:aquifer2.
 
 _:wf1_3  wf:applicationOf tools:SelectFeaturesCoverageToExistenceVector;
-    wf:input1 rfdata:precipitation; #Select areas with low precipitation
+    wf:input1 rfdata:precipitation;
+    rdfs:comment "select areas with low precipitation";
     wf:output _:precipitation2.
 
 _:wf1_5  wf:applicationOf tools:SelectFeaturesCoverageToExistenceVector;
-    wf:input1 rfdata:irrigation; #Select areas with high irrigation
+    wf:input1 rfdata:irrigation;
+    rdfs:comment "select areas with high irrigation";
     wf:output _:irrigation2.
 
 _:wf1_7  wf:applicationOf tools:SelectLayerByLocationPlainRegionObjectsDist;
-    wf:input1 rfdata:UrbanAreas; #Select urban areas within 150 miles (geodesic) of the aquifer
+    wf:input1 rfdata:UrbanAreas;
     wf:input2 _:aquifer2;
+    rdfs:comment "select urban areas within 150 miles (geodesic) of the aquifer";
     wf:output _:urbanAreas2.
 
 _:wf1_8  wf:applicationOf tools:SelectLayerByLocationPlainRegionObjectsFieldDist;
-    wf:input1 _:urbanAreas2; #Further select urban areas within the area with low precipitation
+    wf:input1 _:urbanAreas2;
     wf:input2 _:precipitation2;
+    rdfs:comment "further select urban areas within the area with low precipitation";
     wf:output _:urbanAreas3.
 
-_:wf1_9  wf:applicationOf tools:SelectLayerByLocationPlainRegionObjectsFieldDist ;
-    wf:input1 _:urbanAreas3; #Further select urban areas that intersect with the irrigation region dataset.
+_:wf1_9  wf:applicationOf tools:SelectLayerByLocationPlainRegionObjectsFieldDist;
+    wf:input1 _:urbanAreas3;
     wf:input2 _:irrigation2;
+    rdfs:comment "further select urban areas that intersect with the irrigation region dataset";
     wf:output _:urbanAreas5.
 

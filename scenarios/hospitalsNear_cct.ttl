@@ -25,11 +25,12 @@ repo:HospitalsNear a wf:Workflow;
     wf:source rfdata:incident;      #Geocoded location point of 2350 Pine St, San Francisco, where an incident occurred.
     wf:edge _:wf1_1.
 
+
 # Workflow nodes
 
-
 _:wf1_1 wf:applicationOf tools:nearPointObjects;
-    wf:input1 rfdata:incident; #Search for the three closest hospitals using Euclidean distance. Parameters are <Find only closest feature: False>, <Maximum number of closest: 3>
+    wf:input1 rfdata:incident;
     wf:input2 rfdata:hospitals;
+    rdfs:comment "Search for the three closest hospitals using Euclidean distance"; #.Parameters are <Find only closest feature: False>, <Maximum number of closest: 3>
     wf:output _:nearTable.
 
