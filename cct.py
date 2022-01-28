@@ -74,60 +74,9 @@ TernaryRelation1 = TypeAlias(R3a(Obj, Qlt, Obj))
 TernaryRelation2 = TypeAlias(R3a(Obj, Reg, Qlt))
 TernaryRelation3 = TypeAlias(R3a(Obj, Qlt, Reg))
 
-
-# Data inputs ################################################################
-# These are deprecated and will be removed in a future version, in favour of
-# inline typing (`1 : Type` or `~Type`).
-
-# Reintroducing these for now to make sure the tests still work
-objectnominals = Operator(type=R2(Obj, Nom))
-objectcounts = Operator(type=R2(Obj, Count))
-
-test = Operator(
-    type=lambda x: x,
-    doc="This is a data input of any type, strictly for testing."
-)
-
-pointmeasures = Operator(type=R2(Reg, Itv))
-amountpatches = Operator(type=R2(Reg, Nom))
-countamounts = Operator(type=R2(Reg, Count))
-ratioamounts = Operator(type=R2(Reg, Ratio))
-boolcoverages = Operator(type=R2(Bool, Reg))
-boolratio = Operator(type=R2(Bool, Ratio))
-nomcoverages = Operator(type=R2(Nom, Reg))
-nomsize = Operator(type=R2(Nom, Ratio))
-contour = Operator(type=R2(Ord, Reg))
-contourline = Operator(type=R2(Itv, Reg))
-objectregions = Operator(type=R2(Obj, Reg))
-objectratios = Operator(type=R2(Obj, Ratio))
-objectregionratios = Operator(type=R3a(Obj, Reg, Ratio))
-objectregionnominals = Operator(type=R3a(Obj, Reg, Nom))
-objectregioncounts = Operator(type=R3a(Obj, Reg, Count))
-objectregionattr = Operator(type=lambda x: R3a(Obj, Reg, x))
-field = Operator(type=R2(Loc, Ratio))
-nomfield = Operator(type=R2(Loc, Nom))
-boolfield = Operator(type=R2(Loc, Bool))
-ordfield = Operator(type=R2(Loc, Ord))
-itvfield = Operator(type=R2(Loc, Itv))
-ratiofield = Operator(type=R2(Loc, Ratio))
-locationfield = Operator(type=R2(Loc, Loc))
-object = Operator(type=Obj)
-objects = Operator(type=R1(Obj))
-region = Operator(type=Reg)
-regions = Operator(type=R1(Reg))
-locs = Operator(type=R1(Loc))
 in_ = Operator(type=Nom)
-contains = Operator(type=Nom)
 out = Operator(type=Nom)
-noms = Operator(type=R1(Nom))
-ratios = Operator(type=R1(Ratio))
-countV = Operator(type=Count)
-ratioV = Operator(type=Ratio)
-interval = Operator(type=Itv)
-ordinal = Operator(type=Ord)
-nominal = Operator(type=Nom)
 true = Operator(type=Bool)
-rationetwork = Operator(type=R3(Obj, Ratio, Obj))
 
 
 # Math/stats transformations ##############################################
@@ -230,8 +179,8 @@ extrapol = Operator(
     "buffering, defined in terms of some distance (given as parameter)",
     type=R2(Obj, Reg) ** R2(Loc, Bool),
     define=lambda x: apply1(
-        leq(ratioV),
-        groupbyL(min, loDist(deify(region), x)))
+        leq(~Ratio),
+        groupbyL(min, loDist(deify(~Reg), x)))
 )
 arealinterpol = Operator(
     "areal interpolation",

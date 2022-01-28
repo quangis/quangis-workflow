@@ -601,7 +601,7 @@ tools:SelectObjectbyExtent
         1: R3a(Obj, Reg, Nom);
         subset 1 (pi3 (select
             eq
-            (loTopo (deify region) (get_attrL 1))
+            (loTopo (deify ~Reg) (get_attrL 1))
             in
         ))
         """.
