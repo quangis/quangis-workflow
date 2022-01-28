@@ -41,13 +41,12 @@ tools:closestfacilityanalysis
         "Selects the distance to the closest goal object on a line network.";
     tools:algebraexpression
         """
+        1: Network(Ratio);
+        2: R3a(Obj, Reg, Nom);
+        3: R3a(Obj, Reg, Nom);
         join_attr
-            (get_attrL (objectregionnominals x2))
-            (groupbyL min (nDist
-                (get_attrL (objectregionnominals x2))
-                (get_attrL (objectregionnominals x3))
-                (rationetwork x1)
-            ))
+            (get_attrL 2)
+            (groupbyL min (nDist (get_attrL 2) (get_attrL 3) 1))
         """.
 
 #Builds ratio network from line objects
@@ -57,7 +56,7 @@ tools:closestfacilityanalysis
     rdfs:comment
         "Builds ratio network from line objects.";
     tools:algebraexpression
-        "nbuild (objectregionratios x1)".
+        "nbuild (1: R3a(Obj, Reg, Ratio))".
 
 #Near tool, to seach for the closest objects using Euclidean distance
 <https://pro.arcgis.com/en/pro-app/latest/tool-reference/analysis/generate-near-table.htm>
@@ -71,12 +70,11 @@ tools:nearPointObjects
         "Near tool, to seach for the closest objects using Euclidean distance.";
     tools:algebraexpression
         """
+        1: R3a(Obj, Reg, Nom);
+        2: R3a(Obj, Reg, Nom);
         join_attr
-            (get_attrL (objectregionnominals x1))
-            (groupbyL min (oDist
-                (get_attrL (objectregionnominals x1))
-                (get_attrL (objectregionnominals x2))
-            ))
+            (get_attrL 1)
+            (groupbyL min (oDist (get_attrL 1) (get_attrL 2)))
         """.
 
 
@@ -95,7 +93,7 @@ tools:FC2FCObjectTess
         "Object selection by id.";
     tools:algebraexpression
         """
-        subset (objectregionnominals x1) (objects)
+        subset (1: R3a(Obj, Reg, Nom)) ~Objects
         """.
 
 ##Merge object parts into single object
@@ -109,15 +107,13 @@ tools:MergeObjects
         "Merges object parts into single objects based on object identifiers stored as names.";
     tools:algebraexpression
         """
+        1: R3a(Obj, Reg, Nom);
         join_attr
             (groupby
-                (compose merge (compose
-                    pi2
-                    (subset (get_attrL (objectregionnominals x1)))
-                ))
-                (apply1 objectify (get_attrR (objectregionnominals x1)))
+                (compose merge (compose pi2 (subset (get_attrL 1))))
+                (apply1 objectify (get_attrR 1))
             )
-            (getobjectnames (pi2 (get_attrR (objectregionnominals x1))))
+            (getobjectnames (pi2 (get_attrR 1)))
         """.
 
 
@@ -130,11 +126,13 @@ tools:ZonalStatisticsSumCount
         "Sums up count amounts (given as raster) into object regions.";
     tools:algebraexpression #"groupby_avg bowtie* sigmae lotopo pi1 field x objectregions y in field x".
         """
+        1: Amounts(Count);
+        2: R3a(Obj, Reg, Nom);
         join_attr
-            (get_attrL (objectregionnominals x2))
-            (groupbyL sum (join_key
-                (orTopo (get_attrL (objectregionnominals x2))
-                (pi1 (countamounts x1))) (countamounts x1))
+            (get_attrL 2)
+            (groupbyL
+                sum
+                (join_key (orTopo (get_attrL 2) (pi1 1)) 1)
             )
         """.
 
@@ -156,7 +154,11 @@ tools:LoadAmountonObjects
     rdfs:comment
         "Loads object based count amounts from excel and joins them with vector objects.";
     tools:algebraexpression
-        "join_attr (get_attrL (objectregionattr x2)) (objectcounts x1)".
+        """
+        1: ObjectQuality(Count);
+        2: R3a(Obj, Reg, _);
+        join_attr (get_attrL 2) 1
+        """.
 
 #Calculate new attribute: Object Content proportion OA/OA
 tools:CalculateObjectVectorCountAmountRatio
@@ -167,12 +169,11 @@ tools:CalculateObjectVectorCountAmountRatio
         "Calculates the ratio of two count vector amounts on objects.";
     tools:algebraexpression
         """
+        1: R3a(Obj, Reg, Count);
+        2: R3a(Obj, Reg, Count);
         join_attr
-            (get_attrL (objectregioncounts x1))
-            (apply2 ratio
-                (get_attrR (objectregioncounts x1))
-                (get_attrR (objectregioncounts x2))
-            )
+            (get_attrL 1)
+            (apply2 ratio (get_attrR 1) (get_attrR 2))
         """.
 
 
@@ -194,7 +195,7 @@ tools:CalculateObjectVectorCountAmountRatio
     rdfs:comment
         "Computes a grid graph of flow directions from a DEM.";
     tools:algebraexpression
-        "flowdirgraph (itvfield x1)".
+        "flowdirgraph (1: Field(Itv))".
 
 #Flow direction accumulation
 <https://pro.arcgis.com/en/pro-app/latest/tool-reference/spatial-analyst/flow-accumulation.htm>
@@ -203,7 +204,7 @@ tools:CalculateObjectVectorCountAmountRatio
     rdfs:comment
         "Accumulates flow directions into areas reachable downstream.";
     tools:algebraexpression
-        "apply1 size (accumulate (locationfield x1))".
+        "apply1 size (accumulate (1: LocationField))".
 
 #Slope computation
 <https://pro.arcgis.com/en/pro-app/latest/tool-reference/spatial-analyst/slope.htm>
@@ -212,7 +213,7 @@ tools:CalculateObjectVectorCountAmountRatio
     rdfs:comment
         "Computes slopes of a DEM.";
     tools:algebraexpression
-        "slope (itvfield x1)".
+        "slope (1: Field(Itv))".
 
 #Method for flow velocities
 tools:VelocityField
@@ -238,7 +239,7 @@ tools:VelocityFieldDEM
     rdfs:comment
         "Computes velocity field from DEM.";
     tools:algebraexpression
-        "apply2 product (ratiofield x1) (ratiofield x2)".
+        "apply2 product (1: Field(Ratio)) (2: Field(Ratio))".
 
 
 #Con with leq/gte
@@ -248,7 +249,7 @@ tools:con1
     rdfs:comment
         "Cuts a field raster conditional on less than some value";
     tools:algebraexpression
-        "select leq (ratiofield x1) (ratioV)".
+        "select leq (1: Field(Ratio)) ~Ratio".
 
 ### local map algebra transformation invert
 <https://pro.arcgis.com/en/pro-app/tool-reference/spatial-analyst/raster-calculator.htm> tools:implements tools:LocalMapAlgebraInvert.
@@ -259,7 +260,7 @@ tools:LocalMapAlgebraInvert
     rdfs:comment
         "Builds and executes a Local Map Algebra expression that inverts rasters with a ratio level.";
     tools:algebraexpression
-        "apply1 (ratio ratioV) (ratiofield x1)".
+        "apply1 (ratio ~Ratio) (1: Field(Ratio))".
 
 #Snap point to raster
 <https://pro.arcgis.com/en/pro-app/latest/tool-reference/spatial-analyst/snap-pour-point.htm>
@@ -272,9 +273,8 @@ tools:LocalMapAlgebraInvert
         # This is a simplification that ignores flow accumulation, but just
         # generates a nominal patch from an object nominal
         """
-        join
-            (revert (get_attrL (objectregionnominals x1)))
-            (get_attrR (objectregionnominals x1))
+        1: R3a(Obj, Reg, Nom);
+        join (revert (get_attrL 1)) (get_attrR 1)
         """.
 
  <https://pro.arcgis.com/en/pro-app/latest/tool-reference/spatial-analyst/watershed.htm>
@@ -286,8 +286,8 @@ tools:LocalMapAlgebraInvert
     tools:algebraexpression
         """
         revert (join
-            (invert (nomfield x2))
-            (invert (apply1 reify (accumulate (locationfield x1))))
+            (invert (2: Field(Nom)))
+            (invert (apply1 reify (accumulate (1: LocationField))))
         )
         """.
 
@@ -298,7 +298,7 @@ tools:LocalMapAlgebraInvert
     rdfs:comment
         "Extract raster by the extent of another (field) raster.";
     tools:algebraexpression
-        "subset (locationfield x1) (pi1 (nomfield x2))".
+        "subset (1: LocationField) (pi1 (2: Field(Nom)))".
 
 <https://pro.arcgis.com/en/pro-app/latest/tool-reference/spatial-analyst/flow-length.htm>
     wf:input1 [ a ccd:FieldRaster, ccd:RatioA ]; #Impedance Weight raster (e.g. 1/velocity raster)
@@ -308,9 +308,11 @@ tools:LocalMapAlgebraInvert
         "Calculate the upstream or downstream distance, or weighted distance (=time), along the flow path for each cell.";
     tools:algebraexpression
         """
+        1: Field(Ratio);
+        2: LocationField;
         groupbyL max (relunion (pi2 (apply2
-            (lgDist (gridgraph (locationfield x2) (ratiofield x1)))
-            (apply nest (pi1 (locationfield x2))) (accumulate (locationfield x2))
+            (lgDist (gridgraph 2 1))
+            (apply nest (pi1 2)) (accumulate 2)
         )))
         """.
 
@@ -321,7 +323,7 @@ tools:RasterToIsoRaster
     rdfs:comment
         "Converts an interval field raster into an ordinal raster.";
     tools:algebraexpression
-        "apply1 classify (itvfield x1)".
+        "apply1 classify (1: Field(Itv))".
 
 
 #Method for summarizing raster coverages
@@ -346,7 +348,7 @@ tools:CreateUnitHydrograph
         "Creates a unit hydrograph from an isochrones raster based on isochrone interval. This is a table that indicates for each time interval an areal coverage";
     tools:algebraexpression
         """
-        apply1 ((swap ratio) ratioV) (groupby size (ordfield x1))
+        apply1 ((swap ratio) ~Ratio) (groupby size (1: Field(Ord)))
         """.
 
 
@@ -374,7 +376,7 @@ tools:SelectFeaturesByObjectPlainRegionObjects
     rdfs:comment
         "Select region objects by id";
     tools:algebraexpression
-        "subset (objectregionnominals x1) (objects)".
+        "subset (1: R3a(Obj, Reg, Nom)) ~Objects".
 
 tools:SelectFeaturesCoverageToExistenceVector
     wf:input1 [ a ccd:Coverage ];
@@ -382,7 +384,7 @@ tools:SelectFeaturesCoverageToExistenceVector
     rdfs:comment
         "Select patches of a coverage by attribute";
     tools:algebraexpression
-        "revert (select eq (nomcoverages x1) (nominal))".
+        "revert (select eq (1: Coverages(Nom)) ~Nom)".
 
 
 
@@ -397,7 +399,7 @@ tools:SelectFeaturesCoverageToExistenceVector
     rdfs:comment
         "Derives the aspect of a digital elevation model";
     tools:algebraexpression
-        "aspect (itvfield x1)".
+        "aspect (1: Field(Itv))".
 
 ### local map algebra divide
 <https://pro.arcgis.com/en/pro-app/tool-reference/spatial-analyst/raster-calculator.htm> tools:implements tools:LocalMapAlgebraDivide.
@@ -407,7 +409,7 @@ tools:LocalMapAlgebraDivide
     rdfs:comment
         "Builds and executes a Local Map Algebra expression that divides rasters by a ratio number";
     tools:algebraexpression
-        "apply1 ((swap ratio) (ratioV)) (ratiofield x1)".
+        "apply1 ((swap ratio) ~Ratio) (1: Field(Ratio))".
 
 <https://pro.arcgis.com/en/pro-app/latest/tool-reference/spatial-analyst/con-.htm> tools:implements tools:con1, tools:con2, tools:con3.
 tools:con2
@@ -417,7 +419,7 @@ tools:con2
     rdfs:comment
         "Cuts a field raster conditional on (the coverage of) another field raster that is less than some value";
     tools:algebraexpression
-        "subset (ratiofield x2) (pi1 (select leq (ratiofield x1) (ratioV)))".
+        "subset (2: Field(Ratio)) (pi1 (select leq (1: Field(Ratio)) ~Ratio))".
 
 tools:con3
     wf:input1 [ a ccd:FieldRaster, ccd:RatioA ]; ## conditional raster, less than some value
@@ -428,11 +430,14 @@ tools:con3
         "Cuts a field raster conditional on (the coverage of) another field raster, and adds another field raster for those locations outside of the coverage";
     tools:algebraexpression
         """
+        1: Field(Ratio);
+        2: Field(Ratio);
+        3: Field(Ratio);
         set_union
-            (subset (ratiofield x2) (pi1 (select leq (ratiofield x1) (ratioV))))
-            (subset (ratiofield x3) (pi1 (select eq (lTopo
-                (pi1 (ratiofield x3))
-                (reify (pi1 (select leq (ratiofield x1) (ratioV))))
+            (subset 2 (pi1 (select leq 1 ~Ratio)))
+            (subset 3 (pi1 (select eq (lTopo
+                (pi1 3)
+                (reify (pi1 (select leq 1 ~Ratio)))
             ) out)))
         """.
 
@@ -455,11 +460,12 @@ tools:CalculateObjectSpatialAmount
         "Calculates an amount from an object ratio quality (representating an intensive measure) using the object's area. For example, the amount of radiation falling on a building using the mean radiation and the building's area";
     tools:algebraexpression
         """
+        1: R3a(Obj, Reg, Ratio);
         join_attr
-            (get_attrL (objectregionratios x1))
+            (get_attrL 1)
             (apply2 product
-                (get_attrR (objectregionratios x1))
-                (apply1 (compose size deify)(get_attrL (objectregionratios x1)))
+                (get_attrR 1)
+                (apply1 (compose size deify) (get_attrL 1))
             )
         """.
 
@@ -470,9 +476,10 @@ tools:CalculateProd
         "Calculates some product of ratio scaled object attribute with some ratio value.";
     tools:algebraexpression
         """
+        1: R3a(Obj, Reg, Ratio);
         join_attr
-            (get_attrL (objectregionratios x1))
-            (apply1 (product ratioV) (get_attrR (objectregionratios x1)))
+            (get_attrL 1)
+            (apply1 (product ~Ratio) (get_attrR 1))
         """.
 
 tools:ZonalStatisticsMeanRatio
@@ -485,11 +492,13 @@ tools:ZonalStatisticsMeanRatio
         #"groupby_avg bowtie* sigmae lotopo pi1 field x objectregions y in field x".
         #"join_attr (get_attrL (objectregionnominals x2)) (apply1 (fcont (avg) (field x1)) (get_attrL (objectregionnominals x2)))".
         """
+        1: Field(Ratio);
+        2: R3a(Obj, Reg, Nom);
         join_attr
-            (get_attrL (objectregionnominals x2))
+            (get_attrL 2)
             (groupbyR avg (join_key
-                (select eq (loTopo (pi1 (field x1)) (get_attrL (objectregionnominals x2))) in)
-                (field x1)
+                (select eq (loTopo (pi1 1) (get_attrL 2)) in)
+                1
             ))
         """.
 
@@ -509,7 +518,7 @@ tools:ObjectSummaryStatisticsAmount
     rdfs:comment
         "Sums the amount values of an object layer into a sum";
     tools:algebraexpression
-        "contentsum (getamounts (objectregionratios x1))".
+        "contentsum (getamounts (1: R3a(Obj, Reg, Ratio)))".
 
 tools:SummaryStatisticsAmount
     wf:input1 [ a ccd:AmountQ, ccd:VectorRegionA, ccd:CountA ]; ##
@@ -517,7 +526,7 @@ tools:SummaryStatisticsAmount
     rdfs:comment
         "Sums the amount values of a count amount layer into a sum";
     tools:algebraexpression
-        "contentsum (ratioamounts x1)".
+        "contentsum (1: Amounts(Ratio))".
 
 <https://pro.arcgis.com/en/pro-app/tool-reference/data-management/clip.htm> tools:implements tools:ClipObject2Object.
 tools:ClipObject2Object
@@ -528,10 +537,12 @@ tools:ClipObject2Object
         "Clips some object polygons to the extent of an object layer. We assume here that objects exactly coincide (otherwise clip would cut objects).";
     tools:algebraexpression
         """
+        1: R3a(Obj, Reg, Count);
+        2: R3a(Obj, Reg, Nom);
         subset
-            (objectregioncounts x1)
+            1
             (pi1 (select eq
-                (oTopo (get_attrL (objectregioncounts x1)) (get_attrL (objectregionnominals x2)))
+                (oTopo (get_attrL 1) (get_attrL 2))
                 in
             ))
         """.
@@ -563,11 +574,13 @@ tools:CalculatePartialAmountsfromObjects
         "Clips some object vector with some count amounts to the extent of a field layer (e.g. a buffer) and interpolates partial count amounts R(Reg, Ratio) based on area percentage.";
     tools:algebraexpression
         """
+        1: R3a(Obj, Reg, Count);
+        2: Field(Bool);
         arealinterpol
-            (getamounts (objectregioncounts x1))
+            (getamounts 1)
             (pi2 (groupbyR reify (select eq (loTopo
-                (fcover (boolfield x2) (nest true))
-                (get_attrL (objectregioncounts x1))
+                (fcover 2 (nest true))
+                (get_attrL 1)
             ) in)))
         """.
 
@@ -585,12 +598,12 @@ tools:SelectObjectbyExtent
         "Select object vector by extent. Extent remains implicit.";
     tools:algebraexpression
         """
-        subset
-            (objectregionnominals x1)
-            (pi3 (select eq (loTopo
-                (deify region)
-                (get_attrL (objectregionnominals x1))
-            ) in))
+        1: R3a(Obj, Reg, Nom);
+        subset 1 (pi3 (select
+            eq
+            (loTopo (deify region) (get_attrL 1))
+            in
+        ))
         """.
 
 ##Buffer (interpreted as vector representation of boolean field)
@@ -601,7 +614,7 @@ tools:ObjectBuffer
     rdfs:comment
         "Buffers some object vector and returns the buffer as a boolean field R(Loc, Bool)";
     tools:algebraexpression
-        "extrapol (get_attrL (objectregionnominals x1))".
+        "extrapol (get_attrL (1: R3a(Obj, Reg, Nom)))".
 
 ##Clip vector fields
 <https://pro.arcgis.com/en/pro-app/tool-reference/data-management/clip.htm> tools:implements tools:ClipNomFieldVector2Extent,tools:ClipBoolFieldVector2Extent .
@@ -612,7 +625,7 @@ tools:ClipNomFieldVector2Extent
     rdfs:comment
         "Clips some nominal field vector to the region where a boolean field vector is true.";
     tools:algebraexpression
-        "subset (nomfield x1) (fcover (boolfield x2) (nest true))".
+        "subset (1: Field(Nom)) (fcover (2: Field(Bool)) (nest true))".
 
 tools:ClipBoolFieldVector2Extent
     wf:input1 [ a ccd:FieldQ, ccd:VectorRegionA, ccd:BooleanA];
@@ -621,7 +634,7 @@ tools:ClipBoolFieldVector2Extent
     rdfs:comment
         "Clips some boolean field vector to the region where a boolean field vector is true.";
     tools:algebraexpression
-        "subset (boolfield x1) (fcover (boolfield x2) (nest true))".
+        "subset (1: Field(Bool)) (fcover (2: Field(Bool)) (nest true))".
 
 ##CalculateAreaMeasure: This is an abbreviated workflow for calculating area based measures with attributes
 tools:CalculateAreaMeasure tools:implements tools:CalculateVectorFieldAreaPercentage,  tools:CalculateVectorFieldPartialArea, tools:CalculateCountAmountRatio,  tools:CalculateObjectVectorCountAmountRatio, tools:CalculateObjectAttrRatio;
@@ -647,8 +660,8 @@ tools:CalculateVectorFieldAreaPercentage
     tools:algebraexpression
         """
         nest2 true (ratio
-            (size (fcover (boolfield x1) (nest true)))
-            (size (fcover (boolfield x2) (nest true)))
+            (size (fcover (1: Field(Bool)) (nest true)))
+            (size (fcover (2: Field(Bool)) (nest true)))
         )
         """.
 
@@ -660,7 +673,7 @@ tools:CalculateVectorFieldPartialArea
     rdfs:comment
         "Calculates a partial area measure by multiplying an area proportion with the size of the extent of a vector field.";
     tools:algebraexpression
-        "apply1 (product (size (pi1 (nomfield x1)))) (boolratio x2)".
+        "apply1 (product (size (pi1 (1: Field(Nom))))) (2: R2(Bool, Ratio))".
 
 #Object Content proportion OA/OA
 tools:CalculateCountAmountRatio
@@ -670,7 +683,7 @@ tools:CalculateCountAmountRatio
     rdfs:comment
         "Calculates the ratio of two count vector amounts.";
     tools:algebraexpression
-        "apply2 (ratio) (ratioamounts x1) (ratioamounts x2)".
+        "apply2 ratio (1: Amounts(Ratio)) (2: Amounts(Ratio))".
 
 ##Erase Vector fields
 <https://pro.arcgis.com/en/pro-app/latest/tool-reference/analysis/erase.htm> tools:implements tools:EraseFieldExtentfromFieldVector.
@@ -682,12 +695,15 @@ tools:EraseFieldExtentfromFieldVector
         "Erases the coverage of a boolean field vector (second input) from a field vector (first input)";
     tools:algebraexpression
         """
+        1: Field(Nom);
+        2: Field(Bool);
         subset
-            (nomfield x1)
-            (pi1 (select eq (lTopo
-                (pi1 (nomfield x1))
-                (reify (fcover (boolfield x2) (nest true)))
-            ) out))
+            1
+            (pi1 (select
+                eq
+                (lTopo (pi1 1) (reify (fcover 2 (nest true))))
+                out
+            ))
         """.
 
 
@@ -723,91 +739,91 @@ tools:SelectLayerByObjectLineObjects
     wf:input1 [ a ccd:ObjectQ, ccd:LineA ];
     wf:output [ a ccd:ObjectQ, ccd:LineA, ccd:BooleanA ];
     tools:algebraexpression
-        "subset (objectregionnominals x1) (objects)".
+        "subset (1: R3a(Obj, Reg, Nom)) ~Objects".
 
 #### Object selection variant by id
 tools:SelectLayerByObjectPlainRegionObjects
     wf:input1 [ a ccd:ObjectQ, ccd:PlainVectorRegionA ];
     wf:output [ a ccd:ObjectQ, ccd:PlainVectorRegionA, ccd:BooleanA ];
     tools:algebraexpression
-        "subset (objectregionnominals x1) (objects)".
+        "subset (1: R3a(Obj, Reg, Nom)) ~Objects".
 
 #### Object selection variant by id
 tools:SelectLayerByObjectTessObjects
     wf:input1 [ a ccd:ObjectQ, ccd:VectorTessellationA ];
     wf:output [ a ccd:ObjectQ, ccd:PlainVectorRegionA, ccd:BooleanA ];
     tools:algebraexpression
-        "subset (objectregionnominals x1) (objects)".
+        "subset (1: R3a(Obj, Reg, Nom)) ~Objects".
 
 #### Object selection variant, needs a nominal attribute
 tools:SelectLayerByAttributePointObjects
     wf:input1 [ a ccd:ObjectQ, ccd:PointA, ccd:NominalA ];
     wf:output [ a ccd:ObjectQ, ccd:PointA, ccd:NominalA];
     tools:algebraexpression
-        "subset (objectregionnominals x1) (noms)".
+        "subset (1: R3a(Obj, Reg, Nom)) ~Nominals".
 
 #### Object selection variant, needs a nominal attribute
 tools:SelectLayerByAttributeLineObjects
     wf:input1 [ a ccd:ObjectQ, ccd:LineA, ccd:NominalA ];
     wf:output [ a ccd:ObjectQ, ccd:LineA, ccd:NominalA ];
     tools:algebraexpression
-        "subset (objectregionnominals x1) (noms)".
+        "subset (1: R3a(Obj, Reg, Nom)) ~Nominals".
 
 #### Object selection variant, needs a nominal attribute
 tools:SelectLayerByAttributePlainRegionObjects
     wf:input1 [ a ccd:ObjectQ, ccd:PlainVectorRegionA, ccd:NominalA ];
     wf:output [ a ccd:ObjectQ, ccd:PlainVectorRegionA, ccd:NominalA ];
     tools:algebraexpression
-        "subset (objectregionnominals x1) (noms)".
+        "subset (1: R3a(Obj, Reg, Nom)) ~Nominals".
 
 #### Object selection variant, needs a nominal attribute
 tools:SelectLayerByAttributeTessObjects
     wf:input1 [ a ccd:ObjectQ, ccd:VectorTessellationA, ccd:NominalA ];
     wf:output [ a ccd:ObjectQ, ccd:PlainVectorRegionA, ccd:NominalA ];
     tools:algebraexpression
-        "subset (objectregionnominals x1) (noms)".
+        "subset (1: R3a(Obj, Reg, Nom)) ~Nominals".
 
 #### Object selection variant, needs a ratio attribute
 tools:SelectLayerByRatioPointObjects
     wf:input1 [ a ccd:ObjectQ, ccd:PointA, ccd:RatioA ];
     wf:output [ a ccd:ObjectQ, ccd:PointA, ccd:RatioA ];
     tools:algebraexpression
-        "subset (objectregionratios x1) (ratios)".
+        "subset (1: R3a(Obj, Reg, Ratio)) ~Ratios".
 
 #### Object selection variant, needs a ratio attribute
 tools:SelectLayerByRatioLineObjects
     wf:input1 [ a ccd:ObjectQ, ccd:LineA, ccd:RatioA ];
     wf:output [ a ccd:ObjectQ, ccd:LineA, ccd:RatioA  ];
     tools:algebraexpression
-        "subset (objectregionratios x1) (ratios)".
+        "subset (1: R3a(Obj, Reg, Ratio)) ~Ratios".
 
 #### Object selection variant, needs a ratio attribute
 tools:SelectLayerByRatioPlainRegionObjects
     wf:input1 [ a ccd:ObjectQ, ccd:PlainVectorRegionA, ccd:RatioA ];
     wf:output [ a ccd:ObjectQ, ccd:PlainVectorRegionA, ccd:RatioA ];
     tools:algebraexpression
-        "subset (objectregionratios x1) (ratios)".
+        "subset (1: R3a(Obj, Reg, Ratio)) ~Ratios".
 
 #### Object selection variant, needs a ratio attribute
 tools:SelectLayerByRatioTessObjects
     wf:input1 [ a ccd:ObjectQ, ccd:VectorTessellationA, ccd:RatioA ];
     wf:output [ a ccd:ObjectQ, ccd:PlainVectorRegionA, ccd:RatioA ];
     tools:algebraexpression
-        "subset (objectregionratios x1) (ratios)".
+        "subset (1: R3a(Obj, Reg, Ratio)) ~Ratios".
 
 #### Object selection variant vith gteq, needs a ratio attribute
 tools:SelectLayerByRatioGEQPlainRegionObjects
     wf:input1 [ a ccd:ObjectQ, ccd:PlainVectorRegionA, ccd:RatioA ];
     wf:output [ a ccd:ObjectQ, ccd:PlainVectorRegionA, ccd:RatioA ];
     tools:algebraexpression
-        "select (compose2 notj leq) (objectregionratios x1) (ratioV)".
+        "select (compose2 notj leq) (1: R3a(Obj, Reg, Ratio)) ~Ratio".
 
 #### Contour to Existence Vector (select a contour map greater than some ordinal value)
 tools:SelectLayerContourToExistenceVector
     wf:input1 [ a ccd:Contour ];
     wf:output [ a ccd:FieldQ, ccd:PlainVectorRegionA, ccd:OrdinalA ];
     tools:algebraexpression
-        "revert (select (compose2 notj leq) (contour x1) (ordinal))".
+        "revert (select (compose2 notj leq) (1: Contour) ~Ord)".
 
 #### Coverage to Existence Vector
 
@@ -815,7 +831,7 @@ tools:SelectLayerCoverageToExistenceVector
     wf:input1 [ a ccd:Coverage ];
     wf:output [ a ccd:FieldQ, ccd:PlainVectorRegionA ];
     tools:algebraexpression
-        "revert (select eq (nomcoverages x1) (nominal))".
+        "revert (select eq (1: Coverages(Nom)) ~Nom)".
 
 
 
@@ -839,12 +855,15 @@ tools:SelectLayerByLocationPointObjects
     wf:output [ a ccd:ObjectQ, ccd:PointA ];
     tools:algebraexpression
         """
+        1: R3a(Obj, Reg, Nom);
+        2: R3a(Obj, Reg, Nom);
         subset
-            (objectregionnominals x1)
-            (pi1 (select eq (oTopo
-                (get_attrL (objectregionnominals x1))
-                (get_attrL (objectregionnominals x2))
-            ) in))
+            1
+            (pi1 (select
+                eq
+                (oTopo (get_attrL 1) (get_attrL 2))
+                in
+            ))
         """.
 
 #### Object selection variant
@@ -854,12 +873,15 @@ tools:SelectLayerByLocationLineObjects
     wf:output [ a ccd:ObjectQ, ccd:LineA ];
     tools:algebraexpression
         """
+        1: R3a(Obj, Reg, Nom);
+        2: R3a(Obj, Reg, Nom);
         subset
-            (objectregionnominals x1)
-            (pi1 (select eq (oTopo
-                (get_attrL (objectregionnominals x1))
-                (get_attrL (objectregionnominals x2))
-            ) in))
+            1
+            (pi1 (select
+                eq
+                (oTopo (get_attrL 1) (get_attrL 2))
+                in
+            ))
         """.
 
 #### Object selection variant
@@ -869,12 +891,15 @@ tools:SelectLayerByLocationPlainRegionObjects
     wf:output [ a ccd:ObjectQ, ccd:PlainVectorRegionA ];
     tools:algebraexpression
         """
+        1: R3a(Obj, Reg, Nom);
+        2: R3a(Obj, Reg, Nom);
         subset
-            (objectregionnominals x1)
-            (pi1 (select eq (oTopo
-                (get_attrL (objectregionnominals x1))
-                (get_attrL (objectregionnominals x2))
-            ) in))
+            1
+            (pi1 (select
+                eq
+                (oTopo (get_attrL 1) (get_attrL 2))
+                in
+            ))
         """.
 
 #### Object selection variant with distance
@@ -884,12 +909,15 @@ tools:SelectLayerByLocationPlainRegionObjectsDist
     wf:output [ a ccd:ObjectQ, ccd:PlainVectorRegionA ];
      tools:algebraexpression
         """
+        1: R3a(Obj, Reg, Nom);
+        2: R3a(Obj, Reg, Nom);
         subset
-            (objectregionnominals x1)
-            (pi1 (select leq (oDist
-                (get_attrL (objectregionnominals x1))
-                (get_attrL (objectregionnominals x2))
-            ) (ratioV)))
+            1
+            (pi1 (select
+                leq
+                (oDist (get_attrL 1) (get_attrL 2))
+                ~Ratio
+            ))
         """.
 
 #### Object selection variant with vector field patches
@@ -899,12 +927,15 @@ tools:SelectLayerByLocationPlainRegionObjectsFieldDist
     wf:output [ a ccd:ObjectQ, ccd:PlainVectorRegionA ];
      tools:algebraexpression
         """
+        1: R3a(Obj, Reg, Nom);
+        2: Field(Nom);
         subset
-            (objectregionnominals x1)
-            (pi3 (select eq (loTopo
-                (pi1 (nomfield x2))
-                (get_attrL (objectregionnominals x1))
-            ) in))
+            1
+            (pi3 (select
+                eq
+                (loTopo (pi1 2) (get_attrL 1))
+                in
+            ))
         """.
 
 #### Object selection variant
@@ -914,12 +945,15 @@ tools:SelectLayerByLocationTessObjects
     wf:output [ a ccd:ObjectQ, ccd:VectorTessellationA ];
     tools:algebraexpression
         """
+        1: R3a(Obj, Reg, Nom);
+        2: R3a(Obj, Reg, Nom);
         subset
-            (objectregionnominals x1)
-            (pi1 (select eq (oTopo
-                (get_attrL (objectregionnominals x1))
-                (get_attrL (objectregionnominals x2))
-            ) in))
+            1
+            (pi1 (select
+                eq
+                (oTopo (get_attrL 1) (get_attrL 2))
+                in
+            ))
         """.
 
 
@@ -936,14 +970,16 @@ tools:SpatialJoinSumTessRatio
         "Sums the attributes at ratio measurement level from one feature to another based on the spatial relation";
     tools:algebraexpression
         """
+        1: R3a(Obj, Reg, Ratio);
+        2: R3a(Obj, Reg, Nom);
         join_attr
-            (get_attrL (objectregionnominals x2))
-            (join (get_attrL (objectregionnominals x2)) (groupbyR sum (join_key
+            (get_attrL 2)
+            (join (get_attrL 2) (groupbyR sum (join_key
                 (select eq (rTopo
-                    (pi2 (get_attrL (objectregionratios x1)))
-                    (pi2 (get_attrL (objectregionnominals x2)))
+                    (pi2 (get_attrL 1))
+                    (pi2 (get_attrL 2))
                 ) in)
-                (getamounts (objectregionratios x1))
+                (getamounts 1)
             )))
         """.
 
@@ -957,14 +993,16 @@ tools:SpatialJoinSumTessCount
         "Sums the attributes at Count measurement level from one feature to another based on the spatial relation";
     tools:algebraexpression
         """
+        1: R3a(Obj, Reg, Count);
+        2: R3a(Obj, Reg, Nom);
         join_attr
-            (get_attrL (objectregionnominals x2))
-            (join (get_attrL (objectregionnominals x2)) (groupbyR sum (join_key
+            (get_attrL 2)
+            (join (get_attrL 2) (groupbyR sum (join_key
                 (select eq (rTopo
-                    (pi2 (get_attrL (objectregioncounts x1)))
-                    (pi2 (get_attrL (objectregionnominals x2)))
+                    (pi2 (get_attrL 1))
+                    (pi2 (get_attrL 2))
                 ) in)
-                (getamounts (objectregioncounts x1))
+                (getamounts 1)
             )))
         """.
 
@@ -980,14 +1018,18 @@ tools:SpatialJoinAmountSumTessRatio
         "Sums the attributes at ratio measurement level from one feature to another based on the spatial relation";
     tools:algebraexpression
         """
+        1: Amounts(Ratio);
+        2: R3a(Obj, Reg, Nom);
         join_attr
-            (get_attrL (objectregionnominals x2)) (join
-                (get_attrL (objectregionnominals x2))
-                (groupbyR sum (join_key (select eq (rTopo
-                    (pi1 (ratioamounts x1))
-                    (pi2 (get_attrL (objectregionnominals x2)))
-                ) in)
-                (ratioamounts x1)))
+            (get_attrL 2) (join
+                (get_attrL 2)
+                (groupbyR sum (join_key
+                    (select
+                        eq
+                        (rTopo (pi1 1) (pi2 (get_attrL 2)))
+                        in)
+                    1
+                ))
             )
         """.
 
@@ -1001,15 +1043,20 @@ tools:SpatialJoinAmountSumTessCount
         "Sums the attributes at Count measurement level from one feature to another based on the spatial relation";
     tools:algebraexpression
         """
+        1: Amounts(Count);
+        2: R3a(Obj, Reg, Nom);
         join_attr
-            (get_attrL (objectregionnominals x2))
+            (get_attrL 2)
             (join
-                (get_attrL (objectregionnominals x2))
-                (groupbyR sum (join_key (select eq (rTopo
-                    (pi1 (countamounts x1))
-                    (pi2 (get_attrL (objectregionnominals x2)))
-                ) in)
-                (countamounts x1)))
+                (get_attrL 2)
+                (groupbyR sum (join_key
+                    (select
+                        eq
+                        (rTopo (pi1 1) (pi2 (get_attrL 2)))
+                        in
+                    )
+                    1
+                ))
             )
         """.
 
@@ -1025,14 +1072,16 @@ tools:SpatialJoinMeanTessInterval
     "Averages the attributes at interval measurement level from one feature to another based on the spatial relation";
     tools:algebraexpression
         """
+        1: R3a(Obj, Reg, Ratio);
+        2: R3a(Obj, Reg, Nom);
         join_attr
-            (get_attrL (objectregionnominals x2))
+            (get_attrL 2)
             (join
-                (get_attrL (objectregionnominals x2))
+                (get_attrL 2)
                 (groupbyR avg (join_key (select eq (rTopo
-                    (pi2 (get_attrL (objectregionratios x1)))
-                    (pi2 (get_attrL (objectregionnominals x2)))
-                ) in) (getamounts (objectregionratios x1))))
+                    (pi2 (get_attrL 1))
+                    (pi2 (get_attrL 2))
+                ) in) (getamounts 1)))
             )
         """.
 
@@ -1046,14 +1095,16 @@ tools:SpatialJoinMeanTessRatio
         "Averages the attributes at Ratio measurement level from one feature to another based on the spatial relation";
     tools:algebraexpression
         """
+        1: R3a(Obj, Reg, Ratio);
+        2: R3a(Obj, Reg, Nom);
         join_attr
-            (get_attrL (objectregionnominals x2))
+            (get_attrL 2)
             (join
-                (get_attrL (objectregionnominals x2))
+                (get_attrL 2)
                 (groupbyR avg (join_key (select eq (rTopo
-                    (pi2 (get_attrL (objectregionratios x1)))
-                    (pi2 (get_attrL (objectregionnominals x2)))
-                ) in) (getamounts (objectregionratios x1))))
+                    (pi2 (get_attrL 1))
+                    (pi2 (get_attrL 2))
+                ) in) (getamounts 1)))
             )
         """.
 
@@ -1067,14 +1118,16 @@ tools:SpatialJoinMeanTessCount
         "Averages the attributes at Count measurement level from one feature to another based on the spatial relation";
     tools:algebraexpression
         """
+        1: R3a(Obj, Reg, Count);
+        2: R3a(Obj, Reg, Nom);
         join_attr
-            (get_attrL (objectregionnominals x2))
+            (get_attrL 2)
             (join
-                (get_attrL (objectregionnominals x2))
+                (get_attrL 2)
                 (groupbyR avg (join_key (select eq (rTopo
-                    (pi2 (get_attrL (objectregioncounts x1)))
-                    (pi2 (get_attrL (objectregionnominals x2)))
-                ) in) (getamounts (objectregioncounts x1))))
+                    (pi2 (get_attrL 1))
+                    (pi2 (get_attrL 2))
+                ) in) (getamounts 1)))
             )
         """.
 
@@ -1089,11 +1142,13 @@ tools:SpatialJoinCountTess
         "Counts the number of features from one feature to another based on the spatial relation";
     tools:algebraexpression
         """
+        1: R3a(Obj, Reg, Nom);
+        2: R3a(Obj, Reg, Nom);
         join_attr
-            (get_attrL (objectregionnominals x2))
+            (get_attrL 2)
             (apply1
-                (ocont (get_attrL (objectregionnominals x1)))
-                (get_attrL (objectregionnominals x2))
+                (ocont (get_attrL 1))
+                (get_attrL 2)
             )
         """.
 
@@ -1113,9 +1168,11 @@ tools:ClipFieldRaster2ObjectExtent
         "Clips some interval scaled field raster to the extent of an object layer.";
     tools:algebraexpression #"bowtie field x deify merge pi2 objectregions x".
         """
-        subset (ordfield x1) (deify (ocover
-            (get_attrL (objectregionnominals x2))
-            (pi1 (get_attrL (objectregionnominals x2)))
+        1: Field(Ord);
+        2: R3a(Obj, Reg, Nom);
+        subset 1 (deify (ocover
+            (get_attrL 2)
+            (pi1 (get_attrL 2))
         ))
         """.
 
@@ -1126,7 +1183,7 @@ tools:RegionFromRasterExtent
     rdfs:comment
         "Make a region layer from the extent of a raster. Measures the coverage of a nominal field.";
     tools:algebraexpression
-        "nest2 (name (noms)) (reify (fcover (nomfield x1) (noms)))".
+        "nest2 (name ~Nominals) (reify (fcover (1: Field(Nom)) ~Nominals))".
 
 #Noise proportion (raster)
 
@@ -1139,7 +1196,7 @@ tools:CoverageToNominalFieldRaster
     rdfs:comment
         "Converts Field polygons to nominal field Rasters";
     tools:algebraexpression
-        "revert (nomcoverages x1)".
+        "revert (1: Coverages(Nom))".
 
 
 <https://pro.arcgis.com/en/pro-app/tool-reference/conversion/polygon-to-raster.htm> tools:implements tools:ContourToFieldRaster.
@@ -1149,7 +1206,7 @@ tools:ContourToFieldRaster
     rdfs:comment
         "Converts contour maps to field Rasters";
     tools:algebraexpression
-        "revert (contour x1)".
+        "revert (1: Contour)".
 
 #<https://pro.arcgis.com/en/pro-app/tool-reference/spatial-analyst/raster-calculator.htm>
 
@@ -1161,7 +1218,7 @@ tools:LocalMapAlgebraSubOrder
     rdfs:comment
         "Builds and executes a Local Map Algebra expression (smaller than or greater than some number) using Python syntax using rasters with an ordinal level";
     tools:algebraexpression
-        "select (compose2 notj leq) (ordfield x1) (ordinal)".
+        "select (compose2 notj leq) (1: Field(Ord)) ~Ord".
 
 ### local map algebra transformation with ratio field
 tools:LocalMapAlgebraSubRatio
@@ -1170,7 +1227,7 @@ tools:LocalMapAlgebraSubRatio
     rdfs:comment
         "Builds and executes a Local Map Algebra expression (less than or equal to some number) using Python syntax using rasters with a ratio level";
     tools:algebraexpression
-        "select (compose2 notj leq) (field x1) (ratioV)".
+        "select (compose2 notj leq) (1: Field(Ratio)) ~Ratio".
 
 tools:RasterToContour tools:implements tools:RasterToContourInterval;
     wf:edge _:wf3_1, _:wf3_2;
@@ -1188,7 +1245,7 @@ tools:RasterToContourInterval
     rdfs:comment
         "Converts a field raster to a Contour dataset. The raster is first reclassified to an ordinal raster, and then converted to a polygon layer.";
     tools:algebraexpression
-        "invert (apply1 classify (itvfield x1))".
+        "invert (apply1 classify (1: Field(Itv)))".
 
 #<https://pro.arcgis.com/en/pro-app/tool-reference/spatial-analyst/zonal-statistics-as-table.htm>+<https://pro.arcgis.com/en/pro-app/tool-reference/data-management/join-field.htm>
 
@@ -1212,11 +1269,13 @@ tools:ZonalStatisticsSize
         "Measures the size of the coverage of a given field raster inside object regions.";
     tools:algebraexpression
         """
+        1: Field(Nom);
+        2: R3a(Obj, Reg, Nom);
         join_attr
-            (get_attrL (objectregionnominals x2))
+            (get_attrL 2)
             (groupbyR size (select eq (loTopo
-                (fcover (nomfield x1) (noms))
-                (get_attrL (objectregionnominals x2))
+                (fcover 1 ~Nominals)
+                (get_attrL 2)
             ) in))
         """.
 
@@ -1229,11 +1288,12 @@ tools:AddObjectVectorRegionArea
         "Adds an area attribute to an object vector region layer.";
     tools:algebraexpression
         """
+        1: R3a(Obj, Reg, Nom);
         join_attr
-            (get_attrL (objectregionnominals x1))
+            (get_attrL 1)
             (apply1
                 (compose size deify)
-                (get_attrL (objectregionnominals x1))
+                (get_attrL 1)
             )
         """.
 
@@ -1247,12 +1307,11 @@ tools:AddObjectVectorRegionArea
         "Calculates ratios of two ratio scaled object attributes.";
     tools:algebraexpression
         """
+        1: R3a(Obj, Reg, Ratio);
+        2: R3a(Obj, Reg, Ratio);
         join_attr
-            (get_attrL (objectregionratios x1))
-            (apply2 ratio
-                (get_attrR (objectregionratios x1))
-                (get_attrR (objectregionratios x2))
-            )
+            (get_attrL 1)
+            (apply2 ratio (get_attrR 1) (get_attrR 2))
         """.
 
 
@@ -1283,11 +1342,13 @@ tools:IntersectDissolveField2Object
         "Intersects a field vector with an object vector and then dissolves the result into the object to measure the areal coverage of the field inside the object.";
     tools:algebraexpression
         """
+        1: Field(Nom);
+        2: R3a(Obj, Reg, _);
         join_attr
-            (get_attrL (objectregionattr x2))
+            (get_attrL 2)
             (groupbyR size (select eq (loTopo
-                (fcover (nomfield x1) (noms))
-                (get_attrL (objectregionattr x2))
+                (fcover 1 ~Nominals)
+                (get_attrL 2)
             ) in))
         """.
 
@@ -1324,7 +1385,7 @@ tools:MakePointMeasuresFromTable
     rdfs:comment
         "Makes a layer of pointmeasures from some XY table.";
     tools:algebraexpression
-        "pointmeasures x1" .
+        "1: PointMeasures" .
 
 
 <https://pro.arcgis.com/en/pro-app/tool-reference/spatial-analyst/idw.htm> tools:implements tools:IDWInterval.
@@ -1334,7 +1395,7 @@ tools:IDWInterval
     rdfs:comment
         "Standard point interpolation for interval measurements.";
     tools:algebraexpression
-        "interpol (pointmeasures x1) (deify (region))".
+        "interpol (1: PointMeasures) (deify ~Reg)".
 
 <https://pro.arcgis.com/en/pro-app/tool-reference/spatial-analyst/kriging.htm> tools:implements tools:KrigingInterval.
 tools:KrigingInterval
@@ -1343,7 +1404,7 @@ tools:KrigingInterval
     rdfs:comment
         "Kriging point interpolation for interval measurements.";
     tools:algebraexpression
-        "interpol (pointmeasures x1) (deify (region))".
+        "interpol (1: PointMeasures) (deify ~Reg)".
 
 #Zonal Statistics
 tools:ZonalStatisticsMeanInterval
@@ -1354,10 +1415,10 @@ tools:ZonalStatisticsMeanInterval
         "Calculates the average value of a field raster within the zones of a lattice.";
     tools:algebraexpression #"groupby_avg bowtie* sigmae lotopo pi1 field x objectregions y in field x".
         """
+        1: Field(Itv);
+        2: R3a(Obj, Reg, Nom);
         join_attr
-            (get_attrL (objectregionnominals x2))
-            (apply1 (fcont avg (itvfield x1))
-                (get_attrL (objectregionnominals x2))
-            )
+            (get_attrL 2)
+            (apply1 (fcont avg 1) (get_attrL 2))
         """.
 

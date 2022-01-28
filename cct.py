@@ -51,29 +51,24 @@ Counts = TypeAlias(R1(Count))
 
 QualityRelation = TypeAlias(R2(Qlt, Qlt))
 
-SpatialField = TypeAlias(R2(Loc, Qlt))
-NominalField = TypeAlias(R2(Loc, Nom))
-BooleanField = TypeAlias(R2(Loc, Bool))
-OrdinalField = TypeAlias(R2(Loc, Ord))
-IntervalField = TypeAlias(R2(Loc, Itv))
-RatioField = TypeAlias(R2(Loc, Ratio))
-CountField = TypeAlias(R2(Loc, Count))
+Field = TypeAlias(lambda x: R2(Loc, x), Qlt)
+LocationField = TypeAlias(R2(Loc, Loc))
 
+
+Amounts = TypeAlias(lambda x: R2(Reg, x), Qlt)
 FieldSample = TypeAlias(R2(Reg, Qlt))
 AmountPatches = TypeAlias(R2(Reg, Nom))
 PointMeasures = TypeAlias(R2(Reg, Itv))
 
-Coverages = TypeAlias(R2(Qlt, Reg))
-NominalCoverages = TypeAlias(R2(Nom, Reg))
-BooleanCoverages = TypeAlias(R2(Bool, Reg))
+Coverages = TypeAlias(lambda x: R2(x, Reg), Qlt)
 Contour = TypeAlias(R2(Ord, Reg))
 ContourLine = TypeAlias(R2(Itv, Reg))
 
 ObjectExtent = TypeAlias(R2(Obj, Reg))
+ObjectQuality = TypeAlias(lambda x: R2(Obj, x), Qlt)
 
-ObjectQuality = TypeAlias(R2(Obj, Qlt))
-RelationalField = TypeAlias(R3(Loc, Qlt, Loc))
-SpatialNetwork = TypeAlias(R3(Obj, Qlt, Obj))
+RelationalField = TypeAlias(lambda x: R3(Loc, x, Loc), Qlt)
+Network = TypeAlias(lambda x: R3(Obj, x, Obj), Qlt)
 
 TernaryRelation1 = TypeAlias(R3a(Obj, Qlt, Obj))
 TernaryRelation2 = TypeAlias(R3a(Obj, Reg, Qlt))
@@ -240,7 +235,7 @@ extrapol = Operator(
 )
 arealinterpol = Operator(
     "areal interpolation",
-    type=R2(Reg, Ratio) ** R1(Reg) ** R2(Reg, Ratio)
+    type=lambda x: R2(Reg, x) ** R1(Reg) ** R2(Reg, x) | x << Ratio
 )
 slope = Operator(
     "slope",
