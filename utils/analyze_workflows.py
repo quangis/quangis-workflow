@@ -45,33 +45,28 @@ def write_tools_text(wf: Workflow, path: Path):
             print("OUTPUT:", label[out], file=f)
             print("INPUTS:", [label[i] for i in wf.inputs[out]], file=f)
             print("EXPRESSION:", wf.expressions[out], file=f)
-            print("PRIMITIVE:",
-                cct.parse(wf.expressions[out]).primitive(), file=f)
+            # print("PRIMITIVE:",
+            #     cct.parse(wf.expressions[out]).primitive(), file=f)
 
 
 def write_graph(wf: Workflow, path: Path, primitive: bool = False):
+
+    assert not primitive
+
     print('Building', path.name, file=stderr)
-    node2expr = {
-        node: cct.parse(expr).primitive() if primitive else cct.parse(expr)
-        for node, expr in wf.expressions.items()
-    }
     g = TransformationGraph(cct, minimal=True, with_labels=True)
-    g.add_workflow(wf.root, {
-        node2expr[output]: list(node2expr.get(i, i) for i in inputs)
-        for output, inputs in wf.inputs.items()
-    })
+    step2expr = g.add_workflow(wf.root, wf.wf, wf.sources)
 
     # Annotate the expression nodes that correspond with output nodes of a tool
     # with said tool
     for output, tool in wf.tools.items():
-        g.add((g.expr_nodes[node2expr[output]], RDFS.comment, Literal(
+        g.add((step2expr[output], RDFS.comment, Literal(
             "using " + tool[len(TOOLS):]
         )))
     for output, comment in wf.comment.items():
-        g.add((g.expr_nodes[node2expr[output]], RDFS.comment,
-            Literal(comment)))
+        g.add((step2expr[output], RDFS.comment, Literal(comment)))
 
-    g.add((g.expr_nodes[node2expr[wf.output]], RDFS.comment, Literal("output tool")))
+    g.add((step2expr[wf.output], RDFS.comment, Literal("output")))
 
     with open(path, 'w') as f:
         rdf2dot(g, f)
@@ -83,9 +78,10 @@ for path in workflow_paths:
         wf = Workflow(path)
         write_tools_text(wf, build_path / (path.stem + ".txt"))
         write_graph(wf, build_path / (path.stem + ".raw.dot"))
-        write_graph(wf, build_path / (path.stem + ".prim.dot"), primitive=True)
+        # write_graph(wf, build_path / (path.stem + ".prim.dot"), primitive=True)
     except Exception as e:
         print("Failure: ", e)
+        raise
     else:
         print("Success.")
     print()

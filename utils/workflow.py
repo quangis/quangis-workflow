@@ -33,6 +33,8 @@ class Workflow(Graph):
         self.expressions: dict[Node, str] = {}
         self.comment: dict[Node, str] = {}
 
+        self.wf: dict[Node, tuple[str, list[Node]]] = {}
+
         for step in self.steps:
             out = self.value(step, WF.output, any=False)
             self.outputs.add(out)
@@ -52,6 +54,8 @@ class Workflow(Graph):
                 for pred in (WF.input1, WF.input2, WF.input3)
                 if (node := self.value(step, pred))
             ]
+
+            self.wf[out] = expr, self.inputs[out]
 
         final_outputs = (self.outputs - set(chain.from_iterable(self.inputs.values())))
         assert len(final_outputs) == 1
