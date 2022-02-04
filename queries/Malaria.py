@@ -28,7 +28,7 @@ malaria = Query(cct,
 # R2(Obj, Ratio)  # countryIncidence
 # R2(Obj, Ratio)  # adminIncidence
 
-eval_malaria_eric = Query(cct, [R2(Obj, Ratio), AND(
+eric_eval_malaria = Query(cct, [R2(Obj, Ratio), AND(
     # adminDRC3
     AND(
 
@@ -52,7 +52,7 @@ eval_malaria_eric = Query(cct, [R2(Obj, Ratio), AND(
 
 # simon
 
-eval_malaria_simon = Query(cct, [R3a(Obj, Reg, Ratio), AND(
+eval_malaria = Query(cct, [R3a(Obj, Reg, Ratio), AND(
 
     # popAdminDRC
     [R3a(Obj, Reg, Count), AND(

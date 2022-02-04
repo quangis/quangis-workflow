@@ -25,7 +25,7 @@ query = Query(cct,
 # input: R3(Obj, Ratio, Reg)
 # output: R3a(Obj, Nom, Reg)
 
-eval_aquifer_eric = Query(cct, [R3a(Obj, Nom, Reg), AND(
+eric_eval_aquifer = Query(cct, [R3a(Obj, Nom, Reg), AND(
     # UrbanAreas3
     AND(
 
@@ -53,7 +53,7 @@ eval_aquifer_eric = Query(cct, [R3a(Obj, Nom, Reg), AND(
 # input: R2(Nom, Reg) #precipitation coverage
 # input: R2(Nom, Reg) #irrigation coverage
 
-eval_aquifer_simon = Query(cct, [R3a(Obj, Reg, Nom), AND(
+eval_aquifer = Query(cct, [R3a(Obj, Reg, Nom), AND(
     [R2(Obj, Reg), R3a(Obj, Reg, Nom)],  # urban areas
     [R2(Obj, Reg), R3a(Obj, Reg, Nom)],  # aquifer
     [R2(Loc, Nom), R2(Nom, Reg)],  # precipitation coverage

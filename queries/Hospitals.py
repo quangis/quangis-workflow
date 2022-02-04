@@ -67,7 +67,7 @@ old_eval_hospitalsnetwork_simon = Query(cct,
 
 
 # Corrected version: 2022/02/04
-eval_hospitalsnear_simon = Query(cct,
+eval_hospitalsnear = Query(cct,
     [R3a(Obj, Reg, Ratio), R3(Obj, Ratio, Obj), AND(
         # hospital points
         [R3a(Obj, Reg, Nom)],
@@ -76,7 +76,7 @@ eval_hospitalsnear_simon = Query(cct,
     )]
 )
 
-eval_hospitalsnetwork_simon = Query(cct,
+eval_hospitalsnetwork = Query(cct,
     [R3a(Obj, Reg, Ratio), R3(Obj, Ratio, Obj), AND(
         # Roads
         [R3a(Obj, Reg, Nom)],

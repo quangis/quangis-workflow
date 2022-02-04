@@ -23,7 +23,7 @@ query = Query(cct,
 # R2(Obj, Nom, Reg)  # planned
 # R3a(Obj, Nom, Reg)  # deforested
 
-eval_deforestation_eric = Query(cct, [R2(Reg, Ratio), AND(
+eric_eval_deforestation = Query(cct, [R2(Reg, Ratio), AND(
 
     # Erasedbuffer2
     [R2(Reg, Ratio), AND(
@@ -59,7 +59,7 @@ eval_deforestation_eric = Query(cct, [R2(Reg, Ratio), AND(
 # R2(Loc, Bool) # deforested area
 
 # size of deforested area within buffer area
-eval_deforestation_simon = Query(cct, [R2(Bool, Ratio), AND(
+eval_deforestation = Query(cct, [R2(Bool, Ratio), AND(
 
     # erased buffer
     [R2(Loc, Bool), AND(
