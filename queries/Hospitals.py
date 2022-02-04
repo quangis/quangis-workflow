@@ -45,25 +45,44 @@ query = Query(cct,
 
 # ------------------
 # simon:
-# hospitalsNear
+old_eval_hospitalsnear_simon = Query(cct,
+    [R2(Obj, Ratio), R3(Obj, Ratio, Obj), AND(
+        # hospital points
+        [R3a(Obj, Reg, Nom)],
+        # incident location
+        [R3a(Obj, Reg, Nom)]
+    )]
+)
 
-# input R3a(Obj, Reg, Nom)  # hospital points
-# input R3a(Obj, Reg, Nom)  # incident location
+old_eval_hospitalsnetwork_simon = Query(cct,
+    [R2(Obj, Ratio), R3(Obj, Ratio, Obj), AND(
+        # Roads
+        [R3a(Obj, Reg, Nom)],
+        # Hospital points
+        [R3a(Obj, Reg, Nom)],
+        # Incident location
+        [R3a(Obj, Reg, Nom)]
+    )]
+)
 
-eval_hospitalsnear_simon = Query(cct, [R2(Obj, Ratio), R3(Obj, Ratio, Obj), AND(
-    [R3a(Obj, Reg, Nom)],
-    [R3a(Obj, Reg, Nom)]
-)])
 
+# Corrected version: 2022/02/04
+eval_hospitalsnear_simon = Query(cct,
+    [R3a(Obj, Reg, Ratio), R3(Obj, Ratio, Obj), AND(
+        # hospital points
+        [R3a(Obj, Reg, Nom)],
+        # incident location
+        [R3a(Obj, Reg, Nom)]
+    )]
+)
 
-# hospitalsNetwork
-
-# input R3a(Obj, Reg, Nom)  # Roads
-# input R3a(Obj, Reg, Nom)  # Hospital points
-# input R3a(Obj, Reg, Nom)  # Incident location
-
-eval_hospitalsnetwork_simon = Query(cct, [R2(Obj, Ratio), R3(Obj, Ratio, Obj), AND(
-    [R3a(Obj, Reg, Nom)],
-    [R3a(Obj, Reg, Nom)],
-    [R3a(Obj, Reg, Nom)]
-)])
+eval_hospitalsnetwork_simon = Query(cct,
+    [R3a(Obj, Reg, Ratio), R3(Obj, Ratio, Obj), AND(
+        # Roads
+        [R3a(Obj, Reg, Nom)],
+        # Hospital points
+        [R3a(Obj, Reg, Nom)],
+        # Incident location
+        [R3a(Obj, Reg, Nom)]
+    )]
+)

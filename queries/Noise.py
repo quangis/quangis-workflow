@@ -24,7 +24,14 @@ query = Query(cct,
 
 # noisePortionAmsterdam
 
-eval_noisePortionAmsterdam = Query(cct, [R2(Ord, Reg), R2(Loc, Ord), AND(
+old_eval_noisePortionAmsterdam = Query(cct, [R2(Ord, Reg), R2(Loc, Ord), AND(
+    [R2(Loc, Ord), R2(Ord, Reg)],
+    R3a(Obj, Reg, Nom)
+)])
+
+# Fix 2022/02/04. This should really be (Ord, Reg), but there is a
+# misspecification?
+eval_noisePortionAmsterdam = Query(cct, [R2(Nom, Reg), R2(Loc, Ord), AND(
     [R2(Loc, Ord), R2(Ord, Reg)],
     R3a(Obj, Reg, Nom)
 )])
