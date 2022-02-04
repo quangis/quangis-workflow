@@ -70,7 +70,6 @@ option_variants = {
 queries = list(
     (scenario, variant, expected, query)
     for scenario, variant, expected, query in extract_queries()
-    if (variant != "eval_aquifer_simon" and variant != "eval_solar")
 )
 all_workflows: list[Node] = list(
     set.union(*(expected for (_, _, expected, _) in queries))
@@ -88,6 +87,9 @@ font_wrong = Font(color="FF0000")
 row = 1
 
 for scenario, variant, expected_workflows, query in queries:
+
+    if not variant.startswith("eval"):
+        continue
 
     for optname, options in option_variants.items():
 
