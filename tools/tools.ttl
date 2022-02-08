@@ -1183,7 +1183,10 @@ tools:RegionFromRasterExtent
     rdfs:comment
         "Make a region layer from the extent of a raster. Measures the coverage of a nominal field.";
     tools:algebraexpression
-        "nest2 (name ~Nominals) (reify (fcover (1: Field(Nom)) ~Nominals))".
+        """
+        1: Field(Nom);
+        nest2 (name (pi2 1)) (reify (fcover 1 (pi2 1)))
+        """.
 
 #Noise proportion (raster)
 

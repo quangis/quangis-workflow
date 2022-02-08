@@ -136,7 +136,7 @@ centroid = Operator(
 )
 name = Operator(
     "combine nominal values",
-    type=R1(Nom) ** Nom
+    type=lambda x: R1(x) ** x | x << Nom
 )
 
 # Statistical operations
