@@ -31,7 +31,7 @@ def wfname(wf: Node) -> str:
     return str(wf)[len(REPO):]
 
 
-header = ["Scenario", "Variant", "Options"] + sorted([
+header = ["Scenario", "Variant", "Options", "Precision", "Recall"] + sorted([
     wfname(wf) for wf in all_workflows])
 
 with open(build_path / "results.csv", 'w', newline='') as f:
@@ -50,10 +50,10 @@ with open(build_path / "results.csv", 'w', newline='') as f:
 
             for optname, options in option_variants.items():
 
-                result: dict[str, str] = {
+                result: dict[str, str | float] = {
                     "Scenario": scenario,
                     "Variant": variant,
-                    "Options": optname
+                    "Options": optname,
                 }
 
                 print(f'\033[1m\033[4m{scenario}\033[0m', variant, optname)
@@ -85,12 +85,23 @@ with open(build_path / "results.csv", 'w', newline='') as f:
 
                         result[wfname(wf)] = s
 
-                    w.writerow(result)
-
-                    # Write to terminal
                     false_pos = (pos - expected)
                     false_neg = (expected - pos)
+                    true_pos = (pos - false_pos)
+                    true_neg = (set(all_workflows) - true_pos)
                     correct = pos - false_pos - false_neg
+
+                    try:
+                        result["Precision"] = "{0:.3f}".format(len(true_pos) / (len(true_pos) + len(false_pos)))
+                    except ZeroDivisionError:
+                        result["Precision"] = "N/A"
+
+                    try:
+                        result["Recall"] = "{0:.3f}".format(len(true_pos) / (len(true_pos) + len(false_neg)))
+                    except ZeroDivisionError:
+                        result["Recall"] = "N/A"
+
+                    w.writerow(result)
 
                     print("Correct:", correct)
                     print("False positives:", false_pos)
