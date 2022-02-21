@@ -74,54 +74,54 @@ with open(build_path / "results.csv", 'w', newline='') as f:
                 # Run the query
                 try:
                     results = wfgraph.query(sparql)
+                except ValueError:
+                    print("Server is down or timed out.")
+                    pos = set()
+                else:
                     pos = set(r.workflow for r in results)
 
-                    for wf in all_workflows:
-                        if wf in pos:
-                            if wf in expected:
-                                s = "TP"
-                            else:
-                                s = "FP"
+                for wf in all_workflows:
+                    if wf in pos:
+                        if wf in expected:
+                            s = "TP"
                         else:
-                            if wf in expected:
-                                s = "FN"
-                            else:
-                                s = "TN"
+                            s = "FP"
+                    else:
+                        if wf in expected:
+                            s = "FN"
+                        else:
+                            s = "TN"
 
-                        result[wfname(wf)] = s
+                    result[wfname(wf)] = s
 
-                    false_pos = (pos - expected)
-                    false_neg = (expected - pos)
-                    true_pos = (pos - false_pos)
-                    true_neg = (set(all_workflows) - true_pos)
-                    correct = pos - false_pos - false_neg
+                false_pos = (pos - expected)
+                false_neg = (expected - pos)
+                true_pos = (pos - false_pos)
+                true_neg = (set(all_workflows) - true_pos)
+                correct = pos - false_pos - false_neg
 
-                    n_tpos += (i_tpos := len(true_pos))
-                    n_tneg += (i_tneg := len(true_neg))
-                    n_fpos += (i_fpos := len(false_pos))
-                    n_fneg += (i_fneg := len(false_neg))
+                n_tpos += (i_tpos := len(true_pos))
+                n_tneg += (i_tneg := len(true_neg))
+                n_fpos += (i_fpos := len(false_pos))
+                n_fneg += (i_fneg := len(false_neg))
 
-                    try:
-                        result["Precision"] = "{0:.3f}".format(
-                            i_tpos / (i_tpos + i_fpos))
-                    except ZeroDivisionError:
-                        result["Precision"] = "0.000"
+                try:
+                    result["Precision"] = "{0:.3f}".format(
+                        i_tpos / (i_tpos + i_fpos))
+                except ZeroDivisionError:
+                    result["Precision"] = "0.000"
 
-                    try:
-                        result["Recall"] = "{0:.3f}".format(
-                            i_tpos / (i_tpos + i_fneg))
-                    except ZeroDivisionError:
-                        result["Recall"] = "0.000"
+                try:
+                    result["Recall"] = "{0:.3f}".format(
+                        i_tpos / (i_tpos + i_fneg))
+                except ZeroDivisionError:
+                    result["Recall"] = "0.000"
 
-                    w.writerow(result)
+                w.writerow(result)
 
-                    print("Correct:", correct)
-                    print("False positives:", false_pos)
-                    print("Missing:", false_neg)
-
-                except ValueError:
-                    print("Not firing queries, since the server is down or timed out.")
-
+                print("Correct:", correct)
+                print("False positives:", false_pos)
+                print("Missing:", false_neg)
                 print()
 
         w.writerow({

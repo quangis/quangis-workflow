@@ -40,5 +40,5 @@ fi
 
 # Run the Fuseki server with the TDB we just built
 build/apache-jena-fuseki-$VER/fuseki-server \
-    --timeout=10000 \
+    --timeout=60000 \
     --loc="$PWD/build/tdb" /name
