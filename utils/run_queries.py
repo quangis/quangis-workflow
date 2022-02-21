@@ -39,16 +39,21 @@ with open(build_path / "results.csv", 'w', newline='') as f:
     w = csv.DictWriter(f, fieldnames=header)
     w.writeheader()
 
-    # for scenario, variant, expected_workflows, query in all_queries:
-    for elem in all_queries:
-        scenario = elem["name"]
-        expected = set(elem["expected"])
-        for variant, query in elem["variants"].items():
+    for optname, options in option_variants.items():
 
-            if not variant.startswith("eval"):
-                continue
+        n_tpos = 0
+        n_tneg = 0
+        n_fpos = 0
+        n_fneg = 0
 
-            for optname, options in option_variants.items():
+        # for scenario, variant, expected_workflows, query in all_queries:
+        for elem in all_queries:
+            scenario = elem["name"]
+            expected = set(elem["expected"])
+            for variant, query in elem["variants"].items():
+
+                if not variant.startswith("eval"):
+                    continue
 
                 result: dict[str, str | float] = {
                     "Scenario": scenario,
@@ -91,15 +96,22 @@ with open(build_path / "results.csv", 'w', newline='') as f:
                     true_neg = (set(all_workflows) - true_pos)
                     correct = pos - false_pos - false_neg
 
-                    try:
-                        result["Precision"] = "{0:.3f}".format(len(true_pos) / (len(true_pos) + len(false_pos)))
-                    except ZeroDivisionError:
-                        result["Precision"] = "N/A"
+                    n_tpos += (i_tpos := len(true_pos))
+                    n_tneg += (i_tneg := len(true_neg))
+                    n_fpos += (i_fpos := len(false_pos))
+                    n_fneg += (i_fneg := len(false_neg))
 
                     try:
-                        result["Recall"] = "{0:.3f}".format(len(true_pos) / (len(true_pos) + len(false_neg)))
+                        result["Precision"] = "{0:.3f}".format(
+                            i_tpos / (i_tpos + i_fpos))
                     except ZeroDivisionError:
-                        result["Recall"] = "N/A"
+                        result["Precision"] = "0.000"
+
+                    try:
+                        result["Recall"] = "{0:.3f}".format(
+                            i_tpos / (i_tpos + i_fneg))
+                    except ZeroDivisionError:
+                        result["Recall"] = "0.000"
 
                     w.writerow(result)
 
@@ -111,3 +123,11 @@ with open(build_path / "results.csv", 'w', newline='') as f:
                     print("Not firing queries, since the server is down or timed out.")
 
                 print()
+
+        w.writerow({
+            "Scenario": "Total",
+            "Options": optname,
+            "Precision": "{0:.3f}".format(n_tpos / (n_tpos + n_fpos)),
+            "Recall": "{0:.3f}".format(n_tpos / (n_tpos + n_fneg))
+        })
+
