@@ -31,7 +31,8 @@ Count = TypeOperator(supertype=Ratio)
 R1 = TypeOperator(params=1)  # Collections
 R2 = TypeOperator(params=2)  # Unary core concepts, 1 key (left)
 R3 = TypeOperator(params=3)  # Quantified relation, 2 keys (l & r)
-R3a = TypeOperator(params=3)  # Ternary relation, 1 key (left)
+
+T = TypeOperator(params=2)  # Tuple
 
 
 # Type synonyms ##############################################################
@@ -70,9 +71,12 @@ ObjectQuality = TypeAlias(lambda x: R2(Obj, x), Qlt)
 RelationalField = TypeAlias(lambda x: R3(Loc, x, Loc), Qlt)
 Network = TypeAlias(lambda x: R3(Obj, x, Obj), Qlt)
 
-TernaryRelation1 = TypeAlias(R3a(Obj, Qlt, Obj))
-TernaryRelation2 = TypeAlias(R3a(Obj, Reg, Qlt))
-TernaryRelation3 = TypeAlias(R3a(Obj, Qlt, Reg))
+Temp1 = TypeAlias(T(Qlt, Obj))
+Temp2 = TypeAlias(T(Reg, Qlt))
+Temp3 = TypeAlias(T(Qlt, Reg))
+TernaryRelation1 = TypeAlias(R2(Obj, Temp1))
+TernaryRelation2 = TypeAlias(R2(Obj, Temp2))
+TernaryRelation3 = TypeAlias(R2(Obj, Temp3))
 
 in_ = Operator(type=Nom)
 out = Operator(type=Nom)
@@ -244,7 +248,7 @@ revert = Operator(
 )
 getamounts = Operator(
     "get amounts from object based amount qualities",
-    type=lambda x: R3a(Obj, Reg, x) ** R2(Reg, x) | x << Ratio,
+    type=lambda x: R2(Obj, T(Reg, x)) ** R2(Reg, x) | x << Ratio,
     define=lambda x: join(groupby(get, get_attrL(x)), get_attrR(x))
 )
 
@@ -325,7 +329,7 @@ orTopo = Operator(
 
 nbuild = Operator(
     "build a network from objects with impedance values",
-    type=R3a(Obj, Reg, Ratio) ** R3(Obj, Ratio, Obj)
+    type=R2(Obj, T(Reg, Ratio)) ** R3(Obj, Ratio, Obj)
 )
 nDist = Operator(
     "compute network distances between objects",
@@ -493,13 +497,15 @@ select = Operator(
     "equality (eq) or order (leq)",
     type=lambda x, y, rel:
         (x ** y ** Bool) ** rel ** y ** rel
-        | rel << with_parameters(R1, R2, R3, R3a, param=x)
+        | rel << with_parameters(R1, R2, R3, lambda x, y, z: R2(x, T(y, z)),
+            param=x)
 )
 subset = Operator(
     "Subset a relation to those tuples having an attribute value contained in "
     "a collection",
     type=lambda x, rel:
-        rel ** R1(x) ** rel | rel << with_parameters(R1, R2, R3, R3a, param=x),
+        rel ** R1(x) ** rel | rel << with_parameters(R1, R2, R3,
+            lambda x, y, z: R2(x, T(y, z)), param=x),
     define=lambda r, c: select(inrel, r, c)
 )
 
@@ -508,8 +514,10 @@ select2 = Operator(
     "like equality (eq) or order (leq)",
     type=lambda x, y, rel:
         (x ** y ** Bool) ** rel ** rel
-        | rel << with_parameters(R1, R2, R3, R3a, param=x)
-        | rel << with_parameters(R1, R2, R3, R3a, param=y)
+        | rel << with_parameters(R1, R2, R3, lambda x, y, z: R2(x, T(y, z)),
+            param=x)
+        | rel << with_parameters(R1, R2, R3, lambda x, y, z: R2(x, T(y, z)),
+            param=y)
 )
 
 # Join (⨝)
@@ -521,18 +529,18 @@ join = Operator(
 
 # functions to handle multiple attributes (with 1 key)
 join_attr = Operator(
-    type=lambda x, y, z: R2(x, y) ** R2(x, z) ** R3a(x, y, z),
+    type=lambda x, y, z: R2(x, y) ** R2(x, z) ** R2(x, T(y, z)),
     # define=lambda x1, x2: prod3(pi12(select2(
     #     eq,
     #     prod3(apply1(compose(swap(apply1, x1), nest2), x2))
     # )))
 )
 get_attrL = Operator(
-    type=lambda x, y, z: R3a(x, y, z) ** R2(x, y),
+    type=lambda x, y, z: R2(x, T(y, z)) ** R2(x, y),
     define=None
 )
 get_attrR = Operator(
-    type=lambda x, y, z: R3a(x, y, z) ** R2(x, z),
+    type=lambda x, y, z: R2(x, T(y, z)) ** R2(x, z),
     define=None
 )
 
