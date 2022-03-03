@@ -3,7 +3,7 @@
 
 from config import REPO  # type: ignore
 from transformation_algebra.query import Query, AND
-from cct import cct, R3a, R2, Obj, Reg, Nom, Ratio, Ord, Loc  # type: ignore
+from cct import cct, ObjectInfo, R2, Obj, Reg, Nom, Ratio, Ord, Loc  # type: ignore
 
 workflows = {
     REPO.NoiseProPortionAmsterdam,
@@ -15,9 +15,9 @@ workflows = {
 # input: R2(Ord, Reg)       #noise
 
 eval_noiseProPortionAmsterdam = Query(cct,
-    [R3a(Obj, Reg, Ratio), R2(Obj, Ratio), AND(
+    [ObjectInfo(Ratio), R2(Obj, Ratio), AND(
         # size of object regions
-        [R2(Obj, Ratio), R3a(Obj, Reg, Nom)],
+        [R2(Obj, Ratio), ObjectInfo(Nom)],
 
         # size of noise regions in object
         [R2(Obj, Ratio), R2(Loc, Ord), R2(Ord, Reg)]
@@ -27,9 +27,9 @@ eval_noiseProPortionAmsterdam = Query(cct,
 # noiseProPortionAmsterdam2:
 
 eval_noiseProPortionAmsterdam2 = Query(cct,
-    [R3a(Obj, Reg, Ratio), R2(Obj, Ratio), AND(
+    [ObjectInfo(Ratio), R2(Obj, Ratio), AND(
         # size of object regions
-        [R2(Obj, Ratio), R3a(Obj, Reg, Nom)],
+        [R2(Obj, Ratio), ObjectInfo(Nom)],
 
         # size of noise regions in object
         [R2(Obj, Ratio), R2(Loc, Ord), R2(Ord, Reg)]

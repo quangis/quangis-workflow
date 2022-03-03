@@ -4,7 +4,7 @@
 from config import REPO  # type: ignore
 from transformation_algebra.type import _
 from transformation_algebra.query import Query, AND
-from cct import cct, R3a, R1, R2, Obj, Reg, Nom, Ratio, Loc, Bool, size, extrapol, pi1  # type: ignore
+from cct import cct, ObjectInfo, R1, R2, Obj, Reg, Nom, Ratio, Loc, Bool, size, extrapol, pi1  # type: ignore
 
 workflows = {REPO.Deforestation}
 
@@ -23,35 +23,35 @@ query = Query(cct,
 # R2(Obj, Nom, Reg)  # planned
 # R3a(Obj, Nom, Reg)  # deforested
 
-eric_eval_deforestation = Query(cct, [R2(Reg, Ratio), AND(
+# eric_eval_deforestation = Query(cct, [R2(Reg, Ratio), AND(
 
-    # Erasedbuffer2
-    [R2(Reg, Ratio), AND(
+#     # Erasedbuffer2
+#     [R2(Reg, Ratio), AND(
 
-        # plannedroadbuffer
-        [R1(Reg), R1(Reg)],
+#         # plannedroadbuffer
+#         [R1(Reg), R1(Reg)],
 
-        # deforested
-        R1(Reg)
-    )],
+#         # deforested
+#         R1(Reg)
+#     )],
 
-    # areaPercentage
-    [AND(
+#     # areaPercentage
+#     [AND(
 
-        # roadsBuffer2
-        [R2(Reg, Ratio), R1(Reg), R3a(Obj, Nom, Reg)],
+#         # roadsBuffer2
+#         [R2(Reg, Ratio), R1(Reg), R3a(Obj, Nom, Reg)],
 
-        # deforestedRoadArea
-        [AND(
+#         # deforestedRoadArea
+#         [AND(
 
-            # deforested
-            R3a(Obj, Nom, Reg),
+#             # deforested
+#             R3a(Obj, Nom, Reg),
 
-            # roadsbuffer
-            [R1(Reg), R3a(Obj, Nom, Reg)]
-        )]
-    )]
-)])
+#             # roadsbuffer
+#             [R1(Reg), R3a(Obj, Nom, Reg)]
+#         )]
+#     )]
+# )])
 
 # Simon
 # R3a(Obj, Reg, Nom)  # roads
@@ -64,7 +64,7 @@ eval_deforestation = Query(cct, [R2(Bool, Ratio), AND(
     # erased buffer
     [R2(Loc, Bool), AND(
         [R2(Loc, Bool)],  # deforested area
-        [R2(Loc, Bool), R3a(Obj, Reg, Nom)]  # planned road buffer
+        [R2(Loc, Bool), ObjectInfo(Nom)]  # planned road buffer
     )],
 
     # proportion
@@ -73,10 +73,10 @@ eval_deforestation = Query(cct, [R2(Bool, Ratio), AND(
         # deforested region within buffer
         [R1(Loc), R2(Loc, Bool), AND(
             [R2(Loc, Bool)],  # deforested area
-            [R2(Loc, Bool), R3a(Obj, Reg, Nom)]  # roads buffer
+            [R2(Loc, Bool), ObjectInfo(Nom)]  # roads buffer
         )],
 
         # region of roads buffer
-        [R1(Loc), R2(Loc, Bool), R3a(Obj, Reg, Nom)]
+        [R1(Loc), R2(Loc, Bool), ObjectInfo(Nom)]
     )]
 )])

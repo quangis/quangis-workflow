@@ -3,12 +3,12 @@
 
 from config import REPO  # type: ignore
 from transformation_algebra.query import Query, AND
-from cct import cct, R3a, R2, Obj, Reg, Nom, Loc, Itv, groupbyLR, avg  # type: ignore
+from cct import cct, ObjectInfo, R2, Obj, Reg, Nom, Loc, Itv, groupbyLR, avg  # type: ignore
 
 workflows = {REPO.AmountFieldUtrecht}
 
 query = Query(cct,
-    [R3a(Obj, Reg, Itv), groupbyLR, AND(
+    [ObjectInfo(Itv), groupbyLR, AND(
         avg,
         R2(Loc, Itv)
     )]
@@ -23,8 +23,8 @@ query = Query(cct,
 # input weather stations: R2(Reg, Itv)
 
 eval_temperature = Query(cct,
-    [R3a(Obj, Reg, Itv), R2(Obj, Itv), AND(
+    [ObjectInfo(Itv), R2(Obj, Itv), AND(
         [R2(Loc, Itv), R2(Reg, Itv)],
-        [R2(Obj, Reg), R3a(Obj, Reg, Nom)]
+        [R2(Obj, Reg), ObjectInfo(Nom)]
     )]
 )

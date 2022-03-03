@@ -4,12 +4,12 @@
 
 from config import REPO  # type: ignore
 from transformation_algebra.query import Query, AND
-from cct import cct, R3a, R2, R3, Obj, Reg, Nom, Ratio, Loc, select, pi1, oDist, loTopo  # type: ignore
+from cct import cct, ObjectInfo, R2, R3, Obj, Reg, Nom, Ratio, Loc, select, pi1, oDist, loTopo  # type: ignore
 
 workflows = {REPO.Aquifer}
 
 query = Query(cct,
-    [R3a(Obj, Reg, Nom), select, loTopo, AND(
+    [ObjectInfo(Nom), select, loTopo, AND(
         [pi1, R2(Loc, Nom)],
         [select, oDist, R2(Obj, Reg)]
     )]
@@ -25,27 +25,27 @@ query = Query(cct,
 # input: R3(Obj, Ratio, Reg)
 # output: R3a(Obj, Nom, Reg)
 
-eric_eval_aquifer = Query(cct, [R3a(Obj, Nom, Reg), AND(
-    # UrbanAreas3
-    AND(
+# eval_eric_aquifer = Query(cct, [R3a(Obj, Nom, Reg), AND(
+#     # UrbanAreas3
+#     AND(
 
-        # UrbanAreas2
-        AND(
+#         # UrbanAreas2
+#         AND(
 
-            # aquifer2
-            [R2(Obj, Reg), R3a(Obj, Nom, Reg)],
+#             # aquifer2
+#             [R2(Obj, Reg), R3a(Obj, Nom, Reg)],
 
-            # urbanAreas
-            R3a(Obj, Nom, Reg)
-        ),
+#             # urbanAreas
+#             R3a(Obj, Nom, Reg)
+#         ),
 
-        # precipitation2
-        R2(Ratio, Reg)
-    ),
+#         # precipitation2
+#         R2(Ratio, Reg)
+#     ),
 
-    # irrigation2
-    R3a(Obj, Ratio, Reg)
-)])
+#     # irrigation2
+#     R3a(Obj, Ratio, Reg)
+# )])
 
 # Simon
 # input: R3a(Obj, Reg, Nom) #aquifer
@@ -53,9 +53,9 @@ eric_eval_aquifer = Query(cct, [R3a(Obj, Nom, Reg), AND(
 # input: R2(Nom, Reg) #precipitation coverage
 # input: R2(Nom, Reg) #irrigation coverage
 
-eval_aquifer = Query(cct, [R3a(Obj, Reg, Nom), AND(
-    [R2(Obj, Reg), R3a(Obj, Reg, Nom)],  # urban areas
-    [R2(Obj, Reg), R3a(Obj, Reg, Nom)],  # aquifer
+eval_aquifer = Query(cct, [ObjectInfo(Nom), AND(
+    [R2(Obj, Reg), ObjectInfo(Nom)],  # urban areas
+    [R2(Obj, Reg), ObjectInfo(Nom)],  # aquifer
     [R2(Loc, Nom), R2(Nom, Reg)],  # precipitation coverage
     [R2(Loc, Nom), R2(Nom, Reg)]  # irrigation coverage
 )])

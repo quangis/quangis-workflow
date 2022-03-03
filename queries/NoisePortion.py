@@ -3,7 +3,7 @@
 
 from config import REPO  # type: ignore
 from transformation_algebra.query import Query, AND
-from cct import cct, R3a, R2, Obj, Reg, Nom, Ord, Loc  # type: ignore
+from cct import cct, ObjectInfo, R2, Obj, Reg, Nom, Ord, Loc  # type: ignore
 
 workflows = {REPO.NoisePortionAmsterdam}
 
@@ -13,5 +13,5 @@ workflows = {REPO.NoisePortionAmsterdam}
 
 eval_noisePortionAmsterdam = Query(cct, [R2(Ord, Reg), R2(Loc, Ord), AND(
     [R2(Loc, Ord), R2(Ord, Reg)],
-    R3a(Obj, Reg, Nom)
+    ObjectInfo(Nom)
 )])

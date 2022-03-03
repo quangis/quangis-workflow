@@ -4,7 +4,7 @@
 
 from config import REPO  # type: ignore
 from transformation_algebra.query import Query, AND, STEPS
-from cct import cct, R3a, R1, R2, Obj, Reg, Nom, Ord, Count, Ratio, Loc, Bool, ratio, extrapol  # type: ignore
+from cct import cct, ObjectInfo, R1, R2, Obj, Reg, Nom, Ord, Count, Ratio, Loc, Bool, ratio, extrapol  # type: ignore
 
 workflows = {REPO.InfrastructureAccess}
 
@@ -25,28 +25,28 @@ query = Query(cct,
 # R3a(Obj, Ratio, Reg)  # chochomoku
 # R2(Obj, Reg)  # roads
 
-eric_eval_infrastructure = Query(cct, [R1(Ratio), AND(
+# eval_eric_infrastructure = Query(cct, [R1(Ratio), AND(
 
-    # rural_pop2
-    [R3a(Obj, Ratio, Reg), R2(Obj, Reg), AND(
+#     # rural_pop2
+#     [ObjectInfo(Reg), R2(Obj, Reg), AND(
 
-        # chochomoku
-        R3a(Obj, Ratio, Reg),
+#         # chochomoku
+#         ObjectInfo(Reg),
 
-        # rural
-        [R2(Obj, Reg), R3a(Obj, Ord, Reg)]
-    )],
+#         # rural
+#         [R2(Obj, Reg), ObjectInfo(Reg)]
+#     )],
 
-    # rural_access1
-    [R2(Reg, Ratio), AND(
+#     # rural_access1
+#     [R2(Reg, Ratio), AND(
 
-        # rural_clip
-        [R2(Reg, Ratio), R2(Obj, Reg), R3a(Obj, Ord, Reg)],
+#         # rural_clip
+#         [R2(Reg, Ratio), R2(Obj, Reg), ObjectInfo(Reg)],
 
-        # roads_buffer
-        [R1(Reg), R2(Obj, Reg)]
-    )]
-)])
+#         # roads_buffer
+#         [R1(Reg), R2(Obj, Reg)]
+#     )]
+# )])
 
 # ------------------------------------
 # simon:
@@ -55,29 +55,29 @@ eric_eval_infrastructure = Query(cct, [R1(Ratio), AND(
 eval_infrastructure = Query(cct, [R2(Reg, Ratio), AND(
 
     # rural clip and summing contentamount (rural_pop1)
-    [R2(Reg, Count), R3a(Obj, Reg, Count), AND(
+    [R2(Reg, Count), ObjectInfo(Count), AND(
 
         # chochomoku
-        [R3a(Obj, Reg, Count)],
+        [ObjectInfo(Count)],
 
         # rural
-        [R2(Obj, Reg), R3a(Obj, Reg, Nom)]
+        [R2(Obj, Reg), ObjectInfo(Nom)]
     )],
 
     # rural_access1 via areal interpolation
     [R2(Reg, Count), AND(
 
         # rural_clip
-        [R3a(Obj, Reg, Count), AND(
+        [ObjectInfo(Count), AND(
 
             # chochomoku
-            [R3a(Obj, Reg, Count)],
+            [ObjectInfo(Count)],
 
             # rural
-            [R2(Obj, Reg), R3a(Obj, Reg, Nom)]
+            [R2(Obj, Reg), ObjectInfo(Nom)]
         )],
 
         # roads_buffer
-        [R2(Loc, Bool), R3a(Obj, Reg, Nom)]
+        [R2(Loc, Bool), ObjectInfo(Nom)]
     )]
 )])

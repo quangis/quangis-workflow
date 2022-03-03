@@ -4,12 +4,12 @@
 
 from config import REPO  # type: ignore
 from transformation_algebra.query import Query, AND
-from cct import cct, R3a, R2, Obj, Reg, Nom, Count, Ratio, ratio, sum, groupbyLR  # type: ignore
+from cct import cct, ObjectInfo, R2, Obj, Reg, Nom, Count, Ratio, ratio, sum, groupbyLR  # type: ignore
 
 workflows = {REPO.Malaria}
 
 malaria = Query(cct,
-    [R3a(Obj, Reg, Ratio), AND(
+    [ObjectInfo(Ratio), AND(
         ratio,
         R2(Obj, Count),
         [R2(Obj, Count), groupbyLR, AND(
@@ -28,42 +28,42 @@ malaria = Query(cct,
 # R2(Obj, Ratio)  # countryIncidence
 # R2(Obj, Ratio)  # adminIncidence
 
-eric_eval_malaria = Query(cct, [R2(Obj, Ratio), AND(
-    # adminDRC3
-    AND(
+# eric_eval_malaria = Query(cct, [R2(Obj, Ratio), AND(
+#     # adminDRC3
+#     AND(
 
-        # adminDRC2
-        R3a(Obj, Nom, Reg),
+#         # adminDRC2
+#         R3a(Obj, Nom, Reg),
 
-        # popAdminDRC
-        [R3a(Obj, Ratio, Reg), AND(
+#         # popAdminDRC
+#         [R3a(Obj, Ratio, Reg), AND(
 
-            # population
-            R2(Reg, Ratio),
+#             # population
+#             R2(Reg, Ratio),
 
-            # adminDRC2
-            R3a(Obj, Nom, Reg)
-        )]
-    ),
+#             # adminDRC2
+#             R3a(Obj, Nom, Reg)
+#         )]
+#     ),
 
-    # adminIncidence2
-    R2(Obj, Ratio)
-)])
+#     # adminIncidence2
+#     R2(Obj, Ratio)
+# )])
 
 # simon
 
-eval_malaria = Query(cct, [R3a(Obj, Reg, Ratio), AND(
+eval_malaria = Query(cct, [ObjectInfo(Ratio), AND(
 
     # popAdminDRC
-    [R3a(Obj, Reg, Count), AND(
+    [ObjectInfo(Count), AND(
 
         # population on cells
         R2(Reg, Count),
 
         # adminDRC2
-        R3a(Obj, Reg, Nom)
+        ObjectInfo(Nom)
     )],
 
     # adminIncidence2
-    [R3a(Obj, Reg, Count), R2(Obj, Count)]
+    [ObjectInfo(Count), R2(Obj, Count)]
 )])

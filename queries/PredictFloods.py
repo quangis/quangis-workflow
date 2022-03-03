@@ -3,7 +3,7 @@
 
 from config import REPO  # type: ignore
 from transformation_algebra.query import Query, AND
-from cct import cct, R3a, R2, R3, Obj, Reg, Nom, Ratio, Ord, Loc, Itv, groupbyLR, size, max, accumulate, flowdirgraph, lgDist  # type: ignore
+from cct import cct, ObjectInfo, R2, R3, Obj, Reg, Nom, Ratio, Ord, Loc, Itv, groupbyLR, size, max, accumulate, flowdirgraph, lgDist  # type: ignore
 
 workflows = {REPO.Floods}
 
@@ -26,18 +26,18 @@ query = Query(cct,
 # input: dem: R2(L, Itv)
 # input: pour point: R3a(Obj, Reg, Nom)
 
-old_eval_flood = Query(cct, [R2(Ord, Ratio), R2(Ord, Reg), R2(Loc, Ratio), AND(
+eval_old_flood = Query(cct, [R2(Ord, Ratio), R2(Ord, Reg), R2(Loc, Ratio), AND(
     [R3(Loc, Ratio, Loc), R2(Loc, Itv)],
-    [R2(Reg, Nom), R3a(Obj, Reg, Nom)]
+    [R2(Reg, Nom), ObjectInfo(Nom)]
 )])
 
-old_eval_flood2 = Query(cct, [R2(Ord, Ratio), R2(Loc, Ratio), AND(
+eval_old2_flood = Query(cct, [R2(Ord, Ratio), R2(Loc, Ratio), AND(
     [R3(Loc, Ratio, Loc), R2(Loc, Itv)],
-    [R2(Reg, Nom), R3a(Obj, Reg, Nom)]
+    [R2(Reg, Nom), ObjectInfo(Nom)]
 )])
 
 # corrected version (04/02/2022)
 eval_flood = Query(cct, [R2(Ord, Ratio), R2(Loc, Ord), AND(
     [R3(Loc, Ratio, Loc), R2(Loc, Itv)],
-    [R2(Nom, Reg), R3a(Obj, Reg, Nom)]
+    [R2(Nom, Reg), ObjectInfo(Nom)]
 )])
