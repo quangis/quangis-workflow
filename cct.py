@@ -78,6 +78,9 @@ TernaryRelation1 = TypeAlias(R2(Obj, Temp1))
 TernaryRelation2 = TypeAlias(R2(Obj, Temp2))
 TernaryRelation3 = TypeAlias(R2(Obj, Temp3))
 
+# Associate objects with both their extent and some quality
+ObjectInfo = TypeAlias(lambda x: R2(Obj, T(Reg, x)), Qlt)
+
 in_ = Operator(type=Nom)
 out = Operator(type=Nom)
 true = Operator(type=Bool)
@@ -248,7 +251,7 @@ revert = Operator(
 )
 getamounts = Operator(
     "get amounts from object based amount qualities",
-    type=lambda x: R2(Obj, T(Reg, x)) ** R2(Reg, x) | x << Ratio,
+    type=lambda x: ObjectInfo(x) ** R2(Reg, x) | x << Ratio,
     define=lambda x: join(groupby(get, get_attrL(x)), get_attrR(x))
 )
 
@@ -329,7 +332,7 @@ orTopo = Operator(
 
 nbuild = Operator(
     "build a network from objects with impedance values",
-    type=R2(Obj, T(Reg, Ratio)) ** R3(Obj, Ratio, Obj)
+    type=ObjectInfo(Ratio) ** R3(Obj, Ratio, Obj)
 )
 nDist = Operator(
     "compute network distances between objects",
