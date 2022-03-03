@@ -71,13 +71,6 @@ ObjectQuality = TypeAlias(lambda x: R2(Obj, x), Qlt)
 RelationalField = TypeAlias(lambda x: R3(Loc, x, Loc), Qlt)
 Network = TypeAlias(lambda x: R3(Obj, x, Obj), Qlt)
 
-Temp1 = TypeAlias(T(Qlt, Obj))
-Temp2 = TypeAlias(T(Reg, Qlt))
-Temp3 = TypeAlias(T(Qlt, Reg))
-TernaryRelation1 = TypeAlias(R2(Obj, Temp1))
-TernaryRelation2 = TypeAlias(R2(Obj, Temp2))
-TernaryRelation3 = TypeAlias(R2(Obj, Temp3))
-
 # Associate objects with both their extent and some quality
 ObjectInfo = TypeAlias(lambda x: R2(Obj, T(Reg, x)), Qlt)
 
