@@ -10,8 +10,8 @@ Module containing the core concept transformation algebra. Usage:
 """
 
 from transformation_algebra import with_parameters, _, Operator, \
-    Language, LanguageNamespace, TypeOperator
-from transformation_algebra.type import TypeAlias
+    Language, LanguageNamespace, TypeOperator, TypeInstance, Type
+from transformation_algebra.type import TypeAlias, Unit
 from transformation_algebra.query import OR, Operators
 
 
@@ -28,16 +28,47 @@ Ord = TypeOperator(supertype=Nom)
 Itv = TypeOperator(supertype=Ord)
 Ratio = TypeOperator(supertype=Itv)
 Count = TypeOperator(supertype=Ratio)
-R1 = TypeOperator(params=1)  # Collections
-R2 = TypeOperator(params=2)  # Unary core concepts, 1 key (left)
-R3 = TypeOperator(params=3)  # Quantified relation, 2 keys (l & r)
-
-T = TypeOperator(params=2)  # Tuple
+# R = TypeOperator(params=2)
+R1 = TypeOperator(params=1)
+R2 = TypeOperator(params=2)
+R3 = TypeOperator(params=3)
 
 
 # Type synonyms ##############################################################
 # Types with a synonym are also *canonical*, in that they get a defined node in
 # the vocabulary.
+
+# R1 = TypeAlias(lambda x: R(x, Unit), Val)
+# R2 = TypeAlias(lambda x, y: R(x, y), Val, Val)
+# R3 = TypeAlias(lambda x, y, z: R(x * z, y), Val, Val, Val)
+
+
+def with_param(on: Type, x: TypeInstance, at: int = None) -> TypeInstance:
+    return on[with_parameters(R1, R2, R3, lambda x, y, z: R2(x, y * z),
+        param=x, at=at)]
+    # """
+    # Generate a list of instances of relations. The generated relations must
+    # contain a certain parameter (at some index, if given).
+    # """
+
+    # # This is really hacky due to the fact that we can't have
+    # # constraints-in-constraints.
+    # c: list[TypeInstance] = []
+    # if at is None or at == 1:
+    #     c.append(Val * R(x, _))
+    #     c.append(R(_, _) * R(x, _))
+    #     c.append(Val * R(x * _, _))
+    # if at is None or at == 2:
+    #     c.append(Val * R(_, x))
+    #     c.append(R(_, _) * R(_, x))
+    #     c.append(Val * R(_ * x, _))
+    #     c.append(Val * R(_, x * _))
+    # if at is None or at == 3:
+    #     c.append(Val * R(_, _ * x))
+    #     c.append(Val * R(_ * _, x))
+    # (x * on)[c]
+    # return on
+
 
 Objects = TypeAlias(R1(Obj))
 Locations = TypeAlias(R1(Loc))
@@ -72,7 +103,7 @@ RelationalField = TypeAlias(lambda x: R3(Loc, x, Loc), Qlt)
 Network = TypeAlias(lambda x: R3(Obj, x, Obj), Qlt)
 
 # Associate objects with both their extent and some quality
-ObjectInfo = TypeAlias(lambda x: R2(Obj, T(Reg, x)), Qlt)
+ObjectInfo = TypeAlias(lambda x: R2(Obj, Reg * x), Qlt)
 
 in_ = Operator(type=Nom)
 out = Operator(type=Nom)
@@ -442,7 +473,7 @@ set_inters = Operator(
 )
 relunion = Operator(
     "union of a set of relations",
-    type=lambda rel: R1(rel[with_parameters(R1, R2, R3)]) ** rel
+    type=lambda rel: R1(with_param(rel, _)) ** rel
 )
 prod = Operator(
     "A constructor for quantified relations. Prod generates a cartesian "
@@ -463,14 +494,12 @@ prod3 = Operator(
 pi1 = Operator(
     "projects a given relation to the first attribute, resulting in a "
     "collection",
-    type=lambda rel, x:
-        rel[with_parameters(R1, R2, R3, param=x, at=1)] ** R1(x)
+    type=lambda rel, x: with_param(rel, x, at=1) ** R1(x)
 )
 pi2 = Operator(
     "projects a given relation to the second attribute, resulting in a "
     "collection",
-    type=lambda rel, x:
-        rel[with_parameters(R1, R2, R3, param=x, at=2)] ** R1(x),
+    type=lambda rel, x: with_param(rel, x, at=2) ** R1(x),
 )
 pi3 = Operator(
     "projects a given ternary relation to the third attribute, resulting "
@@ -492,17 +521,12 @@ select = Operator(
     "Selects a subset of a relation using a constraint on one attribute, like "
     "equality (eq) or order (leq)",
     type=lambda x, y, rel:
-        {rel[with_parameters(R1, R2, R3, lambda x, y, z: R2(x, T(y, z)),
-            param=x)]} >>
-        (x ** y ** Bool) ** rel ** y ** rel
+        {with_param(rel, x)} >> (x ** y ** Bool) ** rel ** y ** rel
 )
 subset = Operator(
     "Subset a relation to those tuples having an attribute value contained in "
     "a collection",
-    type=lambda x, rel:
-        {rel[with_parameters(R1, R2, R3,
-            lambda x, y, z: R2(x, T(y, z)), param=x)]} >>
-        rel ** R1(x) ** rel,
+    type=lambda x, rel: {with_param(rel, x)} >> rel ** R1(x) ** rel,
     define=lambda r, c: select(inrel, r, c)
 )
 
@@ -510,11 +534,7 @@ select2 = Operator(
     "Selects a subset of a relation using a constraint on two attributes, "
     "like equality (eq) or order (leq)",
     type=lambda x, y, rel:
-        {rel[with_parameters(R1, R2, R3, lambda x, y, z: R2(x, T(y, z)),
-            param=x)],
-        rel[with_parameters(R1, R2, R3, lambda x, y, z: R2(x, T(y, z)),
-            param=y)]} >>
-        (x ** y ** Bool) ** rel ** rel
+        {with_param(with_param(rel, x), y)} >> (x ** y ** Bool) ** rel ** rel
 )
 
 # Join (⨝)
@@ -526,18 +546,18 @@ join = Operator(
 
 # functions to handle multiple attributes (with 1 key)
 join_attr = Operator(
-    type=lambda x, y, z: R2(x, y) ** R2(x, z) ** R2(x, T(y, z)),
+    type=lambda x, y, z: R2(x, y) ** R2(x, z) ** R2(x, y * z),
     # define=lambda x1, x2: prod3(pi12(select2(
     #     eq,
     #     prod3(apply1(compose(swap(apply1, x1), nest2), x2))
     # )))
 )
 get_attrL = Operator(
-    type=lambda x, y, z: R2(x, T(y, z)) ** R2(x, y),
+    type=lambda x, y, z: R2(x, y * z) ** R2(x, y),
     define=None
 )
 get_attrR = Operator(
-    type=lambda x, y, z: R2(x, T(y, z)) ** R2(x, z),
+    type=lambda x, y, z: R2(x, y * z) ** R2(x, z),
     define=None
 )
 
