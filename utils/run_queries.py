@@ -22,9 +22,10 @@ wfgraph.open("http://localhost:3030/name")
 
 # Varying options to try
 option_variants = {
-    "output": {"by_operators": False, "by_types": False, "by_chronology": False},
-    "types": {"by_operators": False, "by_types": True, "by_chronology": False},
-    "ordered": {"by_operators": False, "by_types": True, "by_chronology": True}
+    "inputs": {"by_input": True, "by_output": False, "by_operators": False, "by_types": False, "by_chronology": False},
+    # "output": {"by_operators": False, "by_types": False, "by_chronology": False},
+    # "types": {"by_operators": False, "by_types": True, "by_chronology": False},
+    # "ordered": {"by_operators": False, "by_types": True, "by_chronology": True}
 }
 
 
