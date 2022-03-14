@@ -28,46 +28,40 @@ Ord = TypeOperator(supertype=Nom)
 Itv = TypeOperator(supertype=Ord)
 Ratio = TypeOperator(supertype=Itv)
 Count = TypeOperator(supertype=Ratio)
-# R = TypeOperator(params=2)
-R1 = TypeOperator(params=1)
-R2 = TypeOperator(params=2)
-R3 = TypeOperator(params=3)
-
+R = TypeOperator(params=2)
 
 # Type synonyms ##############################################################
 # Types with a synonym are also *canonical*, in that they get a defined node in
 # the vocabulary.
 
-# R1 = TypeAlias(lambda x: R(x, Unit), Val)
-# R2 = TypeAlias(lambda x, y: R(x, y), Val, Val)
-# R3 = TypeAlias(lambda x, y, z: R(x * z, y), Val, Val, Val)
+R1 = TypeAlias(lambda x: R(x, Unit), Val)
+R2 = TypeAlias(lambda x, y: R(x, y), Val, Val)
+R3 = TypeAlias(lambda x, y, z: R(x * z, y), Val, Val, Val)
 
 
 def with_param(on: Type, x: TypeInstance, at: int = None) -> TypeInstance:
-    return on[with_parameters(R1, R2, R3, lambda x, y, z: R2(x, y * z),
-        param=x, at=at)]
-    # """
-    # Generate a list of instances of relations. The generated relations must
-    # contain a certain parameter (at some index, if given).
-    # """
+    """
+    Generate a list of instances of relations. The generated relations must
+    contain a certain parameter (at some index, if given).
+    """
 
-    # # This is really hacky due to the fact that we can't have
-    # # constraints-in-constraints.
-    # c: list[TypeInstance] = []
-    # if at is None or at == 1:
-    #     c.append(Val * R(x, _))
-    #     c.append(R(_, _) * R(x, _))
-    #     c.append(Val * R(x * _, _))
-    # if at is None or at == 2:
-    #     c.append(Val * R(_, x))
-    #     c.append(R(_, _) * R(_, x))
-    #     c.append(Val * R(_ * x, _))
-    #     c.append(Val * R(_, x * _))
-    # if at is None or at == 3:
-    #     c.append(Val * R(_, _ * x))
-    #     c.append(Val * R(_ * _, x))
-    # (x * on)[c]
-    # return on
+    # This is really hacky due to the fact that we can't have
+    # constraints-in-constraints.
+    c: list[TypeInstance] = []
+    if at is None or at == 1:
+        c.append(Val * R(x, _))
+        c.append(R(_, _) * R(x, _))
+        c.append(Val * R(x * _, _))
+    if at is None or at == 2:
+        c.append(Val * R(_, x))
+        c.append(R(_, _) * R(_, x))
+        c.append(Val * R(_ * x, _))
+        c.append(Val * R(_, x * _))
+    if at is None or at == 3:
+        c.append(Val * R(_, _ * x))
+        c.append(Val * R(_ * _, x))
+    (x * on)[c]
+    return on
 
 
 Objects = TypeAlias(R1(Obj))
@@ -588,16 +582,16 @@ groupbyL = Operator(
     "Group quantified relations by the left key, summarizing lists of "
     "quality values with the same key value into a new value per key, "
     "resulting in a unary concept.",
-    type=lambda rel, l, q1, q2, r:
-        (rel[R1(r), R2(r, q1)] ** q2) ** R3(l, q1, r) ** R2(l, q2),
-)
+    type=lambda l, r, x, y:
+        (R(r, _) ** y) ** R(l * r, x) ** R(l, y)
+)  # .instance()[x, Unit]
 groupbyR = Operator(
     "Group quantified relations by the right key, summarizing lists of "
     "quality values with the same key value into a new value per key, "
     "resulting in a unary concept.",
-    type=lambda rel, q2, l, q1, r:
-        (rel[R1(l), R2(l, q1)] ** q2) ** R3(l, q1, r) ** R2(r, q2)
-)
+    type=lambda l, r, x, y:
+        (R(l, _) ** y) ** R(l * r, x) ** R(r, y)
+)  # .instance()[x, Unit]
 groupby = Operator(
     "Group by qualities of binary relations",
     type=lambda l, q, y:
