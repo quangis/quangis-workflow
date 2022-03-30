@@ -2,14 +2,16 @@
 
 from __future__ import annotations
 
+from sys import stderr
 import json
 import csv
 from rdflib import Graph  # type: ignore
 from rdflib.term import Node  # type: ignore
 from plumbum import cli  # type: ignore
-from transformation_algebra import Query
+from transformation_algebra import Query, TransformationGraph
 
 from config import REPO  # type: ignore
+from workflow import Workflow  # type: ignore
 from cct import cct
 
 
@@ -23,8 +25,36 @@ class Utility(cli.Application):
             return 1
 
 
+@Utility.subcommand("vocab")
+class VocabBuilder(cli.Application):
+    "Build CCT vocabulary file."
+
+    @cli.positional(cli.NonexistentPath)
+    def main(self, output):
+        vocab = TransformationGraph(cct)
+        vocab.add_vocabulary()
+        vocab.serialize(str(output), format='ttl', encoding='utf-8')
+
+
+@Utility.subcommand("graph")
+class TransformationGraphBuilder(cli.Application):
+    """
+    Generate transformation graphs for entire workflows, concatenating the
+    algebra expressions for each individual use of a tool.
+    """
+
+    @cli.positional(cli.ExistingFile, cli.NonexistentPath)
+    def main(self, wf_path, output):
+        wf = Workflow(wf_path)
+        g = TransformationGraph(cct, with_noncanonical_types=False,
+            passthrough=False)
+        g.add_workflow(wf.root, wf.wf, wf.sources)
+        g.serialize(str(output), format='ttl', encoding='utf-8')
+
+
 @Utility.subcommand("query")
 class QueryRunner(cli.Application):
+    "Run a query."
     output = cli.SwitchAttr(["-o", "--output"], cli.NonexistentPath,
         mandatory=True, help="Output CSV file")
     blackbox = cli.Flag("--blackbox", help="Only consider input and output")
