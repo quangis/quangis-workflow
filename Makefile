@@ -1,8 +1,11 @@
 BUILD_DIR=testbuild
 DEBUG_DIR=build
 UTIL=python3 utils/util.py
+JENA=build/apache-jena-4.3.2/bin
+FUSEKI=build/apache-jena-fuseki-4.3.2/fuseki-server
+TIMEOUT=60000
 
-all: graphs
+all: $(BUILD_DIR)/tdb-insular/nodes.dat $(BUILD_DIR)/tdb-normal/nodes.dat
 
 graphs: $(BUILD_DIR)/cct.ttl $(patsubst scenarios/%.ttl,$(BUILD_DIR)/%.ttl,$(wildcard scenarios/*.ttl))
 
@@ -10,23 +13,40 @@ evaluations: $(BUILD_DIR)/eval.csv
 
 queries: $(patsubst queries/%.json,$(BUILD_DIR)/%.rq,$(wildcard queries/*.json))
 
-.PHONY: all graphs queries evaluations
+# Serving
 
-# $(BUILD_DIR)/eval_results.csv: $(wildcard $(QUERY_DIR)/eval_*.json)
-# 	util/query.py run $^ -o $@
+server-normal: $(BUILD_DIR)/tdb-normal/nodes.dat
+	$(FUSEKI) $(if $(TIMEOUT),--timeout=$(TIMEOUT),) --loc="$(<D)" /name
 
-# $(DEBUG_DIR)/%.debug.csv: $(QUERY_DIR)/%.json | $(@D)
-# 	util/query.py debug $< $@
+server-insular: $(BUILD_DIR)/tdb-insular/nodes.dat
+	$(FUSEKI) $(if $(TIMEOUT),--timeout=$(TIMEOUT),) --loc="$(<D)" /name
+
+$(BUILD_DIR)/tdb-insular/nodes.dat: $(BUILD_DIR)/cct.ttl $(patsubst scenarios/%.ttl,$(BUILD_DIR)/%.insular.ttl,$(wildcard scenarios/*.ttl))
+	$(JENA)/tdb1.xloader --loc $(@D) $^
+
+$(BUILD_DIR)/tdb-normal/nodes.dat: $(BUILD_DIR)/cct.ttl $(patsubst scenarios/%.ttl,$(BUILD_DIR)/%.ttl,$(wildcard scenarios/*.ttl))
+	$(JENA)/bin/tdb1.xloader --loc $(@D) $^
+
+
+# Building graphs
 
 $(BUILD_DIR)/cct.ttl: cct.py
 	@rm -f $@
 	@mkdir -p $(@D)
 	$(UTIL) vocab $@
 
+$(BUILD_DIR)/%.insular.ttl: scenarios/%.ttl
+	@rm -f $@
+	@mkdir -p $(@D)
+	$(UTIL) graph --no-passthrough $< $@
+
 $(BUILD_DIR)/%.ttl: scenarios/%.ttl
 	@rm -f $@
 	@mkdir -p $(@D)
 	$(UTIL) graph $< $@
+
+
+# Queries
 
 $(BUILD_DIR)/%.rq: queries/%.json
 	@mkdir -p $(@D)
@@ -37,7 +57,13 @@ $(BUILD_DIR)/eval.csv: $(wildcard queries/*_eval.json)
 	@mkdir -p $(@D)
 	$(UTIL) query $^ -o $@
 
+
+# Other
+
 $(BUILD_DIR)/results.tex: $(BUILD_DIR)/results.csv
 	@mkdir -p $(@D)
 	< $< csvcut -c Variant,Options,Precision,Recall \
 		| csvsort | csv2latex > $@
+
+
+.PHONY: all graphs queries evaluations serve-insular serve-normal

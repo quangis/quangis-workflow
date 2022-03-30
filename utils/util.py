@@ -42,12 +42,14 @@ class TransformationGraphBuilder(cli.Application):
     Generate transformation graphs for entire workflows, concatenating the
     algebra expressions for each individual use of a tool.
     """
+    no_passthrough = cli.Flag("--no-passthrough", default=False,
+        help="Treat tools as insular, disregarding specific input types")
 
     @cli.positional(cli.ExistingFile, cli.NonexistentPath)
     def main(self, wf_path, output):
         wf = Workflow(wf_path)
         g = TransformationGraph(cct, with_noncanonical_types=False,
-            passthrough=False)
+            passthrough=not self.no_passthrough)
         g.add_workflow(wf.root, wf.wf, wf.sources)
         g.serialize(str(output), format='ttl', encoding='utf-8')
 
