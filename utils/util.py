@@ -67,6 +67,8 @@ class TransformationGraphBuilder(cli.Application):
     algebra expressions for each individual use of a tool.
     """
     visual = cli.Flag("--visual", default=False)
+    blackbox = cli.Flag("--blackbox", help="Do not annotate internal types",
+        default=False)
     no_passthrough = cli.Flag("--no-passthrough", default=True,
         help="Treat tools as insular, disregarding specific input types")
 
@@ -93,7 +95,8 @@ class TransformationGraphBuilder(cli.Application):
                 rdf2dot(g, f)
         else:
             g = TransformationGraph(cct, with_noncanonical_types=False,
-                passthrough=not self.no_passthrough)
+                passthrough=not self.no_passthrough,
+                with_intermediate_types=not self.blackbox)
             g.add_workflow(wf.root, wf.wf, wf.sources)
             g.serialize(str(output_path), format='ttl', encoding='utf-8')
 
@@ -103,7 +106,10 @@ class QueryRunner(cli.Application):
     "Run a query."
     output = cli.SwitchAttr(["-o", "--output"], cli.NonexistentPath,
         mandatory=True, help="Output CSV file")
-    blackbox = cli.Flag("--blackbox", help="Only consider input and output")
+    endpoint = cli.SwitchAttr(["-e", "--endpoint"], str,
+        default="http://localhost:3030/name", help="SPARQL endpoint")
+    blackbox = cli.Flag("--blackbox", help="Only consider input and output",
+        default=False)
     unordered = cli.Flag("--unordered", help="Disregard stated chronology")
 
     @cli.positional(cli.ExistingFile)
@@ -113,11 +119,11 @@ class QueryRunner(cli.Application):
             return 1
         else:
             wfgraph = Graph(store='SPARQLStore')
-            wfgraph.open("http://localhost:3030/name")
+            wfgraph.open(self.endpoint)
 
             opts = {"by_input": True, "by_output": True, "by_operators": False}
             opts["by_chronology"] = not self.unordered and not self.blackbox
-            opts["by_types"] = not self.blackbox
+            opts["by_types"] = self.unordered and not self.blackbox
 
             queries: list[tuple[str, set[Node], Query]] = []
             all_workflows: set[Node] = set()

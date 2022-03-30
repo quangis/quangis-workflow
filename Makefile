@@ -2,6 +2,7 @@ BUILD_DIR=testbuild
 DEBUG_DIR=build
 UTIL=python3 utils/util.py
 FUSEKI=build/apache-jena-fuseki-4.3.2/fuseki-server
+SERVER=http://localhost:3030/
 TIMEOUT=60000
 
 graphs: \
@@ -66,7 +67,7 @@ $(BUILD_DIR)/%/query.rq: queries/%.json
 $(BUILD_DIR)/eval.csv: $(wildcard queries/*_eval.json)
 	@rm -f $@
 	@mkdir -p $(@D)
-	$(UTIL) query $^ -o $@
+	$(UTIL) query -e "$(SERVER)/name" $^ -o $@
 
 
 # Other
