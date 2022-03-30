@@ -132,4 +132,3 @@ with open(build_path / "results.csv", 'w', newline='') as f:
             "Precision": "{0:.3f}".format(n_tpos / (n_tpos + n_fpos)),
             "Recall": "{0:.3f}".format(n_tpos / (n_tpos + n_fneg))
         })
-
