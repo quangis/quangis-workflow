@@ -1,11 +1,10 @@
 BUILD_DIR=testbuild
 DEBUG_DIR=build
 UTIL=python3 utils/util.py
-JENA=build/apache-jena-4.3.2/bin
 FUSEKI=build/apache-jena-fuseki-4.3.2/fuseki-server
 TIMEOUT=60000
 
-all: $(BUILD_DIR)/tdb-insular/nodes.dat $(BUILD_DIR)/tdb-normal/nodes.dat
+all:
 
 graphs: $(BUILD_DIR)/cct.ttl $(patsubst scenarios/%.ttl,$(BUILD_DIR)/%.ttl,$(wildcard scenarios/*.ttl))
 
@@ -15,17 +14,21 @@ queries: $(patsubst queries/%.json,$(BUILD_DIR)/%.rq,$(wildcard queries/*.json))
 
 # Serving
 
-server-normal: $(BUILD_DIR)/tdb-normal/nodes.dat
-	$(FUSEKI) $(if $(TIMEOUT),--timeout=$(TIMEOUT),) --loc="$(<D)" /name
+$(BUILD_DIR)/normal.ttl: $(BUILD_DIR)/cct.ttl $(patsubst scenarios/%.ttl,$(BUILD_DIR)/%.ttl,$(wildcard scenarios/*.ttl))
+	$(UTIL) merge $@ $^
 
-server-insular: $(BUILD_DIR)/tdb-insular/nodes.dat
-	$(FUSEKI) $(if $(TIMEOUT),--timeout=$(TIMEOUT),) --loc="$(<D)" /name
+$(BUILD_DIR)/insular.ttl: $(BUILD_DIR)/cct.ttl $(patsubst scenarios/%.ttl,$(BUILD_DIR)/%.insular.ttl,$(wildcard scenarios/*.ttl))
+	$(UTIL) merge $@ $^
 
-$(BUILD_DIR)/tdb-insular/nodes.dat: $(BUILD_DIR)/cct.ttl $(patsubst scenarios/%.ttl,$(BUILD_DIR)/%.insular.ttl,$(wildcard scenarios/*.ttl))
-	$(JENA)/tdb1.xloader --loc $(@D) $^
+server-normal: $(BUILD_DIR)/normal.ttl
+	$(FUSEKI) --localhost --file="$@" \
+		$(if $(TIMEOUT),--timeout=$(TIMEOUT),) \
+		/name
 
-$(BUILD_DIR)/tdb-normal/nodes.dat: $(BUILD_DIR)/cct.ttl $(patsubst scenarios/%.ttl,$(BUILD_DIR)/%.ttl,$(wildcard scenarios/*.ttl))
-	$(JENA)/bin/tdb1.xloader --loc $(@D) $^
+server-normal: $(BUILD_DIR)/insular.ttl
+	$(FUSEKI) --localhost --file="$@" \
+		$(if $(TIMEOUT),--timeout=$(TIMEOUT),) \
+		/name
 
 
 # Building graphs

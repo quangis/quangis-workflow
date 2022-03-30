@@ -25,6 +25,16 @@ class Utility(cli.Application):
             return 1
 
 
+@Utility.subcommand("merge")
+class Merger(cli.Application):
+    @cli.positional(cli.NonexistentPath, cli.ExistingFile)
+    def main(self, output, *inputs):
+        g = Graph()
+        for i in inputs:
+            g.parse(str(i))
+        g.serialize(str(output), format='ttl', encoding='utf-8')
+
+
 @Utility.subcommand("vocab")
 class VocabBuilder(cli.Application):
     "Build CCT vocabulary file."
