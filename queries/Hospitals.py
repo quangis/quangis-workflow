@@ -45,7 +45,7 @@ query = Query(cct,
 
 # ------------------
 # simon:
-eval_old_hospitalsnear_simon = Query(cct,
+old_eval_hospitalsnear_simon = Query(cct,
     [R2(Obj, Ratio), R3(Obj, Ratio, Obj), AND(
         # hospital points
         [ObjectInfo(Nom)],
@@ -54,7 +54,7 @@ eval_old_hospitalsnear_simon = Query(cct,
     )]
 )
 
-eval_old_hospitalsnetwork_simon = Query(cct,
+old_eval_hospitalsnetwork_simon = Query(cct,
     [R2(Obj, Ratio), R3(Obj, Ratio, Obj), AND(
         # Roads
         [ObjectInfo(Nom)],

@@ -26,12 +26,12 @@ query = Query(cct,
 # input: dem: R2(L, Itv)
 # input: pour point: R3a(Obj, Reg, Nom)
 
-eval_old_flood = Query(cct, [R2(Ord, Ratio), R2(Ord, Reg), R2(Loc, Ratio), AND(
+old_eval_flood = Query(cct, [R2(Ord, Ratio), R2(Ord, Reg), R2(Loc, Ratio), AND(
     [R3(Loc, Ratio, Loc), R2(Loc, Itv)],
     [R2(Reg, Nom), ObjectInfo(Nom)]
 )])
 
-eval_old2_flood = Query(cct, [R2(Ord, Ratio), R2(Loc, Ratio), AND(
+old2_eval_flood = Query(cct, [R2(Ord, Ratio), R2(Loc, Ratio), AND(
     [R3(Loc, Ratio, Loc), R2(Loc, Itv)],
     [R2(Reg, Nom), ObjectInfo(Nom)]
 )])
