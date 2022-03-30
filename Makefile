@@ -25,13 +25,18 @@ server-normal: $(BUILD_DIR)/normal.ttl
 		$(if $(TIMEOUT),--timeout=$(TIMEOUT),) \
 		/name
 
-server-normal: $(BUILD_DIR)/insular.ttl
+server-insular: $(BUILD_DIR)/insular.ttl
 	$(FUSEKI) --localhost --file="$@" \
 		$(if $(TIMEOUT),--timeout=$(TIMEOUT),) \
 		/name
 
 
-# Building graphs
+# Building RDF graphs
+
+$(BUILD_DIR)/cct.dot: cct.py
+	@rm -f $@
+	@mkdir -p $(@D)
+	$(UTIL) vocab --visual $@
 
 $(BUILD_DIR)/cct.ttl: cct.py
 	@rm -f $@
@@ -48,6 +53,10 @@ $(BUILD_DIR)/%.ttl: scenarios/%.ttl
 	@mkdir -p $(@D)
 	$(UTIL) graph $< $@
 
+$(BUILD_DIR)/%.dot: scenarios/%.ttl
+	@rm -f $@
+	@mkdir -p $(@D)
+	$(UTIL) graph --visual $< $@
 
 # Queries
 
@@ -69,4 +78,4 @@ $(BUILD_DIR)/results.tex: $(BUILD_DIR)/results.csv
 		| csvsort | csv2latex > $@
 
 
-.PHONY: all graphs queries evaluations serve-insular serve-normal
+.PHONY: all graphs queries evaluations server-insular server-normal

@@ -2,20 +2,27 @@
 
 from __future__ import annotations
 
-from sys import stderr
 import json
 import csv
 from rdflib import Graph  # type: ignore
-from rdflib.term import Node  # type: ignore
+from rdflib.term import Node, Literal  # type: ignore
+from rdflib.namespace import RDFS  # type: ignore
+from rdflib.tools.rdf2dot import rdf2dot  # type: ignore
 from plumbum import cli  # type: ignore
 from transformation_algebra import Query, TransformationGraph
 
-from config import REPO  # type: ignore
+from config import REPO, TOOLS  # type: ignore
 from workflow import Workflow  # type: ignore
 from cct import cct
 
 
 class Utility(cli.Application):
+    """
+    A utility to create RDFs, graph visualizations, queries and other files
+    relevant to workflows annotated with tool descriptions from the CCT
+    algebra.
+    """
+
     def main(self, *args):
         if args:
             print(f"Unknown command {args[0]}")
@@ -38,12 +45,19 @@ class Merger(cli.Application):
 @Utility.subcommand("vocab")
 class VocabBuilder(cli.Application):
     "Build CCT vocabulary file."
+    visual = cli.Flag("--visual", default=False)
 
     @cli.positional(cli.NonexistentPath)
     def main(self, output):
-        vocab = TransformationGraph(cct)
-        vocab.add_vocabulary()
-        vocab.serialize(str(output), format='ttl', encoding='utf-8')
+        if self.visual:
+            vocab = TransformationGraph(cct, minimal=True, with_labels=True)
+            vocab.add_taxonomy()
+            with open(output, 'w') as f:
+                rdf2dot(vocab, f)
+        else:
+            vocab = TransformationGraph(cct)
+            vocab.add_vocabulary()
+            vocab.serialize(str(output), format='ttl', encoding='utf-8')
 
 
 @Utility.subcommand("graph")
@@ -52,16 +66,37 @@ class TransformationGraphBuilder(cli.Application):
     Generate transformation graphs for entire workflows, concatenating the
     algebra expressions for each individual use of a tool.
     """
-    no_passthrough = cli.Flag("--no-passthrough", default=False,
+    visual = cli.Flag("--visual", default=False)
+    no_passthrough = cli.Flag("--no-passthrough", default=True,
         help="Treat tools as insular, disregarding specific input types")
 
     @cli.positional(cli.ExistingFile, cli.NonexistentPath)
-    def main(self, wf_path, output):
+    def main(self, wf_path, output_path):
         wf = Workflow(wf_path)
-        g = TransformationGraph(cct, with_noncanonical_types=False,
-            passthrough=not self.no_passthrough)
-        g.add_workflow(wf.root, wf.wf, wf.sources)
-        g.serialize(str(output), format='ttl', encoding='utf-8')
+        if self.visual:
+            pass
+            g = TransformationGraph(cct, minimal=True, with_labels=True,
+                passthrough=not self.no_passthrough)
+            step2expr = g.add_workflow(wf.root, wf.wf, wf.sources)
+
+            # Annotate the expression nodes that correspond with output nodes
+            # of a tool with said tool
+            for output, tool in wf.tools.items():
+                g.add((step2expr[output], RDFS.comment, Literal(
+                    "using " + tool[len(TOOLS):]
+                )))
+            for output, comment in wf.comment.items():
+                g.add((step2expr[output], RDFS.comment, Literal(comment)))
+
+            g.add((step2expr[wf.output], RDFS.comment, Literal("output")))
+
+            with open(output_path, 'w') as f:
+                rdf2dot(g, f)
+        else:
+            g = TransformationGraph(cct, with_noncanonical_types=False,
+                passthrough=not self.no_passthrough)
+            g.add_workflow(wf.root, wf.wf, wf.sources)
+            g.serialize(str(output_path), format='ttl', encoding='utf-8')
 
 
 @Utility.subcommand("query")
