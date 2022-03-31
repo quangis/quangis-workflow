@@ -20,7 +20,7 @@ class Utility(cli.Application):
     """
     A utility to create RDFs, graph visualizations, queries and other files
     relevant to workflows annotated with tool descriptions from the CCT
-    algebra.
+    algebra
     """
 
     def main(self, *args):
@@ -28,12 +28,16 @@ class Utility(cli.Application):
             print(f"Unknown command {args[0]}")
             return 1
         if not self.nested_command:
-            self.helpall()
+            self.help()
             return 1
 
 
 @Utility.subcommand("merge")
 class Merger(cli.Application):
+    """
+    Merge RDF graphs
+    """
+
     @cli.positional(cli.NonexistentPath, cli.ExistingFile)
     def main(self, output, *inputs):
         g = Graph()
@@ -44,7 +48,7 @@ class Merger(cli.Application):
 
 @Utility.subcommand("vocab")
 class VocabBuilder(cli.Application):
-    "Build CCT vocabulary file."
+    "Build CCT vocabulary file"
     visual = cli.Flag("--visual", default=False)
 
     @cli.positional(cli.NonexistentPath)
@@ -64,20 +68,28 @@ class VocabBuilder(cli.Application):
 class TransformationGraphBuilder(cli.Application):
     """
     Generate transformation graphs for entire workflows, concatenating the
-    algebra expressions for each individual use of a tool.
+    algebra expressions for each individual use of a tool
     """
     visual = cli.Flag("--visual", default=False)
-    blackbox = cli.Flag("--blackbox", help="Do not annotate internal types",
-        default=False)
-    no_passthrough = cli.Flag("--no-passthrough", default=True,
-        help="Treat tools as insular, disregarding specific input types")
+
+    passthrough = True
+    @cli.switch(["-p", "--passthrough"], cli.Set("pass", "block"),
+        help="Whether to pass output type of one tool to the next")
+    def _passthrough(self, value):
+        self.passthrough = (value != "block")
+
+    internals = True
+    @cli.switch(["-i", "--internal"], cli.Set("opaque", "transparent"),
+        help="Either treat tools as black boxes, or annotate their internals")
+    def _internals(self, value):
+        self.internals = (value != "opaque")
 
     @cli.positional(cli.ExistingFile, cli.NonexistentPath)
     def main(self, wf_path, output_path):
         wf = Workflow(wf_path)
         if self.visual:
             g = TransformationGraph(cct, minimal=True, with_labels=True,
-                passthrough=not self.no_passthrough)
+                passthrough=self.passthrough)
             step2expr = g.add_workflow(wf.root, wf.wf, wf.sources)
 
             # Annotate the expression nodes that correspond with output nodes
@@ -95,22 +107,31 @@ class TransformationGraphBuilder(cli.Application):
                 rdf2dot(g, f)
         else:
             g = TransformationGraph(cct, with_noncanonical_types=False,
-                passthrough=not self.no_passthrough,
-                with_intermediate_types=not self.blackbox)
+                passthrough=self.passthrough,
+                with_intermediate_types=self.internals)
             g.add_workflow(wf.root, wf.wf, wf.sources)
             g.serialize(str(output_path), format='ttl', encoding='utf-8')
 
 
 @Utility.subcommand("query")
 class QueryRunner(cli.Application):
-    "Run a query."
+    """
+    Run transformation queries against a SPARQL endpoint
+    """
+
     output = cli.SwitchAttr(["-o", "--output"], cli.NonexistentPath,
         mandatory=True, help="Output CSV file")
     endpoint = cli.SwitchAttr(["-e", "--endpoint"], str,
         default="http://localhost:3030/name", help="SPARQL endpoint")
+
     blackbox = cli.Flag("--blackbox", help="Only consider input and output",
         default=False)
-    unordered = cli.Flag("--unordered", help="Disregard stated chronology")
+
+    ordered = True
+    @cli.switch(["--order"], cli.Set("chronological", "any"),
+        help="Whether to take into account order")
+    def _ordered(self, value):
+        self.ordered = (value == "chronological")
 
     @cli.positional(cli.ExistingFile)
     def main(self, *QUERY_FILE):
@@ -122,8 +143,8 @@ class QueryRunner(cli.Application):
             wfgraph.open(self.endpoint)
 
             opts = {"by_input": True, "by_output": True, "by_operators": False}
-            opts["by_chronology"] = not self.unordered and not self.blackbox
-            opts["by_types"] = self.unordered and not self.blackbox
+            opts["by_chronology"] = self.ordered and not self.blackbox
+            opts["by_types"] = not self.ordered and not self.blackbox
 
             queries: list[tuple[str, set[Node], Query]] = []
             all_workflows: set[Node] = set()
