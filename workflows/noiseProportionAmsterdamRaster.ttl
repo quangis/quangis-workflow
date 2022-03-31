@@ -10,34 +10,43 @@
 
 # @author: Simon Scheider
 
-# Workflow noisy region proportion in Amsterdam, vector variant
+# Workflow noisy region proportion in Amsterdam, raster variant
 # Workflow metadata (result and data sources)
-repo:NoiseProPortionAmsterdam2 a wf:Workflow;
-    rdfs:comment "What  is  the  proportion of the area of noise  greater  than  70  dB  in Amsterdam?"@en;
+repo:NoiseProportionAmsterdamRaster a wf:Workflow;
+    rdfs:comment "What  is  the  proportion  of  the  region  where  noise  is  greater  than  70  dB  in Amsterdam?"@en;
     wf:source pdok:cbs-gebiedsindelingen; #municipalities
     wf:source <https://maps.amsterdam.nl/geluid>;   #Amsterdam noise map
-    wf:edge _:wf3_1, _:wf3_3,_:wf3_5, _:wf3_6, _:wf3_8.
+    wf:edge _:wf3_1, _:wf3_2, _:wf3_3,_:wf3_5, _:wf3_6, _:wf3_8.
 
+_:wf3_1 wf:applicationOf tools:ContourToFieldRaster;
+    wf:input1 <https://maps.amsterdam.nl/geluid>;
+    rdfs:comment "noise map";
+    wf:output _:noise_raster.
 
-_:wf3_1 wf:applicationOf tools:SelectLayerContourToExistenceVector;
-    wf:input1 <https://maps.amsterdam.nl/geluid>; #noise map
-    wf:output _:noisy_vector. #noisy map
+_:wf3_2  wf:applicationOf tools:LocalMapAlgebraSubOrder;
+    wf:input1 _:noise_raster;
+    rdfs:comment "select noise geq 70 db";
+    wf:output _:noisy_raster.
 
 _:wf3_3  wf:applicationOf tools:SelectLayerByObjectTessObjects;
     wf:input1 pdok:cbs-gebiedsindelingen;
+    rdfs:comment "select amsterdam municipality";
     wf:output _:amsterdam_shp.
 
-_:wf3_6  wf:applicationOf  tools:AddObjectVectorRegionArea;
+_:wf3_5  wf:applicationOf tools:AddObjectVectorRegionArea;
     wf:input1 _:amsterdam_shp;
+    rdfs:comment "add area measure";
     wf:output _:amsterdam_area_shp.
 
-_:wf3_5  wf:applicationOf tools:IntersectDissolveField2Object;
-    wf:input1 _:noisy_vector;
+_:wf3_6  wf:applicationOf tools:ZonalStatisticsSize;
+    wf:input1 _:noisy_raster;
     wf:input2 _:amsterdam_area_shp;
+    rdfs:comment "measure size of noisy raster";
     wf:output _:amsterdam_area_area_shp.
 
-_:wf3_8 wf:applicationOf  tools:CalculateObjectAttrRatio;
+_:wf3_8 wf:applicationOf   tools:CalculateObjectAttrRatio;
     wf:input1 _:amsterdam_area_area_shp;
     wf:input2 _:amsterdam_area_shp;
+    rdfs:comment "proportion of noisy area";
     wf:output _:amsterdam_final_shp.
 
