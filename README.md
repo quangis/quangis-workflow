@@ -33,7 +33,7 @@ algebra are contained in [tools/tools.ttl](tools/tools.ttl).
 
 [utils/generate_graphs.py](utils/generate_graphs.py) generates `.ttl` files 
 that represent the transformation graphs for the workflows as they are 
-described in [scenarios/](scenarios), which are in turn described in terms of 
+described in [workflows/](workflows), which are in turn described in terms of 
 the GIS tools of [tools.ttl](tools/tools.ttl).
 
 
