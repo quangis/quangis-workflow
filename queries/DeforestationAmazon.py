@@ -6,7 +6,7 @@ from transformation_algebra.type import _
 from transformation_algebra.query import Query, AND
 from cct import cct, ObjectInfo, R1, R2, Obj, Reg, Nom, Ratio, Loc, Bool, size, extrapol, pi1  # type: ignore
 
-workflows = {REPO.Deforestation}
+workflows = {REPO.DeforestationAmazon}
 
 query = Query(cct,
     [R2(Bool, Ratio), AND(

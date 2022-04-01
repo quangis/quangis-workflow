@@ -6,8 +6,8 @@ from transformation_algebra.query import Query, AND
 from cct import cct, ObjectInfo, R2, Obj, Reg, Nom, Ratio, Ord, Loc  # type: ignore
 
 workflows = {
-    REPO.NoiseProportionAmsterdamVector,
-    REPO.NoiseProportionAmsterdamRaster}
+    REPO.NoiseProportionAmsterdam_Vector,
+    REPO.NoiseProportionAmsterdam_Raster}
 
 # noiseProPortionAmsterdam:
 # output: R3a(Obj, Reg, Ratio) #

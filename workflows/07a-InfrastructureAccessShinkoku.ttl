@@ -16,7 +16,7 @@
 
 # Workflow  Infrastructure Access
 # Workflow metadata (result and data sources)
-repo:InfrastructureAccess a wf:Workflow;
+repo:InfrastructureAccessShikoku a wf:Workflow;
     rdfs:comment "How much of the rural population in Shikoku, Japan, can reach all-season roads?"@en;
     dct:subject "Out: IntV, In: OS, In: OS, In: OS";
     dbo:abstract "In this lesson, you'll act as an analyst in Japan's National Statistical Office. To promote sustainable development in the nation's rural areas, you'll estimate access to all-season roads. First, you'll add population and road data and limit your study area to rural regions. Then, you'll create a 2-kilometer buffer around all-season roads and calculate the percentage of the rural population within that buffer.";

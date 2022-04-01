@@ -6,7 +6,7 @@ from config import REPO  # type: ignore
 from transformation_algebra.query import Query, AND, OR
 from cct import cct, ObjectInfo, R2, Obj, Reg, Nom, Ratio, Loc, Itv, groupbyLR, avg  # type: ignore
 
-workflows = {REPO.SolarPowerPotential}
+workflows = {REPO.SolarPowerPotentialGloverPark}
 
 query = Query(cct,
     [ObjectInfo(Ratio), groupbyLR, OR(

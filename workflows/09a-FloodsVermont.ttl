@@ -16,7 +16,7 @@
 
 # Workflow amounts of temperature in Utrecht
 # Workflow metadata (result and data sources)
-repo:Floods a wf:Workflow;
+repo:FloodsVermont a wf:Workflow;
     rdfs:comment "Which areas are susceptible to flooding in Vermont during a predicted rainstorm?"@en;
     dct:subject "";
     dbo:abstract " Stowe, a small Vermont town of nearly 5,000 residents, suffered considerably when the remnants of Hurricane Irene stuck the Green Mountain region in August 2011. The Little River overflowed and washed out roads, bridges, and culverts. Wanting to learn from the tragedy, Stowe officials discovered that they had precious little information involving flood prediction. They turned to hydrographs, which are line graphs determining how much water a stream will discharge during a rainstorm. In this lesson, you'll create those hydrographs.";

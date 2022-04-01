@@ -6,7 +6,7 @@ from config import REPO  # type: ignore
 from transformation_algebra.query import Query, AND
 from cct import cct, ObjectInfo, R2, R3, Obj, Reg, Nom, Ratio, Loc, select, pi1, oDist, loTopo  # type: ignore
 
-workflows = {REPO.Aquifer}
+workflows = {REPO.OgallalaAquifer}
 
 query = Query(cct,
     [ObjectInfo(Nom), select, loTopo, AND(

@@ -16,7 +16,7 @@
 
 # Workflow Aquifer Depletion
 # Workflow metadata (result and data sources)
-repo:Aquifer a wf:Workflow;
+repo:OgallalaAquifer a wf:Workflow;
     rdfs:comment "What areas of the Ogallala Aquifer in the United States are at risk from water depletion?"@en;
     dct:subject "Out: Ratio, In: R(Obj, Reg), In: R(Obj, Reg), In: R(Loc, Bool)";
     dbo:abstract "Water from underground aquifers can help create rich farmland and prosperous cities in places that would otherwise not provide enough water. However, many aquifers are being emptied far faster than they can be recharged by rainwater. The Ogallala (High Plains) Aquifer in the United States is one of the largest in the world, spanning 450,000 square kilometers and eight states. It is also at risk of depletion. In this lesson, you'll locate areas where agricultural irrigation, urbanization, and low precipitation place the heaviest burden on the Ogallala Aquifer.";

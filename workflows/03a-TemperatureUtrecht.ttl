@@ -14,7 +14,7 @@
 
 # Workflow amounts of temperature in Utrecht
 # Workflow metadata (result and data sources)
-repo:AmountFieldUtrecht a wf:Workflow;
+repo:TemperatureUtrecht a wf:Workflow;
     rdfs:comment "What is the average temperature for each neighborhood in Utrecht?"@en;
     rdfs:comment "What is the distribution of temperature in Utrecht across neighborhoods?"@en;
     wf:source pdok:cbs-gebiedsindelingen; #municipalities

@@ -12,7 +12,7 @@
 
 # Workflow noisy region proportion in Amsterdam, raster variant
 # Workflow metadata (result and data sources)
-repo:NoiseProportionAmsterdamRaster a wf:Workflow;
+repo:NoiseProportionAmsterdam_Raster a wf:Workflow;
     rdfs:comment "What  is  the  proportion  of  the  region  where  noise  is  greater  than  70  dB  in Amsterdam?"@en;
     wf:source pdok:cbs-gebiedsindelingen; #municipalities
     wf:source <https://maps.amsterdam.nl/geluid>;   #Amsterdam noise map

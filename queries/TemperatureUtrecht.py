@@ -5,7 +5,7 @@ from config import REPO  # type: ignore
 from transformation_algebra.query import Query, AND
 from cct import cct, ObjectInfo, R2, Obj, Reg, Nom, Loc, Itv, groupbyLR, avg  # type: ignore
 
-workflows = {REPO.AmountFieldUtrecht}
+workflows = {REPO.TemperatureUtrecht}
 
 query = Query(cct,
     [ObjectInfo(Itv), groupbyLR, AND(

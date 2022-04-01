@@ -5,7 +5,7 @@ from config import REPO  # type: ignore
 from transformation_algebra.query import Query, AND
 from cct import cct, ObjectInfo, R2, R3, Obj, Reg, Nom, Ratio, Ord, Loc, Itv, groupbyLR, size, max, accumulate, flowdirgraph, lgDist  # type: ignore
 
-workflows = {REPO.Floods}
+workflows = {REPO.FloodsVermont}
 
 query = Query(cct,
     [R2(Ord, Ratio), groupbyLR, AND(

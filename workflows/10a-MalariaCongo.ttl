@@ -16,7 +16,7 @@
 
 # Workflow amounts of temperature in Utrecht
 # Workflow metadata (result and data sources)
-repo:Malaria a wf:Workflow;
+repo:MalariaCongo a wf:Workflow;
     rdfs:comment "What areas have the highest malaria incidence rate in the Democratic Republic of the Congo between 2010-2015?"@en;
     dct:subject "";
     dbo:abstract " You are a member of the Ministry of Public Health for the Democratic Republic of the Congo assigned to monitor progress on eradicating malaria and reporting on the United Nations Sustainable Development Goal (SDG) #3 Good Health and Well-Being. To gather intelligence on where prevention and aid are most needed, and to calculate the incidence rate per 1,000 for SDG reporting, you'll use Esri's Living Atlas layers and the Malaria Atlas Project's incidence reports to map the spatial and temporal distribution from 2000-2015.";

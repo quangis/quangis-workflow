@@ -5,7 +5,7 @@ from config import REPO  # type: ignore
 from transformation_algebra.query import Query, AND
 from cct import cct, ObjectInfo, R2, R3, Obj, Reg, Nom, Ratio, Loc, groupbyLR, min, nDist  # type: ignore
 
-workflows = {REPO.HospitalsNetwork, REPO.HospitalsNear}
+workflows = {REPO.HospitalsUtrecht_Network, REPO.HospitalsUtrecht_Near}
 
 query = Query(cct,
     [ObjectInfo(Ratio), groupbyLR, AND(
@@ -67,7 +67,7 @@ old_eval_hospitalsnetwork_simon = Query(cct,
 
 
 # Corrected version: 2022/02/04
-eval_hospitalsnear = Query(cct,
+eval_hospitals = Query(cct,
     [ObjectInfo(Ratio), R3(Obj, Ratio, Obj), AND(
         # hospital points
         [ObjectInfo(Nom)],
@@ -76,13 +76,13 @@ eval_hospitalsnear = Query(cct,
     )]
 )
 
-eval_hospitalsnetwork = Query(cct,
-    [ObjectInfo(Ratio), R3(Obj, Ratio, Obj), AND(
-        # Roads
-        [ObjectInfo(Nom)],
-        # Hospital points
-        [ObjectInfo(Nom)],
-        # Incident location
-        [ObjectInfo(Nom)]
-    )]
-)
+# eval_hospitalsnetwork = Query(cct,
+#     [ObjectInfo(Ratio), R3(Obj, Ratio, Obj), AND(
+#         # Roads
+#         [ObjectInfo(Nom)],
+#         # Hospital points
+#         [ObjectInfo(Nom)],
+#         # Incident location
+#         [ObjectInfo(Nom)]
+#     )]
+# )

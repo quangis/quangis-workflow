@@ -16,7 +16,7 @@
 
 # Workflow Solar Power Potential
 # Workflow metadata (result and data sources)
-repo:SolarPowerPotential a wf:Workflow;
+repo:SolarPowerPotentialGloverPark a wf:Workflow;
     rdfs:comment "How much solar radiation does each rooftop in Glover Park, Washington, D.C., receive throughout the year?"@en;
     dct:subject "";
     dbo:abstract "Your nonprofit organization recently launched a pilot program to encourage the residents of the Glover Park neighborhood in Washington, D.C., to install solar panels on their roofs. The goal is for the solar panels to produce a large part of the electric power consumed by each household.In this lesson, you will use ArcGIS Pro to determine how much solar radiation each rooftop in the neighborhood receives throughout the year. Then, you will estimate how much electric power each rooftop (and the neighborhood as a whole) could generate if every suitable building was equipped with solar panels.";

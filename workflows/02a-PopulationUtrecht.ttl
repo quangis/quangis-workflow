@@ -13,7 +13,7 @@
 
 # Workflow amounts of people in Utrecht
 # Workflow metadata (result and data sources)
-repo:AmountObjectsUtrecht a wf:Workflow;
+repo:PopulationUtrecht a wf:Workflow;
     rdfs:comment "What is the number of people for each neighborhood in Utrecht?"@en;
     rdfs:comment "What is the distribution of people across neighborhoods in Utrecht?"@en;
     wf:source pdok:cbs-gebiedsindelingen; #municipalities

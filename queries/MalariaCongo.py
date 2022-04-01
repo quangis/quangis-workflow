@@ -6,7 +6,7 @@ from config import REPO  # type: ignore
 from transformation_algebra.query import Query, AND
 from cct import cct, ObjectInfo, R2, Obj, Reg, Nom, Count, Ratio, ratio, sum, groupbyLR  # type: ignore
 
-workflows = {REPO.Malaria}
+workflows = {REPO.MalariaCongo}
 
 malaria = Query(cct,
     [ObjectInfo(Ratio), AND(

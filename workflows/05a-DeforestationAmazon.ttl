@@ -17,7 +17,7 @@
 
 # Workflow Deforestation
 # Workflow metadata (result and data sources)
-repo:Deforestation a wf:Workflow;
+repo:DeforestationAmazon a wf:Workflow;
     rdfs:comment "What area is potentially deforested within 5.5 km of a planned road in the Amazon rainforest?"@en;
     dct:subject "Out: Ratio, In: R(Obj, Reg), In: R(Obj, Reg), In: R(Loc, Bool)";
     dbo:abstract "The Amazon rain forest spans nine countries and millions of square kilometers. Due to deforestation, current estimates indicate only about 80 percent of the original rain forest remains. In this lesson, you'll use ArcGIS Pro to create a map of deforestation in the Brazilian state of Rondonia. Then, you'll predict how much deforestation would be caused by a road proposed to be built across the state. Your workflow requires a wide variety of data, feature editing, and analysis tools. You'll also learn how to share your results as an informative print map.";
