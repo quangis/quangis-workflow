@@ -18,14 +18,16 @@ from queries import all_queries, all_workflows
 
 
 wfgraph = Graph(store='SPARQLStore')
-wfgraph.open("http://localhost:3030/name")
+wfgraph.open("http://localhost:3030/db-OP")
 
 # Varying options to try
 option_variants = {
-    "inputs": {"by_input": True, "by_output": False, "by_operators": False, "by_types": False, "by_chronology": False},
-    # "output": {"by_operators": False, "by_types": False, "by_chronology": False},
-    # "types": {"by_operators": False, "by_types": True, "by_chronology": False},
-    # "ordered": {"by_operators": False, "by_types": True, "by_chronology": True}
+    "E": {"by_input": True, "by_output": True, "by_types": False,
+        "by_operators": False, "by_chronology": False},
+    "A": {"by_input": True, "by_output": True, "by_types": True,
+        "by_operators": False, "by_chronology": False},
+    # "C": {"by_input": True, "by_output": True, "by_types": True,
+    #      "by_operators": False, "by_chronology": True},
 }
 
 
@@ -49,7 +51,7 @@ with open(build_path / "results.csv", 'w', newline='') as f:
         n_fneg = 0
 
         # for scenario, variant, expected_workflows, query in all_queries:
-        for elem in all_queries:
+        for elem in sorted(all_queries, key=lambda x: x["name"]):
             scenario = elem["name"]
             expected = set(elem["expected"])
             for variant, query in elem["variants"].items():
@@ -85,14 +87,14 @@ with open(build_path / "results.csv", 'w', newline='') as f:
                 for wf in all_workflows:
                     if wf in pos:
                         if wf in expected:
-                            s = "TP"
+                            s = "● "  # tp
                         else:
-                            s = "FP"
+                            s = "●⨯"  # fp
                     else:
                         if wf in expected:
-                            s = "FN"
+                            s = "○⨯"  # false neg
                         else:
-                            s = "TN"
+                            s = "○ "  # true neg
 
                     result[wfname(wf)] = s
 
@@ -111,13 +113,15 @@ with open(build_path / "results.csv", 'w', newline='') as f:
                     result["Precision"] = "{0:.3f}".format(
                         i_tpos / (i_tpos + i_fpos))
                 except ZeroDivisionError:
-                    result["Precision"] = "0.000"
+                    assert i_tneg + i_fpos == len(all_workflows)
+                    result["Precision"] = "n/a"
 
                 try:
                     result["Recall"] = "{0:.3f}".format(
                         i_tpos / (i_tpos + i_fneg))
                 except ZeroDivisionError:
-                    result["Recall"] = "0.000"
+                    assert i_tneg + i_fpos == len(all_workflows)
+                    result["Recall"] = "n/a"
 
                 w.writerow(result)
 
