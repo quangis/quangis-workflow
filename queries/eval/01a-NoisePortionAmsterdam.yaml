@@ -1,0 +1,11 @@
+question: |
+  What is the proportion of noise ≥ 70dB in Amsterdam?
+workflows:
+  - NoisePortionAmsterdam
+transform:
+  - R2(Ord, Reg)
+  - R2(Loc, Ord)
+  - all:
+    - - R2(Loc, Ord)
+      - R2(Ord, Reg) # noise
+    - - ObjectInfo(Nom) # cbs buurten

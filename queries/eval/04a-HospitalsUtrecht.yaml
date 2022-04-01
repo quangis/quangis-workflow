@@ -1,0 +1,11 @@
+question: |
+  What is the travel distance to the nearest hospital in California?
+workflows:
+  - HospitalsUtrecht_Network
+  - HospitalsUtrecht_Near
+transform:
+  - ObjectInfo(Ratio)
+  - R3(Obj, Ratio, Obj)
+  - all:
+    - ObjectInfo(Nom) # hospital points
+    - ObjectInfo(Nom) # incident locations

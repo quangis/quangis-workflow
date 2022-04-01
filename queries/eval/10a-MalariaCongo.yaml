@@ -1,0 +1,14 @@
+question: |
+  What is the malaria incidence rate per 1000 inhabitants in the Democratic
+  Republic of the Congo?
+workflows:
+  - MalariaCongo
+transform:
+  - ObjectInfo(Ratio)
+  - all:
+    - - ObjectInfo(Count) # popAdminDRC
+      - all:
+        - R2(Reg, Count) # population on cells
+        - ObjectInfo(Nom) # adminDRC2
+    - - ObjectInfo(Count)
+      - R2(Obj, Count) # adminIncidence2

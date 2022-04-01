@@ -1,0 +1,23 @@
+question: |
+  What is the percentage of rural population within 2km distance to all-season
+  roads in Shikoku, Japan?
+workflows:
+  - InfrastructureAccessShinkoku
+transform:
+  - R2(Reg, Ratio) # count amount ratio
+  - all:
+    - - R2(Reg, Count) # rural clip and summing contentamount (rural_pop1)
+      - ObjectInfo(Count)
+      - all:
+        - - ObjectInfo(Count) # chochomoku
+        - - R2(Obj, Reg) # rural
+          - ObjectInfo(Nom)
+    - - R2(Reg, Count) # rural_access1 via areal interpolation
+      - all:
+        - - ObjectInfo(Count) # rural_clip
+          - all:
+            - - ObjectInfo(Count) # chocomoku
+            - - R2(Obj, Reg) # rural
+              - ObjectInfo(Nom)
+        - - R2(Loc, Bool) # roads_buffer
+          - ObjectInfo(Nom)

@@ -1,0 +1,12 @@
+question: |
+  What is the stream runoff during a predicted rainstorm in Vermont, US?
+workflows:
+  - FloodsVermont
+transform:
+  - R2(Ord, Ratio)
+  - R2(Loc, Ord)
+  - all:
+    - - R3(Loc, Ratio, Loc)
+      - R2(Loc, Itv) # DEM
+    - - R2(Nom, Reg)
+      - ObjectInfo(Nom) # pour point
