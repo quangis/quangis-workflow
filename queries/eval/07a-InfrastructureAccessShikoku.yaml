@@ -2,7 +2,7 @@ question: |
   What is the percentage of rural population within 2km distance to all-season
   roads in Shikoku, Japan?
 workflows:
-  - InfrastructureAccessShinkoku
+  - InfrastructureAccessShikoku
 transform:
   - R2(Reg, Ratio) # count amount ratio
   - all:

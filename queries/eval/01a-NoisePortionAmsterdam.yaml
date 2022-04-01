@@ -1,5 +1,5 @@
 question: |
-  What is the proportion of noise ≥ 70dB in Amsterdam?
+  What is the portion of noise ≥ 70dB in Amsterdam?
 workflows:
   - NoisePortionAmsterdam
 transform:

@@ -6,7 +6,7 @@ from config import REPO  # type: ignore
 from transformation_algebra.query import Query, AND, STEPS
 from cct import cct, ObjectInfo, R1, R2, Obj, Reg, Nom, Ord, Count, Ratio, Loc, Bool, ratio, extrapol  # type: ignore
 
-workflows = {REPO.InfrastructureAccessShinkoku}
+workflows = {REPO.InfrastructureAccessShikoku}
 
 query = Query(cct,
     [R2(Reg, Ratio), AND(
