@@ -123,8 +123,10 @@ class QueryRunner(cli.Application):
     """
 
     output = cli.SwitchAttr(["-o", "--output"], cli.NonexistentPath,
-        mandatory=True, help="Output CSV file")
-    endpoint = cli.SwitchAttr(["-e", "--endpoint"], help="SPARQL endpoint")
+        mandatory=True, help="Output file")
+    endpoint = cli.SwitchAttr(["-e", "--endpoint"],
+        help="SPARQL endpoint; if none is given, output queries; otherwise
+            output results in CSV format")
 
     blackbox = cli.Flag("--blackbox", help="Only consider input and output",
         default=False)
@@ -192,14 +194,14 @@ class QueryRunner(cli.Application):
                         for wf in all_workflows:
                             if wf in pos:
                                 if wf in expected:
-                                    s = "TP"
+                                    s = "● "  # true positive
                                 else:
-                                    s = "FP"
+                                    s = "●⨯"  # false positive
                             else:
                                 if wf in expected:
-                                    s = "FN"
+                                    s = "○⨯"  # false negative
                                 else:
-                                    s = "TN"
+                                    s = "○ "  # true negative
 
                             result[str(wf)[len(REPO):]] = s
 
@@ -217,13 +219,13 @@ class QueryRunner(cli.Application):
                             result["Precision"] = "{0:.3f}".format(
                                 i_tpos / (i_tpos + i_fpos))
                         except ZeroDivisionError:
-                            result["Precision"] = "0.000"
+                            result["Precision"] = "n/a"
 
                         try:
                             result["Recall"] = "{0:.3f}".format(
                                 i_tpos / (i_tpos + i_fneg))
                         except ZeroDivisionError:
-                            result["Recall"] = "0.000"
+                            result["Recall"] = "n/a"
 
                         w.writerow(result)
 
