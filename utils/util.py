@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-import json
+import yaml
 import csv
 from rdflib import Graph  # type: ignore
 from rdflib.term import Node, Literal  # type: ignore
@@ -73,12 +73,14 @@ class TransformationGraphBuilder(cli.Application):
     visual = cli.Flag("--visual", default=False)
 
     passthrough = True
+
     @cli.switch(["-p", "--passthrough"], cli.Set("pass", "block"),
         help="Whether to pass output type of one tool to the next")
     def _passthrough(self, value):
         self.passthrough = (value != "block")
 
     internals = True
+
     @cli.switch(["-i", "--internal"], cli.Set("opaque", "transparent"),
         help="Either treat tools as black boxes, or annotate their internals")
     def _internals(self, value):
@@ -116,18 +118,19 @@ class TransformationGraphBuilder(cli.Application):
 @Utility.subcommand("query")
 class QueryRunner(cli.Application):
     """
-    Run transformation queries against a SPARQL endpoint
+    Run transformation queries against a SPARQL endpoint. If no endpoint is
+    given, just output the query instead.
     """
 
     output = cli.SwitchAttr(["-o", "--output"], cli.NonexistentPath,
         mandatory=True, help="Output CSV file")
-    endpoint = cli.SwitchAttr(["-e", "--endpoint"], str,
-        default="http://localhost:3030/name", help="SPARQL endpoint")
+    endpoint = cli.SwitchAttr(["-e", "--endpoint"], help="SPARQL endpoint")
 
     blackbox = cli.Flag("--blackbox", help="Only consider input and output",
         default=False)
 
     ordered = True
+
     @cli.switch(["--order"], cli.Set("chronological", "any"),
         help="Whether to take into account order")
     def _ordered(self, value):
@@ -139,8 +142,11 @@ class QueryRunner(cli.Application):
             self.help()
             return 1
         else:
-            wfgraph = Graph(store='SPARQLStore')
-            wfgraph.open(self.endpoint)
+            if self.endpoint:
+                wfgraph = Graph(store='SPARQLStore')
+                wfgraph.open(self.endpoint)
+            else:
+                wfgraph = None
 
             opts = {"by_input": True, "by_output": True, "by_operators": False}
             opts["by_chronology"] = self.ordered and not self.blackbox
@@ -150,81 +156,87 @@ class QueryRunner(cli.Application):
             all_workflows: set[Node] = set()
             for path in QUERY_FILE:
                 with open(path, 'r') as fp:
-                    dct = json.load(fp)
+                    dct = yaml.safe_load(fp)
                 query = Query.from_dict(cct, dct)
-                expected = set(REPO[e] for e in dct["expected"])
+                expected = set(REPO[e] for e in dct["workflows"])
                 all_workflows.update(expected)
                 queries.append((path.stem, expected, query))
 
             header = ["Query", "Precision", "Recall"] + sorted([
                 str(wf)[len(REPO):] for wf in all_workflows])
 
-            with open(self.output, 'w', newline='') as h:
-                w = csv.DictWriter(h, fieldnames=header)
-                w.writeheader()
-                n_tpos = 0
-                n_tneg = 0
-                n_fpos = 0
-                n_fneg = 0
-                for name, expected, query in queries:
-                    sparql = query.sparql(**opts)
-                    result: dict[str, str] = {"Query": name}
-                    try:
-                        results = wfgraph.query(sparql)
-                    except ValueError:
-                        print("Server is down or timed out.")
-                        pos = set()
-                    else:
-                        pos = set(r.workflow for r in results)
-
-                    for wf in all_workflows:
-                        if wf in pos:
-                            if wf in expected:
-                                s = "TP"
-                            else:
-                                s = "FP"
+            if not wfgraph:
+                with open(self.output, 'w', newline='') as h:
+                    for _, _, query in queries:
+                        sparql = query.sparql(**opts)
+                        h.write(sparql)
+            else:
+                with open(self.output, 'w', newline='') as h:
+                    w = csv.DictWriter(h, fieldnames=header)
+                    w.writeheader()
+                    n_tpos = 0
+                    n_tneg = 0
+                    n_fpos = 0
+                    n_fneg = 0
+                    for name, expected, query in queries:
+                        sparql = query.sparql(**opts)
+                        result: dict[str, str] = {"Query": name}
+                        try:
+                            results = wfgraph.query(sparql)
+                        except ValueError:
+                            print("Server is down or timed out.")
+                            pos = set()
                         else:
-                            if wf in expected:
-                                s = "FN"
+                            pos = set(r.workflow for r in results)
+
+                        for wf in all_workflows:
+                            if wf in pos:
+                                if wf in expected:
+                                    s = "TP"
+                                else:
+                                    s = "FP"
                             else:
-                                s = "TN"
+                                if wf in expected:
+                                    s = "FN"
+                                else:
+                                    s = "TN"
 
-                        result[str(wf)[len(REPO):]] = s
+                            result[str(wf)[len(REPO):]] = s
 
-                    false_pos = (pos - expected)
-                    false_neg = (expected - pos)
-                    true_pos = (pos - false_pos)
-                    true_neg = (set(all_workflows) - true_pos)
+                        false_pos = (pos - expected)
+                        false_neg = (expected - pos)
+                        true_pos = (pos - false_pos)
+                        true_neg = (set(all_workflows) - true_pos)
 
-                    n_tpos += (i_tpos := len(true_pos))
-                    n_tneg += (i_tneg := len(true_neg))
-                    n_fpos += (i_fpos := len(false_pos))
-                    n_fneg += (i_fneg := len(false_neg))
+                        n_tpos += (i_tpos := len(true_pos))
+                        n_tneg += (i_tneg := len(true_neg))
+                        n_fpos += (i_fpos := len(false_pos))
+                        n_fneg += (i_fneg := len(false_neg))
+
+                        try:
+                            result["Precision"] = "{0:.3f}".format(
+                                i_tpos / (i_tpos + i_fpos))
+                        except ZeroDivisionError:
+                            result["Precision"] = "0.000"
+
+                        try:
+                            result["Recall"] = "{0:.3f}".format(
+                                i_tpos / (i_tpos + i_fneg))
+                        except ZeroDivisionError:
+                            result["Recall"] = "0.000"
+
+                        w.writerow(result)
 
                     try:
-                        result["Precision"] = "{0:.3f}".format(
-                            i_tpos / (i_tpos + i_fpos))
+                        w.writerow({
+                            "Precision": "{0:.3f}".format(n_tpos / (n_tpos + n_fpos)),
+                            "Recall": "{0:.3f}".format(n_tpos / (n_tpos + n_fneg))
+                        })
                     except ZeroDivisionError:
-                        result["Precision"] = "0.000"
-
-                    try:
-                        result["Recall"] = "{0:.3f}".format(
-                            i_tpos / (i_tpos + i_fneg))
-                    except ZeroDivisionError:
-                        result["Recall"] = "0.000"
-
-                    w.writerow(result)
-
-                try:
-                    w.writerow({
-                        "Precision": "{0:.3f}".format(n_tpos / (n_tpos + n_fpos)),
-                        "Recall": "{0:.3f}".format(n_tpos / (n_tpos + n_fneg))
-                    })
-                except ZeroDivisionError:
-                    w.writerow({
-                        "Precision": "{0:.3f}".format(0),
-                        "Recall": "{0:.3f}".format(0)
-                    })
+                        w.writerow({
+                            "Precision": "{0:.3f}".format(0),
+                            "Recall": "{0:.3f}".format(0)
+                        })
 
 
 if __name__ == '__main__':
