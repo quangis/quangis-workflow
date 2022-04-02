@@ -6,16 +6,16 @@
 # -   Passthrough / Blocked
 # The test for Passthrough/Blocked and Opaque/Transparent operate on dedicated
 # database files: PO/PT/BO/BT. Since order is irrelevant at level 1, we get
-# 16-4 different evaluation files: EP/OPC/TPC/OPA/TPA/EB/OBA/TBA/OBC/TBC
+# 16-4 different evaluation files: EB/EP/OPC/TPC/OPA/TPA/OBA/TBA/OBC/TBC
 
 BUILD_DIR=testbuild
 DEBUG_DIR=build
-UTIL=python3 utils/util.py
+TATOOL=python3 utils/ta-tool.py
 FUSEKI=build/apache-jena-fuseki-4.3.2/fuseki-server
 SERVER=http://localhost:3030
-TIMEOUT=60000
-SCENARIOS=$(wildcard scenarios/*.ttl)
-QUERIES_EVAL=$(wildcard queries/*eval.json)
+TIMEOUT=
+WFs=$(wildcard workflows/*.ttl)
+QUERIES_EVAL=$(wildcard queries/eval/*.yaml)
 
 # graphs: \
 # 	$(BUILD_DIR)/cct.ttl \
@@ -25,24 +25,37 @@ QUERIES_EVAL=$(wildcard queries/*eval.json)
 
 evaluations: $(BUILD_DIR)/eval.csv
 
-queries: $(QUERIES_EVAL:queries/%.json=$(BUILD_DIR)/%.rq)
+queries: $(QUERIES_EVAL:queries_eval/%.yaml=$(BUILD_DIR)/%/eval.rq)
 
 # Serving
 
-$(BUILD_DIR)/db-OP.ttl: $(BUILD_DIR)/cct.ttl $(SCENARIOS:scenarios/%.ttl=$(BUILD_DIR)/%/graph-OP.ttl)
-	$(UTIL) merge $@ $^
+$(BUILD_DIR)/db-OP.ttl: $(BUILD_DIR)/cct.ttl $(WFs:workflows/%.ttl=$(BUILD_DIR)/%/graph-OP.ttl)
+	@rm -f $@; mkdir -p $(@D)
+	$(TATOOL) merge $@ $^
 
-$(BUILD_DIR)/db-OB.ttl: $(BUILD_DIR)/cct.ttl $(SCENARIOS:scenarios/%.ttl=$(BUILD_DIR)/%/graph-OB.ttl)
-	$(UTIL) merge $@ $^
+$(BUILD_DIR)/db-OB.ttl: $(BUILD_DIR)/cct.ttl $(WFs:workflows/%.ttl=$(BUILD_DIR)/%/graph-OB.ttl)
+	@rm -f $@; mkdir -p $(@D)
+	$(TATOOL) merge $@ $^
 
-$(BUILD_DIR)/db-TP.ttl: $(BUILD_DIR)/cct.ttl $(SCENARIOS:scenarios/%.ttl=$(BUILD_DIR)/%/graph-TP.ttl)
-	$(UTIL) merge $@ $^
+$(BUILD_DIR)/db-TP.ttl: $(BUILD_DIR)/cct.ttl $(WFs:workflows/%.ttl=$(BUILD_DIR)/%/graph-TP.ttl)
+	@rm -f $@; mkdir -p $(@D)
+	$(TATOOL) merge $@ $^
 
-$(BUILD_DIR)/db-TB.ttl: $(BUILD_DIR)/cct.ttl $(SCENARIOS:scenarios/%.ttl=$(BUILD_DIR)/%/graph-TB.ttl)
-	$(UTIL) merge $@ $^
+$(BUILD_DIR)/db-TB.ttl: $(BUILD_DIR)/cct.ttl $(WFs:workflows/%.ttl=$(BUILD_DIR)/%/graph-TB.ttl)
+	@rm -f $@; mkdir -p $(@D)
+	$(TATOOL) merge $@ $^
 
 # Run servers at /db-%
-db-%: $(BUILD_DIR)/db-%.ttl
+db-OP: $(BUILD_DIR)/db-OP.ttl
+	$(FUSEKI) --localhost --file="$<" $(if $(TIMEOUT),--timeout=$(TIMEOUT),) /$@
+
+db-OB: $(BUILD_DIR)/db-OB.ttl
+	$(FUSEKI) --localhost --file="$<" $(if $(TIMEOUT),--timeout=$(TIMEOUT),) /$@
+
+db-TB: $(BUILD_DIR)/db-TB.ttl
+	$(FUSEKI) --localhost --file="$<" $(if $(TIMEOUT),--timeout=$(TIMEOUT),) /$@
+
+db-TP: $(BUILD_DIR)/db-TP.ttl
 	$(FUSEKI) --localhost --file="$<" $(if $(TIMEOUT),--timeout=$(TIMEOUT),) /$@
 
 .PHONY: db-OP db-TP db-OB db-TB
@@ -52,77 +65,77 @@ db-%: $(BUILD_DIR)/db-%.ttl
 
 $(BUILD_DIR)/cct.dot: cct.py
 	@rm -f $@; mkdir -p $(@D)
-	$(UTIL) vocab --visual $@
+	$(TATOOL) vocab --visual $@
 
 $(BUILD_DIR)/cct.ttl: cct.py
 	@rm -f $@; mkdir -p $(@D)
-	$(UTIL) vocab $@
+	$(TATOOL) vocab $@
 
-$(BUILD_DIR)/%/graph-OP.ttl: scenarios/%.ttl
+$(BUILD_DIR)/%/graph-OP.ttl: workflows/%.ttl
 	@rm -f $@; mkdir -p $(@D)
-	$(UTIL) graph --passthrough=pass --internals=opaque $< $@
+	$(TATOOL) graph --passthrough=pass --internal=opaque $< $@
 
-$(BUILD_DIR)/%/graph-TP.ttl: scenarios/%.ttl
+$(BUILD_DIR)/%/graph-TP.ttl: workflows/%.ttl
 	@rm -f $@; mkdir -p $(@D)
-	$(UTIL) graph --passthrough=pass --internals=transparent $< $@
+	$(TATOOL) graph --passthrough=pass --internal=transparent $< $@
 
-$(BUILD_DIR)/%/graph-OB.ttl: scenarios/%.ttl
+$(BUILD_DIR)/%/graph-OB.ttl: workflows/%.ttl
 	@rm -f $@; mkdir -p $(@D)
-	$(UTIL) graph --passthrough=block --internals=opaque $< $@
+	$(TATOOL) graph --passthrough=block --internal=opaque $< $@
 
-$(BUILD_DIR)/%/graph-TB.ttl: scenarios/%.ttl
+$(BUILD_DIR)/%/graph-TB.ttl: workflows/%.ttl
 	@rm -f $@; mkdir -p $(@D)
-	$(UTIL) graph --passthrough=block --internals=transparent $< $@
+	$(TATOOL) graph --passthrough=block --internal=transparent $< $@
 
-$(BUILD_DIR)/%/graph.dot: scenarios/%.ttl
+$(BUILD_DIR)/%/graph.dot: workflows/%.ttl
 	@rm -f $@; mkdir -p $(@D)
-	$(UTIL) graph --visual $< $@
+	$(TATOOL) graph --visual --passthrough=pass --internal=transparent $< $@
 
 # Queries
 
-$(BUILD_DIR)/%/query.rq: queries/%.json
+$(BUILD_DIR)/%/eval.rq: queries/eval/%.yaml
 	@mkdir -p $(@D)
-	python3 -c 'from cct import cct; from transformation_algebra.query import Query; print(Query.from_file(cct, "$<").sparql())' > $@
+	$(TATOOL) query --blackbox $^ -o $@
 
 $(BUILD_DIR)/eval-EP.csv: $(QUERIES_EVAL)
 	@rm -f $@; mkdir -p $(@D)
-	$(UTIL) query -e "$(SERVER)/db-OP" --blackbox $^ -o $@
+	$(TATOOL) query -e "$(SERVER)/db-OP" --blackbox $^ -o $@
 
 $(BUILD_DIR)/eval-EB.csv: $(QUERIES_EVAL)
 	@rm -f $@; mkdir -p $(@D)
-	$(UTIL) query -e "$(SERVER)/db-OB" --blackbox $^ -o $@
+	$(TATOOL) query -e "$(SERVER)/db-OB" --blackbox $^ -o $@
 
 $(BUILD_DIR)/eval-OPC.csv: $(QUERIES_EVAL)
 	@rm -f $@; mkdir -p $(@D)
-	$(UTIL) query -e "$(SERVER)/db-OP" $^ -o $@
+	$(TATOOL) query -e "$(SERVER)/db-OP" $^ -o $@
 
 $(BUILD_DIR)/eval-OPA.csv: $(QUERIES_EVAL)
 	@rm -f $@; mkdir -p $(@D)
-	$(UTIL) query -e "$(SERVER)/db-OP" --order=any $^ -o $@
+	$(TATOOL) query -e "$(SERVER)/db-OP" --order=any $^ -o $@
 
 $(BUILD_DIR)/eval-TPC.csv: $(QUERIES_EVAL)
 	@rm -f $@; mkdir -p $(@D)
-	$(UTIL) query -e "$(SERVER)/db-TP" $^ -o $@
+	$(TATOOL) query -e "$(SERVER)/db-TP" $^ -o $@
 
 $(BUILD_DIR)/eval-TPA.csv: $(QUERIES_EVAL)
 	@rm -f $@; mkdir -p $(@D)
-	$(UTIL) query -e "$(SERVER)/db-TP" --order=any $^ -o $@
+	$(TATOOL) query -e "$(SERVER)/db-TP" --order=any $^ -o $@
 
 $(BUILD_DIR)/eval-OBC.csv: $(QUERIES_EVAL)
 	@rm -f $@; mkdir -p $(@D)
-	$(UTIL) query -e "$(SERVER)/db-OB" $^ -o $@
+	$(TATOOL) query -e "$(SERVER)/db-OB" $^ -o $@
 
 $(BUILD_DIR)/eval-OBA.csv: $(QUERIES_EVAL)
 	@rm -f $@; mkdir -p $(@D)
-	$(UTIL) query -e "$(SERVER)/db-OB" --order=any $^ -o $@
+	$(TATOOL) query -e "$(SERVER)/db-OB" --order=any $^ -o $@
 
 $(BUILD_DIR)/eval-TBC.csv: $(QUERIES_EVAL)
 	@rm -f $@; mkdir -p $(@D)
-	$(UTIL) query -e "$(SERVER)/db-TB" $^ -o $@
+	$(TATOOL) query -e "$(SERVER)/db-TB" $^ -o $@
 
 $(BUILD_DIR)/eval-TBA.csv: $(QUERIES_EVAL)
 	@rm -f $@; mkdir -p $(@D)
-	$(UTIL) query -e "$(SERVER)/db-TB" --order=any $^ -o $@
+	$(TATOOL) query -e "$(SERVER)/db-TB" --order=any $^ -o $@
 
 
 # Other

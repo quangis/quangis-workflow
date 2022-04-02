@@ -16,7 +16,7 @@ from workflow import Workflow  # type: ignore
 from cct import cct
 
 
-class Utility(cli.Application):
+class Tatool(cli.Application):
     """
     A utility to create RDFs, graph visualizations, queries and other files
     relevant to workflows annotated with tool descriptions from the CCT
@@ -32,7 +32,7 @@ class Utility(cli.Application):
             return 1
 
 
-@Utility.subcommand("merge")
+@Tatool.subcommand("merge")
 class Merger(cli.Application):
     """
     Merge RDF graphs
@@ -46,7 +46,7 @@ class Merger(cli.Application):
         g.serialize(str(output), format='ttl', encoding='utf-8')
 
 
-@Utility.subcommand("vocab")
+@Tatool.subcommand("vocab")
 class VocabBuilder(cli.Application):
     "Build CCT vocabulary file"
     visual = cli.Flag("--visual", default=False)
@@ -64,7 +64,7 @@ class VocabBuilder(cli.Application):
             vocab.serialize(str(output), format='ttl', encoding='utf-8')
 
 
-@Utility.subcommand("graph")
+@Tatool.subcommand("graph")
 class TransformationGraphBuilder(cli.Application):
     """
     Generate transformation graphs for entire workflows, concatenating the
@@ -115,7 +115,7 @@ class TransformationGraphBuilder(cli.Application):
             g.serialize(str(output_path), format='ttl', encoding='utf-8')
 
 
-@Utility.subcommand("query")
+@Tatool.subcommand("query")
 class QueryRunner(cli.Application):
     """
     Run transformation queries against a SPARQL endpoint. If no endpoint is
@@ -125,8 +125,8 @@ class QueryRunner(cli.Application):
     output = cli.SwitchAttr(["-o", "--output"], cli.NonexistentPath,
         mandatory=True, help="Output file")
     endpoint = cli.SwitchAttr(["-e", "--endpoint"],
-        help="SPARQL endpoint; if none is given, output queries; otherwise
-            output results in CSV format")
+        help="SPARQL endpoint; if none is given, output queries; otherwise "
+             "output results in CSV format")
 
     blackbox = cli.Flag("--blackbox", help="Only consider input and output",
         default=False)
@@ -242,4 +242,4 @@ class QueryRunner(cli.Application):
 
 
 if __name__ == '__main__':
-    Utility.run()
+    Tatool.run()
