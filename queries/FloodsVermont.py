@@ -31,13 +31,8 @@ old_eval_flood = Query(cct, [R2(Ord, Ratio), R2(Ord, Reg), R2(Loc, Ratio), AND(
     [R2(Reg, Nom), ObjectInfo(Nom)]
 )])
 
-old2_eval_flood = Query(cct, [R2(Ord, Ratio), R2(Loc, Ratio), AND(
-    [R3(Loc, Ratio, Loc), R2(Loc, Itv)],
-    [R2(Reg, Nom), ObjectInfo(Nom)]
-)])
-
 # corrected version (04/02/2022)
-eval_flood = Query(cct, [R2(Ord, Ratio), R2(Loc, Ord), AND(
+eval_flood = Query(cct, [R2(Ord, Ratio), R2(Loc, Ratio), AND(
     [R3(Loc, Ratio, Loc), R2(Loc, Itv)],
     [R2(Nom, Reg), ObjectInfo(Nom)]
 )])
