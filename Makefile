@@ -8,9 +8,10 @@
 # database files: PO/PT/BO/BT. Since order is irrelevant at level 1, we get
 # 16-4 different evaluation files: EB/EP/OPC/TPC/OPA/TPA/OBA/TBA/OBC/TBC
 
-BUILD_DIR=testbuild
+BUILD_DIR=build
 DEBUG_DIR=build
 TATOOL=python3 utils/ta-tool.py
+JENA=build/apache-jena-4.3.2/bin/tdb2.tdbloader
 FUSEKI=build/apache-jena-fuseki-4.3.2/fuseki-server
 SERVER=http://localhost:3030
 TIMEOUT=
@@ -25,9 +26,19 @@ QUERIES_EVAL=$(wildcard queries/eval/*.yaml)
 
 evaluations: $(BUILD_DIR)/eval.csv
 
-queries: $(QUERIES_EVAL:queries_eval/%.yaml=$(BUILD_DIR)/%/eval.rq)
+queries: $(QUERIES_EVAL:queries/eval/%.yaml=$(BUILD_DIR)/%/eval.rq)
 
 # Serving
+
+.PHONY: tdb-TP
+tdb-TP: $(BUILD_DIR)/tdb-TP/marker
+	$(FUSEKI) --localhost --loc=$(<D) $(if $(TIMEOUT),--timeout=$(TIMEOUT),) /$@
+
+
+
+$(BUILD_DIR)/tdb-TP/marker: $(BUILD_DIR)/cct.ttl $(WFs:workflows/%.ttl=$(BUILD_DIR)/%/graph-TP.ttl)
+	mkdir -p $(@D); touch $@
+	$(JENA) --loc=$(@D) --loader=phased $^
 
 $(BUILD_DIR)/db-OP.ttl: $(BUILD_DIR)/cct.ttl $(WFs:workflows/%.ttl=$(BUILD_DIR)/%/graph-OP.ttl)
 	@rm -f $@; mkdir -p $(@D)
@@ -89,7 +100,7 @@ $(BUILD_DIR)/%/graph-TB.ttl: workflows/%.ttl
 
 $(BUILD_DIR)/%/graph.dot: workflows/%.ttl
 	@rm -f $@; mkdir -p $(@D)
-	$(TATOOL) graph --visual --passthrough=pass --internal=transparent $< $@
+	$(TATOOL) graph --visual --passthrough=block --internal=transparent $< $@
 
 # Queries
 
@@ -119,7 +130,7 @@ $(BUILD_DIR)/eval-TPC.csv: $(QUERIES_EVAL)
 
 $(BUILD_DIR)/eval-TPA.csv: $(QUERIES_EVAL)
 	@rm -f $@; mkdir -p $(@D)
-	$(TATOOL) query -e "$(SERVER)/db-TP" --order=any $^ -o $@
+	$(TATOOL) query -e "$(SERVER)/tdb-TP" --order=any $^ -o $@
 
 $(BUILD_DIR)/eval-OBC.csv: $(QUERIES_EVAL)
 	@rm -f $@; mkdir -p $(@D)

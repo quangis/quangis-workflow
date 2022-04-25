@@ -433,6 +433,7 @@ apply = Operator(
 
 # Set operations
 
+# This should be a single operator, nest: R(x, y)
 nest = Operator(
     "put value in unary relation",
     type=lambda x: x ** R1(x)
@@ -445,6 +446,8 @@ nest3 = Operator(
     "put values in ternary relation",
     type=lambda x, y, z: x ** y ** z ** R3(x, y, z)
 )
+# There should be an empty relation operator
+# This should have both key and value, and the relation should come last
 add = Operator(
     "add value to unary relation",
     type=lambda x: R1(x) ** x ** R1(x),
@@ -536,6 +539,14 @@ select2 = Operator(
     type=lambda x, y, rel:
         {with_param(with_param(rel, x), y)} >> (x ** y ** Bool) ** rel ** rel
 )
+
+# remove nest
+# empty: R(x, y)
+# keys: R(x, y) -> R(x, ())
+# values: R(x, y) -> R(y, ())
+# map: (y -> z) -> R(x, y) -> R(x, z)
+# left: x * _ -> x
+# right: _ * x -> x
 
 # Join (⨝)
 
