@@ -7,151 +7,114 @@
 # The test for Passthrough/Blocked and Opaque/Transparent operate on dedicated
 # database files: PO/PT/BO/BT. Since order is irrelevant at level 1, we get
 # 16-4 different evaluation files: EB/EP/OPC/TPC/OPA/TPA/OBA/TBA/OBC/TBC
+# cf. https://stackoverflow.com/questions/974077/how-can-i-trap-errors-and-interrupts-in-gnu-make
 
-BUILD_DIR=build
-DEBUG_DIR=build
+.NOTPARALLEL:
+
+BUILD=build
 TATOOL=python3 utils/ta-tool.py
 JENA=build/apache-jena-4.3.2/bin/tdb2.tdbloader
 FUSEKI=build/apache-jena-fuseki-4.3.2/fuseki-server
 SERVER=http://localhost:3030
 TIMEOUT=
 WFs=$(wildcard workflows/*.ttl)
-QUERIES_EVAL=$(wildcard queries/eval/*.yaml)
+TASKS=$(wildcard tasks/*.yaml)
 
-# graphs: \
-# 	$(BUILD_DIR)/cct.ttl \
-# 	$(patsubst scenarios/%.ttl,$(BUILD_DIR)/%/graph0.ttl,$(wildcard scenarios/*.ttl))
-
-# $(SCENARIOS:scenarios/%.ttl=$(BUILD_DIR)/%/graphPO.ttl)
-
-evaluations: $(BUILD_DIR)/eval.csv
-
-queries: $(QUERIES_EVAL:queries/eval/%.yaml=$(BUILD_DIR)/%/eval.rq)
-
-# Serving
-
-.PHONY: tdb-TP
-tdb-TP: $(BUILD_DIR)/tdb-TP/marker
-	$(FUSEKI) --localhost --loc=$(<D) $(if $(TIMEOUT),--timeout=$(TIMEOUT),) /$@
+# evaluations: $(patsubst %,$(BUILD)/eval/%.csv, \
+# 	EP EB OPC OPA TPC TPA OBC OBA TBC TBA \
+# )
+evaluations: $(patsubst %,$(BUILD)/eval/%.csv, \
+	EP EB OPA TPA OBA TBA \
+)
 
 
+queries: $(TASKS:queries/eval/%.yaml=$(BUILD)/%/eval.rq)
 
-$(BUILD_DIR)/tdb-TP/marker: $(BUILD_DIR)/cct.ttl $(WFs:workflows/%.ttl=$(BUILD_DIR)/%/graph-TP.ttl)
+
+# Server
+
+$(BUILD)/tdb-%/marker: $(BUILD)/cct.ttl $(subst VARIANT,%,$(WFs:workflows/%.ttl=$(BUILD)/%/graph-VARIANT.ttl))
 	mkdir -p $(@D); touch $@
 	$(JENA) --loc=$(@D) --loader=phased $^
 
-$(BUILD_DIR)/db-OP.ttl: $(BUILD_DIR)/cct.ttl $(WFs:workflows/%.ttl=$(BUILD_DIR)/%/graph-OP.ttl)
+$(BUILD)/tdb-%/started: $(BUILD)/tdb-%/marker
+	rm -f $(<D)/stopped
+	$(FUSEKI) --localhost --loc=$(<:%/marker=%) \
+		$(if $(TIMEOUT),--timeout=$(TIMEOUT),) \
+		$(<:$(BUILD)/tdb-%/marker=/%) & echo $$! > $@
+	sleep 10
+
+$(BUILD)/tdb-%/stopped: $(BUILD)/tdb-%/started
+	pkill $(shell cat $<) && rm $<; touch $@
+
+
+# Running queries
+
+$(BUILD)/eval/%C.csv: $(BUILD)/tdb-%/started $(TASKS)
 	@rm -f $@; mkdir -p $(@D)
-	$(TATOOL) merge $@ $^
+	$(TATOOL) query -e "$(<:$(BUILD)/tdb-%/started=$(SERVER)/%)" $(filter-out %/started,$^) -o $@
+	-$(MAKE) $(<:%/started=%/stopped)
 
-$(BUILD_DIR)/db-OB.ttl: $(BUILD_DIR)/cct.ttl $(WFs:workflows/%.ttl=$(BUILD_DIR)/%/graph-OB.ttl)
+$(BUILD)/eval/%A.csv: $(BUILD)/tdb-%/started $(TASKS)
 	@rm -f $@; mkdir -p $(@D)
-	$(TATOOL) merge $@ $^
+	$(TATOOL) query -e "$(<:$(BUILD)/tdb-%/started=$(SERVER)/%)" --order=any $(filter-out %/started,$^) -o $@
+	-$(MAKE) $(<:%/started=%/stopped)
 
-$(BUILD_DIR)/db-TP.ttl: $(BUILD_DIR)/cct.ttl $(WFs:workflows/%.ttl=$(BUILD_DIR)/%/graph-TP.ttl)
+$(BUILD)/eval/EB.csv: $(BUILD)/tdb-OB/started $(TASKS)
 	@rm -f $@; mkdir -p $(@D)
-	$(TATOOL) merge $@ $^
+	$(TATOOL) query -e "$(<:$(BUILD)/tdb-%/started=$(SERVER)/%)" --blackbox $(filter-out %/started,$^) -o $@
+	-$(MAKE) $(<:%/started=%/stopped)
 
-$(BUILD_DIR)/db-TB.ttl: $(BUILD_DIR)/cct.ttl $(WFs:workflows/%.ttl=$(BUILD_DIR)/%/graph-TB.ttl)
+$(BUILD)/eval/EP.csv: $(BUILD)/tdb-OP/started $(TASKS)
 	@rm -f $@; mkdir -p $(@D)
-	$(TATOOL) merge $@ $^
-
-# Run servers at /db-%
-db-OP: $(BUILD_DIR)/db-OP.ttl
-	$(FUSEKI) --localhost --file="$<" $(if $(TIMEOUT),--timeout=$(TIMEOUT),) /$@
-
-db-OB: $(BUILD_DIR)/db-OB.ttl
-	$(FUSEKI) --localhost --file="$<" $(if $(TIMEOUT),--timeout=$(TIMEOUT),) /$@
-
-db-TB: $(BUILD_DIR)/db-TB.ttl
-	$(FUSEKI) --localhost --file="$<" $(if $(TIMEOUT),--timeout=$(TIMEOUT),) /$@
-
-db-TP: $(BUILD_DIR)/db-TP.ttl
-	$(FUSEKI) --localhost --file="$<" $(if $(TIMEOUT),--timeout=$(TIMEOUT),) /$@
-
-.PHONY: db-OP db-TP db-OB db-TB
+	$(TATOOL) query -e "$(<:$(BUILD)/tdb-%/started=$(SERVER)/%)" --blackbox $(filter-out %/started,$^) -o $@
+	-$(MAKE) $(<:%/started=%/stopped)
 
 
-# Graphs
+# Vocabulary
 
-$(BUILD_DIR)/cct.dot: cct.py
-	@rm -f $@; mkdir -p $(@D)
-	$(TATOOL) vocab --visual $@
-
-$(BUILD_DIR)/cct.ttl: cct.py
+$(BUILD)/cct.ttl: cct.py
 	@rm -f $@; mkdir -p $(@D)
 	$(TATOOL) vocab $@
 
-$(BUILD_DIR)/%/graph-OP.ttl: workflows/%.ttl
+
+# Transformation graphs for each workflow
+
+$(BUILD)/%/graph-OP.ttl: workflows/%.ttl
 	@rm -f $@; mkdir -p $(@D)
 	$(TATOOL) graph --passthrough=pass --internal=opaque $< $@
 
-$(BUILD_DIR)/%/graph-TP.ttl: workflows/%.ttl
+$(BUILD)/%/graph-TP.ttl: workflows/%.ttl
 	@rm -f $@; mkdir -p $(@D)
 	$(TATOOL) graph --passthrough=pass --internal=transparent $< $@
 
-$(BUILD_DIR)/%/graph-OB.ttl: workflows/%.ttl
+$(BUILD)/%/graph-OB.ttl: workflows/%.ttl
 	@rm -f $@; mkdir -p $(@D)
 	$(TATOOL) graph --passthrough=block --internal=opaque $< $@
 
-$(BUILD_DIR)/%/graph-TB.ttl: workflows/%.ttl
+$(BUILD)/%/graph-TB.ttl: workflows/%.ttl
 	@rm -f $@; mkdir -p $(@D)
 	$(TATOOL) graph --passthrough=block --internal=transparent $< $@
 
-$(BUILD_DIR)/%/graph.dot: workflows/%.ttl
+
+# Visualisation/diagnostics
+
+$(BUILD)/cct.dot: cct.py
+	@rm -f $@; mkdir -p $(@D)
+	$(TATOOL) vocab --visual $@
+
+$(BUILD)/%/graph.dot: workflows/%.ttl
 	@rm -f $@; mkdir -p $(@D)
 	$(TATOOL) graph --visual --passthrough=block --internal=transparent $< $@
 
-# Queries
-
-$(BUILD_DIR)/%/eval.rq: queries/eval/%.yaml
+$(BUILD)/%/eval.rq: queries/eval/%.yaml
 	@mkdir -p $(@D)
-	$(TATOOL) query --blackbox $^ -o $@
-
-$(BUILD_DIR)/eval-EP.csv: $(QUERIES_EVAL)
-	@rm -f $@; mkdir -p $(@D)
-	$(TATOOL) query -e "$(SERVER)/db-OP" --blackbox $^ -o $@
-
-$(BUILD_DIR)/eval-EB.csv: $(QUERIES_EVAL)
-	@rm -f $@; mkdir -p $(@D)
-	$(TATOOL) query -e "$(SERVER)/db-OB" --blackbox $^ -o $@
-
-$(BUILD_DIR)/eval-OPC.csv: $(QUERIES_EVAL)
-	@rm -f $@; mkdir -p $(@D)
-	$(TATOOL) query -e "$(SERVER)/db-OP" $^ -o $@
-
-$(BUILD_DIR)/eval-OPA.csv: $(QUERIES_EVAL)
-	@rm -f $@; mkdir -p $(@D)
-	$(TATOOL) query -e "$(SERVER)/db-OP" --order=any $^ -o $@
-
-$(BUILD_DIR)/eval-TPC.csv: $(QUERIES_EVAL)
-	@rm -f $@; mkdir -p $(@D)
-	$(TATOOL) query -e "$(SERVER)/db-TP" $^ -o $@
-
-$(BUILD_DIR)/eval-TPA.csv: $(QUERIES_EVAL)
-	@rm -f $@; mkdir -p $(@D)
-	$(TATOOL) query -e "$(SERVER)/tdb-TP" --order=any $^ -o $@
-
-$(BUILD_DIR)/eval-OBC.csv: $(QUERIES_EVAL)
-	@rm -f $@; mkdir -p $(@D)
-	$(TATOOL) query -e "$(SERVER)/db-OB" $^ -o $@
-
-$(BUILD_DIR)/eval-OBA.csv: $(QUERIES_EVAL)
-	@rm -f $@; mkdir -p $(@D)
-	$(TATOOL) query -e "$(SERVER)/db-OB" --order=any $^ -o $@
-
-$(BUILD_DIR)/eval-TBC.csv: $(QUERIES_EVAL)
-	@rm -f $@; mkdir -p $(@D)
-	$(TATOOL) query -e "$(SERVER)/db-TB" $^ -o $@
-
-$(BUILD_DIR)/eval-TBA.csv: $(QUERIES_EVAL)
-	@rm -f $@; mkdir -p $(@D)
-	$(TATOOL) query -e "$(SERVER)/db-TB" --order=any $^ -o $@
+	$(TATOOL) query $^ -o $@
 
 
 # Other
 
-$(BUILD_DIR)/results.tex: $(BUILD_DIR)/results.csv
+$(BUILD)/results.tex: $(BUILD)/results.csv
 	@mkdir -p $(@D)
 	< $< csvcut -c Variant,Options,Precision,Recall \
 		| csvsort | csv2latex > $@
