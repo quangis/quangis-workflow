@@ -43,6 +43,7 @@ $(BUILD)/tdb-%/started: $(BUILD)/tdb-%/marker
 $(BUILD)/tdb-%/stopped:
 	kill -9 $(shell cat $(@:%/stopped=%/started))
 	rm $(@:%/stopped=%/started)
+	sleep 2
 
 
 # Running queries
