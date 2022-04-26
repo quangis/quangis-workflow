@@ -47,21 +47,32 @@ $(BUILD)/tdb-%/stopped:
 
 # Running queries
 
-$(BUILD)/eval/%C.csv: $(BUILD)/tdb-%/started $(TASKS)
+$(BUILD)/eval/%C.csv: $(TASKS)
 	@rm -f $@; mkdir -p $(@D)
-	$(TATOOL) query -e "$(<:$(BUILD)/tdb-%/started=$(SERVER)/%)" $(filter-out %/started,$^) -o $@; $(MAKE) $(<:%/started=%/stopped)
+	V=$(@:$(BUILD)/eval/%C.csv=%); \
+	$(MAKE) $(BUILD)/tdb-$$V/started; \
+	$(TATOOL) query -e "$(SERVER)/$$V" $^ -o $@;\
+	$(MAKE) $(BUILD)/tdb-$$V/stopped
 
-$(BUILD)/eval/%A.csv: $(BUILD)/tdb-%/started $(TASKS)
+$(BUILD)/eval/%A.csv: $(TASKS)
 	@rm -f $@; mkdir -p $(@D)
-	$(TATOOL) query -e "$(<:$(BUILD)/tdb-%/started=$(SERVER)/%)" --order=any $(filter-out %/started,$^) -o $@; $(MAKE) $(<:%/started=%/stopped)
+	V=$(@:$(BUILD)/eval/%A.csv=%); \
+	$(MAKE) $(BUILD)/tdb-$$V/started; \
+	$(TATOOL) query -e "$(SERVER)/$$V" --order=any $^ -o $@;\
+	$(MAKE) $(BUILD)/tdb-$$V/stopped
 
-$(BUILD)/eval/EB.csv: $(BUILD)/tdb-OB/started $(TASKS)
-	@rm -f $@; mkdir -p $(@D)
-	$(TATOOL) query -e "$(<:$(BUILD)/tdb-%/started=$(SERVER)/%)" --blackbox $(filter-out %/started,$^) -o $@; $(MAKE) $(<:%/started=%/stopped)
+$(BUILD)/eval/EB.csv: $(TASKS)
+	V=OB; \
+	$(MAKE) $(BUILD)/tdb-$$V/started; \
+	$(TATOOL) query -e "$(SERVER)/$$V" --blackbox $^ -o $@;\
+	$(MAKE) $(BUILD)/tdb-$$V/stopped
 
-$(BUILD)/eval/EP.csv: $(BUILD)/tdb-OP/started $(TASKS)
+$(BUILD)/eval/EP.csv: $(TASKS)
 	@rm -f $@; mkdir -p $(@D)
-	$(TATOOL) query -e "$(<:$(BUILD)/tdb-%/started=$(SERVER)/%)" --blackbox $(filter-out %/started,$^) -o $@; $(MAKE) $(<:%/started=%/stopped)
+	V=OP; \
+	$(MAKE) $(BUILD)/tdb-$$V/started; \
+	$(TATOOL) query -e "$(SERVER)/$$V" --blackbox $^ -o $@;\
+	$(MAKE) $(BUILD)/tdb-$$V/stopped
 
 
 # Vocabulary
