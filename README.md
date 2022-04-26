@@ -22,42 +22,42 @@ version of the library:
 You can then clone this repository and use it.
 
 
-## Usage
+## Overview
 
-The types and operators of the CCT transformation algebra are defined in 
-[cct.py](cct.py). Descriptions of GIS tools in terms of expressions of the CCT 
-algebra are contained in [tools/tools.ttl](tools/tools.ttl).
+-   The types and operators of the CCT transformation algebra are defined in 
+    [cct.py](cct.py).
+-   Descriptions of GIS tools in terms of expressions of the CCT algebra are 
+    contained in [tools/tools.ttl](tools/tools.ttl).
+-   The [workflows/](workflows/) directory contains encodings of workflows that 
+    make use of those tools.
+-   The underlying tasks can be found in the [tasks/](tasks/) directory.
+
+The `ta-tool` is used to manipulate this data. You can also use it to get 
+visualizations and diagnostics information. Run `ta-tool -h` for a full 
+overview of its capabilities. It is now [here](utils/ta-tool.py) but should be 
+integrated in the transformation-algebra library in the future.
+
+-   The `ta-tool graph` subcommand uses the algebra expressions of the 
+    [tools](tools/tools.ttl) to turn [workflow](workflows/) graphs into 
+    transformation graphs.
+-   The `ta-tool query` subcommand can turn [task](tasks/) descriptions into 
+    SPARQL queries and fire them at a SPARQL endpoint. This will produce CSV 
+    files that show which workflows are retrieved for which task descriptions.
+
+There is a [Makefile](Makefile) with recipes that automate the process, 
+assuming you have a Fuseki installation (see below). Run `make graphs` to 
+obtain PDF representations of transformation graphs for all workflows. Run 
+`make evaluations` to obtain tables for the evaluation variants used in our 
+paper. Be advised: the queries are very unoptimized at the moment and some 
+results will take a very a long time to build.
 
 
-#### Generating transformation graphs
-
-[utils/generate_graphs.py](utils/generate_graphs.py) generates `.ttl` files 
-that represent the transformation graphs for the workflows as they are 
-described in [workflows/](workflows), which are in turn described in terms of 
-the GIS tools of [tools.ttl](tools/tools.ttl).
-
-
-#### Serving a SPARQL endpoint
+## Serving a SPARQL endpoint
 
 `rdflib` is not powerful enough to handle the workflow store in-memory, so you 
 will need an external triple store. For open-source options, see 
 [BlazeGraph](https://blazegraph.com/) or [Apache 
-Jena](https://jena.apache.org/) ([Virtuoso](https://virtuoso.openlinksw.com/) 
-seems to have an issue with property paths).
-
-The script at [utils/serve_sparql_endpoint.sh](utils/serve_sparql_endpoint.sh) 
-downloads and runs Apache Jena on the generated `.ttl` files.
-
-
-#### Firing queries
-
-The script at [utils/run_queries.py](utils/run_queries.py) fires the queries 
-defined in the [queries/](queries/) directory at the SPARQL endpoint.
-
-
-#### Workflow analysis
-
-To analyze what the expressions and transformation graphs actually look like, 
-use [utils/analyze_workflows.py](utils/analyze_workflows.py). This script 
-generates simplified graphs and a text description of the tools used in each 
-workflow.
+Fuseki](https://jena.apache.org/) ([Virtuoso](https://virtuoso.openlinksw.com/) 
+seems to have an issue with property paths). The Makefile has a variable 
+pointing to Apache Jena and Apache Fuseki binaries, so make sure it points to 
+the correct place for your installation.
