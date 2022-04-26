@@ -20,16 +20,13 @@ TIMEOUT=
 WFs=$(wildcard workflows/*.ttl)
 TASKS=$(wildcard tasks/*.yaml)
 
-# evaluations: $(patsubst %,$(BUILD)/eval/%.csv, \
-# 	EP EB OPC OPA TPC TPA OBC OBA TBC TBA \
-# )
+graphs: $(TASKS:workflows/%.ttl=$(BUILD)/%/graph.pdf)
+
 evaluations: $(patsubst %,$(BUILD)/eval/%.csv, \
-	EP EB OPA TPA OBA TBA \
+	EP EB OPC OPA TPC TPA OBC OBA TBC TBA \
 )
 
-
-queries: $(TASKS:queries/eval/%.yaml=$(BUILD)/%/eval.rq)
-
+queries: $(TASKS:tasks/%.yaml=$(BUILD)/%/eval.rq)
 
 # Server
 
@@ -38,14 +35,14 @@ $(BUILD)/tdb-%/marker: $(BUILD)/cct.ttl $(subst VARIANT,%,$(WFs:workflows/%.ttl=
 	$(JENA) --loc=$(@D) --loader=phased $^
 
 $(BUILD)/tdb-%/started: $(BUILD)/tdb-%/marker
-	rm -f $(<D)/stopped
 	$(FUSEKI) --localhost --loc=$(<:%/marker=%) \
 		$(if $(TIMEOUT),--timeout=$(TIMEOUT),) \
 		$(<:$(BUILD)/tdb-%/marker=/%) & echo $$! > $@
 	sleep 10
 
-$(BUILD)/tdb-%/stopped: $(BUILD)/tdb-%/started
-	pkill $(shell cat $<) && rm $<; touch $@
+$(BUILD)/tdb-%/stopped:
+	kill -9 $(shell cat $(@:%/stopped=%/started))
+	rm $(@:%/stopped=%/started)
 
 
 # Running queries
@@ -107,12 +104,15 @@ $(BUILD)/%/graph.dot: workflows/%.ttl
 	@rm -f $@; mkdir -p $(@D)
 	$(TATOOL) graph --visual --passthrough=block --internal=transparent $< $@
 
-$(BUILD)/%/eval.rq: queries/eval/%.yaml
+$(BUILD)/%/eval.rq: tasks/%.yaml
 	@mkdir -p $(@D)
 	$(TATOOL) query $^ -o $@
 
 
 # Other
+
+%.pdf: %.dot
+	dot -Tpdf $< > $@
 
 $(BUILD)/results.tex: $(BUILD)/results.csv
 	@mkdir -p $(@D)
