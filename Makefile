@@ -49,23 +49,19 @@ $(BUILD)/tdb-%/stopped:
 
 $(BUILD)/eval/%C.csv: $(BUILD)/tdb-%/started $(TASKS)
 	@rm -f $@; mkdir -p $(@D)
-	$(TATOOL) query -e "$(<:$(BUILD)/tdb-%/started=$(SERVER)/%)" $(filter-out %/started,$^) -o $@
-	-$(MAKE) $(<:%/started=%/stopped)
+	$(TATOOL) query -e "$(<:$(BUILD)/tdb-%/started=$(SERVER)/%)" $(filter-out %/started,$^) -o $@; $(MAKE) $(<:%/started=%/stopped)
 
 $(BUILD)/eval/%A.csv: $(BUILD)/tdb-%/started $(TASKS)
 	@rm -f $@; mkdir -p $(@D)
-	$(TATOOL) query -e "$(<:$(BUILD)/tdb-%/started=$(SERVER)/%)" --order=any $(filter-out %/started,$^) -o $@
-	-$(MAKE) $(<:%/started=%/stopped)
+	$(TATOOL) query -e "$(<:$(BUILD)/tdb-%/started=$(SERVER)/%)" --order=any $(filter-out %/started,$^) -o $@; $(MAKE) $(<:%/started=%/stopped)
 
 $(BUILD)/eval/EB.csv: $(BUILD)/tdb-OB/started $(TASKS)
 	@rm -f $@; mkdir -p $(@D)
-	$(TATOOL) query -e "$(<:$(BUILD)/tdb-%/started=$(SERVER)/%)" --blackbox $(filter-out %/started,$^) -o $@
-	-$(MAKE) $(<:%/started=%/stopped)
+	$(TATOOL) query -e "$(<:$(BUILD)/tdb-%/started=$(SERVER)/%)" --blackbox $(filter-out %/started,$^) -o $@; $(MAKE) $(<:%/started=%/stopped)
 
 $(BUILD)/eval/EP.csv: $(BUILD)/tdb-OP/started $(TASKS)
 	@rm -f $@; mkdir -p $(@D)
-	$(TATOOL) query -e "$(<:$(BUILD)/tdb-%/started=$(SERVER)/%)" --blackbox $(filter-out %/started,$^) -o $@
-	-$(MAKE) $(<:%/started=%/stopped)
+	$(TATOOL) query -e "$(<:$(BUILD)/tdb-%/started=$(SERVER)/%)" --blackbox $(filter-out %/started,$^) -o $@; $(MAKE) $(<:%/started=%/stopped)
 
 
 # Vocabulary
