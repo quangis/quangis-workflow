@@ -717,7 +717,7 @@ tools:SelectLayerByAttributePointObjects,  tools:SelectLayerByAttributeLineObjec
 tools:SelectLayerContourToExistenceVector,tools:SelectLayerCoverageToExistenceVector;
     wf:edge _:wf1_1, _:wf1_2;
     wf:source _:in11;
-    rdfs:comment "a SQL query to select features matching a selection criteria.You build a query expression to generate the subset. You can query a dataset based on a field in a layer or a table. Using this selection a new Feature dataset is created with only the selected features using the Copy Features tool. This feature dataset represents all the area's that denounce the presence of a certain criteria".
+    rdfs:comment "a SQL query to select features matching a selection criterion. You build a query expression to generate the subset. You can query a dataset based on a field in a layer or a table. Using this selection a new Feature dataset is created with only the selected features using the 'Copy Features tool'. This feature dataset represents all the areas that fulfill the criterion".
 #### Select by attribute is always followed by copy features (treated as one tool in the annotation
 _:wf1_1 wf:applicationOf <https://pro.arcgis.com/en/pro-app/tool-reference/data-management/select-layer-by-attribute.htm>;
         wf:input1 _:in11;

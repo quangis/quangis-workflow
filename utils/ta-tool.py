@@ -152,7 +152,7 @@ class QueryRunner(cli.Application):
 
             opts = {"by_input": True, "by_output": True, "by_operators": False}
             opts["by_chronology"] = self.ordered and not self.blackbox
-            opts["by_types"] = not self.ordered and not self.blackbox
+            opts["by_types"] = not self.blackbox
 
             queries: list[tuple[str, set[Node], Query]] = []
             all_workflows: set[Node] = set()

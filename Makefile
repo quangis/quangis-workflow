@@ -13,29 +13,32 @@
 
 BUILD=build
 TATOOL=python3 utils/ta-tool.py
-JENA=build/apache-jena-4.3.2/bin/tdb2.tdbloader
+TDBLOADER=build/apache-jena-4.3.2/bin/tdb1.xloader
+# TDBLOADER=build/apache-jena-4.3.2/bin/tdb2.tdbloader
 FUSEKI=build/apache-jena-fuseki-4.3.2/fuseki-server
 SERVER=http://localhost:3030
 TIMEOUT=
-WFs=$(wildcard workflows/*.ttl)
+WORKFLOWS=$(wildcard workflows/*.ttl)
 TASKS=$(wildcard tasks/*.yaml)
 
-graphs: $(TASKS:workflows/%.ttl=$(BUILD)/%/graph.pdf)
-
-evaluations: $(patsubst %,$(BUILD)/eval/%.csv, \
-	EP EB OPC OPA TPC TPA OBC OBA TBC TBA \
-)
+graphs: $(WORKFLOWS:workflows/%.ttl=$(BUILD)/%/graph-TB.pdf) \
+		$(WORKFLOWS:workflows/%.ttl=$(BUILD)/%/graph-TP.pdf)
 
 queries: $(TASKS:tasks/%.yaml=$(BUILD)/%/eval.rq)
 
+evaluations: $(patsubst %,$(BUILD)/eval/%.csv, \
+	EP EB OBA OPA TBA TPA OBC OPC TBC TPC   \
+)
+
 # Server
 
-$(BUILD)/tdb-%/marker: $(BUILD)/cct.ttl $(subst VARIANT,%,$(WFs:workflows/%.ttl=$(BUILD)/%/graph-VARIANT.ttl))
-	mkdir -p $(@D); touch $@
-	$(JENA) --loc=$(@D) --loader=phased $^
+$(BUILD)/tdb-%/marker: $(BUILD)/cct.ttl $(subst VARIANT,%,$(WORKFLOWS:workflows/%.ttl=$(BUILD)/%/graph-VARIANT.ttl))
+	mkdir -p $(@D)/db
+	$(TDBLOADER) --loc=$(@D)/db $^
+	touch $@
 
 $(BUILD)/tdb-%/started: $(BUILD)/tdb-%/marker
-	$(FUSEKI) --localhost --loc=$(<:%/marker=%) \
+	$(FUSEKI) --localhost --loc=$(<:%/marker=%)/db \
 		$(if $(TIMEOUT),--timeout=$(TIMEOUT),) \
 		$(<:$(BUILD)/tdb-%/marker=/%) & echo $$! > $@
 	sleep 10
@@ -63,6 +66,7 @@ $(BUILD)/eval/%A.csv: $(TASKS)
 	$(MAKE) $(BUILD)/tdb-$$V/stopped
 
 $(BUILD)/eval/EB.csv: $(TASKS)
+	@rm -f $@; mkdir -p $(@D)
 	V=OB; \
 	$(MAKE) $(BUILD)/tdb-$$V/started; \
 	$(TATOOL) query -e "$(SERVER)/$$V" --blackbox $^ -o $@;\
@@ -108,9 +112,13 @@ $(BUILD)/cct.dot: cct.py
 	@rm -f $@; mkdir -p $(@D)
 	$(TATOOL) vocab --visual $@
 
-$(BUILD)/%/graph.dot: workflows/%.ttl
+$(BUILD)/%/graph-TB.dot: workflows/%.ttl
 	@rm -f $@; mkdir -p $(@D)
 	$(TATOOL) graph --visual --passthrough=block --internal=transparent $< $@
+
+$(BUILD)/%/graph-TP.dot: workflows/%.ttl
+	@rm -f $@; mkdir -p $(@D)
+	$(TATOOL) graph --visual --passthrough=pass --internal=transparent $< $@
 
 $(BUILD)/%/eval.rq: tasks/%.yaml
 	@mkdir -p $(@D)
