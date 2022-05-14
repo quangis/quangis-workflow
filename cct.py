@@ -65,7 +65,7 @@ def with_param(on: Type, x: TypeInstance, at: int = None) -> TypeInstance:
     #     c.append(Val * R(_, x * _))
     # if at is None or at == 3:
     #     c.append(Val * R(_, _ * x))
-    #     c.append(Val * R(_ * _, x))
+    #     c.appene(Val * R(_ * _, x))
     # (x * on)[c]
     # return on
 
@@ -167,30 +167,30 @@ centroid = Operator(
 )
 name = Operator(
     "combine nominal values",
-    type=lambda x: R1(x[Nom]) ** x
+    type=lambda x: (x <= Nom) >> R1(x) ** x
 )
 
 # Statistical operations
 
 avg = Operator(
     "average",
-    type=lambda y: R2(Val, y[Itv]) ** y
+    type=lambda y: (y <= Itv) >> R2(Val, y) ** y
 )
 min = Operator(
     "minimum",
-    type=lambda y: R2(Val, y[Ord]) ** y
+    type=lambda y: (y <= Ord) >> R2(Val, y) ** y
 )
 max = Operator(
     "maximum",
-    type=lambda y: R2(Val, y[Ord]) ** y
+    type=lambda y: (y <= Ord) >> R2(Val, y) ** y
 )
 sum = Operator(
     "summing up values",
-    type=lambda y: R2(Val, y[Ratio]) ** y
+    type=lambda y: (y <= Ratio) >> R2(Val, y) ** y
 )
 contentsum = Operator(
     "summing up content amounts (regions and their values)",
-    type=lambda x: R2(Reg, x[Ratio]) ** R2(Reg, x),
+    type=lambda x: (x <= Ratio) >> R2(Reg, x) ** R2(Reg, x),
     define=lambda x: nest2(merge(pi1(x)), sum(x))
 )
 coveragesum = Operator(
@@ -204,7 +204,7 @@ coveragesum = Operator(
 
 interpol = Operator(
     "spatial point interpolation",
-    type=lambda x: R2(Reg, x[Itv]) ** R1(Loc) ** R2(Loc, x)
+    type=lambda x: (x <= Itv) >> R2(Reg, x) ** R1(Loc) ** R2(Loc, x)
 )
 extrapol = Operator(
     "buffering, defined in terms of some distance (given as parameter)",
@@ -215,7 +215,7 @@ extrapol = Operator(
 )
 arealinterpol = Operator(
     "areal interpolation",
-    type=lambda x: R2(Reg, x[Ratio]) ** R1(Reg) ** R2(Reg, x)
+    type=lambda x: (x <= Ratio) >> R2(Reg, x) ** R1(Reg) ** R2(Reg, x)
 )
 slope = Operator(
     "slope",
@@ -259,12 +259,12 @@ getobjectnames = Operator(
 )
 invert = Operator(
     "invert a field, generating a coverage",
-    type=lambda x: R2(Loc, x[Val]) ** R2(x, Reg),
+    type=lambda x: (x < Val) >> R2(Loc, x) ** R2(x, Reg),
     define=lambda x: groupby(reify, x)
 )
 revert = Operator(
     "invert a coverage to a field",
-    type=lambda x: R2(x[Val], Reg) ** R2(Loc, x),
+    type=lambda x: (x < Val) >> R2(x, Reg) ** R2(Loc, x),
     define=lambda x: groupbyL(
         compose(get, pi1),
         join_key(
@@ -275,7 +275,7 @@ revert = Operator(
 )
 getamounts = Operator(
     "get amounts from object based amount qualities",
-    type=lambda x: ObjectInfo(x[Ratio]) ** R2(Reg, x),
+    type=lambda x: (x <= Ratio) >> ObjectInfo(x) ** R2(Reg, x),
     define=lambda x: join(groupby(get, get_attrL(x)), get_attrR(x))
 )
 
@@ -380,7 +380,7 @@ lgDist = Operator(
 fcont = Operator(
     "summarizes the content of a field within a region",
     type=lambda x, y:
-        (R2(Val, x[Qlt]) ** y[Qlt]) ** R2(Loc, x) ** Reg ** y,
+        (x < Qlt, y < Qlt) >> (R2(Val, x) ** y) ** R2(Loc, x) ** Reg ** y,
     define=lambda f, x, r: f(subset(x, deify(r)))
 )
 ocont = Operator(
@@ -393,7 +393,7 @@ ocont = Operator(
 fcover = Operator(
     "measures the spatial coverage of a field that is constrained to certain "
     "field values",
-    type=lambda x: R2(Loc, x[Qlt]) ** R1(x) ** R1(Loc),
+    type=lambda x: (x < Qlt) >> R2(Loc, x) ** R1(x) ** R1(Loc),
     define=lambda x, y: pi1(subset(x, y))
 )
 ocover = Operator(
@@ -476,7 +476,7 @@ set_inters = Operator(
 )
 relunion = Operator(
     "union of a set of relations",
-    type=lambda rel: R1(with_param(rel, _)) ** rel
+    type=lambda rel: (rel[R1(_), R2(_, _), R3(_, _, _)]) >> R1(rel) ** rel
 )
 prod = Operator(
     "A constructor for quantified relations. Prod generates a cartesian "
@@ -497,12 +497,12 @@ prod3 = Operator(
 pi1 = Operator(
     "projects a given relation to the first attribute, resulting in a "
     "collection",
-    type=lambda rel, x: with_param(rel, x, at=1) ** R1(x)
+    type=lambda rel, x: with_param(rel, x, at=1) >> rel ** R1(x)
 )
 pi2 = Operator(
     "projects a given relation to the second attribute, resulting in a "
     "collection",
-    type=lambda rel, x: with_param(rel, x, at=2) ** R1(x),
+    type=lambda rel, x: with_param(rel, x, at=2) >> rel ** R1(x),
 )
 pi3 = Operator(
     "projects a given ternary relation to the third attribute, resulting "
@@ -524,12 +524,12 @@ select = Operator(
     "Selects a subset of a relation using a constraint on one attribute, like "
     "equality (eq) or order (leq)",
     type=lambda x, y, rel:
-        {with_param(rel, x)} >> (x ** y ** Bool) ** rel ** y ** rel
+        with_param(rel, x) >> (x ** y ** Bool) ** rel ** y ** rel
 )
 subset = Operator(
     "Subset a relation to those tuples having an attribute value contained in "
     "a collection",
-    type=lambda x, rel: {with_param(rel, x)} >> rel ** R1(x) ** rel,
+    type=lambda x, rel: with_param(rel, x) >> rel ** R1(x) ** rel,
     define=lambda r, c: select(inrel, r, c)
 )
 
@@ -537,7 +537,7 @@ select2 = Operator(
     "Selects a subset of a relation using a constraint on two attributes, "
     "like equality (eq) or order (leq)",
     type=lambda x, y, rel:
-        {with_param(with_param(rel, x), y)} >> (x ** y ** Bool) ** rel ** rel
+        (with_param(rel, y), with_param(rel, x)) >> (x ** y ** Bool) ** rel ** rel
 )
 
 # remove nest
@@ -576,7 +576,7 @@ join_key = Operator(
     "Substitute the quality of a quantified relation to some quality of one "
     "of its keys.",
     type=lambda x, q1, y, rel, q2:
-        R3(x, q1, y) ** rel[R2(x, q2), R2(y, q2)] ** R3(x, q2, y),
+        (rel[R2(x, q2), R2(y, q2)]) >> R3(x, q1, y) ** rel ** R3(x, q2, y),
     # define=lambda x, y: prod3(apply1(subset(y), groupbyL(pi1, x)))
 )
 
@@ -600,14 +600,14 @@ groupbyL = Operator(
     "quality values with the same key value into a new value per key, "
     "resulting in a unary concept.",
     type=lambda rel, l, q1, q2, r:
-        (rel[R1(r), R2(r, q1)] ** q2) ** R3(l, q1, r) ** R2(l, q2),
+        (rel[R1(r), R2(r, q1)]) >> (rel ** q2) ** R3(l, q1, r) ** R2(l, q2),
 )
 groupbyR = Operator(
     "Group quantified relations by the right key, summarizing lists of "
     "quality values with the same key value into a new value per key, "
     "resulting in a unary concept.",
     type=lambda rel, q2, l, q1, r:
-        (rel[R1(l), R2(l, q1)] ** q2) ** R3(l, q1, r) ** R2(r, q2)
+        (rel[R1(l), R2(l, q1)]) >> (rel ** q2) ** R3(l, q1, r) ** R2(r, q2)
 )
 groupby = Operator(
     "Group by qualities of binary relations",
