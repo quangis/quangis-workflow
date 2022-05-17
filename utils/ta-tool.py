@@ -91,6 +91,7 @@ class TransformationGraphBuilder(cli.Application):
         wf = Workflow(wf_path)
         if self.visual:
             g = TransformationGraph(cct, minimal=True, with_labels=True,
+                with_intermediate_types=self.internals,
                 passthrough=self.passthrough)
             step2expr = g.add_workflow(wf.root, wf.wf, wf.sources)
 

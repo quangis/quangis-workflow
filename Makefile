@@ -21,8 +21,8 @@ TIMEOUT=
 WORKFLOWS=$(wildcard workflows/*.ttl)
 TASKS=$(wildcard tasks/*.yaml)
 
-graphs: $(WORKFLOWS:workflows/%.ttl=$(BUILD)/%/graph-TB.pdf) \
-		$(WORKFLOWS:workflows/%.ttl=$(BUILD)/%/graph-TP.pdf)
+graphs: $(WORKFLOWS:workflows/%.ttl=$(BUILD)/%/graph-TB.dot) \
+		$(WORKFLOWS:workflows/%.ttl=$(BUILD)/%/graph-TP.dot)
 
 queries: $(TASKS:tasks/%.yaml=$(BUILD)/%/eval.rq)
 
