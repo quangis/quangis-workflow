@@ -1,0 +1,18 @@
+@prefix : <https://github.com/quangis/transformation-algebra#>.
+@prefix from: <https://github.com/quangis/transformation-algebra#from>.
+@prefix type: <https://github.com/quangis/cct#type>.
+@prefix via: <https://github.com/quangis/cct#operator>.
+
+[] a :Query;
+    :question "What is the travel distance to the nearest hospital in California?";
+    :workflow <http://example.com#HospitalsUtrecht_Network>;
+    :workflow <http://example.com#HospitalsUtrecht_Near>;
+    :output [
+        type: "R(Obj, Reg * Ratio)"; from: [
+            type: "R3(Obj, Ratio, Obj)"; from: [ # TODO: deprecate R3
+                type: "R(Obj, Reg * Nom)" # hospital points
+            ], [
+                type: "R(Obj, Reg * Nom)" # incident locations
+            ]
+        ]
+    ].

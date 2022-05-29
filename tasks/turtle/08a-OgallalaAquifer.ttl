@@ -1,0 +1,27 @@
+@prefix : <https://github.com/quangis/transformation-algebra#>.
+@prefix from: <https://github.com/quangis/transformation-algebra#from>.
+@prefix type: <https://github.com/quangis/cct#type>.
+@prefix via: <https://github.com/quangis/cct#operator>.
+
+[] a :Query;
+    :question "Which urban areas are at risk from water depletion in Ogandala (High Plains) Aquifer, US?";
+    :workflow <http://example.com#OgallalaAquifer>;
+    :output [
+        type: "R(Obj, Reg * Nom)"; from: [
+            type: "R(Obj, Reg)"; from: [
+                type: "R(Obj, Reg * Nom)" # urban areas
+            ]
+        ], [
+            type: "R(Obj, Reg)"; from: [
+                type: "R(Obj, Reg * Nom)" # aquifer
+            ]
+        ], [
+            type: "R(Loc, Nom)"; from: [
+                type: "R(Nom, Reg)" # precipitation coverage
+            ]
+        ], [
+            type: "R(Loc, Nom)"; from: [
+                type: "R(Nom, Reg)" # irrigation coverage
+            ]
+        ]
+    ].

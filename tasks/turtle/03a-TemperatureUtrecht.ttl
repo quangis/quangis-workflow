@@ -1,0 +1,21 @@
+@prefix : <https://github.com/quangis/transformation-algebra#>.
+@prefix from: <https://github.com/quangis/transformation-algebra#from>.
+@prefix type: <https://github.com/quangis/cct#type>.
+@prefix via: <https://github.com/quangis/cct#operator>.
+
+[] a :Query;
+    :question "What is the average temperature for each neighbourhood in Utrecht?";
+    :workflow <http://example.com#TemperatureUtrecht>;
+    :output [
+        type: "R(Obj, Reg * Itv)"; from: [
+            type: "R(Obj, Itv)"; from: [
+                type: "R(Loc, Itv)"; from: [
+                    type: "R(Reg, Itv)" # weather stations
+                ]
+            ], [
+                type: "R(Obj, Reg)"; from: [
+                    type: "R(Obj, Reg * Nom)" # cbsneighbours
+                ]
+            ]
+        ]
+    ].

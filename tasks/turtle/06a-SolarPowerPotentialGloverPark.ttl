@@ -1,0 +1,29 @@
+@prefix : <https://github.com/quangis/transformation-algebra#>.
+@prefix from: <https://github.com/quangis/transformation-algebra#from>.
+@prefix type: <https://github.com/quangis/cct#type>.
+@prefix via: <https://github.com/quangis/cct#operator>.
+
+[] a :Query;
+    :question "What is the potential of solar power for each rooftop in the Glover Park neighbourhood in Washington DC?";
+    :workflow <http://example.com#SolarPowerPotentialGloverPark>;
+    :output [
+        type: "R(Obj, Reg * Ratio)"; from: [
+            type: "R(Obj, Ratio)"; from: [
+                type: "R(Obj, Ratio)"; from: [ # average radiation
+                    [
+                        type: "R(Loc, Ratio)"; from: [ # usable radiation
+                            type: "R(Loc, Itv)" # dsm
+                        ], [
+                            type: "R(Loc, Ratio)" # solar radiation
+                        ]
+                    ]
+                ], [
+                    type: "R(Obj, Reg * Nom)" # buildings
+                ]
+            ], [
+                type: "R(Obj, Ratio)"; from: [ # usable building area size
+                    type: "R(Obj, Reg * Nom)"
+                ]
+            ]
+        ]
+    ].

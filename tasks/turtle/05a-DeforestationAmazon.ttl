@@ -1,0 +1,37 @@
+@prefix : <https://github.com/quangis/transformation-algebra#>.
+@prefix from: <https://github.com/quangis/transformation-algebra#from>.
+@prefix type: <https://github.com/quangis/cct#type>.
+@prefix via: <https://github.com/quangis/cct#operator>.
+
+[] a :Query;
+    :question "What is the impact of roads on deforestation in the Amazon rainforest?";
+    :workflow <http://example.com#DeforestationAmazon>;
+    :output [
+        type: "R(Bool, Ratio)"; from: [
+            type: "R(Loc, Bool)"; from: [ # erased buffer
+                type: "R(Loc, Bool)" # deforested area
+            ], [
+                type: "R(Loc, Bool)"; from: [
+                    type: "R(Obj, Reg * Nom)" # planned road buffer
+                ]
+            ]
+        ], [
+            type: "R(Bool, Ratio)"; from: [ # proportion
+                type: "C(Loc)"; from: [ # deforested region within buffer
+                    type: "R(Loc, Bool)"; from: [
+                        type: "R(Loc, Bool)" # deforested area
+                    ], [
+                        type: "R(Loc, Bool)"; from: [
+                            type: "R(Obj, Reg * Nom)" # roads buffer
+                        ]
+                    ]
+                ]
+            ], [
+                type: "C(Loc)"; from: [ # region of roads buffer
+                    type: "R(Loc, Bool)"; from: [
+                        type: "R(Obj, Reg * Nom)"
+                    ]
+                ]
+            ]
+        ]
+    ].
