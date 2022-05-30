@@ -2,14 +2,13 @@
 
 from __future__ import annotations
 
-import yaml
 import csv
 from rdflib import Graph  # type: ignore
 from rdflib.term import Node, Literal  # type: ignore
 from rdflib.namespace import RDFS  # type: ignore
 from rdflib.tools.rdf2dot import rdf2dot  # type: ignore
 from plumbum import cli  # type: ignore
-from transformation_algebra import Query, TransformationGraph
+from transformation_algebra import TransformationQuery, TransformationGraph, TA
 
 from config import REPO, TOOLS  # type: ignore
 from workflow import Workflow  # type: ignore
@@ -151,17 +150,15 @@ class QueryRunner(cli.Application):
             else:
                 wfgraph = None
 
-            opts = {"by_input": True, "by_output": True, "by_operators": False}
+            opts = {"by_io": True, "by_operators": False}
             opts["by_chronology"] = self.ordered and not self.blackbox
             opts["by_types"] = not self.blackbox
 
-            queries: list[tuple[str, set[Node], Query]] = []
+            queries: list[tuple[str, set[Node], TransformationQuery]] = []
             all_workflows: set[Node] = set()
             for path in QUERY_FILE:
-                with open(path, 'r') as fp:
-                    dct = yaml.safe_load(fp)
-                query = Query.from_dict(cct, dct)
-                expected = set(REPO[e] for e in dct["workflows"])
+                query = TransformationQuery(cct, path)
+                expected = set(query.graph.objects(query.root, TA.workflow))
                 all_workflows.update(expected)
                 queries.append((path.stem, expected, query))
 

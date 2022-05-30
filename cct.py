@@ -10,9 +10,9 @@ Module containing the core concept transformation algebra. Usage:
 """
 
 from transformation_algebra import with_parameters, _, Operator, \
-    Language, LanguageNamespace, TypeOperator, TypeInstance, Type
+    Language, TypeOperator, TypeInstance, Type
 from transformation_algebra.type import TypeAlias, Unit, Constraint
-from transformation_algebra.query import OR, Operators
+# from transformation_algebra.query import OR, Operators
 
 
 # Types ######################################################################
@@ -32,6 +32,9 @@ Count = TypeOperator(supertype=Ratio)
 R1 = TypeOperator(params=1)
 R2 = TypeOperator(params=2)
 R3 = TypeOperator(params=3)
+
+R = TypeAlias(lambda x, y: R2(x, y), Val, Val)
+C = TypeAlias(lambda x: R1(x), Val)
 
 
 # Type synonyms ##############################################################
@@ -619,8 +622,8 @@ groupby = Operator(
 # Generalized operators ######################################################
 # These cannot be used in an expression, but they can be used in queries.
 
-groupbyLR: Operators = OR(groupbyR, groupbyL)
-dist: Operators = OR(nDist, loDist, lgDist, lDist, oDist)
+# groupbyLR: Operators = OR(groupbyR, groupbyL)
+# dist: Operators = OR(nDist, loDist, lgDist, lDist, oDist)
 
 
 # Language definition ########################################################

@@ -11,12 +11,16 @@
         type: "R(Obj, Reg * Ratio)"; from: [
             type: "R(Obj, Ratio)"; from: [
                 type: "R(Obj, Ratio)"; # size of object regions
-                from: [ type: "R(Obj, Reg * Nom)" ] # cbs buurten
+                from: [
+                    type: "R(Obj, Reg * Nom)" # cbs buurten
+                ]
             ], [
                 type: "R(Obj, Ratio)"; # size of noise regions in object
                 from: [
-                    type: "R(Loc, Ord)",
-                    from: [ type: "R(Ord, Reg)" ] # noise
+                    type: "R(Loc, Ord)";
+                    from: [
+                        type: "R(Ord, Reg)" # noise
+                    ]
                 ]
             ]
         ]

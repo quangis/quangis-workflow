@@ -19,16 +19,16 @@ FUSEKI=build/apache-jena-fuseki-4.3.2/fuseki-server
 SERVER=http://localhost:3030
 TIMEOUT=
 WORKFLOWS=$(wildcard workflows/*.ttl)
-TASKS=$(wildcard tasks/*.yaml)
+TASKS=$(wildcard tasks/turtle/*.ttl)
 
 graphs: $(WORKFLOWS:workflows/%.ttl=$(BUILD)/%/graph-TB.dot) \
 		$(WORKFLOWS:workflows/%.ttl=$(BUILD)/%/graph-TP.dot)
 
-queries: $(TASKS:tasks/%.yaml=$(BUILD)/%/eval.rq)
+queries: $(TASKS:tasks/%.ttl=$(BUILD)/%/eval.rq)
 
 evaluations: $(patsubst %,$(BUILD)/eval/%.csv, \
-	EP EB OBA OPA TBA TPA OBC OPC TBC TPC   \
-)
+	EP EB OBA OPA TBA TPA   \
+) # OBC OPC TBC TPC
 
 # Server
 
@@ -120,7 +120,7 @@ $(BUILD)/%/graph-TP.dot: workflows/%.ttl
 	@rm -f $@; mkdir -p $(@D)
 	$(TATOOL) graph --visual --passthrough=pass --internal=transparent $< $@
 
-$(BUILD)/%/eval.rq: tasks/%.yaml
+$(BUILD)/%/eval.rq: tasks/%.ttl
 	@mkdir -p $(@D)
 	$(TATOOL) query $^ -o $@
 

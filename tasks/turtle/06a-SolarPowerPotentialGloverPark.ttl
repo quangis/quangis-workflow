@@ -10,12 +10,10 @@
         type: "R(Obj, Reg * Ratio)"; from: [
             type: "R(Obj, Ratio)"; from: [
                 type: "R(Obj, Ratio)"; from: [ # average radiation
-                    [
-                        type: "R(Loc, Ratio)"; from: [ # usable radiation
-                            type: "R(Loc, Itv)" # dsm
-                        ], [
-                            type: "R(Loc, Ratio)" # solar radiation
-                        ]
+                    type: "R(Loc, Ratio)"; from: [ # usable radiation
+                        type: "R(Loc, Itv)" # dsm
+                    ], [
+                        type: "R(Loc, Ratio)" # solar radiation
                     ]
                 ], [
                     type: "R(Obj, Reg * Nom)" # buildings
