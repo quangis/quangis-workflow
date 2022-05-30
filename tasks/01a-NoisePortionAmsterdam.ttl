@@ -16,7 +16,8 @@ _:Amsterdam
         type: "R(Ord, Reg)";
         from: [
             type: "R(Loc, Ord)";
-            from: _:Amsterdam, [
+            from: _:Amsterdam;
+            from: [
                 type: "R(Loc, Ord)";
                 from: _:NoiseContourMap
             ]
