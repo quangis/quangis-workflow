@@ -19,7 +19,7 @@ FUSEKI=build/apache-jena-fuseki-4.3.2/fuseki-server
 SERVER=http://localhost:3030
 TIMEOUT=
 WORKFLOWS=$(wildcard workflows/*.ttl)
-TASKS=$(wildcard tasks/turtle/*.ttl)
+TASKS=$(wildcard tasks/*.ttl)
 
 # Workflow graphs and the database should not be removed as intermediate files
 .SECONDARY: $(foreach VARIANT,OB OP TB TP,\
@@ -30,11 +30,11 @@ TASKS=$(wildcard tasks/turtle/*.ttl)
 graphs: $(WORKFLOWS:workflows/%.ttl=$(BUILD)/%/graph-TB.dot) \
 		$(WORKFLOWS:workflows/%.ttl=$(BUILD)/%/graph-TP.dot)
 
-queries: $(TASKS:tasks/turtle/%.ttl=$(BUILD)/%/eval.rq)
+queries: $(TASKS:tasks/%.ttl=$(BUILD)/%/eval.rq)
 
-evaluations: $(patsubst %,$(BUILD)/eval/%.csv, \
-	   TPA\
-) # EP EB OBA OPA TBA TPA OBC OPC TBC TPC
+eval: eval-ordered eval-unordered
+eval-ordered: $(patsubst %,$(BUILD)/eval/%.csv, OBC OPC TBC TPC)
+eval-unordered: $(patsubst %,$(BUILD)/eval/%.csv, EP EB OBA OPA TBA TPA)
 
 # Server
 
@@ -115,7 +115,7 @@ $(BUILD)/%/graph-TP.dot: workflows/%.ttl
 	@rm -f $@; mkdir -p $(@D)
 	$(TATOOL) graph --visual --passthrough=pass --internal=transparent $< $@
 
-$(BUILD)/%/eval.rq: tasks/turtle/%.ttl
+$(BUILD)/%/eval.rq: tasks/%.ttl
 	@rm -f $@; mkdir -p $(@D)
 	$(TATOOL) query $^ -o $@
 
@@ -131,4 +131,4 @@ $(BUILD)/results.tex: $(BUILD)/results.csv
 		| csvsort | csv2latex > $@
 
 
-.PHONY: all graphs queries evaluations
+.PHONY: all graphs queries eval eval-ordered eval-unordered
