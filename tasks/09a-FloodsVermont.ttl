@@ -7,14 +7,19 @@
     :question "What is the stream runoff during a predicted rainstorm in Vermont, US?";
     :workflow <https://example.com/#FloodsVermont>;
     :output [
-        type: "R(Ord, Ratio)"; from: [
-            # type: "R(Ord, Reg)"; from: [
-                type: "R(Loc, Ratio)"; from: [
-                    type: "R3(Loc, Ratio, Loc)"; from: [ # TODO: deprecate R3
+        type: "R(Ord, Ratio)";
+        from: [
+            # type: "R(Ord, Reg)";
+            # from: [
+                type: "R(Loc, Ratio)";
+                from: [
+                    type: "R3(Loc, Ratio, Loc)"; # TODO: deprecate R3
+                    from: [
                         type: "R(Loc, Itv)" # DEM
                     ]
                 ], [
-                    type: "R(Nom, Reg)"; from: [
+                    type: "R(Nom, Reg)";
+                    from: [
                         type: "R(Obj, Reg * Nom)" # pour point
                     ]
                 ]

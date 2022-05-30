@@ -7,27 +7,35 @@
     :question "What is the percentage of rural population within 2km distance to all-season roads in Shikoku, Japan?";
     :workflow <https://example.com/#InfrastructureAccessShikoku>;
     :output [
-        type: "R(Reg, Ratio)"; from: [ # count amount ratio
-            type: "R(Reg, Count)"; from: [ # rural clip and summing contentamount (rural_pop1)
-                type: "R(Obj, Reg * Count)"; from: [
-                    type: "R(Obj, Reg * Count)" # chochomoku
+        type: "R(Reg, Ratio)"; # count amount ratio
+        from: [
+            type: "R(Reg, Count)"; # rural clip and summing contentamount (rural_pop1)
+            from: [
+                type: "R(Obj, Reg * Count)"; # chochomoku
+                from: [
+                    type: "R(Obj, Reg * Count)"
                 ], [
-                    type: "R(Obj, Reg)"; from: [ # rural
+                    type: "R(Obj, Reg)"; # rural
+                    from: [
                         type: "R(Obj, Reg * Nom)"
                     ]
                 ]
             ]
         ], [
-            type: "R(Reg, Count)"; from: [ # rural_access1 via areal interpolation
-                type: "R(Obj, Reg * Count)"; from: [ # rural_clip
+            type: "R(Reg, Count)"; # rural_access1 via areal interpolation
+            from: [
+                type: "R(Obj, Reg * Count)"; # rural_clip
+                from: [
                     type: "R(Obj, Reg * Count)" # chochomoku
                 ], [
-                    type: "R(Obj, Reg)"; from: [ # rural
+                    type: "R(Obj, Reg)"; # rural
+                    from: [
                         type: "R(Obj, Reg * Nom)"
                     ]
                 ]
             ], [
-                type: "R(Loc, Bool)"; from: [ # roads_buffer
+                type: "R(Loc, Bool)"; # roads_buffer
+                from: [
                     type: "R(Obj, Reg * Nom)"
                 ]
             ]

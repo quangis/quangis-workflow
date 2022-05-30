@@ -7,9 +7,12 @@
     :question "What is the number of inhabitants for each neighbourhood in Utrecht?";
     :workflow <https://example.com/#PopulationUtrecht>;
     :output [
-        type: "R(Obj, Reg * Count)"; from: [
-            type: "R(Obj, Count)"; from: [
-                type: "R(Obj, Reg)"; from: [
+        type: "R(Obj, Reg * Count)";
+        from: [
+            type: "R(Obj, Count)";
+            from: [
+                type: "R(Obj, Reg)";
+                from: [
                     type: "R(Obj, Reg * Nom)"
                 ]
             ], [

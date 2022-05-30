@@ -7,10 +7,14 @@
     :question "What is the potential of solar power for each rooftop in the Glover Park neighbourhood in Washington DC?";
     :workflow <https://example.com/#SolarPowerPotentialGloverPark>;
     :output [
-        type: "R(Obj, Reg * Ratio)"; from: [
-            type: "R(Obj, Ratio)"; from: [
-                type: "R(Obj, Ratio)"; from: [ # average radiation
-                    type: "R(Loc, Ratio)"; from: [ # usable radiation
+        type: "R(Obj, Reg * Ratio)";
+        from: [
+            type: "R(Obj, Ratio)";
+            from: [
+                type: "R(Obj, Ratio)"; # average radiation
+                from: [
+                    type: "R(Loc, Ratio)"; # usable radiation
+                    from: [
                         type: "R(Loc, Itv)" # dsm
                     ], [
                         type: "R(Loc, Ratio)" # solar radiation
@@ -19,7 +23,8 @@
                     type: "R(Obj, Reg * Nom)" # buildings
                 ]
             ], [
-                type: "R(Obj, Ratio)"; from: [ # usable building area size
+                type: "R(Obj, Ratio)"; # usable building area size
+                from: [
                     type: "R(Obj, Reg * Nom)"
                 ]
             ]

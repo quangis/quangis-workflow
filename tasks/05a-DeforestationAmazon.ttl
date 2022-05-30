@@ -7,28 +7,37 @@
     :question "What is the impact of roads on deforestation in the Amazon rainforest?";
     :workflow <https://example.com/#DeforestationAmazon>;
     :output [
-        type: "R(Bool, Ratio)"; from: [
-            type: "R(Loc, Bool)"; from: [ # erased buffer
+        type: "R(Bool, Ratio)";
+        from: [
+            type: "R(Loc, Bool)"; # erased buffer
+            from: [
                 type: "R(Loc, Bool)" # deforested area
             ], [
-                type: "R(Loc, Bool)"; from: [
+                type: "R(Loc, Bool)";
+                from: [
                     type: "R(Obj, Reg * Nom)" # planned road buffer
                 ]
             ]
         ], [
-            type: "R(Bool, Ratio)"; from: [ # proportion
-                type: "C(Loc)"; from: [ # deforested region within buffer
-                    type: "R(Loc, Bool)"; from: [
-                        type: "R(Loc, Bool)" # deforested area
+            type: "R(Bool, Ratio)"; # proportion
+            from: [
+                type: "C(Loc)"; # deforested region within buffer
+                from: [
+                    type: "R(Loc, Bool)"; # deforested area
+                    from: [
+                        type: "R(Loc, Bool)"
                     ], [
-                        type: "R(Loc, Bool)"; from: [
-                            type: "R(Obj, Reg * Nom)" # roads buffer
+                        type: "R(Loc, Bool)"; # roads buffer
+                        from: [
+                            type: "R(Obj, Reg * Nom)"
                         ]
                     ]
                 ]
             ], [
-                type: "C(Loc)"; from: [ # region of roads buffer
-                    type: "R(Loc, Bool)"; from: [
+                type: "C(Loc)"; # region of roads buffer
+                from: [
+                    type: "R(Loc, Bool)";
+                    from: [
                         type: "R(Obj, Reg * Nom)"
                     ]
                 ]

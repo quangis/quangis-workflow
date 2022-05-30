@@ -7,20 +7,25 @@
     :question "Which urban areas are at risk from water depletion in Ogandala (High Plains) Aquifer, US?";
     :workflow <https://example.com/#OgallalaAquifer>;
     :output [
-        type: "R(Obj, Reg * Nom)"; from: [
-            type: "R(Obj, Reg)"; from: [
+        type: "R(Obj, Reg * Nom)";
+        from: [
+            type: "R(Obj, Reg)";
+            from: [
                 type: "R(Obj, Reg * Nom)" # urban areas
             ]
         ], [
-            type: "R(Obj, Reg)"; from: [
+            type: "R(Obj, Reg)";
+            from: [
                 type: "R(Obj, Reg * Nom)" # aquifer
             ]
         ], [
-            type: "R(Loc, Nom)"; from: [
+            type: "R(Loc, Nom)";
+            from: [
                 type: "R(Nom, Reg)" # precipitation coverage
             ]
         ], [
-            type: "R(Loc, Nom)"; from: [
+            type: "R(Loc, Nom)";
+            from: [
                 type: "R(Nom, Reg)" # irrigation coverage
             ]
         ]

@@ -7,13 +7,17 @@
     :question "What is the average temperature for each neighbourhood in Utrecht?";
     :workflow <https://example.com/#TemperatureUtrecht>;
     :output [
-        type: "R(Obj, Reg * Itv)"; from: [
-            type: "R(Obj, Itv)"; from: [
-                type: "R(Loc, Itv)"; from: [
+        type: "R(Obj, Reg * Itv)";
+        from: [
+            type: "R(Obj, Itv)";
+            from: [
+                type: "R(Loc, Itv)";
+                from: [
                     type: "R(Reg, Itv)" # weather stations
                 ]
             ], [
-                type: "R(Obj, Reg)"; from: [
+                type: "R(Obj, Reg)";
+                from: [
                     type: "R(Obj, Reg * Nom)" # cbsneighbours
                 ]
             ]
