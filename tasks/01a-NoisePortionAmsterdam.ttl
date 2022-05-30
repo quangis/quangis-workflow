@@ -3,20 +3,20 @@
 @prefix type: <https://github.com/quangis/cct#type>.
 @prefix via: <https://github.com/quangis/cct#operator>.
 
+_:NoiseContourMap type: "R(Ord, Reg)".
+_:SpatialRegionAmsterdam type: "R(Obj, Reg * Nom)".
+
 [] a :Query;
     :question "What is the portion of noise ≥ 70dB in Amsterdam?";
     :workflow <https://example.com/#NoisePortionAmsterdam>;
+    :input _:NoiseContourMap, _:SpatialRegionAmsterdam;
     :output [
         type: "R(Ord, Reg)";
         from: [
             type: "R(Loc, Ord)";
-            from: [
+            from: _:SpatialRegionAmsterdam, [
                 type: "R(Loc, Ord)";
-                from: [
-                    type: "R(Ord, Reg)"
-                ]
-            ], [
-                type: "R(Obj, Reg * Nom)"
+                from: _:NoiseContourMap
             ]
         ]
     ].

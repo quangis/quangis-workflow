@@ -3,18 +3,18 @@
 @prefix type: <https://github.com/quangis/cct#type>.
 @prefix via: <https://github.com/quangis/cct#operator>.
 
+_:HospitalPoints type: "R(Obj, Reg * Nom)".
+_:IncidentLocations type: "R(Obj, Reg * Nom)".
+
 [] a :Query;
     :question "What is the travel distance to the nearest hospital in California?";
     :workflow <https://example.com/#HospitalsUtrecht_Network>;
     :workflow <https://example.com/#HospitalsUtrecht_Near>;
+    :input _:HospitalPoints, _:IncidentLocations;
     :output [
         type: "R(Obj, Reg * Ratio)";
         from: [
             type: "R3(Obj, Ratio, Obj)"; # TODO: deprecate R3
-            from: [
-                type: "R(Obj, Reg * Nom)" # hospital points
-            ], [
-                type: "R(Obj, Reg * Nom)" # incident locations
-            ]
+            from: _:HospitalPoints, _:IncidentLocations
         ]
     ].

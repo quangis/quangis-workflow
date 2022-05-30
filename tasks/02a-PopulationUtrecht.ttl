@@ -3,20 +3,20 @@
 @prefix type: <https://github.com/quangis/cct#type>.
 @prefix via: <https://github.com/quangis/cct#operator>.
 
+_:Neighborhoods type: "R(Obj, Reg * Nom)".
+_:CountsCoveringCellRegions type: "R(Reg, Count)".
+
 [] a :Query;
-    :question "What is the number of inhabitants for each neighbourhood in Utrecht?";
+    :question "What is the number of inhabitants for each neighborhood in Utrecht?";
     :workflow <https://example.com/#PopulationUtrecht>;
+    :input _:Neighborhoods, _:CountsCoveringCellRegions;
     :output [
         type: "R(Obj, Reg * Count)";
         from: [
             type: "R(Obj, Count)";
-            from: [
+            from: _:CountsCoveringCellRegions, [
                 type: "R(Obj, Reg)";
-                from: [
-                    type: "R(Obj, Reg * Nom)"
-                ]
-            ], [
-                type: "R(Reg, Count)"
+                from: _:Neighborhoods
             ]
         ]
     ].

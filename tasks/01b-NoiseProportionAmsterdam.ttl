@@ -3,25 +3,29 @@
 @prefix type: <https://github.com/quangis/cct#type>.
 @prefix via: <https://github.com/quangis/cct#operator>.
 
+_:NoiseContourMap type: "R(Ord, Reg)".
+_:SpatialRegionAmsterdam type: "R(Obj, Reg * Nom)".
+
 [] a :Query;
     :question "What is the proportion of noise ≥ 70dB in Amsterdam?";
     :workflow <https://example.com/#NoiseProportionAmsterdam_Vector>;
     :workflow <https://example.com/#NoiseProportionAmsterdam_Raster>;
+    :input _:NoiseContourMap, _:SpatialRegionAmsterdam;
     :output [
-        type: "R(Obj, Reg * Ratio)"; from: [
-            type: "R(Obj, Ratio)"; from: [
+        type: "R(Obj, Reg * Ratio)";
+        from: [
+            type: "R(Obj, Ratio)";
+            from: [
                 type: "R(Obj, Ratio)"; # size of object regions
-                from: [
-                    type: "R(Obj, Reg * Nom)" # cbs buurten
-                ]
+                from: _:SpatialRegionAmsterdam
             ], [
                 type: "R(Obj, Ratio)"; # size of noise regions in object
                 from: [
                     type: "R(Loc, Ord)";
-                    from: [
-                        type: "R(Ord, Reg)" # noise
-                    ]
+                    from: _:NoiseContourMap
                 ]
             ]
         ]
     ].
+
+
