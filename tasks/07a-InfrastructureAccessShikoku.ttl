@@ -3,41 +3,36 @@
 @prefix type: <https://github.com/quangis/cct#type>.
 @prefix via: <https://github.com/quangis/cct#operator>.
 
+_:Roads
+    type: "R(Obj, Reg * Nom)".
+_:AdministrativeAreas
+    type: "R(Obj, Reg * Nom)".
+_:RegionalPopulationCounts
+    type: "R(Obj, Reg * Count)".
+
 [] a :Query;
     :question "What is the percentage of rural population within 2km distance to all-season roads in Shikoku, Japan?";
     :workflow <https://example.com/#InfrastructureAccessShikoku>;
+    :input _:Roads, _:AdminstrativeAreas, _:RegionalPopulationCounts;
     :output [
-        type: "R(Reg, Ratio)"; # count amount ratio
+        type: "R(Reg, Ratio)"; # A count amount ratio
         from: [
-            type: "R(Reg, Count)"; # rural clip and summing contentamount (rural_pop1)
+            type: "R(Reg, Count)"; # B rural clip and summing contentamount (rural_pop1)
+            from: _:RuralPopulationCounts # C
+        ];
+        from: [
+            type: "R(Reg, Count)"; # G rural_access1 via areal interpolation
+            from: _:RuralPopulationCounts; # C
             from: [
-                type: "R(Obj, Reg * Count)"; # chochomoku
-                from: [
-                    type: "R(Obj, Reg * Count)"
-                ], [
-                    type: "R(Obj, Reg)"; # rural
-                    from: [
-                        type: "R(Obj, Reg * Nom)"
-                    ]
-                ]
-            ]
-        ], [
-            type: "R(Reg, Count)"; # rural_access1 via areal interpolation
-            from: [
-                type: "R(Obj, Reg * Count)"; # rural_clip
-                from: [
-                    type: "R(Obj, Reg * Count)" # chochomoku
-                ], [
-                    type: "R(Obj, Reg)"; # rural
-                    from: [
-                        type: "R(Obj, Reg * Nom)"
-                    ]
-                ]
-            ], [
-                type: "R(Loc, Bool)"; # roads_buffer
-                from: [
-                    type: "R(Obj, Reg * Nom)"
-                ]
+                type: "R(Loc, Bool)"; # H roads_buffer
+                from: _:Roads # I
             ]
         ]
+    ].
+
+_:RuralPopulationCounts type: "R(Obj, Reg * Count)"; # C rural_clip
+    from: _:RegionalPopulationCounts; # D chochomoku
+    from: [
+        type: "R(Obj, Reg)"; # E rural
+        from: _:AdministrativeAreas # F
     ].

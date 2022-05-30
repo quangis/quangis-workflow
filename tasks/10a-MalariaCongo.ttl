@@ -3,22 +3,25 @@
 @prefix type: <https://github.com/quangis/cct#type>.
 @prefix via: <https://github.com/quangis/cct#operator>.
 
+_:MalariaIncidence
+    type: "R(Obj, Count)".
+_:AdministrativeRegions
+    type: "R(Obj, Reg * Nom)".
+_:PopulationCountPerCell
+    type: "R(Reg, Count)".
+
 [] a :Query;
     :question "What is the malaria incidence rate per 1000 inhabitants in the Democratic Republic of the Congo?";
     :workflow <https://example.com/#MalariaCongo>;
+    :input _:MalariaIncidence, _:PopulationCountPerCell, _:AdministrativeRegions;
     :output [
-        type: "R(Obj, Reg * Ratio)";
+        type: "R(Obj, Reg * Ratio)"; # A
         from: [
-            type: "R(Obj, Reg * Count)";
-            from: [
-                type: "R(Reg, Count)" # population on cells
-            ], [
-                type: "R(Obj, Reg * Nom)" # adminDRC2
-            ]
+            type: "R(Obj, Reg * Count)"; # B
+            from: _:PopulationCountPerCell; # C
+            from: _:AdminstrativeRegions # D
         ], [
             type: "R(Obj, Reg * Count)";
-            from: [
-                type: "R(Obj, Count)" # adminIncidence2
-            ]
+            from: _:MalariaIncidence # F
         ]
     ].

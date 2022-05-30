@@ -3,8 +3,10 @@
 @prefix type: <https://github.com/quangis/cct#type>.
 @prefix via: <https://github.com/quangis/cct#operator>.
 
-_:Neighborhoods type: "R(Obj, Reg * Nom)".
-_:WeatherStations type: "R(Reg, Itv)".
+_:Neighborhoods
+    type: "R(Obj, Reg * Nom)".
+_:WeatherStations
+    type: "R(Reg, Itv)".
 
 [] a :Query;
     :question "What is the average temperature for each neighbourhood in Utrecht?";
@@ -17,7 +19,8 @@ _:WeatherStations type: "R(Reg, Itv)".
             from: [
                 type: "R(Loc, Itv)";
                 from: _:WeatherStations
-            ], [
+            ];
+            from: [
                 type: "R(Obj, Reg)";
                 from: _:Neighborhoods
             ]

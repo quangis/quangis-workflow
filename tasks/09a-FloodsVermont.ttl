@@ -3,26 +3,28 @@
 @prefix type: <https://github.com/quangis/cct#type>.
 @prefix via: <https://github.com/quangis/cct#operator>.
 
+_:DEM
+    type: "R(Loc, Itv)".
+_:PourPoint
+    type: "R(Obj, Reg * Nom)".
+
 [] a :Query;
     :question "What is the stream runoff during a predicted rainstorm in Vermont, US?";
     :workflow <https://example.com/#FloodsVermont>;
+    :input _:DEM, _:PourPoint;
     :output [
-        type: "R(Ord, Ratio)";
+        type: "R(Ord, Ratio)"; # A
         from: [
-            # type: "R(Ord, Reg)";
+            # type: "R(Ord, Reg)"; # G
             # from: [
-                type: "R(Loc, Ratio)";
+                type: "R(Loc, Ratio)"; # B
                 from: [
-                    type: "R3(Loc, Ratio, Loc)"; # TODO: deprecate R3
-                    from: [
-                        type: "R(Loc, Itv)" # DEM
-                    ]
-                ], [
-                    type: "R(Nom, Reg)";
-                    from: [
-                        type: "R(Obj, Reg * Nom)" # pour point
-                    ]
-                ]
+                    type: "R3(Loc, Ratio, Loc)"; # C TODO: deprecate R3
+                    from: _:DEM # D
+                ];
+                from: [
+                    type: "R(Nom, Reg)"; # E
+                    from: _:PourPoint # F                ]
             ]
         # ]
     ].

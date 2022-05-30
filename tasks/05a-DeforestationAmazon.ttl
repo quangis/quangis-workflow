@@ -3,43 +3,45 @@
 @prefix type: <https://github.com/quangis/cct#type>.
 @prefix via: <https://github.com/quangis/cct#operator>.
 
+_:ExistingRoads
+    type: "R(Obj, Reg * Nom)".
+_:PlannedRoads
+    type: "R(Obj, Reg * Nom)".
+_:DeforestedArea
+    type: "R(Loc, Bool)".
+
 [] a :Query;
     :question "What is the impact of roads on deforestation in the Amazon rainforest?";
     :workflow <https://example.com/#DeforestationAmazon>;
+    :input _:ExistingRoads, _:PlannedRoads, _:DeforestedArea;
     :output [
-        type: "R(Bool, Ratio)";
+        type: "R(Bool, Ratio)"; # A
         from: [
-            type: "R(Loc, Bool)"; # erased buffer
+            type: "R(Loc, Bool)"; # B erased buffer
+            from: _:DeforestedArea; # C
             from: [
-                type: "R(Loc, Bool)" # deforested area
-            ], [
-                type: "R(Loc, Bool)";
-                from: [
-                    type: "R(Obj, Reg * Nom)" # planned road buffer
-                ]
+                type: "R(Loc, Bool)"; # D planned roads buffer
+                from: _:PlannedRoads # E
             ]
-        ], [
-            type: "R(Bool, Ratio)"; # proportion
+        ];
+        from: [
+            type: "R(Bool, Ratio)"; # F proportion
             from: [
-                type: "C(Loc)"; # deforested region within buffer
+                type: "C(Loc)"; # G deforested region within buffer
                 from: [
-                    type: "R(Loc, Bool)"; # deforested area
+                    type: "R(Loc, Bool)"; # H deforested area
+                    from: _:DeforestedArea; # C
                     from: [
-                        type: "R(Loc, Bool)"
-                    ], [
-                        type: "R(Loc, Bool)"; # roads buffer
-                        from: [
-                            type: "R(Obj, Reg * Nom)"
-                        ]
+                        type: "R(Loc, Bool)"; # I roads buffer
+                        from: _:ExistingRoads # J
                     ]
                 ]
-            ], [
-                type: "C(Loc)"; # region of roads buffer
+            ];
+            from: [
+                type: "C(Loc)"; # K region of roads buffer
                 from: [
-                    type: "R(Loc, Bool)";
-                    from: [
-                        type: "R(Obj, Reg * Nom)"
-                    ]
+                    type: "R(Loc, Bool)"; # L
+                    from: _:ExistingRoads # M (assuming it is the same as J)
                 ]
             ]
         ]
