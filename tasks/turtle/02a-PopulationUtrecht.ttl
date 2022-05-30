@@ -10,7 +10,7 @@
         type: "R(Obj, Reg * Count)"; from: [
             type: "R(Obj, Count)"; from: [
                 type: "R(Obj, Reg)"; from: [
-                    type: "R(Obj, Reg * Count)"
+                    type: "R(Obj, Reg * Nom)"
                 ]
             ], [
                 type: "R(Reg, Count)"

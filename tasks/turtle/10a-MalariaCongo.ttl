@@ -7,14 +7,17 @@
     :question "What is the malaria incidence rate per 1000 inhabitants in the Democratic Republic of the Congo?";
     :workflow <https://example.com/#MalariaCongo>;
     :output [
-        type: "R(Obj, Reg * Ratio)"; from: [
-            type: "R(Obj, Reg * Count)"; from: [
+        type: "R(Obj, Reg * Ratio)";
+        from: [
+            type: "R(Obj, Reg * Count)";
+            from: [
                 type: "R(Reg, Count)" # population on cells
             ], [
                 type: "R(Obj, Reg * Nom)" # adminDRC2
             ]
         ], [
-            type: "R(Obj, Reg * Count)"; from: [
+            type: "R(Obj, Reg * Count)";
+            from: [
                 type: "R(Obj, Count)" # adminIncidence2
             ]
         ]

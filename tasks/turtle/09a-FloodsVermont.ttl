@@ -8,7 +8,7 @@
     :workflow <https://example.com/#FloodsVermont>;
     :output [
         type: "R(Ord, Ratio)"; from: [
-            type: "R(Ord, Reg)"; from: [
+            # type: "R(Ord, Reg)"; from: [
                 type: "R(Loc, Ratio)"; from: [
                     type: "R3(Loc, Ratio, Loc)"; from: [ # TODO: deprecate R3
                         type: "R(Loc, Itv)" # DEM
@@ -19,5 +19,5 @@
                     ]
                 ]
             ]
-        ]
+        # ]
     ].
