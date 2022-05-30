@@ -5,7 +5,7 @@
 
 [] a :Query;
     :question "What is the impact of roads on deforestation in the Amazon rainforest?";
-    :workflow <http://example.com#DeforestationAmazon>;
+    :workflow <https://example.com/#DeforestationAmazon>;
     :output [
         type: "R(Bool, Ratio)"; from: [
             type: "R(Loc, Bool)"; from: [ # erased buffer

@@ -5,8 +5,8 @@
 
 [] a :Query;
     :question "What is the proportion of noise ≥ 70dB in Amsterdam?";
-    :workflow <http://example.com#NoiseProportionAmsterdam_Vector>;
-    :workflow <http://example.com#NoiseProportionAmsterdam_Raster>;
+    :workflow <https://example.com/#NoiseProportionAmsterdam_Vector>;
+    :workflow <https://example.com/#NoiseProportionAmsterdam_Raster>;
     :output [
         type: "R(Obj, Reg * Ratio)"; from: [
             type: "R(Obj, Ratio)"; from: [

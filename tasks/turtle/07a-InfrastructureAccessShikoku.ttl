@@ -5,7 +5,7 @@
 
 [] a :Query;
     :question "What is the percentage of rural population within 2km distance to all-season roads in Shikoku, Japan?";
-    :workflow <http://example.com#InfrastructureAccessShikoku>;
+    :workflow <https://example.com/#InfrastructureAccessShikoku>;
     :output [
         type: "R(Reg, Ratio)"; from: [ # count amount ratio
             type: "R(Reg, Count)"; from: [ # rural clip and summing contentamount (rural_pop1)

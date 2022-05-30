@@ -5,7 +5,7 @@
 
 [] a :Query;
     :question "What is the average temperature for each neighbourhood in Utrecht?";
-    :workflow <http://example.com#TemperatureUtrecht>;
+    :workflow <https://example.com/#TemperatureUtrecht>;
     :output [
         type: "R(Obj, Reg * Itv)"; from: [
             type: "R(Obj, Itv)"; from: [

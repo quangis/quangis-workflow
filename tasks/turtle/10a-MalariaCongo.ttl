@@ -5,7 +5,7 @@
 
 [] a :Query;
     :question "What is the malaria incidence rate per 1000 inhabitants in the Democratic Republic of the Congo?";
-    :workflow <http://example.com#MalariaCongo>;
+    :workflow <https://example.com/#MalariaCongo>;
     :output [
         type: "R(Obj, Reg * Ratio)"; from: [
             type: "R(Obj, Reg * Count)"; from: [

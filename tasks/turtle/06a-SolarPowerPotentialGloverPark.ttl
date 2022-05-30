@@ -5,7 +5,7 @@
 
 [] a :Query;
     :question "What is the potential of solar power for each rooftop in the Glover Park neighbourhood in Washington DC?";
-    :workflow <http://example.com#SolarPowerPotentialGloverPark>;
+    :workflow <https://example.com/#SolarPowerPotentialGloverPark>;
     :output [
         type: "R(Obj, Reg * Ratio)"; from: [
             type: "R(Obj, Ratio)"; from: [

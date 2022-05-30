@@ -5,7 +5,7 @@
 
 [] a :Query;
     :question "What is the stream runoff during a predicted rainstorm in Vermont, US?";
-    :workflow <http://example.com#FloodsVermont>;
+    :workflow <https://example.com/#FloodsVermont>;
     :output [
         type: "R(Ord, Ratio)"; from: [
             type: "R(Ord, Reg)"; from: [

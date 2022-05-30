@@ -5,7 +5,7 @@
 
 [] a :Query;
     :question "What is the portion of noise ≥ 70dB in Amsterdam?";
-    :workflow <http://example.com#NoisePortionAmsterdam>;
+    :workflow <https://example.com/#NoisePortionAmsterdam>;
     :output
         [ type: "R(Ord, Reg)"; from:
             [ type: "R(Loc, Ord)"; from:

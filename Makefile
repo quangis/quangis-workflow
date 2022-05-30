@@ -21,63 +21,59 @@ TIMEOUT=
 WORKFLOWS=$(wildcard workflows/*.ttl)
 TASKS=$(wildcard tasks/turtle/*.ttl)
 
+# Workflow graphs and the database should not be removed as intermediate files
+.SECONDARY: $(foreach VARIANT,OB OP TB TP,\
+	$(BUILD)/tdb-$(VARIANT)/mark \
+	$(WORKFLOWS:workflows/%.ttl=$(BUILD)/%/graph-$(VARIANT).ttl)\
+)
+
 graphs: $(WORKFLOWS:workflows/%.ttl=$(BUILD)/%/graph-TB.dot) \
 		$(WORKFLOWS:workflows/%.ttl=$(BUILD)/%/graph-TP.dot)
 
-queries: $(TASKS:tasks/%.ttl=$(BUILD)/%/eval.rq)
+queries: $(TASKS:tasks/turtle/%.ttl=$(BUILD)/%/eval.rq)
 
 evaluations: $(patsubst %,$(BUILD)/eval/%.csv, \
-	EP EB OBA OPA TBA TPA   \
-) # OBC OPC TBC TPC
+	   TPA\
+) # EP EB OBA OPA TBA TPA OBC OPC TBC TPC
 
 # Server
 
-$(BUILD)/tdb-%/marker: $(BUILD)/cct.ttl $(subst VARIANT,%,$(WORKFLOWS:workflows/%.ttl=$(BUILD)/%/graph-VARIANT.ttl))
-	mkdir -p $(@D)/db
-	$(TDBLOADER) --loc=$(@D)/db $^
+$(BUILD)/tdb-%/mark: $(BUILD)/cct.ttl \
+		$(subst VARIANT,%,$(WORKFLOWS:workflows/%.ttl=$(BUILD)/%/graph-VARIANT.ttl))
+	mkdir -p $(@D); rm -rf $(@D)/*
+	$(TDBLOADER) --loc=$(@D) $^
 	touch $@
-
-$(BUILD)/tdb-%/started: $(BUILD)/tdb-%/marker
-	$(FUSEKI) --localhost --loc=$(<:%/marker=%)/db \
-		$(if $(TIMEOUT),--timeout=$(TIMEOUT),) \
-		$(<:$(BUILD)/tdb-%/marker=/%) & echo $$! > $@
-	sleep 10
-
-$(BUILD)/tdb-%/stopped:
-	kill -9 $(shell cat $(@:%/stopped=%/started))
-	rm $(@:%/stopped=%/started)
-	sleep 2
 
 
 # Running queries
 
-$(BUILD)/eval/%C.csv: $(TASKS)
+$(BUILD)/eval/%C.csv: $(BUILD)/tdb-%/mark $(TASKS)
 	@rm -f $@; mkdir -p $(@D)
-	V=$(@:$(BUILD)/eval/%C.csv=%); \
-	$(MAKE) $(BUILD)/tdb-$$V/started; \
-	$(TATOOL) query -e "$(SERVER)/$$V" $^ -o $@;\
-	$(MAKE) $(BUILD)/tdb-$$V/stopped
+	TDB=$(<:$(BUILD)/tdb-%/mark=%); \
+	$(FUSEKI) --localhost --loc=$(<:%/mark=%) /$$TDB & PID=$$!; sleep 10; \
+	$(TATOOL) query -e "$(SERVER)/$$TDB" $(filter %.ttl,$^) -o $@;\
+	kill -9 $$PID
 
-$(BUILD)/eval/%A.csv: $(TASKS)
+$(BUILD)/eval/%A.csv: $(BUILD)/tdb-%/mark $(TASKS)
 	@rm -f $@; mkdir -p $(@D)
-	V=$(@:$(BUILD)/eval/%A.csv=%); \
-	$(MAKE) $(BUILD)/tdb-$$V/started; \
-	$(TATOOL) query -e "$(SERVER)/$$V" --order=any $^ -o $@;\
-	$(MAKE) $(BUILD)/tdb-$$V/stopped
+	TDB=$(<:$(BUILD)/tdb-%/mark=%); \
+	$(FUSEKI) --localhost --loc=$(<:%/mark=%) /$$TDB & PID=$$!; sleep 10; \
+	$(TATOOL) query -e "$(SERVER)/$$TDB" --order=any $(filter %.ttl,$^) -o $@;\
+	kill -9 $$PID
 
-$(BUILD)/eval/EB.csv: $(TASKS)
+$(BUILD)/eval/EB.csv: $(BUILD)/tdb-OB/mark $(TASKS)
 	@rm -f $@; mkdir -p $(@D)
-	V=OB; \
-	$(MAKE) $(BUILD)/tdb-$$V/started; \
-	$(TATOOL) query -e "$(SERVER)/$$V" --blackbox $^ -o $@;\
-	$(MAKE) $(BUILD)/tdb-$$V/stopped
+	TDB=$(<:$(BUILD)/tdb-%/mark=%); \
+	$(FUSEKI) --localhost --loc=$(<:%/mark=%) /$$TDB & PID=$$!; sleep 10; \
+	$(TATOOL) query -e "$(SERVER)/$$TDB" --blackbox $(filter %.ttl,$^) -o $@;\
+	kill -9 $$PID
 
-$(BUILD)/eval/EP.csv: $(TASKS)
+$(BUILD)/eval/EP.csv: $(BUILD)/tdb-OP/mark $(TASKS)
 	@rm -f $@; mkdir -p $(@D)
-	V=OP; \
-	$(MAKE) $(BUILD)/tdb-$$V/started; \
-	$(TATOOL) query -e "$(SERVER)/$$V" --blackbox $^ -o $@;\
-	$(MAKE) $(BUILD)/tdb-$$V/stopped
+	TDB=$(<:$(BUILD)/tdb-%/mark=%); \
+	$(FUSEKI) --localhost --loc=$(<:%/mark=%) /$$TDB & PID=$$!; sleep 10; \
+	$(TATOOL) query -e "$(SERVER)/$$TDB" --blackbox $(filter %.ttl,$^) -o $@;\
+	kill -9 $$PID
 
 
 # Vocabulary
@@ -105,7 +101,6 @@ $(BUILD)/%/graph-TB.ttl: workflows/%.ttl
 	@rm -f $@; mkdir -p $(@D)
 	$(TATOOL) graph --passthrough=block --internal=transparent $< $@
 
-
 # Visualisation/diagnostics
 
 $(BUILD)/cct.dot: cct.py
@@ -120,8 +115,8 @@ $(BUILD)/%/graph-TP.dot: workflows/%.ttl
 	@rm -f $@; mkdir -p $(@D)
 	$(TATOOL) graph --visual --passthrough=pass --internal=transparent $< $@
 
-$(BUILD)/%/eval.rq: tasks/%.ttl
-	@mkdir -p $(@D)
+$(BUILD)/%/eval.rq: tasks/turtle/%.ttl
+	@rm -f $@; mkdir -p $(@D)
 	$(TATOOL) query $^ -o $@
 
 
