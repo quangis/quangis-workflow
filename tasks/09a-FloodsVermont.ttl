@@ -33,6 +33,7 @@ _:PourPoint
                     # Region
                     type: "R(Nom, Reg)"; # E
                     from: _:PourPoint # F                ]
+                ]
             ]
         # ]
     ].
