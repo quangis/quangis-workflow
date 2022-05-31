@@ -15,34 +15,41 @@ _:DeforestedArea
     :workflow <https://example.com/#DeforestationAmazon>;
     :input _:ExistingRoads, _:PlannedRoads, _:DeforestedArea;
     :output [
+        # Size of the area covered by the land use field
         type: "R(Bool, Ratio)"; # A
         from: [
-            type: "R(Loc, Bool)"; # B erased buffer
+            # Land use field, which is the part of deforested area within
+            # buffers of new roads
+            type: "R(Loc, Bool)"; # B
             from: _:DeforestedArea; # C
             from: [
-                type: "R(Loc, Bool)"; # D planned roads buffer
+                # Buffer the planned roads into a boolean field: in or out?
+                type: "R(Loc, Bool)"; # D
                 from: _:PlannedRoads # E
             ]
         ];
         from: [
-            type: "R(Bool, Ratio)"; # F proportion
+            # Proportion of the coverage of deforested vs all existing roads
+            type: "R(Bool, Ratio)"; # F
             from: [
-                type: "C(Loc)"; # G deforested region within buffer
+                # Spatial coverage of existing deforested roads
+                type: "C(Loc)"; # G
                 from: [
-                    type: "R(Loc, Bool)"; # H deforested area
+                    # Intersect buffer with the deforested area field
+                    type: "R(Loc, Bool)"; # H
                     from: _:DeforestedArea; # C
-                    from: [
-                        type: "R(Loc, Bool)"; # I roads buffer
-                        from: _:ExistingRoads # J
-                    ]
+                    from: _:ExistingRoadsBuffer
                 ]
             ];
             from: [
-                type: "C(Loc)"; # K region of roads buffer
-                from: [
-                    type: "R(Loc, Bool)"; # L
-                    from: _:ExistingRoads # M (assuming it is the same as J)
-                ]
+                # Spatial coverage of existing roads
+                type: "C(Loc)";
+                from: _:ExistingRoadsBuffer
             ]
         ]
     ].
+
+    _:ExistingRoadsBuffer
+        # Buffer the existing roads objects into a boolean field: in or out?
+        type: "R(Loc, Bool)"; # I/L
+        from: _:ExistingRoads. # J/M

@@ -14,10 +14,12 @@ _:IncidentLocations
     :workflow <https://example.com/#HospitalsUtrecht_Near>;
     :input _:HospitalPoints, _:IncidentLocations;
     :output [
-        type: "R(Obj, Reg * Ratio)";
+        # Minimize distance matrix over objects (TODO technical?)
+        type: "R(Obj, Reg * Ratio)"; # A
         from: [
-            type: "R3(Obj, Ratio, Obj)"; # TODO: deprecate R3
-            from: _:HospitalPoints;
-            from: _:IncidentLocations
+            # Generate a distance matrix from events (as objects) to hospital objects
+            type: "R3(Obj, Ratio, Obj)"; # B TODO: deprecate R3
+            from: _:HospitalPoints; # D
+            from: _:IncidentLocations # C
         ]
     ].

@@ -15,19 +15,25 @@ _:Buildings
     :workflow <https://example.com/#SolarPowerPotentialGloverPark>;
     :input _:SolarRadiation, _:TerrainDSM, _:Buildings;
     :output [
+        # Add regions (technical)
         type: "R(Obj, Reg * Ratio)"; # A
         from: [
+            # Sum the amount of energy per rooftop
             type: "R(Obj, Ratio)"; # B
             from: [
+                # Average potential by aggregating each building rooftop
                 type: "R(Obj, Ratio)"; # C average radiation
                 from: [
-                    type: "R(Loc, Ratio)"; # D usable radiation
-                    from: _:TerrainDSM, _:SolarRadiation # E, F
+                    # Constrain the solar potential field by the terrain field
+                    type: "R(Loc, Ratio)"; # D
+                    from: _:TerrainDSM; # E
+                    from: _:SolarRadiation # F
                 ];
                 from: _:Buildings # G
             ];
             from: [
-                type: "R(Obj, Ratio)"; # H usable building area size
+                # Size of the usable building area (rooftops)
+                type: "R(Obj, Ratio)"; # H
                 from: _:Buildings # G
             ]
         ]

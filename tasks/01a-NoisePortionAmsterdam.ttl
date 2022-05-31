@@ -13,13 +13,16 @@ _:Amsterdam
     :workflow <https://example.com/#NoisePortionAmsterdam>;
     :input _:NoiseContourMap, _:Amsterdam;
     :output [
-        type: "R(Ord, Reg)";
+        # Noise coverage
+        type: "R(Ord, Reg)"; # A
         from: [
-            type: "R(Loc, Ord)";
-            from: _:Amsterdam;
+            # Noise field constrained to the spatial region of Amsterdam
+            type: "R(Loc, Ord)"; # B
+            from: _:Amsterdam; # C
             from: [
-                type: "R(Loc, Ord)";
-                from: _:NoiseContourMap
+                # Noise contour map to a noise field
+                type: "R(Loc, Ord)"; # D
+                from: _:NoiseContourMap # E
             ]
         ]
     ].

@@ -13,16 +13,24 @@ _:PourPoint
     :workflow <https://example.com/#FloodsVermont>;
     :input _:DEM, _:PourPoint;
     :output [
+        # Measuring the area covered by each time interval yields unit hydrograph
         type: "R(Ord, Ratio)"; # A
         from: [
+            # Classify into ordinal time intervals and invert the field; may be
+            # commented out for reasons discussed in the paper
             # type: "R(Ord, Reg)"; # G
             # from: [
+                # Drainage time field result from minimizing wrt closest
+                # location in the region
                 type: "R(Loc, Ratio)"; # B
                 from: [
+                    # Derive a quantified (drainage time) relation between
+                    # locations from a terrain model
                     type: "R3(Loc, Ratio, Loc)"; # C TODO: deprecate R3
                     from: _:DEM # D
                 ];
                 from: [
+                    # Region
                     type: "R(Nom, Reg)"; # E
                     from: _:PourPoint # F                ]
             ]

@@ -15,24 +15,31 @@ _:RegionalPopulationCounts
     :workflow <https://example.com/#InfrastructureAccessShikoku>;
     :input _:Roads, _:AdminstrativeAreas, _:RegionalPopulationCounts;
     :output [
-        type: "R(Reg, Ratio)"; # A count amount ratio
+        # Proportion of rural areas close to roads wrt total rural population
+        type: "R(Reg, Ratio)"; # A
         from: [
-            type: "R(Reg, Count)"; # B rural clip and summing contentamount (rural_pop1)
+            # Sum the total population amount in rural areas
+            type: "R(Reg, Count)"; # B
             from: _:RuralPopulationCounts # C
         ];
         from: [
-            type: "R(Reg, Count)"; # G rural_access1 via areal interpolation
+            # Content amounts for rural buffer areas by areal interpolation
+            type: "R(Reg, Count)"; # G
             from: _:RuralPopulationCounts; # C
             from: [
-                type: "R(Loc, Bool)"; # H roads_buffer
+                # Build a buffer around roads
+                type: "R(Loc, Bool)"; # H
                 from: _:Roads # I
             ]
         ]
     ].
 
-_:RuralPopulationCounts type: "R(Obj, Reg * Count)"; # C rural_clip
-    from: _:RegionalPopulationCounts; # D chochomoku
+_:RuralPopulationCounts
+    # Clip population counts to rural areas
+    type: "R(Obj, Reg * Count)"; # C
+    from: _:RegionalPopulationCounts; # D
     from: [
-        type: "R(Obj, Reg)"; # E rural
+        # Select rural administrative areas
+        type: "R(Obj, Reg)"; # E
         from: _:AdministrativeAreas # F
     ].

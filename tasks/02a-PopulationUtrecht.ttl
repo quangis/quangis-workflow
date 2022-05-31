@@ -13,13 +13,16 @@ _:PopulationCountPerCell
     :workflow <https://example.com/#PopulationUtrecht>;
     :input _:Neighborhoods, _:PopulationCountPerCell;
     :output [
-        type: "R(Obj, Reg * Count)";
+        # Add regions (technical)
+        type: "R(Obj, Reg * Count)"; # A
         from: [
-            type: "R(Obj, Count)";
-            from: _:PopulationCountsPerCell;
+            # Aggregate counts of objects that cover cell regions
+            type: "R(Obj, Count)"; # B
+            from: _:PopulationCountsPerCell; # E
             from: [
-                type: "R(Obj, Reg)";
-                from: _:Neighborhoods
+                # Neighbourhood regions
+                type: "R(Obj, Reg)"; # C
+                from: _:Neighborhoods # D
             ]
         ]
     ].

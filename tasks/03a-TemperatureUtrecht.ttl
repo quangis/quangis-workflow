@@ -13,16 +13,21 @@ _:WeatherStations
     :workflow <https://example.com/#TemperatureUtrecht>;
     :input _:Neighborhoods, _:WeatherStations;
     :output [
-        type: "R(Obj, Reg * Itv)";
+        # Add regions (technical)
+        type: "R(Obj, Reg * Itv)"; # A
         from: [
-            type: "R(Obj, Itv)";
+            # Average temperature field over neighborhood regions
+            type: "R(Obj, Itv)"; # B
             from: [
-                type: "R(Loc, Itv)";
-                from: _:WeatherStations
+                # Interpolate point-wise measurements from weather stations
+                # into a temperature field
+                type: "R(Loc, Itv)"; # C
+                from: _:WeatherStations # D
             ];
             from: [
-                type: "R(Obj, Reg)";
-                from: _:Neighborhoods
+                # Neighborhood regions from neighborhood data
+                type: "R(Obj, Reg)"; # E
+                from: _:Neighborhoods # F
             ]
         ]
     ].

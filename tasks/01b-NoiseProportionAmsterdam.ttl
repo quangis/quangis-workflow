@@ -14,18 +14,24 @@ _:Amsterdam
     :workflow <https://example.com/#NoiseProportionAmsterdam_Raster>;
     :input _:NoiseContourMap, _:Amsterdam;
     :output [
-        type: "R(Obj, Reg * Ratio)";
+        # Add regions to neighborhoods (technical)
+        type: "R(Obj, Reg * Ratio)"; # F
         from: [
-            type: "R(Obj, Ratio)";
+            # Ratio scaled quality of neighborhoods, as a proportion of the
+            # sizes of neighborhoods and the sizes of ordinal fields within
+            type: "R(Obj, Ratio)"; # G
             from: [
-                type: "R(Obj, Ratio)"; # size of object regions
-                from: _:Amsterdam
+                # Sizes of neighborhoods
+                type: "R(Obj, Ratio)"; # H
+                from: _:Amsterdam # C
             ];
             from: [
-                type: "R(Obj, Ratio)"; # size of noise regions in object
+                # Sizes of ordinal fields within neighborhoods
+                type: "R(Obj, Ratio)"; # I
                 from: [
-                    type: "R(Loc, Ord)";
-                    from: _:NoiseContourMap
+                    # Noise contour map to ordinal fields
+                    type: "R(Loc, Ord)"; # D
+                    from: _:NoiseContourMap # E
                 ]
             ]
         ]

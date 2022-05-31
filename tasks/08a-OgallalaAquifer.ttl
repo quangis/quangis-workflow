@@ -17,21 +17,27 @@ _:Irrigation
     :workflow <https://example.com/#OgallalaAquifer>;
     :input _:UrbanAreas, _:Aquifer, _:Precipitation, _:Irrigation;
     :output [
-        type: "R(Obj, Reg * Nom)";
+        # Select urban regions that overlap with high irrigation/low
+        # precipitation within some distance of the aquifer's region
+        type: "R(Obj, Reg * Nom)"; # A
         from: [
-            type: "R(Obj, Reg)";
-            from: _:UrbanAreas
+            # Urban regions
+            type: "R(Obj, Reg)"; # D
+            from: _:UrbanAreas # E
         ];
         from: [
-            type: "R(Obj, Reg)";
-            from: _:Aquifer
+            # Region of the aquifer
+            type: "R(Obj, Reg)"; # B
+            from: _:Aquifer # C
         ];
         from: [
-            type: "R(Loc, Nom)";
-            from: _:Precipitation # coverage
+            # Field from coverage of low precipitation
+            type: "R(Loc, Nom)"; # G
+            from: _:Precipitation # F
         ];
         from: [
-            type: "R(Loc, Nom)";
-            from: _:Irrigation # coverage
+            # Field from coverage of high irrigation
+            type: "R(Loc, Nom)"; # I
+            from: _:Irrigation # H
         ]
     ].

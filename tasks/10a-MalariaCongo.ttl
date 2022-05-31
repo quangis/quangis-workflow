@@ -15,13 +15,17 @@ _:PopulationCountPerCell
     :workflow <https://example.com/#MalariaCongo>;
     :input _:MalariaIncidence, _:PopulationCountPerCell, _:AdministrativeRegions;
     :output [
+        # Proportion of malaria incidents vs population counts (TODO technical?)
         type: "R(Obj, Reg * Ratio)"; # A
         from: [
+            # Sum up population content amounts for cells within the regions of
+            # administrative areas to obtain population counts
             type: "R(Obj, Reg * Count)"; # B
             from: _:PopulationCountPerCell; # C
-            from: _:AdminstrativeRegions # D
+            from: _:AdministrativeRegions # D
         ], [
-            type: "R(Obj, Reg * Count)";
+            # Malaria incidents on administrative areas
+            type: "R(Obj, Reg * Count)"; # E
             from: _:MalariaIncidence # F
         ]
     ].
