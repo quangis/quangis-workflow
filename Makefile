@@ -7,15 +7,15 @@
 # The test for Passthrough/Blocked and Opaque/Transparent operate on dedicated
 # database files: PO/PT/BO/BT. Since order is irrelevant at level 1, we get
 # 16-4 different evaluation files: EB/EP/OPC/TPC/OPA/TPA/OBA/TBA/OBC/TBC
-# cf. https://stackoverflow.com/questions/974077/how-can-i-trap-errors-and-interrupts-in-gnu-make
 
 .NOTPARALLEL:
 
 BUILD=build
 TATOOL=python3 utils/ta-tool.py
-TDBLOADER=build/apache-jena-4.3.2/bin/tdb1.xloader
+JENAVERSION=4.5.0
+TDBLOADER=build/apache-jena-$(JENAVERSION)/bin/tdb1.xloader
 # TDBLOADER=build/apache-jena-4.3.2/bin/tdb2.tdbloader
-FUSEKI=build/apache-jena-fuseki-4.3.2/fuseki-server
+FUSEKI=build/apache-jena-fuseki-$(JENAVERSION)/fuseki-server
 SERVER=http://localhost:3030
 TIMEOUT=
 WORKFLOWS=$(wildcard workflows/*.ttl)
@@ -36,39 +36,52 @@ eval: eval-ordered eval-unordered
 eval-ordered: $(patsubst %,$(BUILD)/eval/%.csv, OBC OPC TBC TPC)
 eval-unordered: $(patsubst %,$(BUILD)/eval/%.csv, EP EB OBA OPA TBA TPA)
 
+
+# Apache Jena
+
+$(TDBLOADER):
+	mkdir -p build/; cd build; \
+		wget https://archive.apache.org/dist/jena/binaries/apache-jena-$(JENAVERSION).tar.gz; \
+		tar -xvf apache-jena-$(JENAVERSION).tar.gz
+
+$(FUSEKI):
+	mkdir -p build/; cd build; \
+		wget https://archive.apache.org/dist/jena/binaries/apache-jena-fuseki-$(JENAVERSION).tar.gz; \
+		tar -xvf apache-jena-fuseki-$(JENAVERSION).tar.gz
+
 # Server
 
-$(BUILD)/tdb-%/mark: $(BUILD)/cct.ttl \
+$(BUILD)/tdb-%/mark: $(TDBLOADER) $(BUILD)/cct.ttl \
 		$(subst VARIANT,%,$(WORKFLOWS:workflows/%.ttl=$(BUILD)/%/graph-VARIANT.ttl))
 	mkdir -p $(@D); rm -rf $(@D)/*
-	$(TDBLOADER) --loc=$(@D) $^
+	$(TDBLOADER) --loc=$(@D) $(filter %.ttl,$^)
 	touch $@
 
 
 # Running queries
 
-$(BUILD)/eval/%C.csv: $(BUILD)/tdb-%/mark $(TASKS)
+$(BUILD)/eval/%C.csv: $(BUILD)/tdb-%/mark $(FUSEKI) $(TASKS)
 	@rm -f $@; mkdir -p $(@D)
 	TDB=$(<:$(BUILD)/tdb-%/mark=%); \
 	$(FUSEKI) --localhost --loc=$(<:%/mark=%) /$$TDB & PID=$$!; sleep 4; \
 	$(TATOOL) query -e "$(SERVER)/$$TDB" $(filter %.ttl,$^) -o $@;\
 	kill -9 $$PID
 
-$(BUILD)/eval/%A.csv: $(BUILD)/tdb-%/mark $(TASKS)
+$(BUILD)/eval/%A.csv: $(BUILD)/tdb-%/mark $(FUSEKI) $(TASKS)
 	@rm -f $@; mkdir -p $(@D)
 	TDB=$(<:$(BUILD)/tdb-%/mark=%); \
 	$(FUSEKI) --localhost --loc=$(<:%/mark=%) /$$TDB & PID=$$!; sleep 4; \
 	$(TATOOL) query -e "$(SERVER)/$$TDB" --order=any $(filter %.ttl,$^) -o $@;\
 	kill -9 $$PID
 
-$(BUILD)/eval/EB.csv: $(BUILD)/tdb-OB/mark $(TASKS)
+$(BUILD)/eval/EB.csv: $(BUILD)/tdb-OB/mark $(FUSEKI) $(TASKS)
 	@rm -f $@; mkdir -p $(@D)
 	TDB=$(<:$(BUILD)/tdb-%/mark=%); \
 	$(FUSEKI) --localhost --loc=$(<:%/mark=%) /$$TDB & PID=$$!; sleep 4; \
 	$(TATOOL) query -e "$(SERVER)/$$TDB" --blackbox $(filter %.ttl,$^) -o $@;\
 	kill -9 $$PID
 
-$(BUILD)/eval/EP.csv: $(BUILD)/tdb-OP/mark $(TASKS)
+$(BUILD)/eval/EP.csv: $(BUILD)/tdb-OP/mark $(FUSEKI) $(TASKS)
 	@rm -f $@; mkdir -p $(@D)
 	TDB=$(<:$(BUILD)/tdb-%/mark=%); \
 	$(FUSEKI) --localhost --loc=$(<:%/mark=%) /$$TDB & PID=$$!; sleep 4; \
