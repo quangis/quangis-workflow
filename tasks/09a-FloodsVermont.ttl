@@ -8,9 +8,9 @@ _:DEM
 _:PourPoint
     type: "R(Obj, Reg * Nom)".
 
-[] a :Query;
+[] a :Task;
     :question "What is the stream runoff during a predicted rainstorm in Vermont, US?";
-    :workflow <https://example.com/#FloodsVermont>;
+    :implementation <https://example.com/#FloodsVermont>;
     :input _:DEM, _:PourPoint;
     :output [
         # Measuring the area covered by each time interval yields unit hydrograph

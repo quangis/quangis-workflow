@@ -10,9 +10,9 @@ _:TerrainDSM
 _:Buildings
     type: "R(Obj, Reg * Nom)".
 
-[] a :Query;
+[] a :Task;
     :question "What is the potential of solar power for each rooftop in the Glover Park neighbourhood in Washington DC?";
-    :workflow <https://example.com/#SolarPowerPotentialGloverPark>;
+    :implementation <https://example.com/#SolarPowerPotentialGloverPark>;
     :input _:SolarRadiation, _:TerrainDSM, _:Buildings;
     :output [
         # Add regions (technical)

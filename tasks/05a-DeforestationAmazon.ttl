@@ -10,9 +10,9 @@ _:PlannedRoads
 _:DeforestedArea
     type: "R(Loc, Bool)".
 
-[] a :Query;
+[] a :Task;
     :question "What is the impact of roads on deforestation in the Amazon rainforest?";
-    :workflow <https://example.com/#DeforestationAmazon>;
+    :implementation <https://example.com/#DeforestationAmazon>;
     :input _:ExistingRoads, _:PlannedRoads, _:DeforestedArea;
     :output [
         # Size of the area covered by the land use field

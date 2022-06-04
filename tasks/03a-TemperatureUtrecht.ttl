@@ -8,9 +8,9 @@ _:Neighborhoods
 _:WeatherStations
     type: "R(Reg, Itv)".
 
-[] a :Query;
+[] a :Task;
     :question "What is the average temperature for each neighbourhood in Utrecht?";
-    :workflow <https://example.com/#TemperatureUtrecht>;
+    :implementation <https://example.com/#TemperatureUtrecht>;
     :input _:Neighborhoods, _:WeatherStations;
     :output [
         # Add regions (technical)

@@ -8,9 +8,9 @@ _:Neighborhoods
 _:PopulationCountPerCell
     type: "R(Reg, Count)".
 
-[] a :Query;
+[] a :Task;
     :question "What is the number of inhabitants for each neighborhood in Utrecht?";
-    :workflow <https://example.com/#PopulationUtrecht>;
+    :implementation <https://example.com/#PopulationUtrecht>;
     :input _:Neighborhoods, _:PopulationCountPerCell;
     :output [
         # Add regions (technical)

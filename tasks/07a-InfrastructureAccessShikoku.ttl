@@ -10,9 +10,9 @@ _:AdministrativeAreas
 _:RegionalPopulationCounts
     type: "R(Obj, Reg * Count)".
 
-[] a :Query;
+[] a :Task;
     :question "What is the percentage of rural population within 2km distance to all-season roads in Shikoku, Japan?";
-    :workflow <https://example.com/#InfrastructureAccessShikoku>;
+    :implementation <https://example.com/#InfrastructureAccessShikoku>;
     :input _:Roads, _:AdminstrativeAreas, _:RegionalPopulationCounts;
     :output [
         # Proportion of rural areas close to roads wrt total rural population
