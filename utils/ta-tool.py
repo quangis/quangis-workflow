@@ -158,7 +158,7 @@ class QueryRunner(cli.Application):
             all_workflows: set[Node] = set()
             for path in QUERY_FILE:
                 query = TransformationQuery(cct, path)
-                expected = set(query.graph.objects(query.root, TA.workflow))
+                expected = set(query.graph.objects(query.root, TA.implementation))
                 all_workflows.update(expected)
                 queries.append((path.stem, expected, query))
 
