@@ -2,13 +2,15 @@
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
 @prefix xml: <http://www.w3.org/XML/1998/namespace>.
-@prefix wf: <http://geographicknowledge.de/vocab/Workflow.rdf#>.
-@prefix tools: <http://geographicknowledge.de/vocab/GISTools.rdf#>.
-@prefix arcpro: <https://pro.arcgis.com/en/pro-app/tool-reference/>.
-@prefix  rfdata: <https://pro.arcgis.com/en/pro-app/latest/help/analysis/networks/closest-facility-tutorial.htm>.
 @prefix dbo: <https://dbpedia.org/ontology/>.
 @prefix dct: <http://purl.org/dc/terms/>.
+@prefix wf: <http://geographicknowledge.de/vocab/Workflow.rdf#>.
+@prefix tools: <https://github.com/quangis/cct/blob/master/tools/tools.ttl#>.
 @prefix repo: <https://example.com/#>.
+
+# [SC] data prefix
+@prefix rfdata: <https://pro.arcgis.com/en/pro-app/latest/help/analysis/networks/closest-facility-tutorial.htm#>.
+
 
 # @author: Eric Top, Simon Scheider
 
@@ -20,7 +22,6 @@ repo:HospitalsUtrecht_Near a wf:Workflow;
     rdfs:comment "What three hospitals are closest to 2350 Pine St, San Francisco, at most within a two minutes drive?"@en;
     dct:subject "";
     dbo:abstract "The closest facility solver finds one or more facilities that are closest to an incident based on travel time or travel distance and outputs the best routes as driving directions between the incidents and the chosen facilities. In this tutorial, you'll use this tool to find the closest hospital to an accident. Finding a closest facility can be associated with a local network dataset or a network service hosted in ArcGIS Online or ArcGIS Enterprise. ";
-    wf:source rfdata:roads; #Road line network in San Francisco.
     wf:source rfdata:hospitals; #Point locations of hospitals in San Francisco.
     wf:source rfdata:incident;      #Geocoded location point of 2350 Pine St, San Francisco, where an incident occurred.
     wf:edge _:wf1_1.
@@ -34,3 +35,16 @@ _:wf1_1 wf:applicationOf tools:nearPointObjects;
     rdfs:comment "Search for the three closest hospitals using Euclidean distance"; #.Parameters are <Find only closest feature: False>, <Maximum number of closest: 3>
     wf:output _:nearTable.
 
+
+# [SC] added triplets   
+rfdata:hospitals
+    rdfs:comment "Point locations of hospitals in San Francisco"@en;
+    rdfs:label "Hospital locations"@en.
+
+rfdata:incident
+    rdfs:comment "Geocoded location point of 2350 Pine St, San Francisco, where an incident occurred"@en;
+    rdfs:label "2350 Pine St location"@en.
+
+_:nearTable
+    rdfs:comment ""@en;
+    rdfs:label "nearTable"@en.

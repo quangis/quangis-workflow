@@ -2,13 +2,16 @@
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
 @prefix xml: <http://www.w3.org/XML/1998/namespace>.
-@prefix wf: <http://geographicknowledge.de/vocab/Workflow.rdf#>.
-@prefix tools: <http://geographicknowledge.de/vocab/GISTools.rdf#>.
-@prefix arcpro: <https://pro.arcgis.com/en/pro-app/tool-reference/>.
-@prefix  rfdata: <https://learn.arcgis.com/en/projects/estimate-access-to-infrastructure/>.
 @prefix dbo: <https://dbpedia.org/ontology/>.
 @prefix dct: <http://purl.org/dc/terms/>.
+@prefix wf: <http://geographicknowledge.de/vocab/Workflow.rdf#>.
+@prefix tools: <https://github.com/quangis/cct/blob/master/tools/tools.ttl#>.
 @prefix repo: <https://example.com/#>.
+
+# [SC] data prefix
+@prefix rfdataI: <https://learn.arcgis.com/en/projects/estimate-access-to-infrastructure/#>.
+
+
 
 # @author: Eric Top, Simon Scheider
 
@@ -20,9 +23,9 @@ repo:InfrastructureAccessShikoku a wf:Workflow;
     rdfs:comment "How much of the rural population in Shikoku, Japan, can reach all-season roads?"@en;
     dct:subject "Out: IntV, In: OS, In: OS, In: OS";
     dbo:abstract "In this lesson, you'll act as an analyst in Japan's National Statistical Office. To promote sustainable development in the nation's rural areas, you'll estimate access to all-season roads. First, you'll add population and road data and limit your study area to rural regions. Then, you'll create a 2-kilometer buffer around all-season roads and calculate the percentage of the rural population within that buffer.";
-    wf:source rfdata:urbanization; #MetropolitanEmploymentAreas: Urbanization levels in Shikoku, Japan (Polygon)
-    wf:source rfdata:chochomoku; #Cho-cho-moku ((SCCM, small administrative regions) in Shikoku, Japan (Polygon) with population number
-    wf:source rfdata:roads; #All-season roads in Shikoku, Japan (Line)
+    wf:source rfdataI:urbanization; #MetropolitanEmploymentAreas: Urbanization levels in Shikoku, Japan (Polygon)
+    wf:source rfdataI:chochomoku; #Cho-cho-moku ((SCCM, small administrative regions) in Shikoku, Japan (Polygon) with population number
+    wf:source rfdataI:roads; #All-season roads in Shikoku, Japan (Line)
     wf:edge _:wf1_1, _:wf1_3, _:wf1_4, _:wf1_6, _:wf1_7, _:wf1_8, _:wf1_12.
 
 # Workflow nodes
@@ -30,12 +33,12 @@ repo:InfrastructureAccessShikoku a wf:Workflow;
 #Calculate rural population
 
 _:wf1_1 wf:applicationOf tools:SelectLayerByAttributeTessObjects ;
-    wf:input1 rfdata:urbanization;
+    wf:input1 rfdataI:urbanization;
     rdfs:comment "select rural from different urbanization grade areas and create new layer from them";
     wf:output _:rural.
 
 _:wf1_3 wf:applicationOf tools:ClipObject2Object;
-    wf:input1 rfdata:chochomoku;
+    wf:input1 rfdataI:chochomoku;
     wf:input2 _:rural;
     rdfs:comment "clip SCCM regions by rural areas";
     wf:output _:rural_clip.
@@ -48,7 +51,7 @@ _:wf1_4 wf:applicationOf tools:ObjectSummaryStatisticsAmount;
 #Calculate rural population within road buffer
 
 _:wf1_7 wf:applicationOf tools:ObjectBuffer;
-    wf:input1 rfdata:roads;
+    wf:input1 rfdataI:roads;
     rdfs:comment "buffer roads within 2km distance";
     wf:output _:roads_buffer.
 
@@ -70,3 +73,45 @@ _:wf1_6 wf:applicationOf tools:CalculateCountAmountRatio;
     rdfs:comment "calcuate the percentage of population living within 2km of infrastructure";
     wf:output _:rural_pop2.
 
+
+
+# [SC] added triplets   
+rfdataI:urbanization
+    rdfs:comment "Metropolitan Employment Areas: Urbanization levels in Shikoku, Japan (Polygon)"@en;
+    rdfs:label "Metro employment areas"@en.
+
+rfdataI:chochomoku
+    rdfs:comment "Cho-cho-moku ((SCCM, small administrative regions) in Shikoku, Japan (Polygon) with population number"@en;
+    rdfs:label "Administrative regions"@en.
+
+rfdataI:roads
+    rdfs:comment "All-season roads in Shikoku, Japan (Line)"@en;
+    rdfs:label "Roads"@en.
+
+_:rural
+    rdfs:comment ""@en;
+    rdfs:label "rural"@en.
+
+_:rural_clip
+    rdfs:comment ""@en;
+    rdfs:label "rural_clip"@en.
+
+_:rural_pop1
+    rdfs:comment ""@en;
+    rdfs:label "rural_pop1"@en.
+
+_:roads_buffer
+    rdfs:comment ""@en;
+    rdfs:label "roads_buffer"@en.
+
+_:rural_2km4
+    rdfs:comment ""@en;
+    rdfs:label "rural_2km4"@en.
+
+_:rural_access1
+    rdfs:comment ""@en;
+    rdfs:label "rural_access1"@en.
+
+_:rural_pop2
+    rdfs:comment ""@en;
+    rdfs:label "rural_pop2"@en.

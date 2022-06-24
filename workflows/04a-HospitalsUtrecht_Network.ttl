@@ -2,13 +2,16 @@
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
 @prefix xml: <http://www.w3.org/XML/1998/namespace>.
-@prefix wf: <http://geographicknowledge.de/vocab/Workflow.rdf#>.
-@prefix tools: <http://geographicknowledge.de/vocab/GISTools.rdf#>.
-@prefix arcpro: <https://pro.arcgis.com/en/pro-app/tool-reference/>.
-@prefix  rfdata: <https://pro.arcgis.com/en/pro-app/latest/help/analysis/networks/closest-facility-tutorial.htm>.
 @prefix dbo: <https://dbpedia.org/ontology/>.
 @prefix dct: <http://purl.org/dc/terms/>.
+@prefix wf: <http://geographicknowledge.de/vocab/Workflow.rdf#>.
+@prefix tools: <https://github.com/quangis/cct/blob/master/tools/tools.ttl#>.
 @prefix repo: <https://example.com/#>.
+
+# [SC] data prefix
+@prefix rfdata: <https://pro.arcgis.com/en/pro-app/latest/help/analysis/networks/closest-facility-tutorial.htm#>.
+
+
 
 # @author: Eric Top, Simon Scheider
 
@@ -40,3 +43,25 @@ _:wf1_1 wf:applicationOf tools:closestfacilityanalysis;
     rdfs:comment "find the closest facilities (goals) for each origin";
     wf:output _:objectswithdistances.
 
+
+
+# [SC] added triplets   
+rfdata:roads
+    rdfs:comment "Road line network in San Francisco";
+    rdfs:label "Road network"@en.
+
+rfdata:hospitals
+    rdfs:comment "Point locations of hospitals in San Francisco"@en;
+    rdfs:label "Hospital locations"@en.
+
+rfdata:incident
+    rdfs:comment "Geocoded location point of 2350 Pine St, San Francisco, where an incident occurred"@en;
+    rdfs:label "2350 Pine St location"@en.
+
+_:networkdata
+    rdfs:comment ""@en;
+    rdfs:label "networkdata"@en.
+
+_:objectswithdistances
+    rdfs:comment ""@en;
+    rdfs:label "objectswithdistances"@en.

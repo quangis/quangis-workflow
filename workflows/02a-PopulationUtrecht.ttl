@@ -3,10 +3,12 @@
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
 @prefix xml: <http://www.w3.org/XML/1998/namespace>.
 @prefix wf: <http://geographicknowledge.de/vocab/Workflow.rdf#>.
-@prefix tools: <http://geographicknowledge.de/vocab/GISTools.rdf#>.
-@prefix arcpro: <https://pro.arcgis.com/en/pro-app/tool-reference/>.
-@prefix pdok: <https://www.pdok.nl/introductie/-/article/>.
+@prefix tools: <https://github.com/quangis/cct/blob/master/tools/tools.ttl#>.
 @prefix repo: <https://example.com/#>.
+
+# [SC] data prefix
+@prefix pdok: <https://www.pdok.nl/introductie/-/article/>.
+
 
 # @author: Simon Scheider
 
@@ -36,3 +38,28 @@ _:wf1_5 wf:applicationOf tools:SpatialJoinAmountSumTessCount;
     wf:input2 _:neighborhoodsutrecht;
     wf:output _:countneighborhoodsutrecht.
 
+
+# [SC] added triplets   
+pdok:cbs-gebiedsindelingen
+    rdfs:comment ""@en;
+    rdfs:label "Municipalities"@en.
+    
+pdok:cbs-wijken-en-buurten
+    rdfs:comment ""@en;
+    rdfs:label "Neighborhood regions"@en.
+    
+pdok:cbs-vierkantstatistieken
+    rdfs:comment ""@en;
+    rdfs:label "People counts"@en.
+    
+_:utrecht
+    rdfs:comment ""@en;
+    rdfs:label "utrecht"@en.
+    
+_:neighborhoodsutrecht
+    rdfs:comment ""@en;
+    rdfs:label "neighborhoodsutrecht"@en.
+    
+_:countneighborhoodsutrecht
+    rdfs:comment ""@en;
+    rdfs:label "countneighborhoodsutrecht"@en.

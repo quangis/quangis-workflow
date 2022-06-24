@@ -2,13 +2,16 @@
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
 @prefix xml: <http://www.w3.org/XML/1998/namespace>.
-@prefix wf: <http://geographicknowledge.de/vocab/Workflow.rdf#>.
-@prefix tools: <http://geographicknowledge.de/vocab/GISTools.rdf#>.
-@prefix arcpro: <https://pro.arcgis.com/en/pro-app/tool-reference/>.
-@prefix  rfdata: <https://learn.arcgis.com/en/projects/find-areas-at-risk-from-aquifer-depletion/>.
 @prefix dbo: <https://dbpedia.org/ontology/>.
 @prefix dct: <http://purl.org/dc/terms/>.
+@prefix wf: <http://geographicknowledge.de/vocab/Workflow.rdf#>.
+@prefix tools: <https://github.com/quangis/cct/blob/master/tools/tools.ttl#>.
 @prefix repo: <https://example.com/#>.
+
+# [SC] data prefix
+@prefix rfdataA: <https://learn.arcgis.com/en/projects/find-areas-at-risk-from-aquifer-depletion/#>.
+
+
 
 # @author: Eric Top, Simon Scheider
 
@@ -20,44 +23,86 @@ repo:OgallalaAquifer a wf:Workflow;
     rdfs:comment "What areas of the Ogallala Aquifer in the United States are at risk from water depletion?"@en;
     dct:subject "Out: Ratio, In: R(Obj, Reg), In: R(Obj, Reg), In: R(Loc, Bool)";
     dbo:abstract "Water from underground aquifers can help create rich farmland and prosperous cities in places that would otherwise not provide enough water. However, many aquifers are being emptied far faster than they can be recharged by rainwater. The Ogallala (High Plains) Aquifer in the United States is one of the largest in the world, spanning 450,000 square kilometers and eight states. It is also at risk of depletion. In this lesson, you'll locate areas where agricultural irrigation, urbanization, and low precipitation place the heaviest burden on the Ogallala Aquifer.";
-    wf:source rfdata:UrbanAreas;    #U.S. Census Urban Areas provides information about the locations, names, population, and codes of urban areas primarily for national planning applications.
-    wf:source rfdata:precipitation; #polygons of average annual precipitation in the contiguous United States, for the climatological period 1990-2009.
-    wf:source rfdata:aquifer;       #The Ogallala Aquifer object
-    wf:source rfdata:irrigation;    #Counties of the United States with area of irrigated land by acreage and percent.
+    wf:source rfdataA:UrbanAreas;    #U.S. Census Urban Areas provides information about the locations, names, population, and codes of urban areas primarily for national planning applications.
+    wf:source rfdataA:precipitation; #polygons of average annual precipitation in the contiguous United States, for the climatological period 1990-2009.
+    wf:source rfdataA:aquifer;       #The Ogallala Aquifer object
+    wf:source rfdataA:irrigation;    #Counties of the United States with area of irrigated land by acreage and percent.
     wf:edge _:wf1_1, _:wf1_3, _:wf1_5, _:wf1_7, _:wf1_8, _:wf1_9.
 
 # Workflow nodes
 
-_:wf1_1  wf:applicationOf tools:SelectFeaturesByObjectPlainRegionObjects;
-    wf:input1 rfdata:aquifer;
+_:wf1_1 wf:applicationOf tools:SelectFeaturesByObjectPlainRegionObjects;
+    wf:input1 rfdataA:aquifer;
     rdfs:comment "select Oogallala aquifer";
     wf:output _:aquifer2.
 
-_:wf1_3  wf:applicationOf tools:SelectFeaturesCoverageToExistenceVector;
-    wf:input1 rfdata:precipitation;
+_:wf1_3 wf:applicationOf tools:SelectFeaturesCoverageToExistenceVector;
+    wf:input1 rfdataA:precipitation;
     rdfs:comment "select areas with low precipitation";
     wf:output _:precipitation2.
 
-_:wf1_5  wf:applicationOf tools:SelectFeaturesCoverageToExistenceVector;
-    wf:input1 rfdata:irrigation;
+_:wf1_5 wf:applicationOf tools:SelectFeaturesCoverageToExistenceVector;
+    wf:input1 rfdataA:irrigation;
     rdfs:comment "select areas with high irrigation";
     wf:output _:irrigation2.
 
-_:wf1_7  wf:applicationOf tools:SelectLayerByLocationPlainRegionObjectsDist;
-    wf:input1 rfdata:UrbanAreas;
+_:wf1_7 wf:applicationOf tools:SelectLayerByLocationPlainRegionObjectsDist;
+    wf:input1 rfdataA:UrbanAreas;
     wf:input2 _:aquifer2;
     rdfs:comment "select urban areas within 150 miles (geodesic) of the aquifer";
     wf:output _:urbanAreas2.
 
-_:wf1_8  wf:applicationOf tools:SelectLayerByLocationPlainRegionObjectsFieldDist;
+_:wf1_8 wf:applicationOf tools:SelectLayerByLocationPlainRegionObjectsFieldDist;
     wf:input1 _:urbanAreas2;
     wf:input2 _:precipitation2;
     rdfs:comment "further select urban areas within the area with low precipitation";
     wf:output _:urbanAreas3.
 
-_:wf1_9  wf:applicationOf tools:SelectLayerByLocationPlainRegionObjectsFieldDist;
+_:wf1_9 wf:applicationOf tools:SelectLayerByLocationPlainRegionObjectsFieldDist;
     wf:input1 _:urbanAreas3;
     wf:input2 _:irrigation2;
     rdfs:comment "further select urban areas that intersect with the irrigation region dataset";
     wf:output _:urbanAreas5.
 
+
+
+# [SC] added triplets   
+rfdataA:UrbanAreas
+    rdfs:comment "U.S. Census Urban Areas provides information about the locations, names, population, and codes of urban areas primarily for national planning applications."@en;
+    rdfs:label "Urban areas"@en.
+
+rfdataA:precipitation
+    rdfs:comment "Polygons of average annual precipitation in the contiguous United States, for the climatological period 1990-2009"@en;
+    rdfs:label "Average annual precipitation"@en.
+
+rfdataA:aquifer
+    rdfs:comment "The Ogallala Aquifer object"@en;
+    rdfs:label "Aquifer object"@en.
+
+rfdataA:irrigation
+    rdfs:comment "Counties of the United States with area of irrigated land by acreage and percent."@en;
+    rdfs:label "Irrigated land"@en.
+
+_:aquifer2
+    rdfs:comment ""@en;
+    rdfs:label "aquifer2"@en.
+
+_:precipitation2
+    rdfs:comment ""@en;
+    rdfs:label "precipitation2"@en.
+
+_:irrigation2
+    rdfs:comment ""@en;
+    rdfs:label "irrigation2"@en.
+
+_:urbanAreas2
+    rdfs:comment ""@en;
+    rdfs:label "urbanAreas2"@en.
+
+_:urbanAreas3
+    rdfs:comment ""@en;
+    rdfs:label "urbanAreas3"@en.
+
+_:urbanAreas5
+    rdfs:comment ""@en;
+    rdfs:label "urbanAreas5"@en.

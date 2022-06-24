@@ -3,10 +3,13 @@
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
 @prefix xml: <http://www.w3.org/XML/1998/namespace>.
 @prefix wf: <http://geographicknowledge.de/vocab/Workflow.rdf#>.
-@prefix tools: <http://geographicknowledge.de/vocab/GISTools.rdf#>.
-@prefix arcpro: <https://pro.arcgis.com/en/pro-app/tool-reference/>.
-@prefix pdok: <https://www.pdok.nl/introductie/-/article/>.
+@prefix tools: <https://github.com/quangis/cct/blob/master/tools/tools.ttl#>.
 @prefix repo: <https://example.com/#>.
+
+# [SC] data prefix
+@prefix pdok: <https://www.pdok.nl/introductie/-/article/>.
+@prefix amsd: <https://data.amsterdam.nl/datasets/>.
+
 
 # @author: Simon Scheider
 
@@ -15,30 +18,30 @@
 repo:NoiseProportionAmsterdam_Raster a wf:Workflow;
     rdfs:comment "What  is  the  proportion  of  the  region  where  noise  is  greater  than  70  dB  in Amsterdam?"@en;
     wf:source pdok:cbs-gebiedsindelingen; #municipalities
-    wf:source <https://maps.amsterdam.nl/geluid>;   #Amsterdam noise map
+    wf:source amsd:WO-7loNDBtEcWg;   #Amsterdam noise map
     wf:edge _:wf3_1, _:wf3_2, _:wf3_3,_:wf3_5, _:wf3_6, _:wf3_8.
 
 _:wf3_1 wf:applicationOf tools:ContourToFieldRaster;
-    wf:input1 <https://maps.amsterdam.nl/geluid>;
+    wf:input1 amsd:WO-7loNDBtEcWg;
     rdfs:comment "noise map";
     wf:output _:noise_raster.
 
-_:wf3_2  wf:applicationOf tools:LocalMapAlgebraSubOrder;
+_:wf3_2 wf:applicationOf tools:LocalMapAlgebraSubOrder;
     wf:input1 _:noise_raster;
     rdfs:comment "select noise geq 70 db";
     wf:output _:noisy_raster.
 
-_:wf3_3  wf:applicationOf tools:SelectLayerByObjectTessObjects;
+_:wf3_3 wf:applicationOf tools:SelectLayerByObjectTessObjects;
     wf:input1 pdok:cbs-gebiedsindelingen;
     rdfs:comment "select amsterdam municipality";
     wf:output _:amsterdam_shp.
 
-_:wf3_5  wf:applicationOf tools:AddObjectVectorRegionArea;
+_:wf3_5 wf:applicationOf tools:AddObjectVectorRegionArea;
     wf:input1 _:amsterdam_shp;
     rdfs:comment "add area measure";
     wf:output _:amsterdam_area_shp.
 
-_:wf3_6  wf:applicationOf tools:ZonalStatisticsSize;
+_:wf3_6 wf:applicationOf tools:ZonalStatisticsSize;
     wf:input1 _:noisy_raster;
     wf:input2 _:amsterdam_area_shp;
     rdfs:comment "measure size of noisy raster";
@@ -50,3 +53,36 @@ _:wf3_8 wf:applicationOf   tools:CalculateObjectAttrRatio;
     rdfs:comment "proportion of noisy area";
     wf:output _:amsterdam_final_shp.
 
+
+# [SC] added triplets
+pdok:cbs-gebiedsindelingen
+    rdfs:comment ""@en;
+    rdfs:label "Municipalities"@en.
+
+amsd:WO-7loNDBtEcWg
+    rdfs:comment ""@en;
+    rdfs:label "Amsterdam noise contour"@en.
+    
+_:noise_raster
+    rdfs:comment ""@en;
+    rdfs:label "noise_raster"@en.
+    
+_:noisy_raster
+    rdfs:comment ""@en;
+    rdfs:label "noisy_raster"@en.
+    
+_:amsterdam_shp
+    rdfs:comment ""@en;
+    rdfs:label "amsterdam_shp"@en.
+    
+_:amsterdam_area_shp
+    rdfs:comment ""@en;
+    rdfs:label "amsterdam_area_shp"@en.
+    
+_:amsterdam_area_area_shp
+    rdfs:comment ""@en;
+    rdfs:label "amsterdam_area_area_shp"@en.
+    
+_:amsterdam_final_shp
+    rdfs:comment ""@en;
+    rdfs:label "amsterdam_final_shp"@en.

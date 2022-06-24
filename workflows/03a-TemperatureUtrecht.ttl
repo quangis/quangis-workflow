@@ -3,10 +3,12 @@
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
 @prefix xml: <http://www.w3.org/XML/1998/namespace>.
 @prefix wf: <http://geographicknowledge.de/vocab/Workflow.rdf#>.
-@prefix tools: <http://geographicknowledge.de/vocab/GISTools.rdf#>.
-@prefix arcpro: <https://pro.arcgis.com/en/pro-app/tool-reference/>.
-@prefix pdok: <https://www.pdok.nl/introductie/-/article/>.
+@prefix tools: <https://github.com/quangis/cct/blob/master/tools/tools.ttl#>.
 @prefix repo: <https://example.com/#>.
+
+# [SC] data prefix
+@prefix pdok: <https://www.pdok.nl/introductie/-/article/>.
+@prefix amsd: <https://data.amsterdam.nl/datasets/>.
 
 # @author: Simon Scheider
 
@@ -25,25 +27,62 @@ repo:TemperatureUtrecht a wf:Workflow;
 
 # Workflow nodes
 
-_:wf2_1  wf:applicationOf tools:MakePointMeasuresFromTable;
+_:wf2_1 wf:applicationOf tools:MakePointMeasuresFromTable;
     wf:input1 <http://projects.knmi.nl/klimatologie/daggegevens/selectie.cgi>; #KNMI weather stations
     wf:output _:knmi_shp2.
 
-_:wf2_5  wf:applicationOf tools:IDWInterval;
+_:wf2_5 wf:applicationOf tools:IDWInterval;
     wf:input1 _:knmi_shp2   ;
     wf:output _:tempraster.
 
-_:wf2_6  wf:applicationOf tools:SelectLayerByObjectTessObjects;
+_:wf2_6 wf:applicationOf tools:SelectLayerByObjectTessObjects;
     wf:input1 pdok:cbs-gebiedsindelingen;
     wf:output _:utrecht_shp.
 
-_:wf2_8  wf:applicationOf tools:SelectLayerByLocationTessObjects;
+_:wf2_8 wf:applicationOf tools:SelectLayerByLocationTessObjects;
     wf:input1 pdok:cbs-wijken-en-buurten    ;
     wf:input2 _:utrecht_shp ;
     wf:output _:utrecht_buurten.
 
-_:wf2_10  wf:applicationOf tools:ZonalStatisticsMeanInterval;
+_:wf2_10 wf:applicationOf tools:ZonalStatisticsMeanInterval;
     wf:input1 _:tempraster  ;
     wf:input2 _:utrecht_buurten;
     wf:output _:utrecht_buurten_agg_temp.
 
+
+# [SC] added triplets   
+pdok:cbs-gebiedsindelingen
+    rdfs:comment ""@en;
+    rdfs:label "Municipalities"@en.
+    
+pdok:cbs-wijken-en-buurten
+    rdfs:comment ""@en;
+    rdfs:label "Neighborhood regions"@en.
+    
+pdok:cbs-vierkantstatistieken
+    rdfs:comment ""@en;
+    rdfs:label "BS grid statistics"@en.
+    
+<http://projects.knmi.nl/klimatologie/daggegevens/selectie.cgi>
+    rdfs:comment ""@en;
+    rdfs:label "KNMI weather stations"@en.
+    
+_:knmi_shp2
+    rdfs:comment ""@en;
+    rdfs:label "knmi_shp2"@en.
+    
+_:tempraster
+    rdfs:comment ""@en;
+    rdfs:label "tempraster"@en.
+
+_:utrecht_shp
+    rdfs:comment ""@en;
+    rdfs:label "utrecht_shp"@en.
+    
+_:utrecht_buurten
+    rdfs:comment ""@en;
+    rdfs:label "utrecht_buurten"@en.
+    
+_:utrecht_buurten_agg_temp
+    rdfs:comment ""@en;
+    rdfs:label "utrecht_buurten_agg_temp"@en.

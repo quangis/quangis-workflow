@@ -2,13 +2,19 @@
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
 @prefix xml: <http://www.w3.org/XML/1998/namespace>.
-@prefix wf: <http://geographicknowledge.de/vocab/Workflow.rdf#>.
-@prefix tools: <http://geographicknowledge.de/vocab/GISTools.rdf#>.
-@prefix arcpro: <https://pro.arcgis.com/en/pro-app/tool-reference/>.
-@prefix  rfdata: <https://learn.arcgis.com/en/projects/predict-floods-with-unit-hydrographs/>.
 @prefix dbo: <https://dbpedia.org/ontology/>.
 @prefix dct: <http://purl.org/dc/terms/>.
+@prefix wf: <http://geographicknowledge.de/vocab/Workflow.rdf#>.
+@prefix tools: <https://github.com/quangis/cct/blob/master/tools/tools.ttl#>.
 @prefix repo: <https://example.com/#>.
+
+# [SC] tool prefix
+@prefix arcprosa: <https://pro.arcgis.com/en/pro-app/latest/tool-reference/spatial-analyst/>.
+
+# [SC] data prefix
+@prefix rfdataH: <https://learn.arcgis.com/en/projects/predict-floods-with-unit-hydrographs/#>.
+
+
 
 # @author: Eric Top, Simon Scheider
 
@@ -20,16 +26,16 @@ repo:FloodsVermont a wf:Workflow;
     rdfs:comment "Which areas are susceptible to flooding in Vermont during a predicted rainstorm?"@en;
     dct:subject "";
     dbo:abstract " Stowe, a small Vermont town of nearly 5,000 residents, suffered considerably when the remnants of Hurricane Irene stuck the Green Mountain region in August 2011. The Little River overflowed and washed out roads, bridges, and culverts. Wanting to learn from the tragedy, Stowe officials discovered that they had precious little information involving flood prediction. They turned to hydrographs, which are line graphs determining how much water a stream will discharge during a rainstorm. In this lesson, you'll create those hydrographs.";
-    wf:source rfdata:stoweDem; #Vermont as a digital surface model (Raster)
-    wf:source rfdata:pourPoint; #Point of measurement for the unit hydrograph
+    wf:source rfdataH:stoweDem; #Vermont as a digital surface model (Raster)
+    wf:source rfdataH:pourPoint; #Point of measurement for the unit hydrograph
     wf:edge _:wf1_1, _:wf1_3, _:wf1_4, _:wf1_5, _:wf1_6, _:wf1_7, _:wf1_8, _:wf1_9, _:wf1_10, _:wf1_11, _:wf1_12, _:wf1_13, _:wf1_14.
 
 # Workflow nodes
 
 #Find Velocity Weight raster
 
-_:wf1_1 wf:applicationOf <https://pro.arcgis.com/en/pro-app/latest/tool-reference/spatial-analyst/slope.htm>;
-    wf:input1 rfdata:stoweDem; 
+_:wf1_1 wf:applicationOf arcprosa:slope.htm;
+    wf:input1 rfdataH:stoweDem; 
     rdfs:comment "Calculate slopes in Glover";
     wf:output _:stoweSlope.
 
@@ -56,23 +62,23 @@ _:wf1_6 wf:applicationOf tools:LocalMapAlgebraInvert;
 
 #Flow direction, accumulation and watershed (This part is new since second workflow)
 
-_:wf1_7 wf:applicationOf <https://pro.arcgis.com/en/pro-app/latest/tool-reference/spatial-analyst/flow-direction.htm>;
-    wf:input1 rfdata:stoweDem;
+_:wf1_7 wf:applicationOf arcprosa:flow-direction.htm;
+    wf:input1 rfdataH:stoweDem;
     rdfs:comment "get directions of water flow";
     wf:output _:direction.
 
-_:wf1_8 wf:applicationOf <https://pro.arcgis.com/en/pro-app/latest/tool-reference/spatial-analyst/flow-accumulation.htm>;
+_:wf1_8 wf:applicationOf arcprosa:flow-accumulation.htm;
     wf:input1 _:direction;
     rdfs:comment "get accumulations of water flow";
     wf:output _:accumulation.
 
-_:wf1_9 wf:applicationOf <https://pro.arcgis.com/en/pro-app/latest/tool-reference/spatial-analyst/snap-pour-point.htm>;
-    wf:input1 rfdata:pourPoint;
+_:wf1_9 wf:applicationOf arcprosa:snap-pour-point.htm;
+    wf:input1 rfdataH:pourPoint;
     wf:input2 _:accumulation;
     rdfs:comment "snap pour point to river (Distance: 60m)";
     wf:output _:snappedPoint.
 
-_:wf1_10 wf:applicationOf <https://pro.arcgis.com/en/pro-app/latest/tool-reference/spatial-analyst/watershed.htm>;
+_:wf1_10 wf:applicationOf arcprosa:watershed.htm;
     wf:input1 _:direction;
     wf:input2 _:snappedPoint;
     rdfs:comment "get watershed";
@@ -80,13 +86,13 @@ _:wf1_10 wf:applicationOf <https://pro.arcgis.com/en/pro-app/latest/tool-referen
 
 #Continues the same as old workflow from here
 
-_:wf1_11 wf:applicationOf <https://pro.arcgis.com/en/pro-app/latest/tool-reference/spatial-analyst/extract-by-mask.htm>;
+_:wf1_11 wf:applicationOf arcprosa:extract-by-mask.htm;
     wf:input1 _:direction;
     wf:input2 _:watershed;
     rdfs:comment "extract flow directions by watershed mask";
     wf:output _:flowDirections.
 
-_:wf1_12 wf:applicationOf <https://pro.arcgis.com/en/pro-app/latest/tool-reference/spatial-analyst/flow-length.htm>;
+_:wf1_12 wf:applicationOf arcprosa:flow-length.htm;
     wf:input1 _:stoweWeight;
     wf:input2 _:flowDirections;
     rdfs:comment "calculate the upstream or downstream distance, or weighted distance, along the flow path for each cell";
@@ -102,3 +108,65 @@ _:wf1_14 wf:applicationOf tools:CreateUnitHydrograph;
     rdfs:comment "convert to unit hydrograph";
     wf:output _:stoweTable.
 
+
+
+# [SC] added triplets   
+rfdataH:stoweDem
+    rdfs:comment "Vermont as a digital surface model (Raster)"@en;
+    rdfs:label "Digital surface model"@en.
+
+rfdataH:pourPoint
+    rdfs:comment "Point of measurement for the unit hydrograph"@en;
+    rdfs:label "Unit hydrograph measurement"@en.
+
+_:stoweSlope
+    rdfs:comment ""@en;
+    rdfs:label "stoweSlope"@en.
+
+_:accumulation
+    rdfs:comment ""@en;
+    rdfs:label "accumulation"@en.
+
+_:stoweVelocity
+    rdfs:comment ""@en;
+    rdfs:label "stoweVelocity"@en.
+
+_:stoweVelocity2
+    rdfs:comment ""@en;
+    rdfs:label "stoweVelocity2"@en.
+
+_:stoweVelocity3
+    rdfs:comment ""@en;
+    rdfs:label "stoweVelocity3"@en.
+
+_:stoweWeight
+    rdfs:comment ""@en;
+    rdfs:label "stoweWeight"@en.
+
+_:direction
+    rdfs:comment ""@en;
+    rdfs:label "direction"@en.
+
+_:snappedPoint
+    rdfs:comment ""@en;
+    rdfs:label "snappedPoint"@en.
+
+_:watershed
+    rdfs:comment ""@en;
+    rdfs:label "watershed"@en.
+
+_:flowDirections
+    rdfs:comment ""@en;
+    rdfs:label "flowDirections"@en.
+
+_:stoweTime
+    rdfs:comment ""@en;
+    rdfs:label "stoweTime"@en.
+
+_:stoweIsochrones
+    rdfs:comment ""@en;
+    rdfs:label "stoweIsochrones"@en.
+
+_:stoweTable
+    rdfs:comment ""@en;
+    rdfs:label "stoweTable"@en.

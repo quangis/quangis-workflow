@@ -2,13 +2,20 @@
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
 @prefix xml: <http://www.w3.org/XML/1998/namespace>.
-@prefix wf: <http://geographicknowledge.de/vocab/Workflow.rdf#>.
-@prefix tools: <http://geographicknowledge.de/vocab/GISTools.rdf#>.
-@prefix arcpro: <https://pro.arcgis.com/en/pro-app/tool-reference/>.
-@prefix  rfdata: <https://learn.arcgis.com/en/projects/estimate-solar-power-potential/>.
 @prefix dbo: <https://dbpedia.org/ontology/>.
 @prefix dct: <http://purl.org/dc/terms/>.
+@prefix wf: <http://geographicknowledge.de/vocab/Workflow.rdf#>.
+@prefix tools: <https://github.com/quangis/cct/blob/master/tools/tools.ttl#>.
 @prefix repo: <https://example.com/#>.
+
+# [SC] tool prefix
+@prefix arcpro3da: <https://pro.arcgis.com/en/pro-app/latest/tool-reference/3d-analyst/>.
+@prefix arcprosa: <https://pro.arcgis.com/en/pro-app/latest/tool-reference/spatial-analyst/>.
+
+# [SC] data prefix
+@prefix rfdataS: <https://learn.arcgis.com/en/projects/estimate-solar-power-potential/#>.
+
+
 
 # @author: Eric Top, Simon Scheider
 
@@ -20,25 +27,25 @@ repo:SolarPowerPotentialGloverPark a wf:Workflow;
     rdfs:comment "How much solar radiation does each rooftop in Glover Park, Washington, D.C., receive throughout the year?"@en;
     dct:subject "";
     dbo:abstract "Your nonprofit organization recently launched a pilot program to encourage the residents of the Glover Park neighborhood in Washington, D.C., to install solar panels on their roofs. The goal is for the solar panels to produce a large part of the electric power consumed by each household.In this lesson, you will use ArcGIS Pro to determine how much solar radiation each rooftop in the neighborhood receives throughout the year. Then, you will estimate how much electric power each rooftop (and the neighborhood as a whole) could generate if every suitable building was equipped with solar panels.";
-    wf:source rfdata:dsm; #Neighborhood of Glover Park as a digital surface model (Raster)
-    wf:source rfdata:solarRad; #Solar radiation per areal unit in Glover Park
-    wf:source rfdata:buildings; #Polygonal outline of every building in the Glover Park neighborhood (Vector)
+    wf:source rfdataS:dsm; #Neighborhood of Glover Park as a digital surface model (Raster)
+    wf:source rfdataS:solarRad; #Solar radiation per areal unit in Glover Park
+    wf:source rfdataS:buildings; #Polygonal outline of every building in the Glover Park neighborhood (Vector)
     wf:edge _:wf1_1, _:wf1_2, _:wf1_4, _:wf1_5, _:wf1_6, _:wf1_7, _:wf1_8, _:wf1_9, _:wf1_11, _:wf1_13, _:wf1_15.
 
 # Workflow nodes
 
-_:wf1_1 wf:applicationOf <https://pro.arcgis.com/en/pro-app/latest/tool-reference/3d-analyst/aspect.htm>;
-    wf:input1 rfdata:dsm;
+_:wf1_1 wf:applicationOf arcpro3da:aspect.htm;
+    wf:input1 rfdataS:dsm;
     rdfs:comment "calculate aspects in Glover";
     wf:output _:aspectDsm.
 
-_:wf1_2 wf:applicationOf <https://pro.arcgis.com/en/pro-app/latest/tool-reference/spatial-analyst/slope.htm>;
-    wf:input1 rfdata:dsm;
+_:wf1_2 wf:applicationOf arcprosa:slope.htm;
+    wf:input1 rfdataS:dsm;
     rdfs:comment "calculate slopes in Glover";
     wf:output _:slopeDsm.
 
 _:wf1_4 wf:applicationOf tools:LocalMapAlgebraDivide;
-    wf:input1 rfdata:solarRad;
+    wf:input1 rfdataS:solarRad;
     rdfs:comment "watt-hours to kilowatt hours (divide by 1000)";
     wf:output _:solarRad2.
 
@@ -67,7 +74,7 @@ _:wf1_8 wf:applicationOf tools:con3;
     wf:output _:solarRad6.
 
 _:wf1_9 wf:applicationOf tools:ZonalStatisticsMeanRatio ;
-    wf:input2 rfdata:buildings;
+    wf:input2 rfdataS:buildings;
     wf:input1 _:solarRad6;
     rdfs:comment "calculate average solar radiation for each building";
     wf:output _:solarBuildings.
@@ -87,3 +94,61 @@ _:wf1_15 wf:applicationOf tools:CalculateProd;
     rdfs:comment "Calculate field for electric power production potential";  # <!Usable_SR_MWh! * 0.15 * 0.86>
     wf:output _:solarBuildings7.
 
+
+
+# [SC] added triplets   
+rfdataS:dsm
+    rdfs:comment "Neighborhood of Glover Park as a digital surface model (Raster)"@en;
+    rdfs:label "Surface model"@en.
+
+rfdataS:solarRad
+    rdfs:comment "Solar radiation per areal unit in Glover Park"@en;
+    rdfs:label "Solar radiation"@en.
+
+rfdataS:buildings
+    rdfs:comment "Polygonal outline of every building in the Glover Park neighborhood (Vector)"@en;
+    rdfs:label "Buildings"@en.
+
+_:aspectDsm
+    rdfs:comment ""@en;
+    rdfs:label "aspectDsm"@en.
+
+_:slopeDsm
+    rdfs:comment ""@en;
+    rdfs:label "slopeDsm"@en.
+
+_:solarRad2
+    rdfs:comment ""@en;
+    rdfs:label "solarRad2"@en.
+
+_:solarRad3
+    rdfs:comment ""@en;
+    rdfs:label "solarRad3"@en.
+
+_:solarRad4
+    rdfs:comment ""@en;
+    rdfs:label "solarRad4"@en.
+
+_:solarRad5
+    rdfs:comment ""@en;
+    rdfs:label "solarRad5"@en.
+
+_:solarRad6
+    rdfs:comment ""@en;
+    rdfs:label "solarRad6"@en.
+
+_:solarBuildings
+    rdfs:comment ""@en;
+    rdfs:label "solarBuildings"@en.
+
+_:solarBuildings3
+    rdfs:comment ""@en;
+    rdfs:label "solarBuildings3"@en.
+
+_:solarBuildings5
+    rdfs:comment ""@en;
+    rdfs:label "solarBuildings5"@en.
+
+_:solarBuildings7
+    rdfs:comment ""@en;
+    rdfs:label "solarBuildings7"@en.
