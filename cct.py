@@ -628,4 +628,18 @@ groupby = Operator(
 
 # Language definition ########################################################
 
-cct = Language(scope=locals(), namespace="https://github.com/quangis/cct#")
+cct = Language(
+    scope=locals(),
+    namespace="https://github.com/quangis/cct#",
+    canon={
+        R1(Val),
+        R2(Reg, Qlt),
+        R2(Qlt, Reg),
+        R2(Qlt, Qlt),
+        R2(Obj, Reg),
+        R2(Obj, Qlt),
+        R2(Loc, Qlt),
+        R2(Obj, Reg * Qlt),
+        R3(Obj, Qlt, Obj),
+        R3(Loc, Qlt, Loc)
+    })
