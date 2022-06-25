@@ -5,7 +5,8 @@
 @prefix dbo: <https://dbpedia.org/ontology/>.
 @prefix dct: <http://purl.org/dc/terms/>.
 @prefix wf: <http://geographicknowledge.de/vocab/Workflow.rdf#>.
-@prefix tools: <https://github.com/quangis/cct/blob/master/tools/tools.ttl#>.
+# @prefix tools: <https://github.com/quangis/cct/blob/master/tools/tools.ttl#>.
+@prefix tools: <http://geographicknowledge.de/vocab/GISTools.rdf#>.
 @prefix repo: <https://example.com/#>.
 
 # [SC] tool prefix

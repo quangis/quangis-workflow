@@ -3,7 +3,8 @@
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
 @prefix xml: <http://www.w3.org/XML/1998/namespace>.
 @prefix wf: <http://geographicknowledge.de/vocab/Workflow.rdf#>.
-@prefix tools: <https://github.com/quangis/cct/blob/master/tools/tools.ttl#>.
+# @prefix tools: <https://github.com/quangis/cct/blob/master/tools/tools.ttl#>.
+@prefix tools: <http://geographicknowledge.de/vocab/GISTools.rdf#>.
 @prefix repo: <https://example.com/#>.
 
 # [SC] data prefix
