@@ -1,7 +1,10 @@
+@base <https://github.com/quangis/cct/blob/master/tools/tools.ttl#>.
+
 @prefix wf: <http://geographicknowledge.de/vocab/Workflow.rdf#>.
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>.
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
-@prefix tools: <http://geographicknowledge.de/vocab/GISTools.rdf#>.
+# @prefix tools: <http://geographicknowledge.de/vocab/GISTools.rdf#>.
+@prefix tools: <https://github.com/quangis/cct/blob/master/tools/tools.ttl#>.
 @prefix ccd: <http://geographicknowledge.de/vocab/CoreConceptData.rdf#>.
 @prefix exm: <http://geographicknowledge.de/vocab/ExtensiveMeasures.rdf#>.
 
