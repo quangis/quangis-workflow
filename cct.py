@@ -77,38 +77,19 @@ def with_param(on: Type, x: TypeInstance, at: int = None) -> Constraint:
     # return on
 
 
-Objects = TypeAlias(R1(Obj))
-Locations = TypeAlias(R1(Loc))
-Regions = TypeAlias(R1(Reg))
-QuantityValues = TypeAlias(R1(Qlt))
-Nominals = TypeAlias(R1(Nom))
-Booleans = TypeAlias(R1(Bool))
-Ordinals = TypeAlias(R1(Ord))
-Intervals = TypeAlias(R1(Itv))
-Ratios = TypeAlias(R1(Ratio))
-Counts = TypeAlias(R1(Count))
-
 Field = TypeAlias(lambda x: R2(Loc, x))
-LocationField = TypeAlias(R2(Loc, Loc))
-
-
 Amounts = TypeAlias(lambda x: R2(Reg, x) [x <= Qlt])
 FieldSample = TypeAlias(R2(Reg, Qlt))
 AmountPatches = TypeAlias(R2(Reg, Nom))
 PointMeasures = TypeAlias(R2(Reg, Itv))
-
 Coverages = TypeAlias(lambda x: R2(x, Reg) [x <= Qlt])
 Contour = TypeAlias(R2(Ord, Reg))
 ContourLine = TypeAlias(R2(Itv, Reg))
-
 ObjectExtent = TypeAlias(R2(Obj, Reg))
-ObjectQuality = TypeAlias(lambda x: R2(Obj, x) [x <= Qlt])
-
 RelationalField = TypeAlias(lambda x: R3(Loc, x, Loc) [x <= Qlt])
 Network = TypeAlias(lambda x: R3(Obj, x, Obj) [x <= Qlt])
-
-# Associate objects with both their extent and some quality
-ObjectInfo = TypeAlias(lambda x: R2(Obj, Reg * x))
+ObjectInfo = TypeAlias(lambda x: R2(Obj, Reg * x))  # Associate objects with
+# both their extent and some quality
 
 in_ = Operator(type=Nom)
 out = Operator(type=Nom)

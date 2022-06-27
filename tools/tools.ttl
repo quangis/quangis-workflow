@@ -96,7 +96,7 @@ tools:FC2FCObjectTess
         "Object selection by id.";
     tools:algebraexpression
         """
-        subset (1: ObjectInfo(Nom)) ~Objects
+        subset (1: ObjectInfo(Nom)) (-: C(Obj))
         """.
 
 ##Merge object parts into single object
@@ -158,7 +158,7 @@ tools:LoadAmountonObjects
         "Loads object based count amounts from excel and joins them with vector objects.";
     tools:algebraexpression
         """
-        1: ObjectQuality(Count);
+        1: R2(Obj, Count);
         2: ObjectInfo(_);
         join_attr (get_attrL 2) 1
         """.
@@ -207,7 +207,7 @@ tools:CalculateObjectVectorCountAmountRatio
     rdfs:comment
         "Accumulates flow directions into areas reachable downstream.";
     tools:algebraexpression
-        "apply1 size (accumulate (1: LocationField))".
+        "apply1 size (accumulate (1: Field(Loc)))".
 
 #Slope computation
 <https://pro.arcgis.com/en/pro-app/latest/tool-reference/spatial-analyst/slope.htm>
@@ -252,7 +252,7 @@ tools:con1
     rdfs:comment
         "Cuts a field raster conditional on less than some value";
     tools:algebraexpression
-        "select leq (1: Field(Ratio)) ~Ratio".
+        "select leq (1: Field(Ratio)) (-: Ratio)".
 
 ### local map algebra transformation invert
 <https://pro.arcgis.com/en/pro-app/tool-reference/spatial-analyst/raster-calculator.htm> tools:implements tools:LocalMapAlgebraInvert.
@@ -263,7 +263,7 @@ tools:LocalMapAlgebraInvert
     rdfs:comment
         "Builds and executes a Local Map Algebra expression that inverts rasters with a ratio level.";
     tools:algebraexpression
-        "apply1 (ratio ~Ratio) (1: Field(Ratio))".
+        "apply1 (ratio (-: Ratio)) (1: Field(Ratio))".
 
 #Snap point to raster
 <https://pro.arcgis.com/en/pro-app/latest/tool-reference/spatial-analyst/snap-pour-point.htm>
@@ -290,7 +290,7 @@ tools:LocalMapAlgebraInvert
         """
         revert (join
             (invert (2: Field(Nom)))
-            (invert (apply1 reify (accumulate (1: LocationField))))
+            (invert (apply1 reify (accumulate (1: Field(Loc)))))
         )
         """.
 
@@ -301,7 +301,7 @@ tools:LocalMapAlgebraInvert
     rdfs:comment
         "Extract raster by the extent of another (field) raster.";
     tools:algebraexpression
-        "subset (1: LocationField) (pi1 (2: Field(Nom)))".
+        "subset (1: Field(Loc)) (pi1 (2: Field(Nom)))".
 
 <https://pro.arcgis.com/en/pro-app/latest/tool-reference/spatial-analyst/flow-length.htm>
     wf:input1 [ a ccd:FieldRaster, ccd:RatioA ]; #Impedance Weight raster (e.g. 1/velocity raster)
@@ -312,7 +312,7 @@ tools:LocalMapAlgebraInvert
     tools:algebraexpression
         """
         1: Field(Ratio);
-        2: LocationField;
+        2: Field(Loc);
         groupbyL max (relunion (pi2 (apply2
             (lgDist (gridgraph 2 1))
             (apply nest (pi1 2)) (accumulate 2)
@@ -351,7 +351,7 @@ tools:CreateUnitHydrograph
         "Creates a unit hydrograph from an isochrones raster based on isochrone interval. This is a table that indicates for each time interval an areal coverage";
     tools:algebraexpression
         """
-        apply1 ((swap ratio) ~Ratio) (groupby size (1: Field(Ord)))
+        apply1 ((swap ratio) (-: Ratio)) (groupby size (1: Field(Ord)))
         """.
 
 
@@ -379,7 +379,7 @@ tools:SelectFeaturesByObjectPlainRegionObjects
     rdfs:comment
         "Select region objects by id";
     tools:algebraexpression
-        "subset (1: ObjectInfo(Nom)) ~Objects".
+        "subset (1: ObjectInfo(Nom)) (-: C(Obj))".
 
 tools:SelectFeaturesCoverageToExistenceVector
     wf:input1 [ a ccd:Coverage ];
@@ -387,7 +387,7 @@ tools:SelectFeaturesCoverageToExistenceVector
     rdfs:comment
         "Select patches of a coverage by attribute";
     tools:algebraexpression
-        "revert (select eq (1: Coverages(Nom)) ~Nom)".
+        "revert (select eq (1: Coverages(Nom)) (-: Nom))".
 
 
 
@@ -412,7 +412,7 @@ tools:LocalMapAlgebraDivide
     rdfs:comment
         "Builds and executes a Local Map Algebra expression that divides rasters by a ratio number";
     tools:algebraexpression
-        "apply1 ((swap ratio) ~Ratio) (1: Field(Ratio))".
+        "apply1 ((swap ratio) (-: Ratio)) (1: Field(Ratio))".
 
 <https://pro.arcgis.com/en/pro-app/latest/tool-reference/spatial-analyst/con-.htm> tools:implements tools:con1, tools:con2, tools:con3.
 tools:con2
@@ -422,7 +422,7 @@ tools:con2
     rdfs:comment
         "Cuts a field raster conditional on (the coverage of) another field raster that is less than some value";
     tools:algebraexpression
-        "subset (2: Field(Ratio)) (pi1 (select leq (1: Field(Ratio)) ~Ratio))".
+        "subset (2: Field(Ratio)) (pi1 (select leq (1: Field(Ratio)) (-: Ratio)))".
 
 tools:con3
     wf:input1 [ a ccd:FieldRaster, ccd:RatioA ]; ## conditional raster, less than some value
@@ -437,10 +437,10 @@ tools:con3
         2: Field(Ratio);
         3: Field(Ratio);
         set_union
-            (subset 2 (pi1 (select leq 1 ~Ratio)))
+            (subset 2 (pi1 (select leq 1 (-: Ratio))))
             (subset 3 (pi1 (select eq (lTopo
                 (pi1 3)
-                (reify (pi1 (select leq 1 ~Ratio)))
+                (reify (pi1 (select leq 1 (-: Ratio))))
             ) out)))
         """.
 
@@ -482,7 +482,7 @@ tools:CalculateProd
         1: ObjectInfo(Ratio);
         join_attr
             (get_attrL 1)
-            (apply1 (product ~Ratio) (get_attrR 1))
+            (apply1 (product (-: Ratio)) (get_attrR 1))
         """.
 
 tools:CalculateProdPointObjects 
@@ -495,7 +495,7 @@ tools:CalculateProdPointObjects
         1: ObjectInfo(Ratio);
         join_attr
             (get_attrL 1)
-            (apply1 (product ~Ratio) (get_attrR 1))
+            (apply1 (product (-: Ratio)) (get_attrR 1))
         """.
 
 
@@ -619,7 +619,7 @@ tools:SelectObjectbyExtent
         1: ObjectInfo(Nom);
         subset 1 (pi3 (select
             eq
-            (loTopo (deify ~Reg) (get_attrL 1))
+            (loTopo (deify (-: Reg)) (get_attrL 1))
             in
         ))
         """.
@@ -757,91 +757,91 @@ tools:SelectLayerByObjectLineObjects
     wf:input1 [ a ccd:ObjectQ, ccd:LineA ];
     wf:output [ a ccd:ObjectQ, ccd:LineA, ccd:BooleanA ];
     tools:algebraexpression
-        "subset (1: ObjectInfo(Nom)) ~Objects".
+        "subset (1: ObjectInfo(Nom)) (-: C(Obj))".
 
 #### Object selection variant by id
 tools:SelectLayerByObjectPlainRegionObjects
     wf:input1 [ a ccd:ObjectQ, ccd:PlainVectorRegionA ];
     wf:output [ a ccd:ObjectQ, ccd:PlainVectorRegionA, ccd:BooleanA ];
     tools:algebraexpression
-        "subset (1: ObjectInfo(Nom)) ~Objects".
+        "subset (1: ObjectInfo(Nom)) (-: C(Obj))".
 
 #### Object selection variant by id
 tools:SelectLayerByObjectTessObjects
     wf:input1 [ a ccd:ObjectQ, ccd:VectorTessellationA ];
     wf:output [ a ccd:ObjectQ, ccd:PlainVectorRegionA, ccd:BooleanA ];
     tools:algebraexpression
-        "subset (1: ObjectInfo(Nom)) ~Objects".
+        "subset (1: ObjectInfo(Nom)) (-: C(Obj))".
 
 #### Object selection variant, needs a nominal attribute
 tools:SelectLayerByAttributePointObjects
     wf:input1 [ a ccd:ObjectQ, ccd:PointA, ccd:NominalA ];
     wf:output [ a ccd:ObjectQ, ccd:PointA, ccd:NominalA];
     tools:algebraexpression
-        "subset (1: ObjectInfo(Nom)) ~Nominals".
+        "subset (1: ObjectInfo(Nom)) (-: C(Nom))".
 
 #### Object selection variant, needs a nominal attribute
 tools:SelectLayerByAttributeLineObjects
     wf:input1 [ a ccd:ObjectQ, ccd:LineA, ccd:NominalA ];
     wf:output [ a ccd:ObjectQ, ccd:LineA, ccd:NominalA ];
     tools:algebraexpression
-        "subset (1: ObjectInfo(Nom)) ~Nominals".
+        "subset (1: ObjectInfo(Nom)) (-: C(Nom))".
 
 #### Object selection variant, needs a nominal attribute
 tools:SelectLayerByAttributePlainRegionObjects
     wf:input1 [ a ccd:ObjectQ, ccd:PlainVectorRegionA, ccd:NominalA ];
     wf:output [ a ccd:ObjectQ, ccd:PlainVectorRegionA, ccd:NominalA ];
     tools:algebraexpression
-        "subset (1: ObjectInfo(Nom)) ~Nominals".
+        "subset (1: ObjectInfo(Nom)) (-: C(Nom))".
 
 #### Object selection variant, needs a nominal attribute
 tools:SelectLayerByAttributeTessObjects
     wf:input1 [ a ccd:ObjectQ, ccd:VectorTessellationA, ccd:NominalA ];
     wf:output [ a ccd:ObjectQ, ccd:PlainVectorRegionA, ccd:NominalA ];
     tools:algebraexpression
-        "subset (1: ObjectInfo(Nom)) ~Nominals".
+        "subset (1: ObjectInfo(Nom)) (-: C(Nom))".
 
 #### Object selection variant, needs a ratio attribute
 tools:SelectLayerByRatioPointObjects
     wf:input1 [ a ccd:ObjectQ, ccd:PointA, ccd:RatioA ];
     wf:output [ a ccd:ObjectQ, ccd:PointA, ccd:RatioA ];
     tools:algebraexpression
-        "subset (1: ObjectInfo(Ratio)) ~Ratios".
+        "subset (1: ObjectInfo(Ratio)) (-: C(Ratio))".
 
 #### Object selection variant, needs a ratio attribute
 tools:SelectLayerByRatioLineObjects
     wf:input1 [ a ccd:ObjectQ, ccd:LineA, ccd:RatioA ];
     wf:output [ a ccd:ObjectQ, ccd:LineA, ccd:RatioA  ];
     tools:algebraexpression
-        "subset (1: ObjectInfo(Ratio)) ~Ratios".
+        "subset (1: ObjectInfo(Ratio)) (-: C(Ratio))".
 
 #### Object selection variant, needs a ratio attribute
 tools:SelectLayerByRatioPlainRegionObjects
     wf:input1 [ a ccd:ObjectQ, ccd:PlainVectorRegionA, ccd:RatioA ];
     wf:output [ a ccd:ObjectQ, ccd:PlainVectorRegionA, ccd:RatioA ];
     tools:algebraexpression
-        "subset (1: ObjectInfo(Ratio)) ~Ratios".
+        "subset (1: ObjectInfo(Ratio)) (-: C(Ratio))".
 
 #### Object selection variant, needs a ratio attribute
 tools:SelectLayerByRatioTessObjects
     wf:input1 [ a ccd:ObjectQ, ccd:VectorTessellationA, ccd:RatioA ];
     wf:output [ a ccd:ObjectQ, ccd:PlainVectorRegionA, ccd:RatioA ];
     tools:algebraexpression
-        "subset (1: ObjectInfo(Ratio)) ~Ratios".
+        "subset (1: ObjectInfo(Ratio)) (-: C(Ratio))".
 
 #### Object selection variant vith gteq, needs a ratio attribute
 tools:SelectLayerByRatioGEQPlainRegionObjects
     wf:input1 [ a ccd:ObjectQ, ccd:PlainVectorRegionA, ccd:RatioA ];
     wf:output [ a ccd:ObjectQ, ccd:PlainVectorRegionA, ccd:RatioA ];
     tools:algebraexpression
-        "select (compose2 notj leq) (1: ObjectInfo(Ratio)) ~Ratio".
+        "select (compose2 notj leq) (1: ObjectInfo(Ratio)) (-: Ratio)".
 
 #### Contour to Existence Vector (select a contour map greater than some ordinal value)
 tools:SelectLayerContourToExistenceVector
     wf:input1 [ a ccd:Contour ];
     wf:output [ a ccd:FieldQ, ccd:PlainVectorRegionA, ccd:OrdinalA ];
     tools:algebraexpression
-        "revert (select (compose2 notj leq) (1: Contour) ~Ord)".
+        "revert (select (compose2 notj leq) (1: Contour) (-: Ord))".
 
 #### Coverage to Existence Vector
 
@@ -849,7 +849,7 @@ tools:SelectLayerCoverageToExistenceVector
     wf:input1 [ a ccd:Coverage ];
     wf:output [ a ccd:FieldQ, ccd:PlainVectorRegionA ];
     tools:algebraexpression
-        "revert (select eq (1: Coverages(Nom)) ~Nom)".
+        "revert (select eq (1: Coverages(Nom)) (-: Nom))".
 
 
 
@@ -934,7 +934,7 @@ tools:SelectLayerByLocationPlainRegionObjectsDist
             (pi1 (select
                 leq
                 (oDist (get_attrL 1) (get_attrL 2))
-                ~Ratio
+                (-: Ratio)
             ))
         """.
 
@@ -1239,7 +1239,7 @@ tools:LocalMapAlgebraSubOrder
     rdfs:comment
         "Builds and executes a Local Map Algebra expression (smaller than or greater than some number) using Python syntax using rasters with an ordinal level";
     tools:algebraexpression
-        "select (compose2 notj leq) (1: Field(Ord)) ~Ord".
+        "select (compose2 notj leq) (1: Field(Ord)) (-: Ord)".
 
 ### local map algebra transformation with ratio field
 tools:LocalMapAlgebraSubRatio
@@ -1248,7 +1248,7 @@ tools:LocalMapAlgebraSubRatio
     rdfs:comment
         "Builds and executes a Local Map Algebra expression (less than or equal to some number) using Python syntax using rasters with a ratio level";
     tools:algebraexpression
-        "select (compose2 notj leq) (1: Field(Ratio)) ~Ratio".
+        "select (compose2 notj leq) (1: Field(Ratio)) (-: Ratio)".
 
 tools:RasterToContour tools:implements tools:RasterToContourInterval;
     wf:edge _:wf3_1, _:wf3_2;
@@ -1295,7 +1295,7 @@ tools:ZonalStatisticsSize
         join_attr
             (get_attrL 2)
             (groupbyR size (select eq (loTopo
-                (fcover 1 ~Nominals)
+                (fcover 1 (-: C(Nom)))
                 (get_attrL 2)
             ) in))
         """.
@@ -1368,7 +1368,7 @@ tools:IntersectDissolveField2Object
         join_attr
             (get_attrL 2)
             (groupbyR size (select eq (loTopo
-                (fcover 1 ~Nominals)
+                (fcover 1 (-: C(Nom)))
                 (get_attrL 2)
             ) in))
         """.
@@ -1416,7 +1416,7 @@ tools:IDWInterval
     rdfs:comment
         "Standard point interpolation for interval measurements.";
     tools:algebraexpression
-        "interpol (1: PointMeasures) (deify ~Reg)".
+        "interpol (1: PointMeasures) (deify (-: Reg))".
 
 <https://pro.arcgis.com/en/pro-app/tool-reference/spatial-analyst/kriging.htm> tools:implements tools:KrigingInterval.
 tools:KrigingInterval
@@ -1425,7 +1425,7 @@ tools:KrigingInterval
     rdfs:comment
         "Kriging point interpolation for interval measurements.";
     tools:algebraexpression
-        "interpol (1: PointMeasures) (deify ~Reg)".
+        "interpol (1: PointMeasures) (deify (-: Reg))".
 
 #Zonal Statistics
 tools:ZonalStatisticsMeanInterval
