@@ -444,7 +444,7 @@ tools:con3
             ) out)))
         """.
 
-tools:AddandCalculateAttribute tools:implements tools:CalculateObjectSpatialAmount, tools:CalculateProd;
+tools:AddandCalculateAttribute tools:implements tools:CalculateObjectSpatialAmount, tools:CalculateProd, tools:CalculateProdPointObjects ;
 wf:edge _:wf300_1, _:wf300_2;
     wf:source _:wf300_1;
     rdfs:comment "Add an attribute and calculate value based on one other attribute".
@@ -484,6 +484,21 @@ tools:CalculateProd
             (get_attrL 1)
             (apply1 (product ~Ratio) (get_attrR 1))
         """.
+
+tools:CalculateProdPointObjects 
+   wf:input1 [ a  ccd:ObjectQ, ccd:PointA, exm:ERA ];
+    wf:output [ a ccd:ObjectQ, ccd:PointA, exm:ERA ];
+    rdfs:comment
+        "Calculates a product from an attribute using some constant (e.g. time from distance using speed constant)";
+    tools:algebraexpression
+        """
+        1: ObjectInfo(Ratio);
+        join_attr
+            (get_attrL 1)
+            (apply1 (product ~Ratio) (get_attrR 1))
+        """.
+
+
 
 tools:ZonalStatisticsMeanRatio
     wf:input2 [ a ccd:ObjectQ, ccd:PlainVectorRegionA ];
