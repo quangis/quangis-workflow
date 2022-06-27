@@ -34,27 +34,14 @@ R2 = TypeOperator(params=2)
 R3 = TypeOperator(params=3)
 
 
-def stub(k: Type, v: Type) -> TypeInstance:
-    """
-    Previously, we had types that looked like R1(x), R3(x, y, z), etcetera.
-    Everything is now expressed in terms of the R relation and Product/Unit
-    types, like R(x, Unit) and R(x * z, y). There are some issues that need to
-    be addressed before this fully works, so in the meantime, we use this type
-    alias.
-    """
-    x = k.instance()
-    y = v.instance()
-    if y._operator is Unit:
-        return R1(x)
-    elif x._operator is Product:
-        t1, t2 = x.params
-        return R3(t1, y, t2)
-    else:
-        return R2(x, y)
+# Previously, we had types that looked like R1(x), R3(x, y, z), etcetera.
+# Everything is now expressed in terms of the R relation and Product/Unit
+# types, like R(x, Unit) and R(x * z, y). There are some issues that need to be
+# addressed before this fully works, so in the meantime, we use this type
+# alias.
 
-
-R = TypeAlias(stub)
-C = TypeAlias(lambda x: R(x, Unit))
+R = TypeAlias(lambda x, y: R2(x, y))
+C = TypeAlias(lambda x: R1(x))
 
 # Type synonyms ##############################################################
 
@@ -633,15 +620,7 @@ groupby = Operator(
         (R1(l) ** q) ** R2(l, y) ** R2(y, q),
 )
 
-
-# Generalized operators ######################################################
-# These cannot be used in an expression, but they can be used in queries.
-
-# groupbyLR: Operators = OR(groupbyR, groupbyL)
-# dist: Operators = OR(nDist, loDist, lgDist, lDist, oDist)
-
-
-# Language definition ########################################################
+# Language ###################################################################
 
 cct = Language(
     scope=locals(),
@@ -657,5 +636,6 @@ cct = Language(
         R2(Loc, Qlt),
         R2(Obj, Reg * Qlt),
         R3(Obj, Qlt, Obj),
+        R3(Loc, Qlt, Obj),
         R3(Loc, Qlt, Loc)
     })
