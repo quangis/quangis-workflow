@@ -11,7 +11,7 @@ Module containing the core concept transformation algebra. Usage:
 
 from transformation_algebra import with_parameters, _, Operator, \
     Language, TypeOperator, TypeInstance, Type
-from transformation_algebra.type import TypeAlias, Unit, Constraint
+from transformation_algebra.type import TypeAlias, Unit, Constraint, Product
 # from transformation_algebra.query import OR, Operators
 
 
@@ -33,13 +33,30 @@ R1 = TypeOperator(params=1)
 R2 = TypeOperator(params=2)
 R3 = TypeOperator(params=3)
 
-R = TypeAlias(lambda x, y: R2(x, y))
-C = TypeAlias(lambda x: R1(x))
 
+def stub(k: Type, v: Type) -> TypeInstance:
+    """
+    Previously, we had types that looked like R1(x), R3(x, y, z), etcetera.
+    Everything is now expressed in terms of the R relation and Product/Unit
+    types, like R(x, Unit) and R(x * z, y). There are some issues that need to
+    be addressed before this fully works, so in the meantime, we use this type
+    alias.
+    """
+    x = k.instance()
+    y = v.instance()
+    if y._operator is Unit:
+        return R1(x)
+    elif x._operator is Product:
+        t1, t2 = x.params
+        return R3(t1, y, t2)
+    else:
+        return R2(x, y)
+
+
+R = TypeAlias(stub)
+C = TypeAlias(lambda x: R(x, Unit))
 
 # Type synonyms ##############################################################
-# Types with a synonym are also *canonical*, in that they get a defined node in
-# the vocabulary.
 
 # R1 = TypeAlias(lambda x: R(x, Unit), Val)
 # R2 = TypeAlias(lambda x, y: R(x, y), Val, Val)
