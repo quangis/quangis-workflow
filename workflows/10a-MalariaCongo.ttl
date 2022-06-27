@@ -66,7 +66,7 @@ _:wf2_7 wf:applicationOf tools:CalculateObjectVectorCountAmountRatio;
 # [SC] added triplets   
 rfdataM:adminRegions
     rdfs:comment "Vector polygons of all administrative regions (e.g. province in NL) in the world."@en;
-    rdfs:label "Administrative areas"@en.
+    rdfs:label "Administrative areas world"@en.
 
 rfdataM:population
     rdfs:comment "Raster with estimate of the populations in the world in 2016"@en;
@@ -77,21 +77,21 @@ rfdataM:adminIncidence
     rdfs:label "Malaria incidents"@en.
 
 _:adminDRC1
-    rdfs:comment ""@en;
-    rdfs:label "adminDRC1"@en.
+    rdfs:comment "Vector polygons of all administrative regions in the Democratic Republic of Congo (DRC)"@en;
+    rdfs:label "Admin. areas DRC"@en.
 
 _:adminDRC2
-    rdfs:comment ""@en;
-    rdfs:label "adminDRC2"@en.
+    rdfs:comment "Vector polygons of all administrative regions in the Democratic Republic of Congo (DRC) dissolved by name to check for spurious region borders"@en;
+    rdfs:label "Admin. areas DRC (Dissolved)"@en.
 
 _:popAdminDRC
-    rdfs:comment ""@en;
-    rdfs:label "popAdminDRC"@en.
+    rdfs:comment "A table with one row containing a sum of population counts in the Democratic Republic of Congo (DRC)"@en;
+    rdfs:label "Summed population DRC"@en.
 
 _:adminDRC4
-    rdfs:comment ""@en;
-    rdfs:label "adminDRC4"@en.
+    rdfs:comment "Vector polygons of all administrative regions in the Democratic Republic of Congo (DRC) with total population counts and malaria incidence rates for 2000, 2005, 2010 and 2015 as attributes."@en;
+    rdfs:label "Admin. areas DRC with pop. sum and malaria incident counts"@en.
 
 _:adminDRC6
-    rdfs:comment ""@en;
-    rdfs:label "adminDRC6"@en.
+    rdfs:comment "Vector polygons of all administrative regions in the Democratic Republic of Congo (DRC) with malaria incidence rates for 2000, 2005, 2010 and 2015."@en;
+    rdfs:label "Admin. areas DRC with pop. sum and malaria rates"@en.
