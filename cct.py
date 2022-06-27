@@ -33,8 +33,8 @@ R1 = TypeOperator(params=1)
 R2 = TypeOperator(params=2)
 R3 = TypeOperator(params=3)
 
-R = TypeAlias(lambda x, y: R2(x, y), Val, Val)
-C = TypeAlias(lambda x: R1(x), Val)
+R = TypeAlias(lambda x, y: R2(x, y))
+C = TypeAlias(lambda x: R1(x))
 
 
 # Type synonyms ##############################################################
@@ -84,29 +84,27 @@ Intervals = TypeAlias(R1(Itv))
 Ratios = TypeAlias(R1(Ratio))
 Counts = TypeAlias(R1(Count))
 
-QualityRelation = TypeAlias(R2(Qlt, Qlt))
-
-Field = TypeAlias(lambda x: R2(Loc, x), Qlt)
+Field = TypeAlias(lambda x: R2(Loc, x))
 LocationField = TypeAlias(R2(Loc, Loc))
 
 
-Amounts = TypeAlias(lambda x: R2(Reg, x), Qlt)
+Amounts = TypeAlias(lambda x: R2(Reg, x) [x <= Qlt])
 FieldSample = TypeAlias(R2(Reg, Qlt))
 AmountPatches = TypeAlias(R2(Reg, Nom))
 PointMeasures = TypeAlias(R2(Reg, Itv))
 
-Coverages = TypeAlias(lambda x: R2(x, Reg), Qlt)
+Coverages = TypeAlias(lambda x: R2(x, Reg) [x <= Qlt])
 Contour = TypeAlias(R2(Ord, Reg))
 ContourLine = TypeAlias(R2(Itv, Reg))
 
 ObjectExtent = TypeAlias(R2(Obj, Reg))
-ObjectQuality = TypeAlias(lambda x: R2(Obj, x), Qlt)
+ObjectQuality = TypeAlias(lambda x: R2(Obj, x) [x <= Qlt])
 
-RelationalField = TypeAlias(lambda x: R3(Loc, x, Loc), Qlt)
-Network = TypeAlias(lambda x: R3(Obj, x, Obj), Qlt)
+RelationalField = TypeAlias(lambda x: R3(Loc, x, Loc) [x <= Qlt])
+Network = TypeAlias(lambda x: R3(Obj, x, Obj) [x <= Qlt])
 
 # Associate objects with both their extent and some quality
-ObjectInfo = TypeAlias(lambda x: R2(Obj, Reg * x), Qlt)
+ObjectInfo = TypeAlias(lambda x: R2(Obj, Reg * x))
 
 in_ = Operator(type=Nom)
 out = Operator(type=Nom)
@@ -632,6 +630,7 @@ cct = Language(
     scope=locals(),
     namespace="https://github.com/quangis/cct#",
     canon={
+        Val,
         R1(Val),
         R2(Reg, Qlt),
         R2(Qlt, Reg),
