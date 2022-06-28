@@ -26,7 +26,7 @@ repo:OgallalaAquifer a wf:Workflow;
     dbo:abstract "Water from underground aquifers can help create rich farmland and prosperous cities in places that would otherwise not provide enough water. However, many aquifers are being emptied far faster than they can be recharged by rainwater. The Ogallala (High Plains) Aquifer in the United States is one of the largest in the world, spanning 450,000 square kilometers and eight states. It is also at risk of depletion. In this lesson, you'll locate areas where agricultural irrigation, urbanization, and low precipitation place the heaviest burden on the Ogallala Aquifer.";
     wf:source rfdataA:UrbanAreas;    #U.S. Census Urban Areas provides information about the locations, names, population, and codes of urban areas primarily for national planning applications.
     wf:source rfdataA:precipitation; #polygons of average annual precipitation in the contiguous United States, for the climatological period 1990-2009.
-    wf:source rfdataA:aquifer;       #The Ogallala Aquifer object
+    wf:source rfdataA:aquifer;       #Principal aquifers in the USA
     wf:source rfdataA:irrigation;    #Counties of the United States with area of irrigated land by acreage and percent.
     wf:edge _:wf1_1, _:wf1_3, _:wf1_5, _:wf1_7, _:wf1_8, _:wf1_9.
 
@@ -77,33 +77,33 @@ rfdataA:precipitation
     rdfs:label "Average annual precipitation"@en.
 
 rfdataA:aquifer
-    rdfs:comment "The Ogallala Aquifer object"@en;
-    rdfs:label "Aquifer object"@en.
+    rdfs:comment "Vector polygons representing principal aquifers in the USA"@en;
+    rdfs:label "USA Aquifers"@en.
 
 rfdataA:irrigation
     rdfs:comment "Counties of the United States with area of irrigated land by acreage and percent."@en;
     rdfs:label "Irrigated land"@en.
 
 _:aquifer2
-    rdfs:comment ""@en;
-    rdfs:label "aquifer2"@en.
+    rdfs:comment "A vector polygon representing the oogallala aquifer"@en;
+    rdfs:label "Oogallala aquifer"@en.
 
 _:precipitation2
-    rdfs:comment ""@en;
-    rdfs:label "precipitation2"@en.
+    rdfs:comment "Areas with a low precipitation (<=20 inches of rain per year)"@en;
+    rdfs:label "Low precipitation areas"@en.
 
 _:irrigation2
-    rdfs:comment ""@en;
-    rdfs:label "irrigation2"@en.
+    rdfs:comment "Areas with a high irrigation (>=20% of land being irrigated)"@en;
+    rdfs:label "High irrigation areas"@en.
 
 _:urbanAreas2
-    rdfs:comment ""@en;
-    rdfs:label "urbanAreas2"@en.
+    rdfs:comment "Urban areas that are within 150 miles of the Oogallala aquifer"@en;
+    rdfs:label "Urban areas near Oogallala"@en.
 
 _:urbanAreas3
-    rdfs:comment ""@en;
-    rdfs:label "urbanAreas3"@en.
+    rdfs:comment "Urban areas that are within 150 miles of the Oogallala aquifer and have low precipitation (<=20 inches of rain per year)."@en;
+    rdfs:label "Low precipitation urban areas"@en.
 
 _:urbanAreas5
-    rdfs:comment ""@en;
-    rdfs:label "urbanAreas5"@en.
+    rdfs:comment "Urban areas that are within 150 miles of the Oogallala aquifer and have low precipitation (<=20 inches of rain per year) and high irrigation (>=20% of land being irrigated), thereby causing a risk of aquifer depletion."@en;
+    rdfs:label "Drought-risk urban areas"@en.

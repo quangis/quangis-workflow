@@ -49,7 +49,7 @@ _:wf1_1 wf:applicationOf tools:closestfacilityanalysis;
 # [SC] added triplets   
 rfdata:roads
     rdfs:comment "Road line network in San Francisco";
-    rdfs:label "Road network"@en.
+    rdfs:label "Road network lines"@en.
 
 rfdata:hospitals
     rdfs:comment "Point locations of hospitals in San Francisco"@en;
@@ -60,9 +60,9 @@ rfdata:incident
     rdfs:label "2350 Pine St location"@en.
 
 _:networkdata
-    rdfs:comment ""@en;
-    rdfs:label "networkdata"@en.
+    rdfs:comment "Road network data file"@en;
+    rdfs:label "Road network"@en.
 
 _:objectswithdistances
-    rdfs:comment ""@en;
-    rdfs:label "objectswithdistances"@en.
+    rdfs:comment "Incident location with a distance to the closest hospital as an attribute"@en;
+    rdfs:label "Incidence location"@en.

@@ -72,41 +72,41 @@ _:wf1_8 wf:applicationOf tools:CalculateVectorFieldPartialArea;
 
 # [SC] added triplets   
 rfdataF:roads
-    rdfs:comment ""@en;
+    rdfs:comment "Road network in the Amazon Forest Region"@en;
     rdfs:label "Current roads"@en.
 
 rfdataF:planned
-    rdfs:comment ""@en;
-    rdfs:label "Planned roads"@en.
+    rdfs:comment "A planned road in the Amazon Forest Region"@en;
+    rdfs:label "Planned road"@en.
 
 rfdataF:deforested
-    rdfs:comment ""@en;
+    rdfs:comment "Actual deforested area in the Amazon Forest Region"@en;
     rdfs:label "Deforested areas"@en.
 
 _:roadsSelectForBuffer
-    rdfs:comment ""@en;
-    rdfs:label "roadsSelectForBuffer"@en.
+    rdfs:comment "A selection of the roads by a user's view extent (all roads visible on screen)"@en;
+    rdfs:label "Roads selection"@en.
 
 _:roadsBuffer
-    rdfs:comment ""@en;
-    rdfs:label "roadsBuffer"@en.
+    rdfs:comment "A vector polygon representing area within 5.5km of roads in the Amazon Forest area"@en;
+    rdfs:label "Roads area"@en.
 
 _:deforestedRoadArea
-    rdfs:comment ""@en;
-    rdfs:label "deforestedRoadArea"@en.
+    rdfs:comment "Vector polygon data representing area that is both deforested and within 5.5km of roads in the Amazon Forest area"@en;
+    rdfs:label "Deforested road area"@en.
 
 _:areaPercentage
-    rdfs:comment ""@en;
-    rdfs:label "areaPercentage"@en.
+    rdfs:comment "Vector polygon representing the area within 5.5km of roads with a percentage of the area that has been deforested"@en;
+    rdfs:label "Road area (% deforested)"@en.
 
 _:plannedRoadBuffer
-    rdfs:comment ""@en;
-    rdfs:label "plannedRoadBuffer"@en.
+    rdfs:comment "A vector polygon representing area within 5.5km of the planned road in the Amazon Forest area"@en;
+    rdfs:label "Planned road area"@en.
 
 _:erasedBuffer
-    rdfs:comment ""@en;
-    rdfs:label "erasedBuffer"@en.
+    rdfs:comment "A vector multipart polygon representing area within 5.5km of the planned road in the Amazon Forest area with existing deforestation erased"@en;
+    rdfs:label "Planned road area (No deforestation)"@en.
 
 _:predictedDeforestation
-    rdfs:comment ""@en;
-    rdfs:label "predictedDeforestation"@en.
+    rdfs:comment "A vector multipart polygon representing area within 5.5km of the planned road in the Amazon Forest area with an expected total of deforestation as an attribute"@en;
+    rdfs:label "Planned road area (% Deforestation)"@en.

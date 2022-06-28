@@ -113,61 +113,61 @@ _:wf1_14 wf:applicationOf tools:CreateUnitHydrograph;
 
 # [SC] added triplets   
 rfdataH:stoweDem
-    rdfs:comment "Vermont as a digital surface model (Raster)"@en;
-    rdfs:label "Digital surface model"@en.
+    rdfs:comment "Stowe, Vermont as a digital elevation model (Raster)"@en;
+    rdfs:label "DEM"@en.
 
 rfdataH:pourPoint
     rdfs:comment "Point of measurement for the unit hydrograph"@en;
     rdfs:label "Unit hydrograph measurement"@en.
 
 _:stoweSlope
-    rdfs:comment ""@en;
-    rdfs:label "stoweSlope"@en.
+    rdfs:comment "A raster dataset with slope values for each raster cell"@en;
+    rdfs:label "Slope"@en.
 
 _:accumulation
-    rdfs:comment ""@en;
-    rdfs:label "accumulation"@en.
+    rdfs:comment "A raster layer that indicates where water is most likely to accumulate in the Stowe area"@en;
+    rdfs:label "Flow accumulation"@en.
 
 _:stoweVelocity
-    rdfs:comment ""@en;
-    rdfs:label "stoweVelocity"@en.
+    rdfs:comment "A raster with velocity values of water flow"@en;
+    rdfs:label "Flow velocity"@en.
 
 _:stoweVelocity2
-    rdfs:comment ""@en;
-    rdfs:label "stoweVelocity2"@en.
+    rdfs:comment "A raster with velocity values of water flow with a minimum of 0.2 meters per second"@en;
+    rdfs:label "Lower-bounded flow velocity"@en.
 
 _:stoweVelocity3
-    rdfs:comment ""@en;
-    rdfs:label "stoweVelocity3"@en.
+    rdfs:comment "A raster with velocity values of water flow with a minimum of 0.2 meters per second and a maximum of 2 meters per second"@en;
+    rdfs:label "Bounded flow Velocity"@en.
 
 _:stoweWeight
-    rdfs:comment ""@en;
-    rdfs:label "stoweWeight"@en.
+    rdfs:comment "A raster with weights representing flow impedances."@en;
+    rdfs:label "Stowe flow impedances"@en.
 
 _:direction
-    rdfs:comment ""@en;
-    rdfs:label "direction"@en.
+    rdfs:comment "Flow direction raster of the Stowe area"@en;
+    rdfs:label "Flow directions"@en.
 
 _:snappedPoint
-    rdfs:comment ""@en;
-    rdfs:label "snappedPoint"@en.
+    rdfs:comment "Snapping of outlet downstream point to the stream as rendered in the DEM"@en;
+    rdfs:label "Outlet Point"@en.
 
 _:watershed
-    rdfs:comment ""@en;
-    rdfs:label "watershed"@en.
+    rdfs:comment "All of the Stowe area that flows to the specified oulet point"@en;
+    rdfs:label "Watershed"@en.
 
 _:flowDirections
-    rdfs:comment ""@en;
-    rdfs:label "flowDirections"@en.
+    rdfs:comment "Flow direction raster of the Stowe area clipped by the Stowe watershed."@en;
+    rdfs:label "Flow directions"@en.
 
 _:stoweTime
-    rdfs:comment ""@en;
-    rdfs:label "stoweTime"@en.
+    rdfs:comment "A raster of flow lengths to the outlet point weighted by flow impedances."@en;
+    rdfs:label "Flow Time"@en.
 
 _:stoweIsochrones
-    rdfs:comment ""@en;
-    rdfs:label "stoweIsochrones"@en.
+    rdfs:comment "A raster of flow lengths to the outlet point weighted by flow impedance classified into a set of isochrone ranges incrementally increasing by 1,800 seconds"@en;
+    rdfs:label "Isochrone zones"@en.
 
 _:stoweTable
-    rdfs:comment ""@en;
-    rdfs:label "stoweTable"@en.
+    rdfs:comment "A standalone table containing unit hydrograph measurements"@en;
+    rdfs:label "Unit Hydrograph Ordinates"@en.

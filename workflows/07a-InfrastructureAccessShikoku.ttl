@@ -71,14 +71,14 @@ _:wf1_12 wf:applicationOf tools:SummaryStatisticsAmount;
 _:wf1_6 wf:applicationOf tools:CalculateCountAmountRatio;
     wf:input1 _:rural_pop1;
     wf:input2 _:rural_access1;
-    rdfs:comment "calcuate the percentage of population living within 2km of infrastructure";
+    rdfs:comment "calculate the percentage of population living within 2km of infrastructure";
     wf:output _:rural_pop2.
 
 
 
 # [SC] added triplets   
 rfdataI:urbanization
-    rdfs:comment "Metropolitan Employment Areas: Urbanization levels in Shikoku, Japan (Polygon)"@en;
+    rdfs:comment "Metropolitan Employment Areas (MEAs): Urbanization levels in Shikoku, Japan (Polygon)"@en;
     rdfs:label "Metro employment areas"@en.
 
 rfdataI:chochomoku
@@ -90,29 +90,29 @@ rfdataI:roads
     rdfs:label "Roads"@en.
 
 _:rural
-    rdfs:comment ""@en;
-    rdfs:label "rural"@en.
+    rdfs:comment "Vector polygons representing non-MEAs, i.e., areas with a 'rural' classification in Shikoku"@en;
+    rdfs:label "Rural regions"@en.
 
 _:rural_clip
-    rdfs:comment ""@en;
-    rdfs:label "rural_clip"@en.
+    rdfs:comment "All municipalities in rural areas in Shikoku"@en;
+    rdfs:label "Rural municipalities"@en.
 
 _:rural_pop1
-    rdfs:comment ""@en;
-    rdfs:label "rural_pop1"@en.
+    rdfs:comment "A standalone table with the total amount of population in rural municipalities in Shikoku"@en;
+    rdfs:label "Total rural population"@en.
 
 _:roads_buffer
-    rdfs:comment ""@en;
-    rdfs:label "roads_buffer"@en.
+    rdfs:comment "A vector polygon representing all area within 2 kilometers of all-season roads in Shikoku"@en;
+    rdfs:label "Area within 2km of roads"@en.
 
 _:rural_2km4
-    rdfs:comment ""@en;
-    rdfs:label "rural_2km4"@en.
+    rdfs:comment "Rural municipalities in Shikoku clipped by road proximity region and with estimated populations for partitioned municipalities"@en;
+    rdfs:label "Rural mun. area near roads"@en.
 
 _:rural_access1
-    rdfs:comment ""@en;
-    rdfs:label "rural_access1"@en.
+    rdfs:comment "A sum of all population estimates in areas near roads in Shikoku"@en;
+    rdfs:label "Pop. sum near roads"@en.
 
 _:rural_pop2
-    rdfs:comment ""@en;
-    rdfs:label "rural_pop2"@en.
+    rdfs:comment "A percentage of all population living near roads in Shikoku"@en;
+    rdfs:label "Pop. % near roads"@en.

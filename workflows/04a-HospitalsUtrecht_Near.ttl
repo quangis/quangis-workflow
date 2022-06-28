@@ -47,5 +47,5 @@ rfdata:incident
     rdfs:label "2350 Pine St location"@en.
 
 _:nearTable
-    rdfs:comment ""@en;
+    rdfs:comment "A table with entries for each of three closest hospitals to the incident location"@en;
     rdfs:label "nearTable"@en.

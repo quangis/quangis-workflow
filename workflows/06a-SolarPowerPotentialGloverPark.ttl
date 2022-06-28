@@ -58,7 +58,7 @@ _:wf1_5 wf:applicationOf tools:con2;
 
 _:wf1_6 wf:applicationOf tools:con1;
     wf:input1 _:solarRad3;
-    rdfs:comment "get solar_rad where VALUE < 800 KWH";
+    rdfs:comment "get solar_rad where VALUE > 800 KWH";
     wf:output _:solarRad4.
 
 _:wf1_7 wf:applicationOf tools:con2;
@@ -104,52 +104,52 @@ rfdataS:dsm
 
 rfdataS:solarRad
     rdfs:comment "Solar radiation per areal unit in Glover Park"@en;
-    rdfs:label "Solar radiation"@en.
+    rdfs:label "Solar radiation (w/h)"@en.
 
 rfdataS:buildings
     rdfs:comment "Polygonal outline of every building in the Glover Park neighborhood (Vector)"@en;
     rdfs:label "Buildings"@en.
 
 _:aspectDsm
-    rdfs:comment ""@en;
-    rdfs:label "aspectDsm"@en.
+    rdfs:comment "A raster across the neighborhood of Glover Park with aspect (Orientation towards cardinal direction) values for each cell"@en;
+    rdfs:label "Aspect raster"@en.
 
 _:slopeDsm
-    rdfs:comment ""@en;
-    rdfs:label "slopeDsm"@en.
+    rdfs:comment "A raster across the neighborhood of Glover Park with slope (Inclination) values for each cell"@en;
+    rdfs:label "Slope raster"@en.
 
 _:solarRad2
-    rdfs:comment ""@en;
-    rdfs:label "solarRad2"@en.
+    rdfs:comment "Raster with solar radiation values in kilowatt/hour for each raster cell"@en;
+    rdfs:label "Solar radiation (kw/h)"@en.
 
 _:solarRad3
-    rdfs:comment ""@en;
-    rdfs:label "solarRad3"@en.
+    rdfs:comment "Raster with solar radiation values in kilowatt/hour for each raster cell with a slope of less than 45 degrees"@en;
+    rdfs:label "Solar radiation (Slope<45°)"@en.
 
 _:solarRad4
-    rdfs:comment ""@en;
-    rdfs:label "solarRad4"@en.
+    rdfs:comment "Raster with solar radiation values in kilowatt/hour for each raster cell where the solar radiation is above 800 kilowatt per hour"@en;
+    rdfs:label "Solar radiation (>800kw/h)"@en.
 
 _:solarRad5
-    rdfs:comment ""@en;
-    rdfs:label "solarRad5"@en.
+    rdfs:comment "Raster with solar radiation values in kilowatt/hour for each raster cell with a slope of less than 10 degrees"@en;
+    rdfs:label "Solar radiation (Slope<10°)"@en.
 
 _:solarRad6
-    rdfs:comment ""@en;
-    rdfs:label "solarRad6"@en.
+    rdfs:comment "Raster with solar radiation values in kilowatt/hour for each raster cell with north-facing cells removed"@en;
+    rdfs:label "Solar radiation (No North)"@en.
 
 _:solarBuildings
-    rdfs:comment ""@en;
-    rdfs:label "solarBuildings"@en.
+    rdfs:comment "Buildings with average solar radiation in kilowatt/hour per m² for each building in Glover Park"@en;
+    rdfs:label "Solar radiation per building"@en.
 
 _:solarBuildings3
-    rdfs:comment ""@en;
-    rdfs:label "solarBuildings3"@en.
+    rdfs:comment "Buildings in Glover Park with a high average radiation in kilowatt/hour per m² surface."@en;
+    rdfs:label "High radiation buildings (kw/h)"@en.
 
 _:solarBuildings5
-    rdfs:comment ""@en;
-    rdfs:label "solarBuildings5"@en.
+    rdfs:comment "Buildings in Glover Park with a high solar radiation in megawatt/year"@en;
+    rdfs:label "High radiation buildings (mw/y)"@en.
 
 _:solarBuildings7
-    rdfs:comment ""@en;
-    rdfs:label "solarBuildings7"@en.
+    rdfs:comment "Values indicating per building the potential for energy production by solar panels in megawatt/year"@en;
+    rdfs:label "Solar panel potential"@en.
