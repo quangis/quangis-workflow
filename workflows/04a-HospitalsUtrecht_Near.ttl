@@ -30,7 +30,7 @@ repo:HospitalsUtrecht_Near a wf:Workflow;
 
 # Workflow nodes
 
-_:wf1_1 wf:applicationOf tools:nearPointObjects;
+_:wf1_1 wf:applicationOf tools:NearPointObjects;
     wf:input1 rfdata:incident;
     wf:input2 rfdata:hospitals;
     rdfs:comment "Search for the three closest hospitals using Euclidean distance"; #.Parameters are <Find only closest feature: False>, <Maximum number of closest: 3>

@@ -9,9 +9,6 @@
 # @prefix tools: <http://geographicknowledge.de/vocab/GISTools.rdf#>.
 @prefix repo: <https://example.com/#>.
 
-# [SC] tool prefix
-@prefix arcprosa: <https://pro.arcgis.com/en/pro-app/latest/tool-reference/spatial-analyst/>.
-
 # [SC] data prefix
 @prefix rfdataH: <https://learn.arcgis.com/en/projects/predict-floods-with-unit-hydrographs/#>.
 
@@ -35,7 +32,7 @@ repo:FloodsVermont a wf:Workflow;
 
 #Find Velocity Weight raster
 
-_:wf1_1 wf:applicationOf arcprosa:slope.htm;
+_:wf1_1 wf:applicationOf tools:Slope;
     wf:input1 rfdataH:stoweDem; 
     rdfs:comment "Calculate slopes in Glover";
     wf:output _:stoweSlope.
@@ -63,23 +60,23 @@ _:wf1_6 wf:applicationOf tools:LocalMapAlgebraInvert;
 
 #Flow direction, accumulation and watershed (This part is new since second workflow)
 
-_:wf1_7 wf:applicationOf arcprosa:flow-direction.htm;
+_:wf1_7 wf:applicationOf tools:FlowDirection;
     wf:input1 rfdataH:stoweDem;
     rdfs:comment "get directions of water flow";
     wf:output _:direction.
 
-_:wf1_8 wf:applicationOf arcprosa:flow-accumulation.htm;
+_:wf1_8 wf:applicationOf tools:FlowAccumulation;
     wf:input1 _:direction;
     rdfs:comment "get accumulations of water flow";
     wf:output _:accumulation.
 
-_:wf1_9 wf:applicationOf arcprosa:snap-pour-point.htm;
+_:wf1_9 wf:applicationOf tools:SnapPourPoint;
     wf:input1 rfdataH:pourPoint;
     wf:input2 _:accumulation;
     rdfs:comment "snap pour point to river (Distance: 60m)";
     wf:output _:snappedPoint.
 
-_:wf1_10 wf:applicationOf arcprosa:watershed.htm;
+_:wf1_10 wf:applicationOf tools:Watershed;
     wf:input1 _:direction;
     wf:input2 _:snappedPoint;
     rdfs:comment "get watershed";
@@ -87,13 +84,13 @@ _:wf1_10 wf:applicationOf arcprosa:watershed.htm;
 
 #Continues the same as old workflow from here
 
-_:wf1_11 wf:applicationOf arcprosa:extract-by-mask.htm;
+_:wf1_11 wf:applicationOf tools:ExtractByMask;
     wf:input1 _:direction;
     wf:input2 _:watershed;
     rdfs:comment "extract flow directions by watershed mask";
     wf:output _:flowDirections.
 
-_:wf1_12 wf:applicationOf arcprosa:flow-length.htm;
+_:wf1_12 wf:applicationOf tools:FlowLength;
     wf:input1 _:stoweWeight;
     wf:input2 _:flowDirections;
     rdfs:comment "calculate the upstream or downstream distance, or weighted distance, along the flow path for each cell";

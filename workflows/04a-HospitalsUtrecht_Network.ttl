@@ -32,7 +32,7 @@ repo:HospitalsUtrecht_Network a wf:Workflow;
 # Workflow nodes
 
 # Builds network data file from roads file
-_:wf1_0 wf:applicationOf <https://pro.arcgis.com/en/pro-app/latest/tool-reference/network-analyst/build-network.htm>;
+_:wf1_0 wf:applicationOf tools:BuildNetwork;
     wf:input1 rfdata:roads;
     wf:output _:networkdata.
 

@@ -9,10 +9,6 @@
 # @prefix tools: <http://geographicknowledge.de/vocab/GISTools.rdf#>.
 @prefix repo: <https://example.com/#>.
 
-# [SC] tool prefix
-@prefix arcpro3da: <https://pro.arcgis.com/en/pro-app/latest/tool-reference/3d-analyst/>.
-@prefix arcprosa: <https://pro.arcgis.com/en/pro-app/latest/tool-reference/spatial-analyst/>.
-
 # [SC] data prefix
 @prefix rfdataS: <https://learn.arcgis.com/en/projects/estimate-solar-power-potential/#>.
 
@@ -35,12 +31,12 @@ repo:SolarPowerPotentialGloverPark a wf:Workflow;
 
 # Workflow nodes
 
-_:wf1_1 wf:applicationOf arcpro3da:aspect.htm;
+_:wf1_1 wf:applicationOf tools:Aspect;
     wf:input1 rfdataS:dsm;
     rdfs:comment "calculate aspects in Glover";
     wf:output _:aspectDsm.
 
-_:wf1_2 wf:applicationOf arcprosa:slope.htm;
+_:wf1_2 wf:applicationOf tools:Slope;
     wf:input1 rfdataS:dsm;
     rdfs:comment "calculate slopes in Glover";
     wf:output _:slopeDsm.
