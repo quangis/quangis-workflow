@@ -731,6 +731,7 @@ tools:FullSelectLayerByAttribute
         tools:SelectLayerByRatioPlainRegionObjects,
         tools:SelectLayerByRatioTessObjects,
         tools:SelectLayerContourToExistenceVector,
+        tools:SelectLayerByRatioGEQPlainRegionObjects,
         tools:SelectLayerCoverageToExistenceVector;
     wf:edge _:wf1_1, _:wf1_2;
     wf:source _:in11;
