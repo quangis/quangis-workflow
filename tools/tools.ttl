@@ -327,7 +327,7 @@ tools:RasterToIsoRaster
 
 #Method for summarizing raster coverages
 tools:RasterCoverage tools:implements tools:CreateUnitHydrograph;
-wf:edge _:wf55_1, _:wf55_2, _:wf55_3;
+    wf:edge _:wf55_1, _:wf55_2, _:wf55_3;
     wf:source _:fieldraster;
     rdfs:comment "Computes coverage (size) from a raster table for each raster value".
 _:wf55_1 wf:applicationOf tools:TableToTableDef;
@@ -439,8 +439,8 @@ tools:con3
         """.
 
 tools:AddandCalculateAttribute tools:implements tools:CalculateObjectSpatialAmount, tools:CalculateProd, tools:CalculateProdPointObjects ;
-wf:edge _:wf300_1, _:wf300_2;
-    wf:source _:wf300_1;
+    wf:edge _:wf300_1, _:wf300_2;
+    wf:source _:in3001;
     rdfs:comment "Add an attribute and calculate value based on one other attribute".
 _:wf300_1 wf:applicationOf tools:AddFieldDef;
     wf:input1 _:in3001;
@@ -866,7 +866,7 @@ _:wf2_1 wf:applicationOf tools:SelectLayerByLocationDef;
     wf:input1 _:in211;
     wf:input2 _:in212;
     wf:output _:out21.
-_:wf2_1 wf:applicationOf tools:CopyFeaturesDef;
+_:wf2_2 wf:applicationOf tools:CopyFeaturesDef;
     wf:input1 _:out21;
     wf:output _:out22.
 
@@ -1245,7 +1245,7 @@ tools:RasterToContour tools:implements tools:RasterToContourInterval;
 _:wf3_1 wf:applicationOf tools:RasterToIsoRaster;
     wf:input1 _:in31;
     wf:output _:out31.
-_:wf3_1 wf:applicationOf tools:RegionFromRasterExtent;
+_:wf3_2 wf:applicationOf tools:RegionFromRasterExtent;
     wf:input1 _:out31;
     wf:output _:out32.
 
@@ -1271,7 +1271,7 @@ _:wf4_1 wf:applicationOf tools:ZonalStatisticsAsTableDef;
     wf:input1 _:in411;
     wf:input2 _:in412;
     wf:output _:out41.
-_:wf4_1 wf:applicationOf tools:JoinFieldDef;
+_:wf4_2 wf:applicationOf tools:JoinFieldDef;
     wf:input1 _:out41;
     wf:input2 _:in412;
     wf:output _:out42.
@@ -1331,7 +1331,7 @@ tools:CalculateObjectAttrRatio
 
 #this tool computes the coverage of a field inside object region by first intersecting and then dissolving  and joining, to obtain the area covered by the field inside the object region
 tools:IntersectDissolve tools:implements tools:IntersectDissolveField2Object;
-    wf:edge _:wf8_1, _:wf8_2;
+    wf:edge _:wf8_1, _:wf8_2, _:wf8_3;
     wf:source _:in81, _:in82.
 _:wf8_1 wf:applicationOf tools:IntersectDef;
     wf:input1 _:in81;
