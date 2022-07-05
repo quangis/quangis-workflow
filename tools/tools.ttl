@@ -1343,7 +1343,7 @@ _:wf8_2 wf:applicationOf tools:MergeObjects;
 _:wf8_3 wf:applicationOf tools:JoinFieldDef;
     wf:input1 _:out82;
     wf:input2 _:in82;
-    wf:output _:out82.
+    wf:output _:out83.
 
 ##Coverage of vector field in object
 tools:IntersectDissolveField2Object
