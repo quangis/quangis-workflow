@@ -1,5 +1,4 @@
 # [SC][TODO] ambiguous references to arcpro tools in workflows for "tools:VelocityField" (lines 230 and 235) and "tools:CalculatePartialAmounts" (line 562)
-# [SC][TODO] added dummy signature annotations (starting from line 1560) to arcpro tools without annotation
 
 #[SC][TODO] measurement level prefix
 
