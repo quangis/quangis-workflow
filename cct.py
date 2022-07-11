@@ -606,6 +606,7 @@ groupby = Operator(
 cct = Language(
     scope=locals(),
     namespace="https://github.com/quangis/cct#",
+    include_top=True,
     canon={
         Val,
         R1(Val),
