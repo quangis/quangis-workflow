@@ -1857,18 +1857,18 @@ arcprosa:watershed.htm
 
 tools:ClipDef
     # [SC][TODO] annotate inputs and output
-    wf:input1 [ a ccd:CoreConceptQ, ccd:LayerA, ccd:NominalA ];
-    wf:input2 [ a ccd:CoreConceptQ, ccd:LayerA, ccd:NominalA ];
-    wf:output [ a ccd:CoreConceptQ, ccd:LayerA, ccd:NominalA ];
+    wf:input1 [ a ccd:CoreConceptQ, ccd:VectorRegionA, ccd:NominalA ];
+    wf:input2 [ a ccd:CoreConceptQ, ccd:VectorRegionA, ccd:NominalA ];
+    wf:output [ a ccd:CoreConceptQ, ccd:VectorRegionA, ccd:NominalA ];
     rdfs:comment
         "This is the default annotation for the Clip arcpro tool to be used when an algebra expression is not possible to produce.";
     tools:algebraexpression "".
     
 tools:RasterCalculatorDef
     # [SC][TODO] annotate inputs and output
-    wf:input1 [ a ccd:CoreConceptQ, ccd:LayerA, ccd:NominalA ];
-    wf:input2 [ a ccd:CoreConceptQ, ccd:LayerA, ccd:NominalA ];
-    wf:output [ a ccd:CoreConceptQ, ccd:LayerA, ccd:NominalA ];
+    wf:input1 [ a ccd:FieldQ, ccd:RasterA, ccd:NominalA ];
+    wf:input2 [ a ccd:FieldQ, ccd:RasterA, ccd:NominalA ];
+    wf:output [ a ccd:FieldQ, ccd:RasterA, ccd:NominalA ];
     rdfs:comment
         "This is the default annotation for the Raster Calculator arcpro tool to be used when an algebra expression is not possible to produce.";
     tools:algebraexpression "".
@@ -1876,10 +1876,9 @@ tools:RasterCalculatorDef
 arcprona:make-closest-facility-analysis-layer.htm
     tools:implements tools:MakeClosestFacilityAnalysisLayerDef.
 tools:MakeClosestFacilityAnalysisLayerDef
-    # [SC][TODO] annotate inputs and output
-    wf:input1 [ a ccd:CoreConceptQ, ccd:LayerA, ccd:NominalA ];
-    wf:input2 [ a ccd:CoreConceptQ, ccd:LayerA, ccd:NominalA ];
-    wf:output [ a ccd:CoreConceptQ, ccd:LayerA, ccd:NominalA ];
+    # [SC][TODO] annotate inputs and output    
+    wf:input1 [ a ccd:NetworkQ, ccd:LineA, ccd:RatioA ];    
+    wf:output [ a ccd:NetworkQ, ccd:LineA, ccd:RatioA ];
     rdfs:comment
         "This is the default annotation for the Make Closest Facility Analysis Layer arcpro tool to be used when an algebra expression is not possible to produce.";
     tools:algebraexpression "".
@@ -1888,9 +1887,9 @@ arcprona:add-locations.htm
     tools:implements tools:AddLocationsDef.
 tools:AddLocationsDef
     # [SC][TODO] annotate inputs and output
-    wf:input1 [ a ccd:CoreConceptQ, ccd:LayerA, ccd:NominalA ];
-    wf:input2 [ a ccd:CoreConceptQ, ccd:LayerA, ccd:NominalA ];
-    wf:output [ a ccd:CoreConceptQ, ccd:LayerA, ccd:NominalA ];
+    wf:input1 [ a ccd:NetworkQ, ccd:LineA, ccd:RatioA ];
+    wf:input2 [ a ccd:ObjectQ, ccd:PointA, ccd:NominalA ];
+    wf:output [ a ccd:NetworkQ, ccd:LineA, ccd:RatioA ];
     rdfs:comment
         "This is the default annotation for the Add Locations arcpro tool to be used when an algebra expression is not possible to produce.";
     tools:algebraexpression "".
@@ -1899,9 +1898,8 @@ arcprona:solve.htm
     tools:implements tools:SolveDef.
 tools:SolveDef
     # [SC][TODO] annotate inputs and output
-    wf:input1 [ a ccd:CoreConceptQ, ccd:LayerA, ccd:NominalA ];
-    wf:input2 [ a ccd:CoreConceptQ, ccd:LayerA, ccd:NominalA ];
-    wf:output [ a ccd:CoreConceptQ, ccd:LayerA, ccd:NominalA ];
+    wf:input1 [ a ccd:NetworkQ, ccd:LineA, ccd:RatioA ];    
+    wf:output [ a ccd:ObjectQ, ccd:PointA, ccd:RatioA ];
     rdfs:comment
         "This is the default annotation for the Solve arcpro tool to be used when an algebra expression is not possible to produce.";
     tools:algebraexpression "".
@@ -1910,9 +1908,8 @@ arcproco:excel-to-table.htm
     tools:implements tools:ExcelToTableDef.
 tools:ExcelToTableDef
     # [SC][TODO] annotate inputs and output
-    wf:input1 [ a ccd:CoreConceptQ, ccd:LayerA, ccd:NominalA ];
-    wf:input2 [ a ccd:CoreConceptQ, ccd:LayerA, ccd:NominalA ];
-    wf:output [ a ccd:CoreConceptQ, ccd:LayerA, ccd:NominalA ];
+    wf:input1 [ a ccd:CoreConceptQ, ccd:VectorA, ccd:NominalA ];    
+    wf:output [ a ccd:CoreConceptQ, ccd:VectorA, ccd:NominalA ];
     rdfs:comment
         "This is the default annotation for the Excel To Table arcpro tool to be used when an algebra expression is not possible to produce.";
     tools:algebraexpression "".
@@ -1921,9 +1918,9 @@ arcprodm:join-field.htm
     tools:implements tools:JoinFieldDef.
 tools:JoinFieldDef
     # [SC][TODO] annotate inputs and output
-    wf:input1 [ a ccd:CoreConceptQ, ccd:LayerA, ccd:NominalA ];
-    wf:input2 [ a ccd:CoreConceptQ, ccd:LayerA, ccd:NominalA ];
-    wf:output [ a ccd:CoreConceptQ, ccd:LayerA, ccd:NominalA ];
+    wf:input1 [ a ccd:CoreConceptQ, ccd:VectorA, ccd:NominalA ];
+    wf:input2 [ a ccd:CoreConceptQ, ccd:VectorA, ccd:NominalA ];
+    wf:output [ a ccd:CoreConceptQ, ccd:VectorA, ccd:NominalA ];
     rdfs:comment
         "This is the default annotation for the Join Field arcpro tool to be used when an algebra expression is not possible to produce.";
     tools:algebraexpression "".
@@ -1932,9 +1929,8 @@ arcproco:table-to-table.htm
     tools:implements tools:TableToTableDef.
 tools:TableToTableDef
     # [SC][TODO] annotate inputs and output
-    wf:input1 [ a ccd:CoreConceptQ, ccd:LayerA, ccd:NominalA ];
-    wf:input2 [ a ccd:CoreConceptQ, ccd:LayerA, ccd:NominalA ];
-    wf:output [ a ccd:CoreConceptQ, ccd:LayerA, ccd:NominalA ];
+    wf:input1 [ a ccd:CoreConceptQ, ccd:RasterA, ccd:NominalA ];    
+    wf:output [ a ccd:AmountQ, ccd:VectorRegionA, ccd:RatioA ];
     rdfs:comment
         "This is the default annotation for the Table To Table arcpro tool to be used when an algebra expression is not possible to produce.";
     tools:algebraexpression "".
@@ -1943,9 +1939,8 @@ arcprodm:add-field.htm
     tools:implements tools:AddFieldDef.
 tools:AddFieldDef
     # [SC][TODO] annotate inputs and output
-    wf:input1 [ a ccd:CoreConceptQ, ccd:LayerA, ccd:NominalA ];
-    wf:input2 [ a ccd:CoreConceptQ, ccd:LayerA, ccd:NominalA ];
-    wf:output [ a ccd:CoreConceptQ, ccd:LayerA, ccd:NominalA ];
+    wf:input1 [ a ccd:CoreConceptQ, ccd:VectorA, ccd:NominalA ];    
+    wf:output [ a ccd:CoreConceptQ, ccd:VectorA, ccd:NominalA ];
     rdfs:comment
         "This is the default annotation for the Add Field arcpro tool to be used when an algebra expression is not possible to produce.";
     tools:algebraexpression "".
@@ -1954,9 +1949,8 @@ arcprodm:calculate-field.htm
     tools:implements tools:CalculateFieldDef.
 tools:CalculateFieldDef
     # [SC][TODO] annotate inputs and output
-    wf:input1 [ a ccd:CoreConceptQ, ccd:LayerA, ccd:NominalA ];
-    wf:input2 [ a ccd:CoreConceptQ, ccd:LayerA, ccd:NominalA ];
-    wf:output [ a ccd:CoreConceptQ, ccd:LayerA, ccd:NominalA ];
+    wf:input1 [ a ccd:CoreConceptQ, ccd:VectorA, ccd:NominalA ];    
+    wf:output [ a ccd:CoreConceptQ, ccd:VectorA, ccd:NominalA ];
     rdfs:comment
         "This is the default annotation for the Calculate Field arcpro tool to be used when an algebra expression is not possible to produce.";
     tools:algebraexpression "".
@@ -1965,9 +1959,8 @@ arcprodm:add-fields.htm
     tools:implements tools:AddFieldsDef.
 tools:AddFieldsDef
     # [SC][TODO] annotate inputs and output
-    wf:input1 [ a ccd:CoreConceptQ, ccd:LayerA, ccd:NominalA ];
-    wf:input2 [ a ccd:CoreConceptQ, ccd:LayerA, ccd:NominalA ];
-    wf:output [ a ccd:CoreConceptQ, ccd:LayerA, ccd:NominalA ];
+    wf:input1 [ a ccd:CoreConceptQ, ccd:VectorA, ccd:NominalA ];    
+    wf:output [ a ccd:CoreConceptQ, ccd:VectorA, ccd:NominalA ];
     rdfs:comment
         "This is the default annotation for the Add Fields arcpro tool to be used when an algebra expression is not possible to produce.";
     tools:algebraexpression "".
@@ -1976,9 +1969,8 @@ arcprodm:select-layer-by-attribute.htm
     tools:implements tools:SelectLayerByAttributeDef.
 tools:SelectLayerByAttributeDef
     # [SC][TODO] annotate inputs and output
-    wf:input1 [ a ccd:CoreConceptQ, ccd:LayerA, ccd:NominalA ];
-    wf:input2 [ a ccd:CoreConceptQ, ccd:LayerA, ccd:NominalA ];
-    wf:output [ a ccd:CoreConceptQ, ccd:LayerA, ccd:NominalA ];
+    wf:input1 [ a ccd:CoreConceptQ, ccd:VectorA, ccd:NominalA ];    
+    wf:output [ a ccd:CoreConceptQ, ccd:VectorA, ccd:NominalA ];
     rdfs:comment
         "This is the default annotation for the Select Layer By Attribute arcpro tool to be used when an algebra expression is not possible to produce.";
     tools:algebraexpression "".
@@ -1987,9 +1979,8 @@ arcprodm:copy-features.htm
     tools:implements tools:CopyFeaturesDef.
 tools:CopyFeaturesDef
     # [SC][TODO] annotate inputs and output
-    wf:input1 [ a ccd:CoreConceptQ, ccd:LayerA, ccd:NominalA ];
-    wf:input2 [ a ccd:CoreConceptQ, ccd:LayerA, ccd:NominalA ];
-    wf:output [ a ccd:CoreConceptQ, ccd:LayerA, ccd:NominalA ];
+    wf:input1 [ a ccd:CoreConceptQ, ccd:VectorA, ccd:NominalA ];    
+    wf:output [ a ccd:CoreConceptQ, ccd:VectorA, ccd:NominalA ];
     rdfs:comment
         "This is the default annotation for the Copy Features arcpro tool to be used when an algebra expression is not possible to produce.";
     tools:algebraexpression "".
@@ -1998,9 +1989,9 @@ arcprodm:select-layer-by-location.htm
     tools:implements tools:SelectLayerByLocationDef.
 tools:SelectLayerByLocationDef
     # [SC][TODO] annotate inputs and output
-    wf:input1 [ a ccd:CoreConceptQ, ccd:LayerA, ccd:NominalA ];
-    wf:input2 [ a ccd:CoreConceptQ, ccd:LayerA, ccd:NominalA ];
-    wf:output [ a ccd:CoreConceptQ, ccd:LayerA, ccd:NominalA ];
+    wf:input1 [ a ccd:CoreConceptQ, ccd:VectorA, ccd:NominalA ]; 
+	wf:input2 [ a ccd:CoreConceptQ, ccd:VectorA, ccd:NominalA ];     
+    wf:output [ a ccd:CoreConceptQ, ccd:VectorA, ccd:NominalA ];
     rdfs:comment
         "This is the default annotation for the Select Layer By Location arcpro tool to be used when an algebra expression is not possible to produce.";
     tools:algebraexpression "".
