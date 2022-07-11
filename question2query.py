@@ -7,23 +7,28 @@ import sys
 import json
 from rdflib import BNode, RDF
 from transformation_algebra import TA
-from transformation_algebra.type import Top
+from transformation_algebra.type import Top, Product
 from transformation_algebra.graph import TransformationGraph
 from transformation_algebra.query import TransformationQuery
-from cct import cct
+from cct import cct, R3
 
 
 def process(question: dict):
     base = question['cctrans']
 
-    g = TransformationGraph(cct, with_noncanonical_types=False)
+    g = TransformationGraph(cct)
     task = BNode()
     types = {}
     for x in base['types']:
         types[x['id']] = x
         x['node'] = node = BNode()
-        t = g.add_type(cct.parse_type(x['cct']).concretize(Top))
-        g.add((node, TA.type, t))
+        t = cct.parse_type(x['cct']).concretize(Top)
+        if t.params[0].operator == Product:
+            t = R3(t.params[0].params[0], t.params[1], t.params[0].params[1])
+        try:
+            g.add((node, TA.type, cct.uri(t)))
+        except ValueError as e:
+            print(f"\033[31;1;4mWarning: {e}\033[0m")
 
     for edge in base['transformations']:
         for before in edge['before']:
