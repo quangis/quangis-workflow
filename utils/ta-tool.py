@@ -9,6 +9,7 @@ from rdflib.namespace import RDFS  # type: ignore
 from rdflib.tools.rdf2dot import rdf2dot  # type: ignore
 from plumbum import cli  # type: ignore
 from transformation_algebra import TransformationQuery, TransformationGraph, TA
+from typing import NamedTuple
 
 from config import REPO, TOOLS  # type: ignore
 from workflow import Workflow  # type: ignore
@@ -115,6 +116,13 @@ class TransformationGraphBuilder(cli.Application):
             g.serialize(str(output_path), format='ttl', encoding='utf-8')
 
 
+class Task(NamedTuple):
+    name: str
+    query: TransformationQuery
+    expected: set[Node]
+    actual: set[Node]
+
+
 @Tatool.subcommand("query")
 class QueryRunner(cli.Application):
     """
@@ -144,58 +152,61 @@ class QueryRunner(cli.Application):
             self.help()
             return 1
         else:
+            # Determine whether there is an endpoint to send queries to
             if self.endpoint:
                 wfgraph = Graph(store='SPARQLStore')
                 wfgraph.open(self.endpoint)
             else:
                 wfgraph = None
 
+            # Determine options
             opts = {"by_io": True, "by_operators": False}
             opts["by_chronology"] = self.ordered and not self.blackbox
             opts["by_types"] = not self.blackbox
 
-            queries: list[tuple[str, set[Node], TransformationQuery]] = []
-            all_workflows: set[Node] = set()
+            tasks: list[Task] = []
+            workflows: set[Node] = set()
             for path in QUERY_FILE:
-                query = TransformationQuery(cct, path)
-                expected = set(query.graph.objects(query.root, TA.implementation))
-                all_workflows.update(expected)
-                queries.append((path.stem, expected, query))
+                name = path.stem
+                graph = TransformationGraph.from_rdf(path, cct)
+                query = TransformationQuery(cct, graph, **opts)
 
-            header = ["Query", "Precision", "Recall"] + sorted([
-                str(wf)[len(REPO):] for wf in all_workflows])
+                expected = set(query.graph.objects(query.root,
+                    TA.implementation))
+                actual = query.run(wfgraph) if wfgraph else set()
 
+                workflows.update(expected)
+                workflows.update(actual)
+                tasks.append(Task(name, query, expected, actual))
+
+            header = ["Task", "Precision", "Recall"] + sorted([
+                str(wf)[len(REPO):] for wf in workflows])
+
+            # Create and optionally send queries
             if not wfgraph:
                 with open(self.output, 'w', newline='') as h:
-                    for _, _, query in queries:
-                        sparql = query.sparql(**opts)
-                        h.write(sparql)
+                    for task in tasks:
+                        h.write(task.query.sparql())
             else:
                 with open(self.output, 'w', newline='') as h:
                     w = csv.DictWriter(h, fieldnames=header)
                     w.writeheader()
-                    n_tpos = 0
-                    n_tneg = 0
-                    n_fpos = 0
-                    n_fneg = 0
-                    for name, expected, query in queries:
-                        sparql = query.sparql(**opts)
-                        result: dict[str, str] = {"Query": name}
-                        try:
-                            results = wfgraph.query(sparql)
-                        except ValueError:
-                            print("Server is down or timed out.")
-                            pos = set()
-                        else:
-                            pos = set(r.workflow for r in results)
+                    n_tpos, n_tneg, n_fpos, n_fneg = 0, 0, 0, 0
+                    for task in tasks:
+                        result: dict[str, str] = {"Task": task.name}
+                        expected, actual = task.expected, task.actual
 
-                        for wf in all_workflows:
-                            if wf in pos:
-                                if wf in expected:
+                        for wf in workflows:
+                            if wf in actual:
+                                if not expected:
+                                    s = "●?"  # positive
+                                elif wf in expected:
                                     s = "● "  # true positive
                                 else:
                                     s = "●⨯"  # false positive
                             else:
+                                if not expected:
+                                    s = "○?"  # negative
                                 if wf in expected:
                                     s = "○⨯"  # false negative
                                 else:
@@ -203,28 +214,10 @@ class QueryRunner(cli.Application):
 
                             result[str(wf)[len(REPO):]] = s
 
-                        false_pos = (pos - expected)
-                        false_neg = (expected - pos)
-                        true_pos = (pos - false_pos)
-                        true_neg = (set(all_workflows) - true_pos)
-
-                        n_tpos += (i_tpos := len(true_pos))
-                        n_tneg += (i_tneg := len(true_neg))
-                        n_fpos += (i_fpos := len(false_pos))
-                        n_fneg += (i_fneg := len(false_neg))
-
-                        try:
-                            result["Precision"] = "{0:.3f}".format(
-                                i_tpos / (i_tpos + i_fpos))
-                        except ZeroDivisionError:
-                            result["Precision"] = "n/a"
-
-                        try:
-                            result["Recall"] = "{0:.3f}".format(
-                                i_tpos / (i_tpos + i_fneg))
-                        except ZeroDivisionError:
-                            result["Recall"] = "n/a"
-
+                        n_fpos += len(actual - expected)
+                        n_fneg += len(expected - actual)
+                        n_tpos += len(actual.intersection(expected))
+                        n_tneg += len(workflows - expected - actual)
                         w.writerow(result)
 
                     try:
