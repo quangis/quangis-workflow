@@ -1,5 +1,4 @@
 # [SC][TODO] ambiguous references to arcpro tools in workflows for "tools:VelocityField" (lines 230 and 235) and "tools:CalculatePartialAmounts" (line 562)
-# [SC][TODO] added dummy signature annotations (starting from line 1560) to arcpro tools without annotation
 
 #[SC][TODO] measurement level prefix
 
@@ -206,7 +205,7 @@ _:wf44_4 wf:applicationOf tools:RasterCalculatorDef;
     wf:input2 _:acc;
     wf:output _:slopearea.
     #This second step computes 0.1 * ("Stowe_slope_area_term" / [Mean slope-area term]). It needs looking up of parameter [Mean slope-area term].
-_:wf44_5 wf:applicationOf tools:RasterCalculatorDef;
+_:wf44_5 wf:applicationOf tools:RasterCalculator1Def;
     wf:input1 _:slopearea;
     wf:output _:velocity.
 
@@ -244,7 +243,7 @@ tools:LocalMapAlgebraInvert
 tools:SnapPourPoint
     wf:input1 [ a ccd:ObjectQ, ccd:PointA ]; #Snap pour point to river (Distance: 60m)
     wf:input2 [ a ccd:FieldRaster, ccd:RatioA ]; # flow accumulation raster
-    wf:output [ a ccd:FieldQ, ccd:Raster, ccd:PlainNominalA ];
+    wf:output [ a ccd:FieldQ, ccd:RasterA, ccd:PlainNominalA ];
     rdfs:comment
         "Snaps a pour point to a raster to generate a raster showing the pour point.";
     tools:algebraexpression
@@ -257,8 +256,8 @@ tools:SnapPourPoint
 
 tools:Watershed
     wf:input1 [ a ccd:FieldRaster, ccd:RatioA ]; #flow direction raster
-    wf:input2 [ a ccd:FieldQ, ccd:Raster, ccd:PlainNominalA ]; # pour point raster
-    wf:output [ a ccd:FieldQ, ccd:Raster, ccd:PlainNominalA ]; #watershed raster, gives a different watershed id for each pour point
+    wf:input2 [ a ccd:FieldQ, ccd:RasterA, ccd:PlainNominalA ]; # pour point raster
+    wf:output [ a ccd:FieldQ, ccd:RasterA, ccd:PlainNominalA ]; #watershed raster, gives a different watershed id for each pour point
     rdfs:comment
         "Given a flow direction raster and a pour point raster, generates a watershed raster.";
     tools:algebraexpression
@@ -650,7 +649,7 @@ tools:CalculateAreaMeasure
 _:wf11_1 wf:applicationOf tools:AddFieldDef;
     wf:input1 _:in1111;
     wf:output _:out1111.
-_:wf11_2 wf:applicationOf tools:CalculateFieldDef;
+_:wf11_2 wf:applicationOf tools:CalculateField2Def;
     wf:input1 _:out1111;
     wf:input2 _:in1112;
     wf:output _:out1112.
@@ -1605,7 +1604,7 @@ tools:ZonalStatisticsSumCount
         """.
 _:in411_4
     wf:proxyFor _:in411;
-    a ccd:AmountQ, ccd:Raster, ccd:CountA.
+    a ccd:AmountQ, ccd:RasterA, ccd:CountA.
 _:in412_4
     wf:proxyFor _:in412;
     a ccd:ObjectQ, ccd:VectorRegionA.
@@ -1803,7 +1802,8 @@ arcprosa:raster-calculator.htm
         ### local map algebra with only a single input layer
         tools:LocalMapAlgebraSubOrder, 
         tools:LocalMapAlgebraSubRatio,
-        tools:RasterCalculatorDef.
+        tools:RasterCalculatorDef,
+        tools:RasterCalculator1Def.
     
 arcproco:raster-to-polygon.htm
     tools:implements tools:RegionFromRasterExtent.
@@ -1866,12 +1866,20 @@ tools:ClipDef
     
 tools:RasterCalculatorDef
     # [SC][TODO] annotate inputs and output
-    wf:input1 [ a ccd:FieldQ, ccd:RasterA, ccd:NominalA ];
-    wf:input2 [ a ccd:FieldQ, ccd:RasterA, ccd:NominalA ];
-    wf:output [ a ccd:FieldQ, ccd:RasterA, ccd:NominalA ];
+    wf:input1 [ a ccd:CoreConceptQ, ccd:RasterA, ccd:NominalA ];
+    wf:input2 [ a ccd:CoreConceptQ, ccd:RasterA, ccd:NominalA ];
+    wf:output [ a ccd:CoreConceptQ, ccd:RasterA, ccd:NominalA ];
     rdfs:comment
         "This is the default annotation for the Raster Calculator arcpro tool to be used when an algebra expression is not possible to produce.";
     tools:algebraexpression "".
+    
+tools:RasterCalculator1Def
+    # [SC][TODO] annotate inputs and output
+    wf:input1 [ a ccd:CoreConceptQ, ccd:RasterA, ccd:NominalA ];    
+    wf:output [ a ccd:CoreConceptQ, ccd:RasterA, ccd:NominalA ];
+    rdfs:comment
+        "This is the default annotation for the Raster Calculator arcpro tool to be used when an algebra expression is not possible to produce.";
+    tools:algebraexpression "".    
 
 arcprona:make-closest-facility-analysis-layer.htm
     tools:implements tools:MakeClosestFacilityAnalysisLayerDef.
@@ -1888,7 +1896,7 @@ arcprona:add-locations.htm
 tools:AddLocationsDef
     # [SC][TODO] annotate inputs and output
     wf:input1 [ a ccd:NetworkQ, ccd:LineA, ccd:RatioA ];
-    wf:input2 [ a ccd:ObjectQ, ccd:PointA, ccd:NominalA ];
+    wf:input2 [ a ccd:CoreConceptQ, ccd:PointA, ccd:NominalA ];
     wf:output [ a ccd:NetworkQ, ccd:LineA, ccd:RatioA ];
     rdfs:comment
         "This is the default annotation for the Add Locations arcpro tool to be used when an algebra expression is not possible to produce.";
@@ -1946,14 +1954,23 @@ tools:AddFieldDef
     tools:algebraexpression "".
 
 arcprodm:calculate-field.htm
-    tools:implements tools:CalculateFieldDef.
+    tools:implements tools:CalculateFieldDef, tools:CalculateField2Def.
 tools:CalculateFieldDef
     # [SC][TODO] annotate inputs and output
     wf:input1 [ a ccd:CoreConceptQ, ccd:VectorA, ccd:NominalA ];    
     wf:output [ a ccd:CoreConceptQ, ccd:VectorA, ccd:NominalA ];
     rdfs:comment
         "This is the default annotation for the Calculate Field arcpro tool to be used when an algebra expression is not possible to produce.";
+    tools:algebraexpression "".    
+tools:CalculateField2Def
+    # [SC][TODO] annotate inputs and output
+    wf:input1 [ a ccd:CoreConceptQ, ccd:VectorA, ccd:NominalA ];  
+	wf:input2 [ a ccd:CoreConceptQ, ccd:VectorA, ccd:NominalA ];     
+    wf:output [ a ccd:CoreConceptQ, ccd:VectorA, ccd:NominalA ];
+    rdfs:comment
+        "This is the default annotation for the Calculate Field arcpro tool to be used when an algebra expression is not possible to produce.";
     tools:algebraexpression "".
+    
 
 arcprodm:add-fields.htm
     tools:implements tools:AddFieldsDef.
@@ -2000,9 +2017,9 @@ arcprosa:zonal-statistics-as-table.htm
     tools:implements tools:ZonalStatisticsAsTableDef.
 tools:ZonalStatisticsAsTableDef
     # [SC][TODO] annotate inputs and output
-    wf:input1 [ a ccd:CoreConceptQ, ccd:LayerA, ccd:NominalA ];
-    wf:input2 [ a ccd:CoreConceptQ, ccd:LayerA, ccd:NominalA ];
-    wf:output [ a ccd:CoreConceptQ, ccd:LayerA, ccd:NominalA ];
+    wf:input1 [ a ccd:CoreConceptQ, ccd:RasterA, ccd:NominalA ];
+    wf:input2 [ a ccd:CoreConceptQ, ccd:VectorRegionA, ccd:NominalA ];
+    wf:output [ a ccd:CoreConceptQ, ccd:VectorRegionA, ccd:NominalA ];
     rdfs:comment
         "This is the default annotation for the Zonal Statistics As Table arcpro tool to be used when an algebra expression is not possible to produce.";
     tools:algebraexpression "".
@@ -2011,9 +2028,9 @@ arcproan:intersect.htm
     tools:implements tools:IntersectDef.
 tools:IntersectDef
     # [SC][TODO] annotate inputs and output
-    wf:input1 [ a ccd:CoreConceptQ, ccd:LayerA, ccd:NominalA ];
-    wf:input2 [ a ccd:CoreConceptQ, ccd:LayerA, ccd:NominalA ];
-    wf:output [ a ccd:CoreConceptQ, ccd:LayerA, ccd:NominalA ];
+    wf:input1 [ a ccd:CoreConceptQ, ccd:VectorA, ccd:NominalA ];
+    wf:input2 [ a ccd:CoreConceptQ, ccd:VectorA, ccd:NominalA ];
+    wf:output [ a ccd:CoreConceptQ, ccd:VectorA, ccd:NominalA ];
     rdfs:comment
         "This is the default annotation for the Intersect arcpro tool to be used when an algebra expression is not possible to produce.";
     tools:algebraexpression "".
@@ -2022,9 +2039,8 @@ arcprodm:make-xy-event-layer.htm
     tools:implements tools:MakeXyEventLayerDef.
 tools:MakeXyEventLayerDef
     # [SC][TODO] annotate inputs and output
-    wf:input1 [ a ccd:CoreConceptQ, ccd:LayerA, ccd:NominalA ];
-    wf:input2 [ a ccd:CoreConceptQ, ccd:LayerA, ccd:NominalA ];
-    wf:output [ a ccd:CoreConceptQ, ccd:LayerA, ccd:NominalA ];
+    wf:input1 [ a ccd:CoreConceptQ, ccd:PointA, ccd:NominalA ];    
+    wf:output [ a ccd:CoreConceptQ, ccd:PointA, ccd:NominalA ];
     rdfs:comment
         "This is the default annotation for the Make Xy Event Layer arcpro tool to be used when an algebra expression is not possible to produce.";
     tools:algebraexpression "".
