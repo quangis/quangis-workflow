@@ -95,6 +95,9 @@ $(BUILD)/cct.ttl: cct.py
 	@rm -f $@; mkdir -p $(@D)
 	$(TATOOL) vocab $@
 
+$(BUILD)/cct.json: cct.py
+	@rm -f $@; mkdir -p $(@D)
+	$(TATOOL) vocab --format json-ld $@
 
 # Transformation graphs for each workflow
 

@@ -50,6 +50,8 @@ class Merger(cli.Application):
 class VocabBuilder(cli.Application):
     "Build CCT vocabulary file"
     visual = cli.Flag("--visual", default=False)
+    format = cli.SwitchAttr(["-f", "--format"], cli.Set("rdf", "ttl", "json-ld"),
+        default="ttl")
 
     @cli.positional(cli.NonexistentPath)
     def main(self, output):
@@ -61,7 +63,7 @@ class VocabBuilder(cli.Application):
         else:
             vocab = TransformationGraph(cct)
             vocab.add_vocabulary()
-            vocab.serialize(str(output), format='ttl', encoding='utf-8')
+            vocab.serialize(str(output), format=self.format, encoding='utf-8')
 
 
 @Tatool.subcommand("graph")
@@ -71,6 +73,8 @@ class TransformationGraphBuilder(cli.Application):
     algebra expressions for each individual use of a tool
     """
     visual = cli.Flag("--visual", default=False)
+    format = cli.SwitchAttr(["-f", "--format"], cli.Set("rdf", "ttl", "json-ld"),
+        default="ttl")
 
     passthrough = True
 
@@ -113,7 +117,7 @@ class TransformationGraphBuilder(cli.Application):
                 passthrough=self.passthrough,
                 with_intermediate_types=self.internals)
             g.add_workflow(wf.root, wf.wf, wf.sources)
-            g.serialize(str(output_path), format='ttl', encoding='utf-8')
+            g.serialize(str(output_path), format=self.format, encoding='utf-8')
 
 
 class Task(NamedTuple):
