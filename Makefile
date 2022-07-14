@@ -121,11 +121,11 @@ $(BUILD)/%/graph-OB.ttl: workflows/%.ttl
 
 $(BUILD)/cct.dot: cct.py
 	@rm -f $@; mkdir -p $(@D)
-	$(TATOOL) vocab --visual $@
+	$(TATOOL) vocab --format=dot $@
 
 $(BUILD)/%/graph-TP.dot: workflows/%.ttl
 	@rm -f $@; mkdir -p $(@D)
-	$(TATOOL) graph --visual $< $@
+	$(TATOOL) graph --format=dot $< $@
 
 $(BUILD)/%/eval.rq: tasks/%.ttl
 	@rm -f $@; mkdir -p $(@D)

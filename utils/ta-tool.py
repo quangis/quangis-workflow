@@ -50,13 +50,12 @@ class Merger(cli.Application):
 @Tatool.subcommand("vocab")
 class VocabBuilder(cli.Application):
     "Build CCT vocabulary file"
-    visual = cli.Flag("--visual", default=False)
-    format = cli.SwitchAttr(["-f", "--format"], cli.Set("rdf", "ttl", "json-ld"),
-        default="ttl")
+    format = cli.SwitchAttr(["-f", "--format"],
+        cli.Set("rdf", "ttl", "json-ld", "dot"), default="ttl")
 
     @cli.positional(cli.NonexistentPath)
     def main(self, output):
-        if self.visual:
+        if self.format == "dot":
             vocab = TransformationGraph(cct, minimal=True, with_labels=True)
             vocab.add_taxonomy()
             with open(output, 'w') as f:
@@ -73,9 +72,8 @@ class TransformationGraphBuilder(cli.Application):
     Generate transformation graphs for entire workflows, concatenating the
     algebra expressions for each individual use of a tool
     """
-    visual = cli.Flag("--visual", default=False)
-    format = cli.SwitchAttr(["-f", "--format"], cli.Set("rdf", "ttl", "json-ld"),
-        default="ttl")
+    format = cli.SwitchAttr(["-f", "--format"],
+        cli.Set("rdf", "ttl", "json-ld", "dot"), default="ttl")
     blocked = cli.Flag(["--blocked"], default=False,
         help="Do not pass output type of one tool to the next")
     opaque = cli.Flag(["--opaque"], default=False,
@@ -84,30 +82,29 @@ class TransformationGraphBuilder(cli.Application):
     @cli.positional(cli.ExistingFile, cli.NonexistentPath)
     def main(self, wf_path, output_path):
         wf = Workflow(wf_path)
-        if self.visual:
-            g = TransformationGraph(cct, minimal=True, with_labels=True,
-                with_intermediate_types=not self.opaque,
-                passthrough=not self.blocked)
-            step2expr = g.add_workflow(wf.root, wf.wf, wf.sources)
+        visual = self.format == "dot"
 
-            # Annotate the expression nodes that correspond with output nodes
-            # of a tool with said tool
+        g = TransformationGraph(cct, minimal=visual, with_labels=visual,
+            with_noncanonical_types=False,
+            with_intermediate_types=not self.opaque,
+            passthrough=not self.blocked)
+
+        step2expr = g.add_workflow(wf.root, wf.wf, wf.sources)
+
+        # Annotate the expression nodes that correspond with output nodes of a
+        # tool with said tool
+        if visual:
             for output, tool in wf.tools.items():
                 g.add((step2expr[output], RDFS.comment, Literal(
-                    "using " + tool[len(TOOLS):]
-                )))
+                    "using " + tool[len(TOOLS):])))
             for output, comment in wf.comment.items():
                 g.add((step2expr[output], RDFS.comment, Literal(comment)))
-
             g.add((step2expr[wf.output], RDFS.comment, Literal("output")))
 
+        if visual:
             with open(output_path, 'w') as f:
                 rdf2dot(g, f)
         else:
-            g = TransformationGraph(cct, with_noncanonical_types=False,
-                passthrough=not self.blocked,
-                with_intermediate_types=not self.opaque)
-            g.add_workflow(wf.root, wf.wf, wf.sources)
             g.serialize(str(output_path), format=self.format, encoding='utf-8')
 
 
