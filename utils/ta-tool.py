@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 import csv
+import sys
 from rdflib import Graph  # type: ignore
 from rdflib.term import Node, URIRef, Literal  # type: ignore
-from rdflib.namespace import RDF, RDFS  # type: ignore
+from rdflib.namespace import Namespace, RDF, RDFS  # type: ignore
 from rdflib.tools.rdf2dot import rdf2dot  # type: ignore
 from pathlib import Path
 from plumbum import cli  # type: ignore
@@ -13,18 +14,27 @@ from itertools import chain
 from transformation_algebra import TransformationQuery, TransformationGraph, TA
 from typing import NamedTuple, Iterable
 
-from config import tools_path, WF, REPO, TOOLS  # type: ignore
+root_path = Path(__file__).parent.parent
+tools_path = root_path / 'tools' / 'tools.ttl'
+
+# Make sure the modules in the project root will be found
+sys.path.append(str(root_path))
 from cct import cct
 
-
-tools: Graph = Graph()
-tools.parse(tools_path, format='ttl')
+# Namespaces
+WF = Namespace('http://geographicknowledge.de/vocab/Workflow.rdf#')
+TOOLS = Namespace('https://github.com/quangis/cct/blob/master/tools/tools.ttl#')
+# TOOLS = Namespace('http://geographicknowledge.de/vocab/GISTools.rdf#')
+REPO = Namespace('https://example.com/#')
 
 
 class Workflow(Graph):
     def __init__(self, path: Path):
         super().__init__()
         self.parse(path, format='ttl')
+
+        tools: Graph = Graph()
+        tools.parse(tools_path, format='ttl')
 
         self.path = path
         self.root = self.value(None, RDF.type, WF.Workflow, any=False)
@@ -107,6 +117,8 @@ class VocabBuilder(cli.Application):
 
     @cli.positional(cli.NonexistentPath)
     def main(self, output):
+        Path(output).parent.mkdir(parents=True, exist_ok=True)  # build path should exist
+
         if self.format == "dot":
             vocab = TransformationGraph(cct, minimal=True, with_labels=True)
             vocab.add_taxonomy()
@@ -153,6 +165,7 @@ class TransformationGraphBuilder(cli.Application):
                 g.add((step2expr[output], RDFS.comment, Literal(comment)))
             g.add((step2expr[wf.output], RDFS.comment, Literal("output")))
 
+        Path(output_path).parent.mkdir(parents=True, exist_ok=True)
         if visual:
             with open(output_path, 'w') as f:
                 rdf2dot(g, f)
