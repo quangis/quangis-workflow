@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import csv
-import sys
+import importlib.machinery
+import importlib.util
 from rdflib import Graph  # type: ignore
 from rdflib.term import Node, Literal  # type: ignore
 from rdflib.namespace import Namespace, RDF, RDFS  # type: ignore
@@ -12,12 +13,9 @@ from rdflib.tools.rdf2dot import rdf2dot  # type: ignore
 from pathlib import Path
 from plumbum import cli  # type: ignore
 from itertools import chain
-from transformation_algebra import TransformationQuery, TransformationGraph, TA
+from transformation_algebra import TransformationQuery, TransformationGraph, \
+    TA, Language
 from typing import NamedTuple, Iterable
-
-# Make sure the modules in the project root will be found
-sys.path.append(str(Path(__file__).parent.parent))
-from cct import cct
 
 # Namespaces
 WF = Namespace('http://geographicknowledge.de/vocab/Workflow.rdf#')
@@ -36,11 +34,27 @@ def graph(url: str) -> Graph:
     return g
 
 
+def lang(path: str) -> Language:
+    """
+    Import a transformation language from a Python module containing one.
+    """
+    name = Path(path).stem
+    loader = importlib.machinery.SourceFileLoader(name, path)
+    spec = importlib.util.spec_from_loader(name, loader)
+    assert spec
+    module = importlib.util.module_from_spec(spec)
+    loader.exec_module(module)
+    languages = [lang for obj in dir(module)
+        if isinstance(lang := getattr(module, obj), Language)]
+    assert len(languages) == 1
+    return languages[0]
+
+
 class Tatool(cli.Application):
     """
     A utility to create RDFs, graph visualizations, queries and other files
-    relevant to workflows annotated with tool descriptions from the CCT
-    algebra
+    relevant to workflows annotated with tool descriptions in terms of a
+    transformation language
     """
 
     def main(self, *args):
@@ -68,7 +82,11 @@ class Merger(cli.Application):
 
 @Tatool.subcommand("vocab")
 class VocabBuilder(cli.Application):
-    "Build CCT vocabulary file"
+    "Build vocabulary file for the transformation language"
+
+    language = cli.SwitchAttr(["-l", "--language"], argtype=lang,
+        mandatory=True, help="Transformation language on which to operate")
+
     format = cli.SwitchAttr(["-f", "--format"],
         cli.Set("rdf", "ttl", "json-ld", "dot"), default="ttl")
 
@@ -77,12 +95,12 @@ class VocabBuilder(cli.Application):
         Path(output).parent.mkdir(parents=True, exist_ok=True)  # build path should exist
 
         if self.format == "dot":
-            vocab = TransformationGraph(cct, minimal=True, with_labels=True)
+            vocab = TransformationGraph(self.language, minimal=True, with_labels=True)
             vocab.add_taxonomy()
             with open(output, 'w') as f:
                 rdf2dot(vocab, f)
         else:
-            vocab = TransformationGraph(cct)
+            vocab = TransformationGraph(self.language)
             vocab.add_vocabulary()
             vocab.serialize(str(output), format=self.format, encoding='utf-8')
 
@@ -93,6 +111,10 @@ class TransformationGraphBuilder(cli.Application):
     Generate transformation graphs for entire workflows, concatenating the
     algebra expressions for each individual use of a tool
     """
+
+    language = cli.SwitchAttr(["-l", "--language"], argtype=lang,
+        mandatory=True, help="Transformation language on which to operate")
+
     tools = cli.SwitchAttr(["--tools"], argtype=graph, mandatory=True,
         help="RDF graph containing the tool ontology")
     format = cli.SwitchAttr(["--format"],
@@ -120,7 +142,7 @@ class TransformationGraphBuilder(cli.Application):
                 step, WF.applicationOf, any=False)
             assert tool, "workflow has an edge without a tool"
             expr = self.tools.value(
-                tool, cct.namespace.expression, any=False)
+                tool, self.language.namespace.expression, any=False)
             assert expr, f"{tool} has no algebra expression"
 
             tool_apps[out] = expr, [node
@@ -129,7 +151,7 @@ class TransformationGraphBuilder(cli.Application):
             ]
 
         # Build transformation graph
-        g = TransformationGraph(cct, minimal=visual, with_labels=visual,
+        g = TransformationGraph(self.language, minimal=visual, with_labels=visual,
             with_noncanonical_types=False,
             with_intermediate_types=not self.opaque,
             passthrough=not self.blocked)
@@ -172,6 +194,8 @@ class QueryRunner(cli.Application):
     given, just output the query instead.
     """
 
+    language = cli.SwitchAttr(["-l", "--language"], argtype=lang,
+        mandatory=True, help="Transformation language on which to operate")
     output = cli.SwitchAttr(["-o", "--output"], cli.NonexistentPath,
         mandatory=True, help="Output file")
     format = cli.SwitchAttr(["--format"], cli.Set("sparql", "csv"),
@@ -187,8 +211,8 @@ class QueryRunner(cli.Application):
         """
         Parse and run a single task.
         """
-        graph = TransformationGraph.from_rdf(path, cct)
-        query = TransformationQuery(cct, graph, **opts)
+        graph = TransformationGraph.from_rdf(path, self.language)
+        query = TransformationQuery(self.language, graph, **opts)
         return Task(name=path.stem, query=query,
             expected=set(graph.objects(query.root, TA.implementation)),
             actual=(query.run(self.endpoint) if self.endpoint else set()))

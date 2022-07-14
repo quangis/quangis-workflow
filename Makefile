@@ -21,6 +21,7 @@ TIMEOUT=
 WORKFLOWS=$(wildcard workflows/*.ttl)
 TASKS=$(wildcard tasks/*.ttl)
 TOOLS=tools/tools.ttl
+LANG=cct.py
 
 # Workflow graphs and the database should not be removed as intermediate files
 .SECONDARY: $(foreach VARIANT,OB OP TB TP,\
@@ -60,76 +61,76 @@ $(BUILD)/tdb-%/mark: $(TDBLOADER) $(BUILD)/cct.ttl \
 
 # Running queries
 
-$(BUILD)/eval/%C.csv: $(BUILD)/tdb-%/mark $(FUSEKI) $(TASKS)
+$(BUILD)/eval/%C.csv: $(BUILD)/tdb-%/mark $(FUSEKI) $(TASKS) $(LANG)
 	@rm -f $@; mkdir -p $(@D)
 	TDB=$(<:$(BUILD)/tdb-%/mark=%); \
 	$(FUSEKI) --localhost --loc=$(<:%/mark=%) /$$TDB & PID=$$!; sleep 4; \
-	$(TATOOL) query --endpoint "$(SERVER)/$$TDB" --chronological $(filter %.ttl,$^) -o $@;\
+	$(TATOOL) query --language=$(LANG) --endpoint "$(SERVER)/$$TDB" --chronological $(filter %.ttl,$^) -o $@;\
 	kill -9 $$PID
 
-$(BUILD)/eval/%A.csv: $(BUILD)/tdb-%/mark $(FUSEKI) $(TASKS)
+$(BUILD)/eval/%A.csv: $(BUILD)/tdb-%/mark $(FUSEKI) $(TASKS) $(LANG)
 	@rm -f $@; mkdir -p $(@D)
 	TDB=$(<:$(BUILD)/tdb-%/mark=%); \
 	$(FUSEKI) --localhost --loc=$(<:%/mark=%) /$$TDB & PID=$$!; sleep 4; \
-	$(TATOOL) query --endpoint "$(SERVER)/$$TDB" $(filter %.ttl,$^) -o $@;\
+	$(TATOOL) query --language=$(LANG) --endpoint "$(SERVER)/$$TDB" $(filter %.ttl,$^) -o $@;\
 	kill -9 $$PID
 
-$(BUILD)/eval/EB.csv: $(BUILD)/tdb-OB/mark $(FUSEKI) $(TASKS)
+$(BUILD)/eval/EB.csv: $(BUILD)/tdb-OB/mark $(FUSEKI) $(TASKS) $(LANG)
 	@rm -f $@; mkdir -p $(@D)
 	TDB=$(<:$(BUILD)/tdb-%/mark=%); \
 	$(FUSEKI) --localhost --loc=$(<:%/mark=%) /$$TDB & PID=$$!; sleep 4; \
-	$(TATOOL) query --endpoint "$(SERVER)/$$TDB" --blackbox $(filter %.ttl,$^) -o $@;\
+	$(TATOOL) query --language=$(LANG) --endpoint "$(SERVER)/$$TDB" --blackbox $(filter %.ttl,$^) -o $@;\
 	kill -9 $$PID
 
-$(BUILD)/eval/EP.csv: $(BUILD)/tdb-OP/mark $(FUSEKI) $(TASKS)
+$(BUILD)/eval/EP.csv: $(BUILD)/tdb-OP/mark $(FUSEKI) $(TASKS) $(LANG)
 	@rm -f $@; mkdir -p $(@D)
 	TDB=$(<:$(BUILD)/tdb-%/mark=%); \
 	$(FUSEKI) --localhost --loc=$(<:%/mark=%) /$$TDB & PID=$$!; sleep 4; \
-	$(TATOOL) query --endpoint "$(SERVER)/$$TDB" --blackbox $(filter %.ttl,$^) -o $@;\
+	$(TATOOL) query --language=$(LANG) --endpoint "$(SERVER)/$$TDB" --blackbox $(filter %.ttl,$^) -o $@;\
 	kill -9 $$PID
 
 
 # Vocabulary
 
-$(BUILD)/cct.ttl: cct.py
+$(BUILD)/cct.ttl: $(LANG)
 	@rm -f $@; mkdir -p $(@D)
-	$(TATOOL) vocab $@
+	$(TATOOL) vocab --language=$(LANG) $@
 
-$(BUILD)/cct.json: cct.py
+$(BUILD)/cct.json: $(LANG)
 	@rm -f $@; mkdir -p $(@D)
-	$(TATOOL) vocab --format json-ld $@
+	$(TATOOL) vocab --language=$(LANG) --format json-ld $@
 
 # Transformation graphs for each workflow
 
-$(BUILD)/%/graph-TP.ttl: workflows/%.ttl $(TOOLS)
+$(BUILD)/%/graph-TP.ttl: workflows/%.ttl $(TOOLS) $(LANG)
 	@rm -f $@; mkdir -p $(@D)
-	$(TATOOL) graph --tools=$(TOOLS) $< $@
+	$(TATOOL) graph --language=$(LANG) --tools=$(TOOLS) $< $@
 
-$(BUILD)/%/graph-OP.ttl: workflows/%.ttl $(TOOLS)
+$(BUILD)/%/graph-OP.ttl: workflows/%.ttl $(TOOLS) $(LANG)
 	@rm -f $@; mkdir -p $(@D)
-	$(TATOOL) graph --tools=$(TOOLS) --opaque $< $@
+	$(TATOOL) graph --language=$(LANG) --tools=$(TOOLS) --opaque $< $@
 
-$(BUILD)/%/graph-TB.ttl: workflows/%.ttl $(TOOLS)
+$(BUILD)/%/graph-TB.ttl: workflows/%.ttl $(TOOLS) $(LANG)
 	@rm -f $@; mkdir -p $(@D)
-	$(TATOOL) graph --tools=$(TOOLS) --blocked $< $@
+	$(TATOOL) graph --language=$(LANG) --tools=$(TOOLS) --blocked $< $@
 
-$(BUILD)/%/graph-OB.ttl: workflows/%.ttl $(TOOLS)
+$(BUILD)/%/graph-OB.ttl: workflows/%.ttl $(TOOLS) $(LANG)
 	@rm -f $@; mkdir -p $(@D)
-	$(TATOOL) graph --tools=$(TOOLS) --blocked --opaque $< $@
+	$(TATOOL) graph --language=$(LANG) --tools=$(TOOLS) --blocked --opaque $< $@
 
 # Visualisation/diagnostics
 
 $(BUILD)/cct.dot: cct.py
 	@rm -f $@; mkdir -p $(@D)
-	$(TATOOL) vocab --format=dot $@
+	$(TATOOL) vocab --language=$(LANG) --format=dot $@
 
 $(BUILD)/%/graph.dot: workflows/%.ttl
 	@rm -f $@; mkdir -p $(@D)
-	$(TATOOL) graph --tools=$(TOOLS) --format=dot $< $@
+	$(TATOOL) graph --language=$(LANG) --tools=$(TOOLS) --format=dot $< $@
 
 $(BUILD)/%/eval.rq: tasks/%.ttl
 	@rm -f $@; mkdir -p $(@D)
-	$(TATOOL) query --format=sparql $^ -o $@
+	$(TATOOL) query --language=$(LANG) --format=sparql $^ -o $@
 
 
 # Other
