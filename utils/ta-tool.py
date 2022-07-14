@@ -28,57 +28,6 @@ TOOLS = Namespace('https://github.com/quangis/cct/blob/master/tools/tools.ttl#')
 REPO = Namespace('https://example.com/#')
 
 
-class Workflow(Graph):
-    def __init__(self, path: Path):
-        super().__init__()
-        self.parse(path, format='ttl')
-
-        tools: Graph = Graph()
-        tools.parse(tools_path, format='ttl')
-
-        self.path = path
-        self.root = self.value(None, RDF.type, WF.Workflow, any=False)
-        self.description = self.value(self.root, RDFS.comment)
-        self.steps = set(self.objects(self.root, WF.edge))
-        self.sources = set(self.objects(self.root, WF.source))
-
-        # map output nodes to input nodes, tools and expressions
-        self.output: Node
-        self.outputs: set[Node] = set()
-        self.inputs: dict[Node, list[Node]] = {}
-        self.tools: dict[Node, URIRef] = {}
-        self.expressions: dict[Node, str] = {}
-        self.comment: dict[Node, str] = {}
-
-        self.wf: dict[Node, tuple[str, list[Node]]] = {}
-
-        for step in self.steps:
-            out = self.value(step, WF.output, any=False)
-            self.outputs.add(out)
-
-            self.tools[out] = tool = self.value(
-                step, WF.applicationOf, any=False)
-            assert tool, "workflow has an edge without a tool"
-
-            self.expressions[out] = expr = tools.value(
-                tool, cct.namespace.expression, any=False)
-            assert expr, f"{tool} has no algebra expression"
-
-            if comment := self.value(step, RDFS.comment):
-                self.comment[out] = comment
-
-            self.inputs[out] = [node
-                for pred in (WF.input1, WF.input2, WF.input3)
-                if (node := self.value(step, pred))
-            ]
-
-            self.wf[out] = expr, self.inputs[out]
-
-        final_outputs = (self.outputs - set(chain.from_iterable(self.inputs.values())))
-        assert len(final_outputs) == 1
-        self.output, = final_outputs
-
-
 class Tatool(cli.Application):
     """
     A utility to create RDFs, graph visualizations, queries and other files
@@ -145,26 +94,55 @@ class TransformationGraphBuilder(cli.Application):
 
     @cli.positional(cli.ExistingFile, cli.NonexistentPath)
     def main(self, wf_path, output_path):
-        wf = Workflow(wf_path)
         visual = self.format == "dot"
 
+        tools = Graph()
+        tools.parse(tools_path, format='ttl')
+
+        # Read input workflow graph
+        wfg = Graph()
+        wfg.parse(wf_path, format='ttl')
+        root = wfg.value(None, RDF.type, WF.Workflow, any=False)
+        sources = set(wfg.objects(root, WF.source))
+        tool_apps: dict[Node, tuple[str, list[Node]]] = {}
+        for step in wfg.objects(root, WF.edge):
+            out = wfg.value(step, WF.output, any=False)
+
+            # Find expression for the tool associated with this application
+            tool = wfg.value(
+                step, WF.applicationOf, any=False)
+            assert tool, "workflow has an edge without a tool"
+            expr = tools.value(
+                tool, cct.namespace.expression, any=False)
+            assert expr, f"{tool} has no algebra expression"
+
+            tool_apps[out] = expr, [node
+                for pred in (WF.input1, WF.input2, WF.input3)
+                if (node := wfg.value(step, pred))
+            ]
+
+        # Build transformation graph
         g = TransformationGraph(cct, minimal=visual, with_labels=visual,
             with_noncanonical_types=False,
             with_intermediate_types=not self.opaque,
             passthrough=not self.blocked)
-
-        step2expr = g.add_workflow(wf.root, wf.wf, wf.sources)
+        step2expr = g.add_workflow(root, tool_apps, sources)
 
         # Annotate the expression nodes that correspond with output nodes of a
         # tool with said tool
+        # TODO incorporate this into add_workflow
         if visual:
-            for output, tool in wf.tools.items():
-                g.add((step2expr[output], RDFS.comment, Literal(
+            for step in wfg.objects(root, WF.edge):
+                out = wfg.value(step, WF.output, any=False)
+                tool = wfg.value(step, WF.applicationOf, any=False)
+                g.add((step2expr[out], RDFS.comment, Literal(
                     "using " + tool[len(TOOLS):])))
-            for output, comment in wf.comment.items():
-                g.add((step2expr[output], RDFS.comment, Literal(comment)))
-            g.add((step2expr[wf.output], RDFS.comment, Literal("output")))
+            for source in sources:
+                for comment in wfg.objects(source, RDFS.comment):
+                    g.add((source, RDFS.comment, comment))
+            # g.add((step2expr[wf.output], RDFS.comment, Literal("output")))
 
+        # Produce output file
         Path(output_path).parent.mkdir(parents=True, exist_ok=True)
         if visual:
             with open(output_path, 'w') as f:
