@@ -619,5 +619,6 @@ cct = Language(
         R2(Obj, Reg * Qlt),
         R3(Obj, Qlt, Obj),
         R3(Loc, Qlt, Obj),
-        R3(Loc, Qlt, Loc)
+        R3(Loc, Qlt, Loc),
+        R3(Obj, Obj, Obj)
     })
