@@ -11,7 +11,7 @@
 .NOTPARALLEL:
 
 BUILD=build
-TATOOL=python3 utils/ta-tool.py
+TATOOL=contra.py
 JENAVERSION=4.5.0
 TDBLOADER=build/apache-jena-$(JENAVERSION)/bin/tdb1.xloader
 # TDBLOADER=build/apache-jena-4.3.2/bin/tdb2.tdbloader
