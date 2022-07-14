@@ -27,8 +27,7 @@ TASKS=$(wildcard tasks/*.ttl)
 	$(WORKFLOWS:workflows/%.ttl=$(BUILD)/%/graph-$(VARIANT).ttl)\
 )
 
-graphs: $(WORKFLOWS:workflows/%.ttl=$(BUILD)/%/graph-TB.dot) \
-		$(WORKFLOWS:workflows/%.ttl=$(BUILD)/%/graph-TP.dot)
+graphs: $(WORKFLOWS:workflows/%.ttl=$(BUILD)/%/graph.dot)
 
 queries: $(TASKS:tasks/%.ttl=$(BUILD)/%/eval.rq)
 
@@ -123,7 +122,7 @@ $(BUILD)/cct.dot: cct.py
 	@rm -f $@; mkdir -p $(@D)
 	$(TATOOL) vocab --format=dot $@
 
-$(BUILD)/%/graph-TP.dot: workflows/%.ttl
+$(BUILD)/%/graph.dot: workflows/%.ttl
 	@rm -f $@; mkdir -p $(@D)
 	$(TATOOL) graph --format=dot $< $@
 

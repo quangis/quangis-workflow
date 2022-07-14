@@ -4,6 +4,7 @@
 
 @base <https://github.com/quangis/cct/blob/master/tools/tools.ttl#>.
 
+@prefix cct: <https://github.com/quangis/cct#>.
 @prefix wf: <http://geographicknowledge.de/vocab/Workflow.rdf#>.
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>.
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
@@ -54,7 +55,7 @@ tools:closestfacilityanalysis
     wf:output _:out204;
     rdfs:comment
         "Selects the distance to the closest goal object on a line network.";
-    tools:algebraexpression
+    cct:expression
         """
         1: Network(Ratio);
         2: ObjectInfo(Nom);
@@ -74,7 +75,7 @@ tools:BuildNetwork
     wf:output [ a ccd:NetworkQ, ccd:LineA, ccd:RatioA ];
     rdfs:comment
         "Builds ratio network from line objects.";
-    tools:algebraexpression
+    cct:expression
         "nbuild (1: ObjectInfo(Ratio))".
         
 #Near tool, to seach for the closest objects using Euclidean distance
@@ -84,7 +85,7 @@ tools:NearPointObjects
     wf:output [ a ccd:ObjectQ, ccd:PointA, ccd:RatioA ];
     rdfs:comment
         "Near tool, to seach for the closest objects using Euclidean distance.";
-    tools:algebraexpression
+    cct:expression
         """
         1: ObjectInfo(Nom);
         2: ObjectInfo(Nom);
@@ -104,7 +105,7 @@ tools:FC2FCObjectTess
     wf:output [ a ccd:ObjectQ, ccd:PlainVectorRegionA ];
     rdfs:comment
         "Object selection by id.";
-    tools:algebraexpression
+    cct:expression
         """
         subset (1: ObjectInfo(Nom)) (-: C(Obj))
         """.
@@ -115,7 +116,7 @@ tools:MergeObjects
     wf:output [ a ccd:ObjectQ, ccd:VectorTessellationA , ccd:NominalA ];
     rdfs:comment
         "Merges object parts into single objects based on object identifiers stored as names.";
-    tools:algebraexpression
+    cct:expression
         """
         1: ObjectInfo(Nom);
         join_attr
@@ -144,7 +145,7 @@ tools:LoadAmountonObjects
     wf:output _:out10_2;
     rdfs:comment
         "Loads object based count amounts from excel and joins them with vector objects.";
-    tools:algebraexpression
+    cct:expression
         """
         1: R2(Obj, Count);
         2: ObjectInfo(_);
@@ -172,7 +173,7 @@ tools:FlowDirection
     wf:output [ a ccd:FieldRaster, ccd:RatioA ];
     rdfs:comment
         "Computes a grid graph of flow directions from a DEM.";
-    tools:algebraexpression
+    cct:expression
         "flowdirgraph (1: Field(Itv))".
 
 #Flow direction accumulation
@@ -181,7 +182,7 @@ tools:FlowAccumulation
     wf:output [ a ccd:FieldRaster, ccd:RatioA ];
     rdfs:comment
         "Accumulates flow directions into areas reachable downstream.";
-    tools:algebraexpression
+    cct:expression
         "apply1 size (accumulate (1: Field(Loc)))".
 
 #Slope computation
@@ -190,7 +191,7 @@ tools:Slope
     wf:output [ a ccd:FieldRaster, ccd:RatioA ];
     rdfs:comment
         "Computes slopes of a DEM.";
-    tools:algebraexpression
+    cct:expression
         "slope (1: Field(Itv))".
 
 #Method for flow velocities
@@ -215,7 +216,7 @@ tools:VelocityFieldDEM
     wf:output _:velocity;
     rdfs:comment
         "Computes velocity field from DEM.";
-    tools:algebraexpression
+    cct:expression
         "apply2 product (1: Field(Ratio)) (2: Field(Ratio))".
 _:slope a ccd:FieldRaster, ccd:RatioA.
 _:acc a ccd:FieldRaster, ccd:RatioA.
@@ -227,7 +228,7 @@ tools:con1
     wf:output [ a ccd:FieldRaster, ccd:RatioA ];
     rdfs:comment
         "Cuts a field raster conditional on less than some value";
-    tools:algebraexpression
+    cct:expression
         "select leq (1: Field(Ratio)) (-: Ratio)".
 
 ### local map algebra transformation invert
@@ -236,7 +237,7 @@ tools:LocalMapAlgebraInvert
     wf:output [ a ccd:FieldRaster, ccd:RatioA ];
     rdfs:comment
         "Builds and executes a Local Map Algebra expression that inverts rasters with a ratio level.";
-    tools:algebraexpression
+    cct:expression
         "apply1 (ratio (-: Ratio)) (1: Field(Ratio))".
 
 #Snap point to raster
@@ -246,7 +247,7 @@ tools:SnapPourPoint
     wf:output [ a ccd:FieldQ, ccd:RasterA, ccd:PlainNominalA ];
     rdfs:comment
         "Snaps a pour point to a raster to generate a raster showing the pour point.";
-    tools:algebraexpression
+    cct:expression
         # This is a simplification that ignores flow accumulation, but just
         # generates a nominal patch from an object nominal
         """
@@ -260,7 +261,7 @@ tools:Watershed
     wf:output [ a ccd:FieldQ, ccd:RasterA, ccd:PlainNominalA ]; #watershed raster, gives a different watershed id for each pour point
     rdfs:comment
         "Given a flow direction raster and a pour point raster, generates a watershed raster.";
-    tools:algebraexpression
+    cct:expression
         """
         revert (join
             (invert (2: Field(Nom)))
@@ -274,7 +275,7 @@ tools:ExtractByMask
     wf:output [ a ccd:FieldRaster, ccd:RatioA ];
     rdfs:comment
         "Extract raster by the extent of another (field) raster.";
-    tools:algebraexpression
+    cct:expression
         "subset (1: Field(Loc)) (pi1 (2: Field(Nom)))".
 
 tools:FlowLength
@@ -283,7 +284,7 @@ tools:FlowLength
     wf:output [ a ccd:FieldRaster, ccd:RatioA ]; #Flow time raster.
     rdfs:comment
         "Calculate the upstream or downstream distance, or weighted distance (=time), along the flow path for each cell.";
-    tools:algebraexpression
+    cct:expression
         """
         1: Field(Ratio);
         2: Field(Loc);
@@ -298,7 +299,7 @@ tools:RasterToIsoRaster
     wf:output [ a ccd:FieldRaster, ccd:PlainOrdinalA ];
     rdfs:comment
         "Converts an interval field raster into an ordinal raster.";
-    tools:algebraexpression
+    cct:expression
         "apply1 classify (1: Field(Itv))".
 
 #Method for summarizing raster coverages
@@ -321,7 +322,7 @@ tools:CreateUnitHydrograph
     wf:output _:rastertable3;
     rdfs:comment
         "Creates a unit hydrograph from an isochrones raster based on isochrone interval. This is a table that indicates for each time interval an areal coverage";
-    tools:algebraexpression
+    cct:expression
         """
         apply1 ((swap ratio) (-: Ratio)) (groupby size (1: Field(Ord)))
         """.
@@ -354,7 +355,7 @@ tools:SelectFeaturesByObjectPlainRegionObjects
     wf:output _:out112_1;
     rdfs:comment
         "Select region objects by id";
-    tools:algebraexpression
+    cct:expression
         "subset (1: ObjectInfo(Nom)) (-: C(Obj))".
 _:in111_1 
     wf:proxyFor _:in111;
@@ -368,7 +369,7 @@ tools:SelectFeaturesCoverageToExistenceVector
     wf:output _:out112_2;
     rdfs:comment
         "Select patches of a coverage by attribute";
-    tools:algebraexpression
+    cct:expression
         "revert (select eq (1: Coverages(Nom)) (-: Nom))".
 _:in111_2 
     wf:proxyFor _:in111;
@@ -388,7 +389,7 @@ tools:Aspect
     wf:output [ a ccd:FieldRaster, ccd:RatioA ];
     rdfs:comment
         "Derives the aspect of a digital elevation model";
-    tools:algebraexpression
+    cct:expression
         "aspect (1: Field(Itv))".
 
 ### local map algebra divide
@@ -397,7 +398,7 @@ tools:LocalMapAlgebraDivide
     wf:output [ a ccd:FieldRaster, ccd:RatioA ];
     rdfs:comment
         "Builds and executes a Local Map Algebra expression that divides rasters by a ratio number";
-    tools:algebraexpression
+    cct:expression
         "apply1 ((swap ratio) (-: Ratio)) (1: Field(Ratio))".
 
 tools:con2
@@ -406,7 +407,7 @@ tools:con2
     wf:output [ a ccd:FieldRaster, ccd:RatioA ];
     rdfs:comment
         "Cuts a field raster conditional on (the coverage of) another field raster that is less than some value";
-    tools:algebraexpression
+    cct:expression
         "subset (2: Field(Ratio)) (pi1 (select leq (1: Field(Ratio)) (-: Ratio)))".
 
 tools:con3
@@ -416,7 +417,7 @@ tools:con3
     wf:output [ a ccd:FieldRaster, ccd:RatioA ];
     rdfs:comment
         "Cuts a field raster conditional on (the coverage of) another field raster, and adds another field raster for those locations outside of the coverage";
-    tools:algebraexpression
+    cct:expression
         """
         1: Field(Ratio);
         2: Field(Ratio);
@@ -450,7 +451,7 @@ tools:CalculateObjectSpatialAmount
     wf:output _:out300_1;
     rdfs:comment
         "Calculates an amount from an object ratio quality (representating an intensive measure) using the object's area. For example, the amount of radiation falling on a building using the mean radiation and the building's area";
-    tools:algebraexpression
+    cct:expression
         """
         1: ObjectInfo(Ratio);
         join_attr
@@ -472,7 +473,7 @@ tools:CalculateProd
     wf:output _:out300_2;
     rdfs:comment
         "Calculates some product of ratio scaled object attribute with some ratio value.";
-    tools:algebraexpression
+    cct:expression
         """
         1: ObjectInfo(Ratio);
         join_attr
@@ -491,7 +492,7 @@ tools:CalculateProdPointObjects
     wf:output _:out300_3;
     rdfs:comment
         "Calculates a product from an attribute using some constant (e.g. time from distance using speed constant)";
-    tools:algebraexpression
+    cct:expression
         """
         1: ObjectInfo(Ratio);
         join_attr
@@ -517,7 +518,7 @@ tools:ObjectSummaryStatisticsAmount
     wf:output [ a ccd:AmountQ, ccd:VectorRegionA, ccd:CountA ];
     rdfs:comment
         "Sums the amount values of an object layer into a sum";
-    tools:algebraexpression
+    cct:expression
         "contentsum (getamounts (1: ObjectInfo(Ratio)))".
 
 tools:SummaryStatisticsAmount
@@ -525,7 +526,7 @@ tools:SummaryStatisticsAmount
     wf:output [ a ccd:AmountQ, ccd:VectorRegionA, ccd:CountA ];
     rdfs:comment
         "Sums the amount values of a count amount layer into a sum";
-    tools:algebraexpression
+    cct:expression
         "contentsum (1: Amounts(Ratio))".
 
 tools:ClipObject2Object
@@ -534,7 +535,7 @@ tools:ClipObject2Object
     wf:output [ a ccd:ObjectQ, ccd:PlainVectorRegionA, ccd:CountA ];
     rdfs:comment
         "Clips some object polygons to the extent of an object layer. We assume here that objects exactly coincide (otherwise clip would cut objects).";
-    tools:algebraexpression
+    cct:expression
         """
         1: ObjectInfo(Count);
         2: ObjectInfo(Nom);
@@ -570,7 +571,7 @@ tools:CalculatePartialAmountsfromObjects
     wf:output _:out014;
     rdfs:comment
         "Clips some object vector with some count amounts to the extent of a field layer (e.g. a buffer) and interpolates partial count amounts R(Reg, Ratio) based on area percentage.";
-    tools:algebraexpression
+    cct:expression
         """
         1: ObjectInfo(Count);
         2: Field(Bool);
@@ -596,7 +597,7 @@ tools:SelectObjectbyExtent
     wf:output [ a ccd:ObjectQ, ccd:VectorA ];
     rdfs:comment
         "Select object vector by extent. Extent remains implicit.";
-    tools:algebraexpression
+    cct:expression
         """
         1: ObjectInfo(Nom);
         subset 1 (pi3 (select
@@ -612,7 +613,7 @@ tools:ObjectBuffer
     wf:output [ a ccd:FieldQ, ccd:PlainVectorRegionA, ccd:BooleanA ];
     rdfs:comment
         "Buffers some object vector and returns the buffer as a boolean field R(Loc, Bool)";
-    tools:algebraexpression
+    cct:expression
         "extrapol (get_attrL (1: ObjectInfo(Nom)))".
 
 ##Clip vector fields
@@ -622,7 +623,7 @@ tools:ClipNomFieldVector2Extent
     wf:output [ a ccd:FieldQ, ccd:VectorRegionA ];
     rdfs:comment
         "Clips some nominal field vector to the region where a boolean field vector is true.";
-    tools:algebraexpression
+    cct:expression
         "subset (1: Field(Nom)) (fcover (2: Field(Bool)) (nest true))".
 
 tools:ClipBoolFieldVector2Extent
@@ -631,7 +632,7 @@ tools:ClipBoolFieldVector2Extent
     wf:output [ a ccd:FieldQ, ccd:VectorRegionA, ccd:BooleanA ];
     rdfs:comment
         "Clips some boolean field vector to the region where a boolean field vector is true.";
-    tools:algebraexpression
+    cct:expression
         "subset (1: Field(Bool)) (fcover (2: Field(Bool)) (nest true))".
 
 
@@ -663,7 +664,7 @@ tools:CalculateVectorFieldAreaPercentage
     wf:output _:out1112_1;
     rdfs:comment
         "Calculates an area ratio (amount) of the size of the extent of the second boolean field with respect to the extent of the first boolean field, both represented by vector layers.";
-    tools:algebraexpression
+    cct:expression
         """
         nest2 true (ratio
             (size (fcover (1: Field(Bool)) (nest true)))
@@ -687,7 +688,7 @@ tools:CalculateVectorFieldPartialArea
     wf:output _:out1112_2;
     rdfs:comment
         "Calculates a partial area measure by multiplying an area proportion with the size of the extent of a vector field.";
-    tools:algebraexpression
+    cct:expression
         "apply1 (product (size (pi1 (1: Field(Nom))))) (2: R2(Bool, Ratio))".
 _:in1111_2
     wf:proxyFor _:in1111;
@@ -706,7 +707,7 @@ tools:CalculateCountAmountRatio
     wf:output _:out1112_3;
     rdfs:comment
         "Calculates the ratio of two count vector amounts.";
-    tools:algebraexpression
+    cct:expression
         "apply2 ratio (1: Amounts(Ratio)) (2: Amounts(Ratio))".
 _:in1111_3
     wf:proxyFor _:in1111;
@@ -725,7 +726,7 @@ tools:CalculateObjectVectorCountAmountRatio
     wf:output _:out1112_4;
     rdfs:comment
         "Calculates the ratio of two count vector amounts on objects.";
-    tools:algebraexpression
+    cct:expression
         """
         1: ObjectInfo(Count);
         2: ObjectInfo(Count);
@@ -750,7 +751,7 @@ tools:CalculateObjectAttrRatio
     wf:output _:out1112_5;
     rdfs:comment
         "Calculates ratios of two ratio scaled object attributes.";
-    tools:algebraexpression
+    cct:expression
         """
         1: ObjectInfo(Ratio);
         2: ObjectInfo(Ratio);
@@ -777,7 +778,7 @@ tools:EraseFieldExtentfromFieldVector
     wf:output [ a ccd:FieldQ,  ccd:PlainVectorRegionA];
     rdfs:comment
         "Erases the coverage of a boolean field vector (second input) from a field vector (first input)";
-    tools:algebraexpression
+    cct:expression
         """
         1: Field(Nom);
         2: Field(Bool);
@@ -828,7 +829,7 @@ _:wf1_2 wf:applicationOf tools:CopyFeaturesDef;
 tools:SelectLayerByObjectPointObjects
     wf:input1 _:in11_1;
     wf:output _:out12_1;
-    tools:algebraexpression
+    cct:expression
         "subset (objectregionnominals x1) (objects)".
 _:in11_1
     wf:proxyFor _:in11;
@@ -841,7 +842,7 @@ _:out12_1
 tools:SelectLayerByObjectLineObjects
     wf:input1 _:in11_2;
     wf:output _:out12_2;
-    tools:algebraexpression
+    cct:expression
         "subset (1: ObjectInfo(Nom)) (-: C(Obj))".
 _:in11_2
     wf:proxyFor _:in11;
@@ -854,7 +855,7 @@ _:out12_2
 tools:SelectLayerByObjectPlainRegionObjects
     wf:input1 _:in11_3;
     wf:output _:out12_3;
-    tools:algebraexpression
+    cct:expression
         "subset (1: ObjectInfo(Nom)) (-: C(Obj))".
 _:in11_3
     wf:proxyFor _:in11;
@@ -867,7 +868,7 @@ _:out12_3
 tools:SelectLayerByObjectTessObjects
     wf:input1 _:in11_4;
     wf:output _:out12_4;
-    tools:algebraexpression
+    cct:expression
         "subset (1: ObjectInfo(Nom)) (-: C(Obj))".
 _:in11_4
     wf:proxyFor _:in11;
@@ -880,7 +881,7 @@ _:out12_4
 tools:SelectLayerByAttributePointObjects
     wf:input1 _:in11_5;
     wf:output _:out12_5;
-    tools:algebraexpression
+    cct:expression
         "subset (1: ObjectInfo(Nom)) (-: C(Nom))".
 _:in11_5
     wf:proxyFor _:in11;
@@ -893,7 +894,7 @@ _:out12_5
 tools:SelectLayerByAttributeLineObjects
     wf:input1 _:in11_6;
     wf:output _:out12_6;
-    tools:algebraexpression
+    cct:expression
         "subset (1: ObjectInfo(Nom)) (-: C(Nom))".
 _:in11_6
     wf:proxyFor _:in11;
@@ -906,7 +907,7 @@ _:out12_6
 tools:SelectLayerByAttributePlainRegionObjects
     wf:input1 _:in11_7;
     wf:output _:out12_7;
-    tools:algebraexpression
+    cct:expression
         "subset (1: ObjectInfo(Nom)) (-: C(Nom))".
 _:in11_7
     wf:proxyFor _:in11;
@@ -919,7 +920,7 @@ _:out12_7
 tools:SelectLayerByAttributeTessObjects
     wf:input1 _:in11_8;
     wf:output _:out12_8;
-    tools:algebraexpression
+    cct:expression
         "subset (1: ObjectInfo(Nom)) (-: C(Nom))".
 _:in11_8
     wf:proxyFor _:in11;
@@ -932,7 +933,7 @@ _:out12_8
 tools:SelectLayerByRatioPointObjects
     wf:input1 _:in11_9;
     wf:output _:out12_9;
-    tools:algebraexpression
+    cct:expression
         "subset (1: ObjectInfo(Ratio)) (-: C(Ratio))".
 _:in11_9
     wf:proxyFor _:in11;
@@ -945,7 +946,7 @@ _:out12_9
 tools:SelectLayerByRatioLineObjects
     wf:input1 _:in11_10;
     wf:output _:out12_10;
-    tools:algebraexpression
+    cct:expression
         "subset (1: ObjectInfo(Ratio)) (-: C(Ratio))".
 _:in11_10
     wf:proxyFor _:in11;
@@ -958,7 +959,7 @@ _:out12_10
 tools:SelectLayerByRatioPlainRegionObjects
     wf:input1 _:in11_11;
     wf:output _:out12_11;
-    tools:algebraexpression
+    cct:expression
         "subset (1: ObjectInfo(Ratio)) (-: C(Ratio))".
 _:in11_11
     wf:proxyFor _:in11;
@@ -971,7 +972,7 @@ _:out12_11
 tools:SelectLayerByRatioTessObjects
     wf:input1 _:in11_12;
     wf:output _:out12_12;
-    tools:algebraexpression
+    cct:expression
         "subset (1: ObjectInfo(Ratio)) (-: C(Ratio))".
 _:in11_12
     wf:proxyFor _:in11;
@@ -984,7 +985,7 @@ _:out12_12
 tools:SelectLayerContourToExistenceVector
     wf:input1 _:in11_13;
     wf:output _:out12_13;
-    tools:algebraexpression
+    cct:expression
         "revert (select (compose2 notj leq) (1: Contour) (-: Ord))".
 _:in11_13
     wf:proxyFor _:in11;
@@ -997,7 +998,7 @@ _:out12_13
 tools:SelectLayerByRatioGEQPlainRegionObjects
     wf:input1 _:in11_14;
     wf:output _:out12_14;
-    tools:algebraexpression
+    cct:expression
         "select (compose2 notj leq) (1: ObjectInfo(Ratio)) (-: Ratio)".
 _:in11_14
     wf:proxyFor _:in11;
@@ -1010,7 +1011,7 @@ _:out12_14
 tools:SelectLayerCoverageToExistenceVector
     wf:input1 _:in11_15;
     wf:output _:out12_15;
-    tools:algebraexpression
+    cct:expression
         "revert (select eq (1: Coverages(Nom)) (-: Nom))".
 _:in11_15
     wf:proxyFor _:in11;
@@ -1045,7 +1046,7 @@ tools:SelectLayerByLocationPointObjects
     wf:input1 _:in211_1;
     wf:input2 _:in212_1;
     wf:output _:out22_1;
-    tools:algebraexpression
+    cct:expression
         """
         1: ObjectInfo(Nom);
         2: ObjectInfo(Nom);
@@ -1072,7 +1073,7 @@ tools:SelectLayerByLocationLineObjects
     wf:input1 _:in211_2;
     wf:input2 _:in212_2;
     wf:output _:out22_2;
-    tools:algebraexpression
+    cct:expression
         """
         1: ObjectInfo(Nom);
         2: ObjectInfo(Nom);
@@ -1099,7 +1100,7 @@ tools:SelectLayerByLocationPlainRegionObjects
     wf:input1 _:in211_3;
     wf:input2 _:in212_3;
     wf:output _:out22_3;
-    tools:algebraexpression
+    cct:expression
         """
         1: ObjectInfo(Nom);
         2: ObjectInfo(Nom);
@@ -1126,7 +1127,7 @@ tools:SelectLayerByLocationTessObjects
     wf:input1 _:in211_4;
     wf:input2 _:in212_4;
     wf:output _:out22_4;
-    tools:algebraexpression
+    cct:expression
         """
         1: ObjectInfo(Nom);
         2: ObjectInfo(Nom);
@@ -1153,7 +1154,7 @@ tools:SelectLayerByLocationPlainRegionObjectsFieldDist
     wf:input1 _:in211_5;
     wf:input2 _:in212_5;
     wf:output _:out22_5;
-     tools:algebraexpression
+     cct:expression
         """
         1: ObjectInfo(Nom);
         2: Field(Nom);
@@ -1180,7 +1181,7 @@ tools:SelectLayerByLocationPlainRegionObjectsDist
     wf:input1 _:in211_6;
     wf:input2 _:in212_6;
     wf:output _:out22_6;
-     tools:algebraexpression
+     cct:expression
         """
         1: ObjectInfo(Nom);
         2: ObjectInfo(Nom);
@@ -1214,7 +1215,7 @@ tools:SpatialJoinSumTessRatio
     wf:output [ a ccd:ObjectQ, ccd:VectorTessellationA, exm:ERA ];
     rdfs:comment
         "Sums the attributes at ratio measurement level from one feature to another based on the spatial relation";
-    tools:algebraexpression
+    cct:expression
         """
         1: ObjectInfo(Ratio);
         2: ObjectInfo(Nom);
@@ -1236,7 +1237,7 @@ tools:SpatialJoinSumTessCount
     wf:output [ a ccd:ObjectQ, ccd:VectorTessellationA, ccd:CountA ];
     rdfs:comment
         "Sums the attributes at Count measurement level from one feature to another based on the spatial relation";
-    tools:algebraexpression
+    cct:expression
         """
         1: ObjectInfo(Count);
         2: ObjectInfo(Nom);
@@ -1259,7 +1260,7 @@ tools:SpatialJoinAmountSumTessRatio
     wf:output [ a ccd:ObjectQ, ccd:VectorTessellationA, exm:ERA ];
     rdfs:comment
         "Sums the attributes at ratio measurement level from one feature to another based on the spatial relation";
-    tools:algebraexpression
+    cct:expression
         """
         1: Amounts(Ratio);
         2: ObjectInfo(Nom);
@@ -1283,7 +1284,7 @@ tools:SpatialJoinAmountSumTessCount
     wf:output [ a ccd:ObjectQ, ccd:VectorTessellationA, ccd:CountA ];
     rdfs:label
         "Sums the attributes at Count measurement level from one feature to another based on the spatial relation";
-    tools:algebraexpression
+    cct:expression
         """
         1: Amounts(Count);
         2: ObjectInfo(Nom);
@@ -1310,7 +1311,7 @@ tools:SpatialJoinMeanTessInterval
     wf:output [ a ccd:ObjectQ, ccd:VectorTessellationA, ccd:IntervalA ];
     rdfs:comment
     "Averages the attributes at interval measurement level from one feature to another based on the spatial relation";
-    tools:algebraexpression
+    cct:expression
         """
         1: ObjectInfo(Ratio);
         2: ObjectInfo(Nom);
@@ -1332,7 +1333,7 @@ tools:SpatialJoinMeanTessRatio
     wf:output [ a ccd:ObjectQ, ccd:VectorTessellationA, ccd:RatioA ];
     rdfs:comment
         "Averages the attributes at Ratio measurement level from one feature to another based on the spatial relation";
-    tools:algebraexpression
+    cct:expression
         """
         1: ObjectInfo(Ratio);
         2: ObjectInfo(Nom);
@@ -1354,7 +1355,7 @@ tools:SpatialJoinMeanTessCount
     wf:output [ a ccd:ObjectQ, ccd:VectorTessellationA, ccd:CountA ];
     rdfs:comment
         "Averages the attributes at Count measurement level from one feature to another based on the spatial relation";
-    tools:algebraexpression
+    cct:expression
         """
         1: ObjectInfo(Count);
         2: ObjectInfo(Nom);
@@ -1377,7 +1378,7 @@ tools:SpatialJoinCountTess
     wf:output [ a ccd:ObjectQ, ccd:VectorTessellationA, ccd:CountA ];
     rdfs:comment
         "Counts the number of features from one feature to another based on the spatial relation";
-    tools:algebraexpression
+    cct:expression
         """
         1: ObjectInfo(Nom);
         2: ObjectInfo(Nom);
@@ -1402,7 +1403,7 @@ tools:ClipFieldRaster2ObjectExtent
     wf:output [ a ccd:FieldRaster, ccd:OrdinalA];
     rdfs:comment
         "Clips some interval scaled field raster to the extent of an object layer.";
-    tools:algebraexpression #"bowtie field x deify merge pi2 objectregions x".
+    cct:expression #"bowtie field x deify merge pi2 objectregions x".
         """
         1: Field(Ord);
         2: ObjectInfo(Nom);
@@ -1417,7 +1418,7 @@ tools:RegionFromRasterExtent
     wf:output [ a ccd:AmountQ, ccd:VectorRegionA, ccd:NominalA ];
     rdfs:comment
         "Make a region layer from the extent of a raster. Measures the coverage of a nominal field.";
-    tools:algebraexpression
+    cct:expression
         """
         1: Field(Nom);
         nest2 (name (pi2 1)) (reify (fcover 1 (pi2 1)))
@@ -1432,7 +1433,7 @@ tools:CoverageToNominalFieldRaster
     wf:output [ a ccd:FieldRaster, ccd:PlainNominalA ];
     rdfs:comment
         "Converts Field polygons to nominal field Rasters";
-    tools:algebraexpression
+    cct:expression
         "revert (1: Coverages(Nom))".
 
 tools:ContourToFieldRaster
@@ -1440,7 +1441,7 @@ tools:ContourToFieldRaster
     wf:output [ a ccd:FieldRaster, ccd:PlainOrdinalA ];
     rdfs:comment
         "Converts contour maps to field Rasters";
-    tools:algebraexpression
+    cct:expression
         "revert (1: Contour)".
 
 #<https://pro.arcgis.com/en/pro-app/tool-reference/spatial-analyst/raster-calculator.htm>
@@ -1451,7 +1452,7 @@ tools:LocalMapAlgebraSubOrder
     wf:output [ a ccd:FieldRaster, ccd:OrdinalA ];
     rdfs:comment
         "Builds and executes a Local Map Algebra expression (smaller than or greater than some number) using Python syntax using rasters with an ordinal level";
-    tools:algebraexpression
+    cct:expression
         "select (compose2 notj leq) (1: Field(Ord)) (-: Ord)".
 
 ### local map algebra transformation with ratio field
@@ -1460,7 +1461,7 @@ tools:LocalMapAlgebraSubRatio
     wf:output [ a ccd:FieldRaster, ccd:RatioA ];
     rdfs:comment
         "Builds and executes a Local Map Algebra expression (less than or equal to some number) using Python syntax using rasters with a ratio level";
-    tools:algebraexpression
+    cct:expression
         "select (compose2 notj leq) (1: Field(Ratio)) (-: Ratio)".
 
 tools:RasterToContour tools:implements tools:RasterToContourInterval;
@@ -1478,7 +1479,7 @@ tools:RasterToContourInterval
     wf:output _:out32;
     rdfs:comment
         "Converts a field raster to a Contour dataset. The raster is first reclassified to an ordinal raster, and then converted to a polygon layer.";
-    tools:algebraexpression
+    cct:expression
         "invert (apply1 classify (1: Field(Itv)))".
 _:in31 a ccd:FieldRaster, ccd:IntervalA.
 _:out32 a ccd:Contour, ccd:PlainOrdinalA.
@@ -1509,7 +1510,7 @@ tools:ZonalStatisticsSize
     wf:output _:out42_1;
     rdfs:comment
         "Measures the size of the coverage of a given field raster inside object regions.";
-    tools:algebraexpression
+    cct:expression
         """
         1: Field(Nom);
         2: ObjectInfo(Nom);
@@ -1537,7 +1538,7 @@ tools:ZonalStatisticsMeanInterval
     wf:output _:out42_2;
     rdfs:comment
         "Calculates the average value of a field raster within the zones of a lattice.";
-    tools:algebraexpression #"groupby_avg bowtie* sigmae lotopo pi1 field x objectregions y in field x".
+    cct:expression #"groupby_avg bowtie* sigmae lotopo pi1 field x objectregions y in field x".
         """
         1: Field(Itv);
         2: ObjectInfo(Nom);
@@ -1561,7 +1562,7 @@ tools:ZonalStatisticsMeanRatio
     wf:output _:out42_3;
     rdfs:comment
         "Calculates the average value of a field raster within the zones given by object regions. Outcome is intensive.";
-    tools:algebraexpression
+    cct:expression
         #"groupby_avg bowtie* sigmae lotopo pi1 field x objectregions y in field x".
         #"join_attr (get_attrL (objectregionnominals x2)) (apply1 (fcont (avg) (field x1)) (get_attrL (objectregionnominals x2)))".
         """
@@ -1591,7 +1592,7 @@ tools:ZonalStatisticsSumCount
     wf:output _:out42_4;
     rdfs:comment
         "Sums up count amounts (given as raster) into object regions.";
-    tools:algebraexpression #"groupby_avg bowtie* sigmae lotopo pi1 field x objectregions y in field x".
+    cct:expression #"groupby_avg bowtie* sigmae lotopo pi1 field x objectregions y in field x".
         """
         1: Amounts(Count);
         2: ObjectInfo(Nom);
@@ -1619,7 +1620,7 @@ tools:AddObjectVectorRegionArea
     wf:output [ a ccd:ObjectQ, ccd:VectorRegionA, exm:ERA ];
     rdfs:comment
         "Adds an area attribute to an object vector region layer.";
-    tools:algebraexpression
+    cct:expression
         """
         1: ObjectInfo(Nom);
         join_attr
@@ -1655,7 +1656,7 @@ tools:IntersectDissolveField2Object
     wf:output _:out83;
     rdfs:comment
         "Intersects a field vector with an object vector and then dissolves the result into the object to measure the areal coverage of the field inside the object.";
-    tools:algebraexpression
+    cct:expression
         """
         1: Field(Nom);
         2: ObjectInfo(_);
@@ -1697,7 +1698,7 @@ tools:MakePointMeasuresFromTable
     wf:output _:out53;
     rdfs:comment
         "Makes a layer of pointmeasures from some XY table.";
-    tools:algebraexpression
+    cct:expression
         "1: PointMeasures" .
 _:in51 a ccd:PointMeasures, ccd:IntervalA.
 _:out53 a ccd:PointMeasures, ccd:IntervalA.
@@ -1707,7 +1708,7 @@ tools:IDWInterval
     wf:output [ a ccd:FieldRaster, ccd:IntervalA ];
     rdfs:comment
         "Standard point interpolation for interval measurements.";
-    tools:algebraexpression
+    cct:expression
         "interpol (1: PointMeasures) (deify (-: Reg))".
 
 tools:KrigingInterval
@@ -1715,7 +1716,7 @@ tools:KrigingInterval
     wf:output [ a ccd:FieldRaster, ccd:IntervalA ];
     rdfs:comment
         "Kriging point interpolation for interval measurements.";
-    tools:algebraexpression
+    cct:expression
         "interpol (1: PointMeasures) (deify (-: Reg))".
 
 
@@ -1862,7 +1863,7 @@ tools:ClipDef
     wf:output [ a ccd:CoreConceptQ, ccd:VectorRegionA, ccd:NominalA ];
     rdfs:comment
         "This is the default annotation for the Clip arcpro tool to be used when an algebra expression is not possible to produce.";
-    tools:algebraexpression "".
+    cct:expression "".
     
 tools:RasterCalculatorDef
     # [SC][TODO] annotate inputs and output
@@ -1871,7 +1872,7 @@ tools:RasterCalculatorDef
     wf:output [ a ccd:CoreConceptQ, ccd:RasterA, ccd:NominalA ];
     rdfs:comment
         "This is the default annotation for the Raster Calculator arcpro tool to be used when an algebra expression is not possible to produce.";
-    tools:algebraexpression "".
+    cct:expression "".
     
 tools:RasterCalculator1Def
     # [SC][TODO] annotate inputs and output
@@ -1879,7 +1880,7 @@ tools:RasterCalculator1Def
     wf:output [ a ccd:CoreConceptQ, ccd:RasterA, ccd:NominalA ];
     rdfs:comment
         "This is the default annotation for the Raster Calculator arcpro tool to be used when an algebra expression is not possible to produce.";
-    tools:algebraexpression "".    
+    cct:expression "".    
 
 arcprona:make-closest-facility-analysis-layer.htm
     tools:implements tools:MakeClosestFacilityAnalysisLayerDef.
@@ -1889,7 +1890,7 @@ tools:MakeClosestFacilityAnalysisLayerDef
     wf:output [ a ccd:NetworkQ, ccd:LineA, ccd:RatioA ];
     rdfs:comment
         "This is the default annotation for the Make Closest Facility Analysis Layer arcpro tool to be used when an algebra expression is not possible to produce.";
-    tools:algebraexpression "".
+    cct:expression "".
 
 arcprona:add-locations.htm
     tools:implements tools:AddLocationsDef.
@@ -1900,7 +1901,7 @@ tools:AddLocationsDef
     wf:output [ a ccd:NetworkQ, ccd:LineA, ccd:RatioA ];
     rdfs:comment
         "This is the default annotation for the Add Locations arcpro tool to be used when an algebra expression is not possible to produce.";
-    tools:algebraexpression "".
+    cct:expression "".
 
 arcprona:solve.htm
     tools:implements tools:SolveDef.
@@ -1910,7 +1911,7 @@ tools:SolveDef
     wf:output [ a ccd:ObjectQ, ccd:PointA, ccd:RatioA ];
     rdfs:comment
         "This is the default annotation for the Solve arcpro tool to be used when an algebra expression is not possible to produce.";
-    tools:algebraexpression "".
+    cct:expression "".
 
 arcproco:excel-to-table.htm
     tools:implements tools:ExcelToTableDef.
@@ -1920,7 +1921,7 @@ tools:ExcelToTableDef
     wf:output [ a ccd:CoreConceptQ, ccd:VectorA, ccd:NominalA ];
     rdfs:comment
         "This is the default annotation for the Excel To Table arcpro tool to be used when an algebra expression is not possible to produce.";
-    tools:algebraexpression "".
+    cct:expression "".
 
 arcprodm:join-field.htm
     tools:implements tools:JoinFieldDef.
@@ -1931,7 +1932,7 @@ tools:JoinFieldDef
     wf:output [ a ccd:CoreConceptQ, ccd:VectorA, ccd:NominalA ];
     rdfs:comment
         "This is the default annotation for the Join Field arcpro tool to be used when an algebra expression is not possible to produce.";
-    tools:algebraexpression "".
+    cct:expression "".
 
 arcproco:table-to-table.htm
     tools:implements tools:TableToTableDef.
@@ -1941,7 +1942,7 @@ tools:TableToTableDef
     wf:output [ a ccd:AmountQ, ccd:VectorRegionA, ccd:RatioA ];
     rdfs:comment
         "This is the default annotation for the Table To Table arcpro tool to be used when an algebra expression is not possible to produce.";
-    tools:algebraexpression "".
+    cct:expression "".
 
 arcprodm:add-field.htm
     tools:implements tools:AddFieldDef.
@@ -1951,7 +1952,7 @@ tools:AddFieldDef
     wf:output [ a ccd:CoreConceptQ, ccd:VectorA, ccd:NominalA ];
     rdfs:comment
         "This is the default annotation for the Add Field arcpro tool to be used when an algebra expression is not possible to produce.";
-    tools:algebraexpression "".
+    cct:expression "".
 
 arcprodm:calculate-field.htm
     tools:implements tools:CalculateFieldDef, tools:CalculateField2Def.
@@ -1961,7 +1962,7 @@ tools:CalculateFieldDef
     wf:output [ a ccd:CoreConceptQ, ccd:VectorA, ccd:NominalA ];
     rdfs:comment
         "This is the default annotation for the Calculate Field arcpro tool to be used when an algebra expression is not possible to produce.";
-    tools:algebraexpression "".    
+    cct:expression "".    
 tools:CalculateField2Def
     # [SC][TODO] annotate inputs and output
     wf:input1 [ a ccd:CoreConceptQ, ccd:VectorA, ccd:NominalA ];  
@@ -1969,7 +1970,7 @@ tools:CalculateField2Def
     wf:output [ a ccd:CoreConceptQ, ccd:VectorA, ccd:NominalA ];
     rdfs:comment
         "This is the default annotation for the Calculate Field arcpro tool to be used when an algebra expression is not possible to produce.";
-    tools:algebraexpression "".
+    cct:expression "".
     
 
 arcprodm:add-fields.htm
@@ -1980,7 +1981,7 @@ tools:AddFieldsDef
     wf:output [ a ccd:CoreConceptQ, ccd:VectorA, ccd:NominalA ];
     rdfs:comment
         "This is the default annotation for the Add Fields arcpro tool to be used when an algebra expression is not possible to produce.";
-    tools:algebraexpression "".
+    cct:expression "".
 
 arcprodm:select-layer-by-attribute.htm
     tools:implements tools:SelectLayerByAttributeDef.
@@ -1990,7 +1991,7 @@ tools:SelectLayerByAttributeDef
     wf:output [ a ccd:CoreConceptQ, ccd:VectorA, ccd:NominalA ];
     rdfs:comment
         "This is the default annotation for the Select Layer By Attribute arcpro tool to be used when an algebra expression is not possible to produce.";
-    tools:algebraexpression "".
+    cct:expression "".
 
 arcprodm:copy-features.htm
     tools:implements tools:CopyFeaturesDef.
@@ -2000,7 +2001,7 @@ tools:CopyFeaturesDef
     wf:output [ a ccd:CoreConceptQ, ccd:VectorA, ccd:NominalA ];
     rdfs:comment
         "This is the default annotation for the Copy Features arcpro tool to be used when an algebra expression is not possible to produce.";
-    tools:algebraexpression "".
+    cct:expression "".
 
 arcprodm:select-layer-by-location.htm
     tools:implements tools:SelectLayerByLocationDef.
@@ -2011,7 +2012,7 @@ tools:SelectLayerByLocationDef
     wf:output [ a ccd:CoreConceptQ, ccd:VectorA, ccd:NominalA ];
     rdfs:comment
         "This is the default annotation for the Select Layer By Location arcpro tool to be used when an algebra expression is not possible to produce.";
-    tools:algebraexpression "".
+    cct:expression "".
 
 arcprosa:zonal-statistics-as-table.htm
     tools:implements tools:ZonalStatisticsAsTableDef.
@@ -2022,7 +2023,7 @@ tools:ZonalStatisticsAsTableDef
     wf:output [ a ccd:CoreConceptQ, ccd:VectorRegionA, ccd:NominalA ];
     rdfs:comment
         "This is the default annotation for the Zonal Statistics As Table arcpro tool to be used when an algebra expression is not possible to produce.";
-    tools:algebraexpression "".
+    cct:expression "".
 
 arcproan:intersect.htm
     tools:implements tools:IntersectDef.
@@ -2033,7 +2034,7 @@ tools:IntersectDef
     wf:output [ a ccd:CoreConceptQ, ccd:VectorA, ccd:NominalA ];
     rdfs:comment
         "This is the default annotation for the Intersect arcpro tool to be used when an algebra expression is not possible to produce.";
-    tools:algebraexpression "".
+    cct:expression "".
 
 arcprodm:make-xy-event-layer.htm
     tools:implements tools:MakeXyEventLayerDef.
@@ -2043,7 +2044,7 @@ tools:MakeXyEventLayerDef
     wf:output [ a ccd:CoreConceptQ, ccd:PointA, ccd:NominalA ];
     rdfs:comment
         "This is the default annotation for the Make Xy Event Layer arcpro tool to be used when an algebra expression is not possible to produce.";
-    tools:algebraexpression "".
+    cct:expression "".
 
 arcprodm:project.htm
     tools:implements tools:ProjectDef.
@@ -2054,4 +2055,4 @@ tools:ProjectDef
     wf:output [ a ccd:CoreConceptQ, ccd:LayerA, ccd:NominalA ];
     rdfs:comment
         "This is the default annotation for the Project arcpro tool to be used when an algebra expression is not possible to produce.";
-    tools:algebraexpression "".
+    cct:expression "".

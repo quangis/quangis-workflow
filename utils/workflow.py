@@ -9,6 +9,7 @@ from rdflib.namespace import RDF, RDFS  # type: ignore
 from rdflib.term import Node, URIRef  # type: ignore
 
 from config import tools_path, WF, TOOLS  # type: ignore
+from cct import cct
 
 tools: Graph = Graph()
 tools.parse(tools_path, format='ttl')
@@ -44,7 +45,7 @@ class Workflow(Graph):
             assert tool, "workflow has an edge without a tool"
 
             self.expressions[out] = expr = tools.value(
-                tool, TOOLS.algebraexpression, any=False)
+                tool, cct.namespace.expression, any=False)
             assert expr, f"{tool} has no algebra expression"
 
             if comment := self.value(step, RDFS.comment):
