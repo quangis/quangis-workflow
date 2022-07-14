@@ -20,6 +20,7 @@ SERVER=http://localhost:3030
 TIMEOUT=
 WORKFLOWS=$(wildcard workflows/*.ttl)
 TASKS=$(wildcard tasks/*.ttl)
+TOOLS=tools/tools.ttl
 
 # Workflow graphs and the database should not be removed as intermediate files
 .SECONDARY: $(foreach VARIANT,OB OP TB TP,\
@@ -63,28 +64,28 @@ $(BUILD)/eval/%C.csv: $(BUILD)/tdb-%/mark $(FUSEKI) $(TASKS)
 	@rm -f $@; mkdir -p $(@D)
 	TDB=$(<:$(BUILD)/tdb-%/mark=%); \
 	$(FUSEKI) --localhost --loc=$(<:%/mark=%) /$$TDB & PID=$$!; sleep 4; \
-	$(TATOOL) query -e "$(SERVER)/$$TDB" --chronological $(filter %.ttl,$^) -o $@;\
+	$(TATOOL) query --endpoint "$(SERVER)/$$TDB" --chronological $(filter %.ttl,$^) -o $@;\
 	kill -9 $$PID
 
 $(BUILD)/eval/%A.csv: $(BUILD)/tdb-%/mark $(FUSEKI) $(TASKS)
 	@rm -f $@; mkdir -p $(@D)
 	TDB=$(<:$(BUILD)/tdb-%/mark=%); \
 	$(FUSEKI) --localhost --loc=$(<:%/mark=%) /$$TDB & PID=$$!; sleep 4; \
-	$(TATOOL) query -e "$(SERVER)/$$TDB" $(filter %.ttl,$^) -o $@;\
+	$(TATOOL) query --endpoint "$(SERVER)/$$TDB" $(filter %.ttl,$^) -o $@;\
 	kill -9 $$PID
 
 $(BUILD)/eval/EB.csv: $(BUILD)/tdb-OB/mark $(FUSEKI) $(TASKS)
 	@rm -f $@; mkdir -p $(@D)
 	TDB=$(<:$(BUILD)/tdb-%/mark=%); \
 	$(FUSEKI) --localhost --loc=$(<:%/mark=%) /$$TDB & PID=$$!; sleep 4; \
-	$(TATOOL) query -e "$(SERVER)/$$TDB" --blackbox $(filter %.ttl,$^) -o $@;\
+	$(TATOOL) query --endpoint "$(SERVER)/$$TDB" --blackbox $(filter %.ttl,$^) -o $@;\
 	kill -9 $$PID
 
 $(BUILD)/eval/EP.csv: $(BUILD)/tdb-OP/mark $(FUSEKI) $(TASKS)
 	@rm -f $@; mkdir -p $(@D)
 	TDB=$(<:$(BUILD)/tdb-%/mark=%); \
 	$(FUSEKI) --localhost --loc=$(<:%/mark=%) /$$TDB & PID=$$!; sleep 4; \
-	$(TATOOL) query -e "$(SERVER)/$$TDB" --blackbox $(filter %.ttl,$^) -o $@;\
+	$(TATOOL) query --endpoint "$(SERVER)/$$TDB" --blackbox $(filter %.ttl,$^) -o $@;\
 	kill -9 $$PID
 
 
@@ -100,21 +101,21 @@ $(BUILD)/cct.json: cct.py
 
 # Transformation graphs for each workflow
 
-$(BUILD)/%/graph-TP.ttl: workflows/%.ttl
+$(BUILD)/%/graph-TP.ttl: workflows/%.ttl $(TOOLS)
 	@rm -f $@; mkdir -p $(@D)
-	$(TATOOL) graph $< $@
+	$(TATOOL) graph --tools=$(TOOLS) $< $@
 
-$(BUILD)/%/graph-OP.ttl: workflows/%.ttl
+$(BUILD)/%/graph-OP.ttl: workflows/%.ttl $(TOOLS)
 	@rm -f $@; mkdir -p $(@D)
-	$(TATOOL) graph --opaque $< $@
+	$(TATOOL) graph --tools=$(TOOLS) --opaque $< $@
 
-$(BUILD)/%/graph-TB.ttl: workflows/%.ttl
+$(BUILD)/%/graph-TB.ttl: workflows/%.ttl $(TOOLS)
 	@rm -f $@; mkdir -p $(@D)
-	$(TATOOL) graph --blocked $< $@
+	$(TATOOL) graph --tools=$(TOOLS) --blocked $< $@
 
-$(BUILD)/%/graph-OB.ttl: workflows/%.ttl
+$(BUILD)/%/graph-OB.ttl: workflows/%.ttl $(TOOLS)
 	@rm -f $@; mkdir -p $(@D)
-	$(TATOOL) graph --blocked --opaque $< $@
+	$(TATOOL) graph --tools=$(TOOLS) --blocked --opaque $< $@
 
 # Visualisation/diagnostics
 
@@ -124,7 +125,7 @@ $(BUILD)/cct.dot: cct.py
 
 $(BUILD)/%/graph.dot: workflows/%.ttl
 	@rm -f $@; mkdir -p $(@D)
-	$(TATOOL) graph --format=dot $< $@
+	$(TATOOL) graph --tools=$(TOOLS) --format=dot $< $@
 
 $(BUILD)/%/eval.rq: tasks/%.ttl
 	@rm -f $@; mkdir -p $(@D)

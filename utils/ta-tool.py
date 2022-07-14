@@ -5,8 +5,9 @@ from __future__ import annotations
 import csv
 import sys
 from rdflib import Graph  # type: ignore
-from rdflib.term import Node, URIRef, Literal  # type: ignore
+from rdflib.term import Node, Literal  # type: ignore
 from rdflib.namespace import Namespace, RDF, RDFS  # type: ignore
+from rdflib.util import guess_format
 from rdflib.tools.rdf2dot import rdf2dot  # type: ignore
 from pathlib import Path
 from plumbum import cli  # type: ignore
@@ -14,11 +15,8 @@ from itertools import chain
 from transformation_algebra import TransformationQuery, TransformationGraph, TA
 from typing import NamedTuple, Iterable
 
-root_path = Path(__file__).parent.parent
-tools_path = root_path / 'tools' / 'tools.ttl'
-
 # Make sure the modules in the project root will be found
-sys.path.append(str(root_path))
+sys.path.append(str(Path(__file__).parent.parent))
 from cct import cct
 
 # Namespaces
@@ -26,6 +24,16 @@ WF = Namespace('http://geographicknowledge.de/vocab/Workflow.rdf#')
 TOOLS = Namespace('https://github.com/quangis/cct/blob/master/tools/tools.ttl#')
 # TOOLS = Namespace('http://geographicknowledge.de/vocab/GISTools.rdf#')
 REPO = Namespace('https://example.com/#')
+
+
+def graph(url: str) -> Graph:
+    if url.startswith("http://") or url.startswith("https://"):
+        g = Graph(store='SPARQLStore')
+        g.open(url)
+    else:
+        g = Graph()
+        g.parse(url, format=guess_format(url))
+    return g
 
 
 class Tatool(cli.Application):
@@ -85,7 +93,9 @@ class TransformationGraphBuilder(cli.Application):
     Generate transformation graphs for entire workflows, concatenating the
     algebra expressions for each individual use of a tool
     """
-    format = cli.SwitchAttr(["-f", "--format"],
+    tools = cli.SwitchAttr(["--tools"], argtype=graph, mandatory=True,
+        help="RDF graph containing the tool ontology")
+    format = cli.SwitchAttr(["--format"],
         cli.Set("rdf", "ttl", "json-ld", "dot"), default="ttl")
     blocked = cli.Flag(["--blocked"], default=False,
         help="Do not pass output type of one tool to the next")
@@ -95,9 +105,6 @@ class TransformationGraphBuilder(cli.Application):
     @cli.positional(cli.ExistingFile, cli.NonexistentPath)
     def main(self, wf_path, output_path):
         visual = self.format == "dot"
-
-        tools = Graph()
-        tools.parse(tools_path, format='ttl')
 
         # Read input workflow graph
         wfg = Graph()
@@ -112,7 +119,7 @@ class TransformationGraphBuilder(cli.Application):
             tool = wfg.value(
                 step, WF.applicationOf, any=False)
             assert tool, "workflow has an edge without a tool"
-            expr = tools.value(
+            expr = self.tools.value(
                 tool, cct.namespace.expression, any=False)
             assert expr, f"{tool} has no algebra expression"
 
@@ -158,12 +165,6 @@ class Task(NamedTuple):
     actual: set[Node]
 
 
-def graph(url: str) -> Graph:
-    g = Graph(store='SPARQLStore')
-    g.open(url)
-    return g
-
-
 @Tatool.subcommand("query")
 class QueryRunner(cli.Application):
     """
@@ -173,13 +174,13 @@ class QueryRunner(cli.Application):
 
     output = cli.SwitchAttr(["-o", "--output"], cli.NonexistentPath,
         mandatory=True, help="Output file")
-    format = cli.SwitchAttr(["-f", "--format"], cli.Set("sparql", "csv"),
+    format = cli.SwitchAttr(["--format"], cli.Set("sparql", "csv"),
         default="csv", help="Output format")
-    chronological = cli.Flag(["-c", "--chronological"],
+    chronological = cli.Flag(["--chronological"],
         default=False, help="Take into account order")
-    blackbox = cli.Flag(["-b", "--blackbox"],
+    blackbox = cli.Flag(["--blackbox"],
         default=False, help="Only consider input and output of the workflows")
-    endpoint = cli.SwitchAttr(["-e", "--endpoint"], argtype=graph,
+    endpoint = cli.SwitchAttr(["--endpoint"], argtype=graph,
         help="SPARQL endpoint to send queries to")
 
     def evaluate(self, path, **opts) -> Task:
