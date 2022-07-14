@@ -1,11 +1,8 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 from rdflib import Graph, Variable  # type: ignore
-import sys
 import csv
 
-import config  # type: ignore
-from config import build_path
 from queries import all_queries
 
 wfgraph = Graph(store='SPARQLStore')
@@ -22,7 +19,7 @@ for q in all_queries:
         print()
         print(fn)
 
-        with open(build_path / fn, 'w', newline='') as csvfile:
+        with open(fn, 'w', newline='') as csvfile:
             writer = csv.DictWriter(csvfile, fieldnames=[Variable("workflow")] + query.steps)
 
             writer.writeheader()
