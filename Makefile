@@ -64,14 +64,14 @@ $(BUILD)/eval/%C.csv: $(BUILD)/tdb-%/mark $(FUSEKI) $(TASKS)
 	@rm -f $@; mkdir -p $(@D)
 	TDB=$(<:$(BUILD)/tdb-%/mark=%); \
 	$(FUSEKI) --localhost --loc=$(<:%/mark=%) /$$TDB & PID=$$!; sleep 4; \
-	$(TATOOL) query -e "$(SERVER)/$$TDB" $(filter %.ttl,$^) -o $@;\
+	$(TATOOL) query -e "$(SERVER)/$$TDB" --chronological $(filter %.ttl,$^) -o $@;\
 	kill -9 $$PID
 
 $(BUILD)/eval/%A.csv: $(BUILD)/tdb-%/mark $(FUSEKI) $(TASKS)
 	@rm -f $@; mkdir -p $(@D)
 	TDB=$(<:$(BUILD)/tdb-%/mark=%); \
 	$(FUSEKI) --localhost --loc=$(<:%/mark=%) /$$TDB & PID=$$!; sleep 4; \
-	$(TATOOL) query -e "$(SERVER)/$$TDB" --order=any $(filter %.ttl,$^) -o $@;\
+	$(TATOOL) query -e "$(SERVER)/$$TDB" $(filter %.ttl,$^) -o $@;\
 	kill -9 $$PID
 
 $(BUILD)/eval/EB.csv: $(BUILD)/tdb-OB/mark $(FUSEKI) $(TASKS)

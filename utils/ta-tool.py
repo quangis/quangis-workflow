@@ -8,8 +8,9 @@ from rdflib.term import Node, Literal  # type: ignore
 from rdflib.namespace import RDFS  # type: ignore
 from rdflib.tools.rdf2dot import rdf2dot  # type: ignore
 from plumbum import cli  # type: ignore
+from itertools import chain
 from transformation_algebra import TransformationQuery, TransformationGraph, TA
-from typing import NamedTuple
+from typing import NamedTuple, Iterable
 
 from config import REPO, TOOLS  # type: ignore
 from workflow import Workflow  # type: ignore
@@ -139,16 +140,59 @@ class QueryRunner(cli.Application):
     endpoint = cli.SwitchAttr(["-e", "--endpoint"],
         help="SPARQL endpoint; if none is given, output queries; otherwise "
              "output results in CSV format")
+    chronological = cli.Flag(["-c", "--chronological"],
+        default=False, help="Take into account order")
+    blackbox = cli.Flag("--blackbox",
+        default=False, help="Only consider input and output")
 
-    blackbox = cli.Flag("--blackbox", help="Only consider input and output",
-        default=False)
+    def evaluate(self, path, **opts) -> Task:
+        """
+        Parse and run a single task.
+        """
+        graph = TransformationGraph.from_rdf(path, cct)
+        query = TransformationQuery(cct, graph, **opts)
+        return Task(name=path.stem, query=query,
+            expected=set(graph.objects(query.root, TA.implementation)),
+            actual=(query.run(self.wfgraph) if self.wfgraph else set()))
 
-    ordered = True
+    def summarize(self, tasks: Iterable[Task]) -> None:
+        """
+        Write a CSV summary of the tasks to the output.
+        """
 
-    @cli.switch(["--order"], cli.Set("chronological", "any"),
-        help="Whether to take into account order")
-    def _ordered(self, value):
-        self.ordered = (value == "chronological")
+        workflows = set.union(*chain(
+            (t.actual for t in tasks),
+            (t.expected for t in tasks)))
+
+        header = ["Task", "Precision", "Recall"] + sorted([
+            str(wf)[len(REPO):] for wf in workflows])
+
+        with open(self.output, 'w', newline='') as h:
+            n_tpos, n_tneg, n_fpos, n_fneg = 0, 0, 0, 0
+            w = csv.DictWriter(h, fieldnames=header)
+            w.writeheader()
+            for task in tasks:
+                result: dict[str, str] = {"Task": task.name}
+                expected, actual = task.expected, task.actual
+                for wf in workflows:
+                    s = "●" if wf in actual else "○"
+                    if not expected:
+                        s += "?"
+                    elif (wf in actual) ^ (wf in expected):
+                        s += "⨯"
+                    result[str(wf)[len(REPO):]] = s
+                n_fpos += len(actual - expected)
+                n_fneg += len(expected - actual)
+                n_tpos += len(actual.intersection(expected))
+                n_tneg += len(workflows - expected - actual)
+                w.writerow(result)
+            try:
+                w.writerow({
+                    "Precision": "{0:.3f}".format(n_tpos / (n_tpos + n_fpos)),
+                    "Recall": "{0:.3f}".format(n_tpos / (n_tpos + n_fneg))
+                })
+            except ZeroDivisionError:
+                w.writerow({"Precision": "?", "Recall": "?"})
 
     @cli.positional(cli.ExistingFile)
     def main(self, *QUERY_FILE):
@@ -158,82 +202,24 @@ class QueryRunner(cli.Application):
         else:
             # Determine whether there is an endpoint to send queries to
             if self.endpoint:
-                wfgraph = Graph(store='SPARQLStore')
-                wfgraph.open(self.endpoint)
+                self.wfgraph = Graph(store='SPARQLStore')
+                self.wfgraph.open(self.endpoint)
             else:
-                wfgraph = None
+                self.wfgraph = None
 
-            # Determine options
-            opts = {"by_io": True, "by_operators": False}
-            opts["by_chronology"] = self.ordered and not self.blackbox
-            opts["by_types"] = not self.blackbox
+            # Parse tasks and optionally run associated queries
+            tasks = [self.evaluate(task_file, by_io=True,
+                by_operators=False, by_types=not self.blackbox,
+                by_chronology=self.chronological and not self.blackbox,
+            ) for task_file in QUERY_FILE]
 
-            tasks: list[Task] = []
-            workflows: set[Node] = set()
-            for path in QUERY_FILE:
-                name = path.stem
-                graph = TransformationGraph.from_rdf(path, cct)
-                query = TransformationQuery(cct, graph, **opts)
-
-                expected = set(query.graph.objects(query.root,
-                    TA.implementation))
-                actual = query.run(wfgraph) if wfgraph else set()
-
-                workflows.update(expected)
-                workflows.update(actual)
-                tasks.append(Task(name, query, expected, actual))
-
-            header = ["Task", "Precision", "Recall"] + sorted([
-                str(wf)[len(REPO):] for wf in workflows])
-
-            # Create and optionally send queries
-            if not wfgraph:
+            # Summarize query results
+            if not self.wfgraph:
                 with open(self.output, 'w', newline='') as h:
                     for task in tasks:
                         h.write(task.query.sparql())
             else:
-                with open(self.output, 'w', newline='') as h:
-                    w = csv.DictWriter(h, fieldnames=header)
-                    w.writeheader()
-                    n_tpos, n_tneg, n_fpos, n_fneg = 0, 0, 0, 0
-                    for task in tasks:
-                        result: dict[str, str] = {"Task": task.name}
-                        expected, actual = task.expected, task.actual
-
-                        for wf in workflows:
-                            if wf in actual:
-                                if not expected:
-                                    s = "●?"  # positive
-                                elif wf in expected:
-                                    s = "● "  # true positive
-                                else:
-                                    s = "●⨯"  # false positive
-                            else:
-                                if not expected:
-                                    s = "○?"  # negative
-                                if wf in expected:
-                                    s = "○⨯"  # false negative
-                                else:
-                                    s = "○ "  # true negative
-
-                            result[str(wf)[len(REPO):]] = s
-
-                        n_fpos += len(actual - expected)
-                        n_fneg += len(expected - actual)
-                        n_tpos += len(actual.intersection(expected))
-                        n_tneg += len(workflows - expected - actual)
-                        w.writerow(result)
-
-                    try:
-                        w.writerow({
-                            "Precision": "{0:.3f}".format(n_tpos / (n_tpos + n_fpos)),
-                            "Recall": "{0:.3f}".format(n_tpos / (n_tpos + n_fneg))
-                        })
-                    except ZeroDivisionError:
-                        w.writerow({
-                            "Precision": "{0:.3f}".format(0),
-                            "Recall": "{0:.3f}".format(0)
-                        })
+                self.summarize(tasks)
 
 
 if __name__ == '__main__':
