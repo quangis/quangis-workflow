@@ -98,7 +98,7 @@ $(BUILD)/cct.ttl: $(LANG)
 
 $(BUILD)/cct.json: $(LANG)
 	@rm -f $@; mkdir -p $(@D)
-	$(TATOOL) vocab --language=$(LANG) --format json-ld $@
+	$(TATOOL) vocab --language=$(LANG) --to=json-ld $@
 
 # Transformation graphs for each workflow
 
@@ -122,15 +122,15 @@ $(BUILD)/%/graph-OB.ttl: workflows/%.ttl $(TOOLS) $(LANG)
 
 $(BUILD)/cct.dot: cct.py
 	@rm -f $@; mkdir -p $(@D)
-	$(TATOOL) vocab --language=$(LANG) --format=dot $@
+	$(TATOOL) vocab --language=$(LANG) --to=dot $@
 
 $(BUILD)/%/graph.dot: workflows/%.ttl
 	@rm -f $@; mkdir -p $(@D)
-	$(TATOOL) graph --language=$(LANG) --tools=$(TOOLS) --format=dot $< $@
+	$(TATOOL) graph --language=$(LANG) --tools=$(TOOLS) --to=dot $< $@
 
 $(BUILD)/%/eval.rq: tasks/%.ttl
 	@rm -f $@; mkdir -p $(@D)
-	$(TATOOL) query --language=$(LANG) --format=sparql $^ -o $@
+	$(TATOOL) query --language=$(LANG) --to=sparql $^ -o $@
 
 
 # Other
