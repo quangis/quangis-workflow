@@ -1,7 +1,7 @@
 @prefix : <https://github.com/quangis/transformation-algebra#>.
 @prefix from: <https://github.com/quangis/transformation-algebra#from>.
 @prefix type: <https://github.com/quangis/cct#type>.
-@prefix via: <https://github.com/quangis/cct#operator>.
+@prefix via: <https://github.com/quangis/transformation_algebra#via>.
 
 _:Neighborhoods
     type: "R(Obj, Reg * Nom)".
