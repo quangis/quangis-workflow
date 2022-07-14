@@ -76,28 +76,18 @@ class TransformationGraphBuilder(cli.Application):
     visual = cli.Flag("--visual", default=False)
     format = cli.SwitchAttr(["-f", "--format"], cli.Set("rdf", "ttl", "json-ld"),
         default="ttl")
-
-    passthrough = True
-
-    @cli.switch(["-p", "--passthrough"], cli.Set("pass", "block"),
-        help="Whether to pass output type of one tool to the next")
-    def _passthrough(self, value):
-        self.passthrough = (value != "block")
-
-    internals = True
-
-    @cli.switch(["-i", "--internal"], cli.Set("opaque", "transparent"),
-        help="Either treat tools as black boxes, or annotate their internals")
-    def _internals(self, value):
-        self.internals = (value != "opaque")
+    blocked = cli.Flag(["--blocked"], default=False,
+        help="Do not pass output type of one tool to the next")
+    opaque = cli.Flag(["--opaque"], default=False,
+        help="Do not annotate types internal to the tools")
 
     @cli.positional(cli.ExistingFile, cli.NonexistentPath)
     def main(self, wf_path, output_path):
         wf = Workflow(wf_path)
         if self.visual:
             g = TransformationGraph(cct, minimal=True, with_labels=True,
-                with_intermediate_types=self.internals,
-                passthrough=self.passthrough)
+                with_intermediate_types=not self.opaque,
+                passthrough=not self.blocked)
             step2expr = g.add_workflow(wf.root, wf.wf, wf.sources)
 
             # Annotate the expression nodes that correspond with output nodes
@@ -115,8 +105,8 @@ class TransformationGraphBuilder(cli.Application):
                 rdf2dot(g, f)
         else:
             g = TransformationGraph(cct, with_noncanonical_types=False,
-                passthrough=self.passthrough,
-                with_intermediate_types=self.internals)
+                passthrough=not self.blocked,
+                with_intermediate_types=not self.opaque)
             g.add_workflow(wf.root, wf.wf, wf.sources)
             g.serialize(str(output_path), format=self.format, encoding='utf-8')
 
@@ -128,6 +118,12 @@ class Task(NamedTuple):
     actual: set[Node]
 
 
+def graph(url: str) -> Graph:
+    g = Graph(store='SPARQLStore')
+    g.open(url)
+    return g
+
+
 @Tatool.subcommand("query")
 class QueryRunner(cli.Application):
     """
@@ -137,13 +133,14 @@ class QueryRunner(cli.Application):
 
     output = cli.SwitchAttr(["-o", "--output"], cli.NonexistentPath,
         mandatory=True, help="Output file")
-    endpoint = cli.SwitchAttr(["-e", "--endpoint"],
-        help="SPARQL endpoint; if none is given, output queries; otherwise "
-             "output results in CSV format")
+    format = cli.SwitchAttr(["-f", "--format"], cli.Set("sparql", "csv"),
+        default="csv", help="Output format")
     chronological = cli.Flag(["-c", "--chronological"],
         default=False, help="Take into account order")
-    blackbox = cli.Flag("--blackbox",
-        default=False, help="Only consider input and output")
+    blackbox = cli.Flag(["-b", "--blackbox"],
+        default=False, help="Only consider input and output of the workflows")
+    endpoint = cli.SwitchAttr(["-e", "--endpoint"], argtype=graph,
+        help="SPARQL endpoint to send queries to")
 
     def evaluate(self, path, **opts) -> Task:
         """
@@ -153,7 +150,7 @@ class QueryRunner(cli.Application):
         query = TransformationQuery(cct, graph, **opts)
         return Task(name=path.stem, query=query,
             expected=set(graph.objects(query.root, TA.implementation)),
-            actual=(query.run(self.wfgraph) if self.wfgraph else set()))
+            actual=(query.run(self.endpoint) if self.endpoint else set()))
 
     def summarize(self, tasks: Iterable[Task]) -> None:
         """
@@ -200,13 +197,6 @@ class QueryRunner(cli.Application):
             self.help()
             return 1
         else:
-            # Determine whether there is an endpoint to send queries to
-            if self.endpoint:
-                self.wfgraph = Graph(store='SPARQLStore')
-                self.wfgraph.open(self.endpoint)
-            else:
-                self.wfgraph = None
-
             # Parse tasks and optionally run associated queries
             tasks = [self.evaluate(task_file, by_io=True,
                 by_operators=False, by_types=not self.blackbox,
@@ -214,11 +204,18 @@ class QueryRunner(cli.Application):
             ) for task_file in QUERY_FILE]
 
             # Summarize query results
-            if not self.wfgraph:
+            if self.format == "sparql":
                 with open(self.output, 'w', newline='') as h:
+                    h.write("---\n")
                     for task in tasks:
                         h.write(task.query.sparql())
+                        h.write("\n\nActual: ")
+                        h.write(", ".join(t.n3() for t in task.actual))
+                        h.write("\nExpected: ")
+                        h.write(", ".join(t.n3() for t in task.expected))
+                        h.write("\n---\n")
             else:
+                assert self.format == "csv"
                 self.summarize(tasks)
 
 

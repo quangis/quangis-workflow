@@ -101,21 +101,21 @@ $(BUILD)/cct.json: cct.py
 
 # Transformation graphs for each workflow
 
-$(BUILD)/%/graph-OP.ttl: workflows/%.ttl
-	@rm -f $@; mkdir -p $(@D)
-	$(TATOOL) graph --passthrough=pass --internal=opaque $< $@
-
 $(BUILD)/%/graph-TP.ttl: workflows/%.ttl
 	@rm -f $@; mkdir -p $(@D)
-	$(TATOOL) graph --passthrough=pass --internal=transparent $< $@
+	$(TATOOL) graph $< $@
 
-$(BUILD)/%/graph-OB.ttl: workflows/%.ttl
+$(BUILD)/%/graph-OP.ttl: workflows/%.ttl
 	@rm -f $@; mkdir -p $(@D)
-	$(TATOOL) graph --passthrough=block --internal=opaque $< $@
+	$(TATOOL) graph --opaque $< $@
 
 $(BUILD)/%/graph-TB.ttl: workflows/%.ttl
 	@rm -f $@; mkdir -p $(@D)
-	$(TATOOL) graph --passthrough=block --internal=transparent $< $@
+	$(TATOOL) graph --blocked $< $@
+
+$(BUILD)/%/graph-OB.ttl: workflows/%.ttl
+	@rm -f $@; mkdir -p $(@D)
+	$(TATOOL) graph --blocked --opaque $< $@
 
 # Visualisation/diagnostics
 
@@ -123,17 +123,13 @@ $(BUILD)/cct.dot: cct.py
 	@rm -f $@; mkdir -p $(@D)
 	$(TATOOL) vocab --visual $@
 
-$(BUILD)/%/graph-TB.dot: workflows/%.ttl
-	@rm -f $@; mkdir -p $(@D)
-	$(TATOOL) graph --visual --passthrough=block --internal=transparent $< $@
-
 $(BUILD)/%/graph-TP.dot: workflows/%.ttl
 	@rm -f $@; mkdir -p $(@D)
-	$(TATOOL) graph --visual --passthrough=pass --internal=transparent $< $@
+	$(TATOOL) graph --visual $< $@
 
 $(BUILD)/%/eval.rq: tasks/%.ttl
 	@rm -f $@; mkdir -p $(@D)
-	$(TATOOL) query $^ -o $@
+	$(TATOOL) query --format=sparql $^ -o $@
 
 
 # Other
