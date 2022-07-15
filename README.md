@@ -32,17 +32,27 @@ You can then clone this repository and use it.
     make use of those tools.
 -   The underlying tasks can be found in the [tasks/](tasks/) directory.
 
-The `ta-tool` is used to manipulate this data. You can also use it to get 
-visualizations and diagnostics information. Run `ta-tool -h` for a full 
-overview of its capabilities. It is now [here](utils/ta-tool.py) but should be 
-integrated in the transformation-algebra library in the future.
+The `contra.py` tool from the `transformation-algebra` package is used 
+to manipulate this data. You can also use it to get visualizations and 
+diagnostics information. Run `contra.py -h` for a full overview of its 
+capabilities.
 
--   The `ta-tool graph` subcommand uses the algebra expressions of the 
+-   The `graph` subcommand can use the CCT expressions of the 
     [tools](tools/tools.ttl) to turn [workflow](workflows/) graphs into 
-    transformation graphs.
--   The `ta-tool query` subcommand can turn [task](tasks/) descriptions into 
-    SPARQL queries and fire them at a SPARQL endpoint. This will produce CSV 
-    files that show which workflows are retrieved for which task descriptions.
+    transformation graphs. For example:
+    ```
+    contra.py graph --language=cct.py --tools=tools/tools.ttl \
+        workflows/10a-MalariaCongo.ttl output.ttl
+    ```
+
+-   The `query` subcommand can turn [task](tasks/) descriptions into 
+    SPARQL queries and fire them at a SPARQL endpoint. This will produce 
+    CSV files that show which workflows are retrieved for which task 
+    descriptions. For example:
+    ```
+    contra.py query --endpoint=https://localhost/graphs --language=cct.py \
+        tasks/*.ttl -o output.csv
+    ```
 
 There is a [Makefile](Makefile) with recipes that automate the process, 
 assuming you have a Fuseki installation (see below). Run `make graphs` to 
