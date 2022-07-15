@@ -21,7 +21,6 @@ version of the library:
 
 You can then clone this repository and use it.
 
-
 ## Overview
 
 -   The types and operators of the CCT transformation algebra are defined in 
@@ -60,6 +59,11 @@ obtain PDF representations of transformation graphs for all workflows. Run
 `make evaluations` to obtain tables for the evaluation variants used in our 
 paper. Be advised: the queries are very unoptimized at the moment and some 
 results will take a very a long time to build.
+
+## Tests
+
+To run the tests, use `python3 -m unittest test.py` or simply run 
+`test.py`.
 
 
 ## Serving a SPARQL endpoint
