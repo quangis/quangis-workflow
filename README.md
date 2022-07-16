@@ -62,8 +62,7 @@ results will take a very a long time to build.
 
 ## Tests
 
-To run the tests, use `python3 -m unittest test.py` or simply run 
-`test.py`.
+To run the tests, simply run `nose2`.
 
 
 ## Serving a SPARQL endpoint
