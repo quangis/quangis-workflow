@@ -4,6 +4,7 @@
 
 @base <https://github.com/quangis/cct/blob/master/tools/tools.ttl#>.
 
+@prefix : <https://github.com/quangis/cct/blob/master/tools/tools.ttl#>.
 @prefix cct: <https://github.com/quangis/cct#>.
 @prefix wf: <http://geographicknowledge.de/vocab/Workflow.rdf#>.
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>.
@@ -30,7 +31,7 @@
     rdfs:comment "An abstract tool refers to the *functionality* of one or more tools.".
 
 :ToolCombination rdfs:subClassOf :Tool;
-    rdfs:comment "A complex abstract tool, a 'supertool': a subworkflow consisting of partial tool specifications that be meaningfully interpreted as a complete tool specification only when taken together. It is composed of tool specifications and implements one or more complete tool specifications."
+    rdfs:comment "A complex abstract tool, a 'supertool': a subworkflow consisting of partial tool specifications that be meaningfully interpreted as a complete tool specification only when taken together. It is composed of tool specifications and implements one or more complete tool specifications.".
 
 :CompleteToolSpecification rdfs:subClassOf :ToolSpecification;
     rdfs:comment "A complete tool specification is a tool specification that is semantically captured with an algebra expression. Every such specification must be implemented by a concrete tool or by a supertool.".
@@ -68,7 +69,7 @@ _:wf20_4 wf:applicationOf tools:SolveDef;
     wf:output _:out204.
 
 #selects the distance to the closest goal object on a line network
-tools:closestfacilityanalysis :CompleteToolSpecification;
+tools:closestfacilityanalysis a :CompleteToolSpecification;
     wf:input1 _:in_roads;
     wf:input2 _:in_goals;
     wf:input3 _:in_origins; #Events?
@@ -469,7 +470,7 @@ _:wf300_2 wf:applicationOf tools:CalculateFieldDef;
     wf:output _:out300.
 
 ##Uses calculate field to obtain an extensive amount on objects from an average
-tools:CalculateObjectSpatialAmount a :ToolCombination
+tools:CalculateObjectSpatialAmount a :ToolCombination;
     wf:input1 _:in3001_1;
     wf:output _:out300_1;
     rdfs:comment
