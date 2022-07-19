@@ -27,11 +27,11 @@
 :ToolImplementation rdfs:subClassOf :Tool;
     rdfs:comment "A concrete tool is a reference to a concrete *implementation* of a tool.".
 
-:ToolSpecification rdfs:subClassOf :Tool;
-    rdfs:comment "An abstract tool refers to the *functionality* of one or more tools.".
-
 :ToolCombination rdfs:subClassOf :Tool;
     rdfs:comment "A complex abstract tool, a 'supertool': a subworkflow consisting of partial tool specifications that be meaningfully interpreted as a complete tool specification only when taken together. It is composed of tool specifications and implements one or more complete tool specifications.".
+
+:ToolSpecification rdfs:subClassOf :Tool;
+    rdfs:comment "An abstract tool refers to the *functionality* of one or more tools.".
 
 :CompleteToolSpecification rdfs:subClassOf :ToolSpecification;
     rdfs:comment "A complete tool specification is a tool specification that is semantically captured with an algebra expression. Every such specification must be implemented by a concrete tool or by a supertool.".
