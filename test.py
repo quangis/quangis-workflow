@@ -119,8 +119,7 @@ class Tests(unittest.TestCase):
     @nodes(graph.subjects(RDF.type, TOOLS.ToolCombination))
     def test_supertool_blank_nodes_never_reused(self, tool: Node):
         for step in graph.objects(tool, WF.edge):
-            tool1 = graph.value(None, WF.edge, step, any=False)
-            self.assertEqual(tool, tool1)
+            self.assertEqual([tool], list(graph.subjects(WF.edge, step)))
 
     @nodes(graph.subjects(RDF.type / RDFS.subClassOf, TOOLS.ToolSpecification))
     def test_input_and_outputs_are_never_reused(self, tool: Node):
