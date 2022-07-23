@@ -9,10 +9,14 @@ Module containing the core concept transformation algebra. Usage:
      └─╼ objects data : R1(Obj)
 """
 
-from transformation_algebra import with_parameters, _, Operator, \
-    Language, TypeOperator, TypeInstance, Type
-from transformation_algebra.type import TypeAlias, Unit, Constraint, Product
-# from transformation_algebra.query import OR, Operators
+from rdflib import BNode, RDF
+from transformation_algebra.type import Type, Top, Product, Constraint, \
+    TypeInstance, TypeOperation, TypeAlias, TypeOperator, \
+    with_parameters, _
+from transformation_algebra.lang import TA, Language
+from transformation_algebra.expr import Operator
+from transformation_algebra.graph import TransformationGraph
+from transformation_algebra.query import TransformationQuery
 
 
 # Types ######################################################################
@@ -347,7 +351,7 @@ nbuild = Operator(
 nDist = Operator(
     "compute network distances between objects",
     type=(R2(Obj, Reg) ** R2(Obj, Reg)
-        ** R3(Obj, Ratio, Obj) ** R3(Obj, Ratio, Obj))
+          ** R3(Obj, Ratio, Obj) ** R3(Obj, Ratio, Obj))
 )
 lVis = Operator(
     "build a visibility relation between locations using a DEM",
@@ -473,8 +477,8 @@ prod = Operator(
 )
 prod3 = Operator(
     doc=("prod3 generates a quantified relation from two nested binary "
-        "relations. The keys of the nested relations become two keys of "
-        "the quantified relation."),
+         "relations. The keys of the nested relations become two keys of "
+         "the quantified relation."),
     type=lambda x, y, z: R2(z, R2(x, y)) ** R3(x, y, z),
 )
 
@@ -535,7 +539,6 @@ select2 = Operator(
 # right: _ * x -> x
 
 # Join (⨝)
-
 join = Operator(
     "Join of two unary concepts, like a table join",
     type=lambda x, y, z: R2(x, y) ** R2(y, z) ** R2(x, z)
@@ -622,3 +625,36 @@ cct = Language(
         R3(Loc, Qlt, Loc),
         R3(Obj, Obj, Obj)
     })
+
+
+def question2query(q: dict) -> TransformationQuery:
+    """
+    Converts a dictionary of a particular structure (cf. Haiqi's natural
+    language parser) into a SPARQL query.
+    """
+    # This should probably go in a more sane place eventually, when the
+    # structure of the modules is more stable
+    base = q['cctrans']
+
+    g = TransformationGraph(cct)
+    task = BNode()
+    types = {}
+    for x in base['types']:
+        types[x['id']] = x
+        x['node'] = node = BNode()
+        t = cct.parse_type(x['cct']).concretize(Top)
+        if isinstance(t, TypeOperation) and t.params[0].operator == Product:
+            assert isinstance(t.params[0], TypeOperation)
+            t = R3(t.params[0].params[0], t.params[1], t.params[0].params[1])
+        g.add((node, TA.type, cct.uri(t)))
+
+    for edge in base['transformations']:
+        for before in edge['before']:
+            for after in edge['after']:
+                b = types[before]['node']
+                a = types[after]['node']
+                g.add((b, TA["from"], a))
+
+    g.add((task, RDF.type, TA.Task))
+    g.add((task, TA.output, types['0']['node']))
+    return TransformationQuery(cct, g)
