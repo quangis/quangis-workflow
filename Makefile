@@ -118,6 +118,9 @@ $(BUILD)/%/graph-OB.ttl: workflows/%.ttl $(TOOLS) $(LANG)
 	@rm -f $@; mkdir -p $(@D)
 	$(TATOOL) graph --language=$(LANG) --tools=$(TOOLS) --blocked --opaque $< $@
 
+$(BUILD)/everything.ttl: $(BUILD)/cct.ttl $(WORKFLOWS:workflows/%.ttl=$(BUILD)/%/graph-TP.ttl)
+	$(TATOOL) merge $@ $^
+
 # Visualisation/diagnostics
 
 $(BUILD)/cct.dot: cct.py
