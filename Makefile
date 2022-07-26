@@ -21,7 +21,7 @@ TIMEOUT=
 WORKFLOWS=$(wildcard workflows/*.ttl)
 TASKS=$(wildcard tasks/*.ttl)
 TOOLS=tools/tools.ttl
-LANG=cct.py
+LANG=cct/language.py
 
 # Workflow graphs and the database should not be removed as intermediate files
 .SECONDARY: $(foreach VARIANT,OB OP TB TP,\

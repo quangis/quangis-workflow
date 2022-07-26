@@ -19,7 +19,7 @@ TOOLS = Namespace('https://github.com/quangis/cct/blob/master/tools/tools.ttl#')
 WF = Namespace('http://geographicknowledge.de/vocab/Workflow.rdf#')
 CCT = Namespace('https://github.com/quangis/cct#')
 
-root_path = Path(__file__).parent
+root_path = Path(__file__).parent.parent
 graph = Graph()
 graph.parse(root_path / "tools" / "tools.ttl")
 for path in root_path.glob("workflows/*.ttl"):
