@@ -13,16 +13,17 @@ transformation algebra of the
 -   Encodings of the underlying tasks can be found in the 
     [tasks/](tasks/) directory.
 
-The `contra.py` tool from the `transformation-algebra` package is used 
-to manipulate this data. You can also use it to get visualizations and 
-diagnostics information. Run `contra.py -h` for a full overview of its 
-capabilities.
+The `transformation-algebra` module can also be used as a command-line 
+interface to manipulate this data. You can also use it to get 
+visualizations and diagnostics information. Run `python -m 
+transformation_algebra -h` for a full overview of its capabilities.
 
 -   The `graph` subcommand can use the CCT expressions of the 
     [tools](tools/tools.ttl) to turn [workflow](workflows/) graphs into 
     transformation graphs. For example:
     ```
-    contra.py graph --language=cct.py --tools=tools/tools.ttl \
+    python -m transformation_algebra graph \
+        --language=cct/language.py --tools=tools/tools.ttl \
         workflows/10a-MalariaCongo.ttl output.ttl
     ```
 
@@ -31,7 +32,8 @@ capabilities.
     CSV files that show which workflows are retrieved for which task 
     descriptions. For example:
     ```
-    contra.py query --endpoint=https://localhost/graphs --language=cct.py \
+    python -m transformation_algebra query 
+        --endpoint=https://localhost/graphs --language=cct/language.py \
         tasks/*.ttl -o output.csv
     ```
 
