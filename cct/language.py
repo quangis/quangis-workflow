@@ -626,35 +626,3 @@ cct = Language(
         R3(Obj, Obj, Obj)
     })
 
-
-def question2query(q: dict) -> TransformationQuery:
-    """
-    Converts a dictionary of a particular structure (cf. Haiqi's natural
-    language parser) into a SPARQL query.
-    """
-    # This should probably go in a more sane place eventually, when the
-    # structure of the modules is more stable
-    base = q['cctrans']
-
-    g = TransformationGraph(cct)
-    task = BNode()
-    types = {}
-    for x in base['types']:
-        types[x['id']] = x
-        x['node'] = node = BNode()
-        t = cct.parse_type(x['cct']).concretize(Top)
-        if isinstance(t, TypeOperation) and t.params[0].operator == Product:
-            assert isinstance(t.params[0], TypeOperation)
-            t = R3(t.params[0].params[0], t.params[1], t.params[0].params[1])
-        g.add((node, TA.type, cct.uri(t)))
-
-    for edge in base['transformations']:
-        for before in edge['before']:
-            for after in edge['after']:
-                b = types[before]['node']
-                a = types[after]['node']
-                g.add((b, TA["from"], a))
-
-    g.add((task, RDF.type, TA.Task))
-    g.add((task, TA.output, types['0']['node']))
-    return TransformationQuery(cct, g)
