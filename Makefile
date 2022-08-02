@@ -104,19 +104,19 @@ $(BUILD)/cct.json: $(LANG)
 
 $(BUILD)/%/graph-TP.ttl: workflows/%.ttl $(TOOLS) $(LANG)
 	@rm -f $@; mkdir -p $(@D)
-	$(TATOOL) graph --language=$(LANG) --tools=$(TOOLS) $< $@
+	$(TATOOL) graph --language=$(LANG) --tools=$(TOOLS) $< -o $@
 
 $(BUILD)/%/graph-OP.ttl: workflows/%.ttl $(TOOLS) $(LANG)
 	@rm -f $@; mkdir -p $(@D)
-	$(TATOOL) graph --language=$(LANG) --tools=$(TOOLS) --opaque $< $@
+	$(TATOOL) graph --language=$(LANG) --tools=$(TOOLS) --opaque $< -o $@
 
 $(BUILD)/%/graph-TB.ttl: workflows/%.ttl $(TOOLS) $(LANG)
 	@rm -f $@; mkdir -p $(@D)
-	$(TATOOL) graph --language=$(LANG) --tools=$(TOOLS) --blocked $< $@
+	$(TATOOL) graph --language=$(LANG) --tools=$(TOOLS) --blocked $< -o $@
 
 $(BUILD)/%/graph-OB.ttl: workflows/%.ttl $(TOOLS) $(LANG)
 	@rm -f $@; mkdir -p $(@D)
-	$(TATOOL) graph --language=$(LANG) --tools=$(TOOLS) --blocked --opaque $< $@
+	$(TATOOL) graph --language=$(LANG) --tools=$(TOOLS) --blocked --opaque $< -o $@
 
 $(BUILD)/everything.ttl: $(BUILD)/cct.ttl $(WORKFLOWS:workflows/%.ttl=$(BUILD)/%/graph-TP.ttl)
 	$(TATOOL) merge $@ $^
@@ -129,7 +129,7 @@ $(BUILD)/cct.dot: cct.py
 
 $(BUILD)/%/graph.dot: workflows/%.ttl
 	@rm -f $@; mkdir -p $(@D)
-	$(TATOOL) graph --language=$(LANG) --tools=$(TOOLS) --to=dot $< $@
+	$(TATOOL) graph --language=$(LANG) --tools=$(TOOLS) --to=dot $< -o $@
 
 $(BUILD)/%/eval.rq: tasks/%.ttl
 	@rm -f $@; mkdir -p $(@D)
