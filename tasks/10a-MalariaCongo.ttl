@@ -11,7 +11,7 @@ _:PopulationCountPerCell
     type: "R(Reg, Count)".
 
 [] a :Task;
-    :question "What is the malaria incidence rate per 1000 inhabitants in the Democratic Republic of the Congo?";
+    # :question "What is the malaria incidence rate per 1000 inhabitants in the Democratic Republic of the Congo?";
     :implementation <https://example.com/#MalariaCongo>;
     :input _:MalariaIncidence, _:PopulationCountPerCell, _:AdministrativeRegions;
     :output [
