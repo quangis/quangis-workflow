@@ -37,6 +37,8 @@ eval: eval-ordered eval-unordered
 eval-ordered: $(patsubst %,$(BUILD)/eval/%.csv, OBC OPC TBC TPC)
 eval-unordered: $(patsubst %,$(BUILD)/eval/%.csv, EP EB OBA OPA TBA TPA)
 
+test: workflows/01a-NoisePortionAmsterdam.ttl
+	$(TATOOL) graph --language=$(LANG) --tools=$(TOOLS) $< -b fuseki -s http://localhost:3030/cct
 
 # Apache Jena
 
@@ -65,28 +67,28 @@ $(BUILD)/eval/%C.csv: $(BUILD)/tdb-%/mark $(FUSEKI) $(TASKS) $(LANG)
 	@rm -f $@; mkdir -p $(@D)
 	TDB=$(<:$(BUILD)/tdb-%/mark=%); \
 	$(FUSEKI) --localhost --loc=$(<:%/mark=%) /$$TDB & PID=$$!; sleep 4; \
-	$(TATOOL) query --language=$(LANG) --endpoint "$(SERVER)/$$TDB" --chronological $(filter %.ttl,$^) -o $@;\
+	$(TATOOL) query --language=$(LANG) -b fuseki --server "$(SERVER)/$$TDB" --chronological $(filter %.ttl,$^) -o $@;\
 	kill -9 $$PID
 
 $(BUILD)/eval/%A.csv: $(BUILD)/tdb-%/mark $(FUSEKI) $(TASKS) $(LANG)
 	@rm -f $@; mkdir -p $(@D)
 	TDB=$(<:$(BUILD)/tdb-%/mark=%); \
 	$(FUSEKI) --localhost --loc=$(<:%/mark=%) /$$TDB & PID=$$!; sleep 4; \
-	$(TATOOL) query --language=$(LANG) --endpoint "$(SERVER)/$$TDB" $(filter %.ttl,$^) -o $@;\
+	$(TATOOL) query --language=$(LANG) -b fuseki --server "$(SERVER)/$$TDB" $(filter %.ttl,$^) -o $@;\
 	kill -9 $$PID
 
 $(BUILD)/eval/EB.csv: $(BUILD)/tdb-OB/mark $(FUSEKI) $(TASKS) $(LANG)
 	@rm -f $@; mkdir -p $(@D)
 	TDB=$(<:$(BUILD)/tdb-%/mark=%); \
 	$(FUSEKI) --localhost --loc=$(<:%/mark=%) /$$TDB & PID=$$!; sleep 4; \
-	$(TATOOL) query --language=$(LANG) --endpoint "$(SERVER)/$$TDB" --blackbox $(filter %.ttl,$^) -o $@;\
+	$(TATOOL) query --language=$(LANG) -b fuseki --server "$(SERVER)/$$TDB" --blackbox $(filter %.ttl,$^) -o $@;\
 	kill -9 $$PID
 
 $(BUILD)/eval/EP.csv: $(BUILD)/tdb-OP/mark $(FUSEKI) $(TASKS) $(LANG)
 	@rm -f $@; mkdir -p $(@D)
 	TDB=$(<:$(BUILD)/tdb-%/mark=%); \
 	$(FUSEKI) --localhost --loc=$(<:%/mark=%) /$$TDB & PID=$$!; sleep 4; \
-	$(TATOOL) query --language=$(LANG) --endpoint "$(SERVER)/$$TDB" --blackbox $(filter %.ttl,$^) -o $@;\
+	$(TATOOL) query --language=$(LANG) -b fuseki --server "$(SERVER)/$$TDB" --blackbox $(filter %.ttl,$^) -o $@;\
 	kill -9 $$PID
 
 
