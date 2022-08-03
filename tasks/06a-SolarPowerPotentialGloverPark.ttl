@@ -12,8 +12,7 @@ _:Buildings
 
 [] a :Task;
     # :question "What is the potential of solar power for each rooftop in the Glover Park neighbourhood in Washington DC?";
-    :question "What are the potentials of solar power larger than 30 kilowatt
-    hour for each rooftop in Amsterdam";
+    :question "What are the potentials of solar power larger than 30 kilowatt hour for each rooftop in Amsterdam";
     :implementation <https://example.com/#SolarPowerPotentialGloverPark>;
     :input _:SolarRadiation, _:TerrainDSM, _:Buildings;
     :output [
