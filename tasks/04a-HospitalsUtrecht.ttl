@@ -9,7 +9,8 @@ _:IncidentLocations
     type: "R(Obj, Reg * Nom)".
 
 [] a :Task;
-    :question "What is the travel distance to the nearest hospital in California?";
+    # :question "What is the travel distance to the nearest hospital in California?";
+    :question "What is the travel distance from car accidents to the nearest hospitals in Amsterdam";
     :implementation <https://example.com/#HospitalsUtrecht_Network>;
     :implementation <https://example.com/#HospitalsUtrecht_Near>;
     :input _:HospitalPoints, _:IncidentLocations;

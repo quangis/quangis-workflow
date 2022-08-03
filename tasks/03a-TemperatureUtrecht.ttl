@@ -9,7 +9,8 @@ _:WeatherStations
     type: "R(Reg, Itv)".
 
 [] a :Task;
-    :question "What is the average temperature for each neighbourhood in Utrecht?";
+    # :question "What is the average temperature for each neighbourhood in Utrecht?";
+    :question "What is the average temperature for each neighborhood in Amsterdam";
     :implementation <https://example.com/#TemperatureUtrecht>;
     :input _:Neighborhoods, _:WeatherStations;
     :output [

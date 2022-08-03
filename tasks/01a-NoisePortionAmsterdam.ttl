@@ -9,7 +9,7 @@ _:Amsterdam
     type: "R(Obj, Reg * Nom)".
 
 [] a :Task;
-    :question "What is the portion of noise ≥ 70dB in Amsterdam?";
+    # :question "What is the portion of noise ≥ 70dB in Amsterdam?";
     :implementation <https://example.com/#NoisePortionAmsterdam>;
     :input _:NoiseContourMap, _:Amsterdam;
     :output [

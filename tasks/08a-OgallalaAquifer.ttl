@@ -13,7 +13,8 @@ _:Irrigation
     type: "R(Nom, Reg)".
 
 [] a :Task;
-    :question "Which urban areas are at risk from water depletion in Ogandala (High Plains) Aquifer, US?";
+    # :question "Which urban areas are at risk from water depletion in Ogandala (High Plains) Aquifer, US?";
+    :question "Which urban areas are within 150 miles of the aquifer, have precipitation lower than 10 inches, and intersect with the irrigation regions in Ogallala (High Plains) Aquifer, US";
     :implementation <https://example.com/#OgallalaAquifer>;
     :input _:UrbanAreas, _:Aquifer, _:Precipitation, _:Irrigation;
     :output [
