@@ -23,8 +23,8 @@ transformation_algebra -h` for a full overview of its capabilities.
     transformation graphs. For example:
     ```
     python -m transformation_algebra graph \
-        --language=cct/language.py --tools=tools/tools.ttl \
-        workflows/10a-MalariaCongo.ttl output.ttl
+        --language=cct --tools=tools/tools.ttl \
+        workflows/*.ttl -o output.trig
     ```
 
 -   The `query` subcommand can turn [task](tasks/) descriptions into 
@@ -32,8 +32,8 @@ transformation_algebra -h` for a full overview of its capabilities.
     CSV files that show which workflows are retrieved for which task 
     descriptions. For example:
     ```
-    python -m transformation_algebra query 
-        --endpoint=https://localhost/graphs --language=cct/language.py \
+    python -m transformation_algebra query --language=cct \
+        --backend fuseki --server https://localhost:3030/cct \
         tasks/*.ttl -o output.csv
     ```
 
