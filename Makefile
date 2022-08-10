@@ -96,29 +96,29 @@ $(BUILD)/eval/EP.csv: $(BUILD)/tdb-OP/mark $(FUSEKI) $(TASKS) $(LANG)
 
 $(BUILD)/cct.ttl: $(LANG)
 	@rm -f $@; mkdir -p $(@D)
-	$(TATOOL) vocab --language=$(LANG) $@
+	$(TATOOL) vocab --language=$(LANG) -t ttl -o $@
 
 $(BUILD)/cct.json: $(LANG)
 	@rm -f $@; mkdir -p $(@D)
-	$(TATOOL) vocab --language=$(LANG) --to=json-ld $@
+	$(TATOOL) vocab --language=$(LANG) --to=json-ld -o $@
 
 # Transformation graphs for each workflow
 
 $(BUILD)/%/graph-TP.ttl: workflows/%.ttl $(TOOLS) $(LANG)
 	@rm -f $@; mkdir -p $(@D)
-	$(TATOOL) graph --language=$(LANG) --tools=$(TOOLS) $< -o $@
+	$(TATOOL) graph --language=$(LANG) --tools=$(TOOLS) $< -t ttl -o $@
 
 $(BUILD)/%/graph-OP.ttl: workflows/%.ttl $(TOOLS) $(LANG)
 	@rm -f $@; mkdir -p $(@D)
-	$(TATOOL) graph --language=$(LANG) --tools=$(TOOLS) --opaque $< -o $@
+	$(TATOOL) graph --language=$(LANG) --tools=$(TOOLS) --opaque $< -t ttl -o $@
 
 $(BUILD)/%/graph-TB.ttl: workflows/%.ttl $(TOOLS) $(LANG)
 	@rm -f $@; mkdir -p $(@D)
-	$(TATOOL) graph --language=$(LANG) --tools=$(TOOLS) --blocked $< -o $@
+	$(TATOOL) graph --language=$(LANG) --tools=$(TOOLS) --blocked $< -t ttl -o $@
 
 $(BUILD)/%/graph-OB.ttl: workflows/%.ttl $(TOOLS) $(LANG)
 	@rm -f $@; mkdir -p $(@D)
-	$(TATOOL) graph --language=$(LANG) --tools=$(TOOLS) --blocked --opaque $< -o $@
+	$(TATOOL) graph --language=$(LANG) --tools=$(TOOLS) --blocked --opaque $< -t ttl -o $@
 
 $(BUILD)/everything.ttl: $(BUILD)/cct.ttl $(WORKFLOWS:workflows/%.ttl=$(BUILD)/%/graph-TP.ttl)
 	$(TATOOL) merge $@ $^
@@ -127,7 +127,7 @@ $(BUILD)/everything.ttl: $(BUILD)/cct.ttl $(WORKFLOWS:workflows/%.ttl=$(BUILD)/%
 
 $(BUILD)/cct.dot: cct.py
 	@rm -f $@; mkdir -p $(@D)
-	$(TATOOL) vocab --language=$(LANG) --to=dot $@
+	$(TATOOL) vocab --language=$(LANG) --to=dot -o $@
 
 $(BUILD)/%/graph.dot: workflows/%.ttl
 	@rm -f $@; mkdir -p $(@D)
