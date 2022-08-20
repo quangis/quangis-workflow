@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
-# Just a wrapper script that downloads and runs Apache Jena Fuseki, for easier
-# testing
+# A wrapper script that downloads and runs Apache Jena Fuseki, sends
+# transformation graphs for all workflows to that server, and subsequently
+# fires queries for all tasks to retrieve them back.
 
 from __future__ import annotations
 
@@ -139,11 +140,13 @@ def summary_csv(path: Path | str,
 
 
 def write_evaluation(
-        opacity: Literal['external', 'opaque', 'transparent'],
-        passthrough: Literal['passed', 'blocked'],
+        opacity: Literal['workflow', 'tool', 'internal'],
+        passthrough: Literal['pass', 'block'],
         order: Literal['any', 'chronological']) -> None:
 
     tools = graph(ROOT / "tools" / "tools.ttl")
+
+    print("Variant:", opacity, passthrough, order)
 
     with FusekiServer() as server:
 
@@ -155,22 +158,23 @@ def write_evaluation(
             workflow = graph(wf_path)
             print(f"Building transformation graph for workflow {wf_path}...")
             g = build_transformation(cct, tools, workflow,
-                passthrough=(passthrough == 'passed'),
-                with_intermediate_types=(opacity == 'transparent'))
+                passthrough=(passthrough == 'pass'),
+                with_intermediate_types=(opacity == 'internal'),
+                with_noncanonical_types=False)
             print("Sending transformation graph to Fuseki...")
             store.put(g)
 
-        # Build & fire query for every task
+        # Fire query for every task
         actual: dict[str, set[Node]] = dict()
         expected: dict[str, set[Node]] = dict()
         for task_path in ROOT.glob("tasks/*.ttl"):
             print(f"Reading transformation graph for task {task_path}...")
-            name = task_path.stem
+            name = task_path.stem[4:]
             task_graph = graph(task_path)
             query = TransformationQuery(cct, task_graph,
-                by_io=True,
-                by_types=True,
-                by_chronology=(order == "chronological"),
+                by_types=(opacity != 'workflow'),
+                by_chronology=(order == 'chronological' and
+                    opacity != 'workflow'),
                 unfold_tree=True)
             expected[name] = set(task_graph.objects(query.root,
                 TA.implementation))
@@ -185,9 +189,11 @@ def write_evaluation(
 
 
 if __name__ == '__main__':
-    for opacity in ("external", "opaque", "transparent"):
-        for passthrough in ("blocked", "passed"):
+
+    # Produce evaluation summaries for all variants mentioned in the paper
+    for opacity in ("workflow", "tool", "internal"):
+        for passthrough in ("block", "pass"):
             for order in ("any", "chronological"):
-                if order == "chronological" and opacity == "external":
+                if order == "chronological" and opacity == "workflow":
                     continue
-                write_evaluation(opacity, passthrough, order)
+                write_evaluation(opacity, passthrough, order)  # type: ignore
