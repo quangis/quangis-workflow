@@ -4,7 +4,6 @@
 
 from __future__ import annotations
 
-import sys
 import csv
 import subprocess
 import requests
@@ -14,7 +13,7 @@ import threading
 from itertools import chain
 from pathlib import Path
 from rdflib.term import Node
-from typing import ContextManager
+from typing import ContextManager, Literal
 
 from transformation_algebra import TransformationQuery
 from transformation_algebra.namespace import TA, REPO
@@ -24,6 +23,7 @@ from cct.language import cct
 
 ROOT = Path(__file__).parent
 JAVA = shutil.which("java")
+BUILD_DIR = ROOT / "build"
 FUSEKI_DIR = ROOT / "fuseki"
 FUSEKI_VERSION = "4.5.0"
 FUSEKI_NAME = f"apache-jena-fuseki-{FUSEKI_VERSION}"
@@ -138,7 +138,11 @@ def summary_csv(path: Path | str,
             w.writerow({"Precision": "?", "Recall": "?"})
 
 
-if __name__ == '__main__':
+def write_evaluation(
+        opacity: Literal['external', 'opaque', 'transparent'],
+        passthrough: Literal['passed', 'blocked'],
+        order: Literal['any', 'chronological']) -> None:
+
     tools = graph(ROOT / "tools" / "tools.ttl")
 
     with FusekiServer() as server:
@@ -150,8 +154,9 @@ if __name__ == '__main__':
         for wf_path in ROOT.glob("workflows/*.ttl"):
             workflow = graph(wf_path)
             print(f"Building transformation graph for workflow {wf_path}...")
-            g = build_transformation(cct, tools, workflow)
-            # print(g.serialize(format="ttl"))
+            g = build_transformation(cct, tools, workflow,
+                passthrough=(passthrough == 'passed'),
+                with_intermediate_types=(opacity == 'transparent'))
             print("Sending transformation graph to Fuseki...")
             store.put(g)
 
@@ -163,17 +168,26 @@ if __name__ == '__main__':
             name = task_path.stem
             task_graph = graph(task_path)
             query = TransformationQuery(cct, task_graph,
-                by_io=False,
-                by_types=False,
-                by_chronology=False,
-                unfold_tree=False)
+                by_io=True,
+                by_types=True,
+                by_chronology=(order == "chronological"),
+                unfold_tree=True)
             expected[name] = set(task_graph.objects(query.root,
                 TA.implementation))
 
             print("Querying Fuseki...")
             actual[name] = result = store.query(query)
-            print(result)
+            print(f"Results: {', '.join(str(wf) for wf in result)}")
 
-            # print(f"Results: {', '.join(str(wf) for wf in actual[name])}")
+        BUILD_DIR.mkdir(exist_ok=True)
+        summary_csv(BUILD_DIR / f"eval-{opacity}-{passthrough}-{order}.csv",
+            expected, actual)
 
-        summary_csv("summary.csv", expected, actual)
+
+if __name__ == '__main__':
+    for opacity in ("external", "opaque", "transparent"):
+        for passthrough in ("blocked", "passed"):
+            for order in ("any", "chronological"):
+                if order == "chronological" and opacity == "external":
+                    continue
+                write_evaluation(opacity, passthrough, order)
