@@ -5,7 +5,7 @@ transformation algebra of the
 [QuAnGIS](https://questionbasedanalysis.com/) project.
 
 -   The types and operators of the CCT transformation algebra are 
-    defined in [cct/language.py](cct/language.py).
+    defined in the [cct](cct/language.py) module.
 -   Descriptions of GIS tools in terms of expressions of the CCT algebra 
     can be found in [tools/tools.ttl](tools/tools.ttl).
 -   The [workflows/](workflows/) directory contains encodings of 
@@ -16,11 +16,12 @@ transformation algebra of the
 The `transformation-algebra` module can also be used as a command-line 
 interface to manipulate this data. You can also use it to get 
 visualizations and diagnostics information. Run `python -m 
-transformation_algebra -h` for a full overview of its capabilities.
+transformation_algebra --help` for a full overview of its capabilities.
 
 -   The `graph` subcommand can use the CCT expressions of the 
     [tools](tools/tools.ttl) to turn [workflow](workflows/) graphs into 
-    transformation graphs. For example:
+    transformation graphs, and write them to a file or upload them to a 
+    graph store. For example:
     ```
     python -m transformation_algebra graph \
         --language=cct --tools=tools/tools.ttl \
@@ -37,17 +38,17 @@ transformation_algebra -h` for a full overview of its capabilities.
         tasks/*.ttl -o output.csv
     ```
 
-There is a [Makefile](Makefile) with recipes that automate the process, 
-assuming you have a Fuseki installation (see below). Run `make graphs` 
-to obtain PDF representations of transformation graphs for all 
-workflows. Run `make evaluations` to obtain tables for the evaluation 
-variants used in our paper. Be advised: the queries are very unoptimized 
-at the moment and some results will take a very a long time to build.
-
 
 ## Tests
 
-To run the tests, simply run `nose2`.
+To reproduce our evaluations, run `evaluate.py`. In the `build/` 
+directory, tables will be produced for all evaluation variants used in 
+our paper. You will also need Java, since the Apache Jena Fuseki triple 
+store will be automatically downloaded and run. Be advised: the queries 
+are very unoptimized at the moment and some results will take a very a 
+long time to build.
+
+To perform sanity checks, run `nose2`.
 
 
 ## Installation
@@ -81,6 +82,4 @@ so you will need an external triple store. For open-source options, see
 [BlazeGraph](https://blazegraph.com/) or [Apache 
 Fuseki](https://jena.apache.org/) 
 ([Virtuoso](https://virtuoso.openlinksw.com/) seems to have an issue 
-with property paths). The Makefile has a variable pointing to Apache 
-Jena and Apache Fuseki binaries, so make sure it points to the correct 
-place for your installation.
+with property paths).
