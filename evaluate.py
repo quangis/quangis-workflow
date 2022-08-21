@@ -17,7 +17,7 @@ from rdflib.term import Node
 from typing import ContextManager, Literal
 
 from transformation_algebra import TransformationQuery
-from transformation_algebra.namespace import TA, REPO
+from transformation_algebra.namespace import TA, EX
 from transformation_algebra.util.store import TransformationStore
 from transformation_algebra.util.common import (graph, build_transformation)
 from cct.language import cct
@@ -109,7 +109,7 @@ def summary_csv(path: Path | str,
         table_actual.values()))
 
     header = ["Task", "Precision", "Recall"] + sorted([
-        str(wf)[len(REPO):] for wf in workflows])
+        str(wf)[len(EX):] for wf in workflows])
 
     with open(path, 'w', newline='') as h:
         n_tpos, n_tneg, n_fpos, n_fneg = 0, 0, 0, 0
@@ -123,7 +123,7 @@ def summary_csv(path: Path | str,
             for wf in workflows:
                 s = ("●" if wf in actual else "○")
                 s += ("⨯" if (wf in actual) ^ (wf in expected) else "")
-                row[str(wf)[len(REPO):]] = s
+                row[str(wf)[len(EX):]] = s
 
             n_fpos += len(actual - expected)
             n_fneg += len(expected - actual)
