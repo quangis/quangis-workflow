@@ -146,6 +146,8 @@ def write_evaluations(
         task_paths=ROOT.glob("tasks/*.ttl"),
         workflow_paths=ROOT.glob("workflows/*.ttl")) -> None:
 
+    task_paths = list(task_paths)
+    workflow_paths = list(workflow_paths)
     tools = graph(ROOT / "tools" / "tools.ttl")
 
     for variant in product(opacities, passthroughs, orderings):
