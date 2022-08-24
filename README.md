@@ -41,12 +41,12 @@ transformation_algebra --help` for a full overview of its capabilities.
 
 ## Tests
 
-To reproduce our evaluations, run `evaluate.py`. In the `build/` 
-directory, tables will be produced for all evaluation variants used in 
-our paper. You will also need Java, since the Apache Jena Fuseki triple 
-store will be automatically downloaded and run. Be advised: the queries 
-are very unoptimized at the moment and some results will take a very a 
-long time to build.
+To reproduce our evaluations, set up a triple store like MarkLogic or Fuseki, 
+change the `STORE_*` variables to the appropriate values and run `evaluate.py`. 
+In the `build/` directory, tables will be produced for all evaluation variants 
+used in our paper. Be advised: the queries are very unoptimized at the moment 
+and some results will take a very a long time to build. MarkLogic is the 
+fastest.
 
 To perform sanity checks, run `nose2`.
 

@@ -22,6 +22,14 @@ from transformation_algebra.util.store import TransformationStore
 from transformation_algebra.util.common import (graph, build_transformation)
 from cct.language import cct
 
+STORE_TYPE = "fuseki"
+STORE_URL = "https://localhost:3030"
+STORE_USER = None
+
+# STORE_TYPE = "marklogic"
+# STORE_URL = "http://localhost:8000"
+# STORE_USER = ("user", "password")
+
 ROOT = Path(__file__).parent
 JAVA = shutil.which("java")
 BUILD_DIR = ROOT / "build"
@@ -157,40 +165,40 @@ def write_evaluations(
             continue
 
         print("Variant:", variant)
-        with FusekiServer() as server:
 
-            # Connect to Fuseki as client
-            store = TransformationStore.backend("fuseki", server.url)
+        # Connect to graph store as client
+        store = TransformationStore.backend(STORE_TYPE, STORE_URL,
+            cred=STORE_USER)
 
-            # Build & send transformation graphs for every workflow
-            for wf_path in workflow_paths:
-                workflow = graph(wf_path)
-                print(f"Building graph for workflow {wf_path}...")
-                g = build_transformation(cct, tools, workflow,
-                    passthrough=(passthrough == 'pass'),
-                    with_intermediate_types=(opacity == 'internal'),
-                    with_noncanonical_types=False)
-                print("Sending transformation graph to Fuseki...")
-                store.put(g)
+        # Build & send transformation graphs for every workflow
+        for wf_path in workflow_paths:
+            workflow = graph(wf_path)
+            print(f"Building graph for workflow {wf_path}...")
+            g = build_transformation(cct, tools, workflow,
+                passthrough=(passthrough == 'pass'),
+                with_intermediate_types=(opacity == 'internal'),
+                with_noncanonical_types=False)
+            print("Sending transformation graph to graph store...")
+            store.put(g)
 
-            # Fire query for every task
-            actual: dict[str, set[Node]] = dict()
-            expected: dict[str, set[Node]] = dict()
-            for task_path in task_paths:
-                print(f"Reading transformation graph for task {task_path}...")
-                name = task_path.stem[4:]
-                task_graph = graph(task_path)
-                query = TransformationQuery(cct, task_graph,
-                    by_types=(opacity != 'workflow'),
-                    by_chronology=(ordering == 'chronological' and
-                        opacity != 'workflow'),
-                    unfold_tree=True)
-                expected[name] = set(task_graph.objects(query.root,
-                    TA.implementation))
+        # Fire query for every task
+        actual: dict[str, set[Node]] = dict()
+        expected: dict[str, set[Node]] = dict()
+        for task_path in task_paths:
+            print(f"Reading transformation graph for task {task_path}...")
+            name = task_path.stem[4:]
+            task_graph = graph(task_path)
+            query = TransformationQuery(cct, task_graph,
+                by_types=(opacity != 'workflow'),
+                by_chronology=(ordering == 'chronological' and
+                    opacity != 'workflow'),
+                unfold_tree=True)
+            expected[name] = set(task_graph.objects(query.root,
+                TA.implementation))
 
-                print("Querying Fuseki...")
-                actual[name] = result = store.query(query)
-                print(f"Results: {', '.join(str(wf) for wf in result)}")
+            print("Querying graph store...")
+            actual[name] = result = store.query(query)
+            print(f"Results: {', '.join(str(wf) for wf in result)}")
 
             BUILD_DIR.mkdir(exist_ok=True)
             summary_csv(
@@ -202,5 +210,3 @@ if __name__ == '__main__':
 
     # Produce evaluation summaries for all variants mentioned in the paper
     write_evaluations()
-    # write_evaluations(opacities=["internal"], orderings=["chronological"],
-    #     task_paths=ROOT.glob("tasks/05a-*.ttl"))  # type: ignore
