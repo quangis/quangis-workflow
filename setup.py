@@ -17,10 +17,10 @@ readme = ''
 
 setup(
     long_description=readme,
-    name='pyAPE',
+    name='apey',
     version='0.0.0',
-    packages=['pyAPE'],
+    packages=['apey'],
     package_dir={"": "."},
-    package_data={"pyAPE": ["*.typed"]},
+    package_data={"apey": ["*.typed"]},
     install_requires=['setuptools>=42', 'wheel'],
 )

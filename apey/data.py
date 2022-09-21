@@ -16,14 +16,15 @@ def data_dir() -> Path:
     """
 
     if sys.platform.startswith("win"):
-        path = getenv("LOCALAPPDATA")
+        path = Path(getenv("LOCALAPPDATA"))
     elif sys.platform.startswith("darwin"):
-        path = "~/Library/Application Support"
+        path = Path("~/Library/Application Support")
+    elif sys.platform.startswith("linux"):
+        path = Path(getenv("XDG_DATA_HOME", "~/.local/share"))
     else:
-        assert sys.platform.startswith("linux")
-        path = getenv("XDG_DATA_HOME", "~/.local/share")
+        raise RuntimeError("Unsupported platform")
 
-    path = Path(path).expanduser() / "pyAPE"
+    path = Path(path).expanduser() / "apey"
 
     try:
         path.mkdir(parents=True)

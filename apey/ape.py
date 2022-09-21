@@ -12,7 +12,7 @@ from rdflib.namespace import Namespace, RDF
 from typing import Iterable, Tuple, Dict, List, Union
 from typing_extensions import TypedDict
 
-import pyAPE.data
+import apey.data
 
 # We need version 1.1.5's API; lower versions won't work
 CLASS_PATH = pyAPE.data.get('APE-1.1.5-executable.jar', url=(
@@ -66,7 +66,7 @@ class APE(object):
 
         # Serialize if we weren't given paths
         if isinstance(taxonomy, Graph):
-            fd, taxonomy_file = tempfile.mkstemp(prefix='pyAPE-', suffix='.rdf')
+            fd, taxonomy_file = tempfile.mkstemp(prefix='apey-', suffix='.rdf')
             with open(fd, 'w') as f:
                 taxonomy.serialize(destination=f, format='xml')
         else:
