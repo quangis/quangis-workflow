@@ -11,8 +11,8 @@ of concepts from different semantic dimensions.
 
 from __future__ import annotations
 
-from rdflib import URIRef
-from typing import List, Dict, Optional, Set, Iterable
+from rdflib.term import Node
+from typing import Iterable
 
 from quangis.taxonomy import Taxonomy
 from quangis.namespace import CCD
@@ -27,7 +27,7 @@ class SemType:
 
     def __init__(
             self,
-            mapping: Optional[Dict[URIRef, Set[URIRef]]] = None):
+            mapping: dict[Node, set[Node]] | None = None):
         """
         We represent a datatype as a mapping from RDF dimension nodes to one or
         more of its subclasses.
@@ -38,15 +38,15 @@ class SemType:
         else:
             self._mapping = {}
 
-    def __getitem__(self, dimension: URIRef) -> Set[URIRef]:
+    def __getitem__(self, dimension: Node) -> set[Node]:
         if dimension in self._mapping:
             return self._mapping[dimension]
         else:
-            x: Set[URIRef] = set()
+            x: set[Node] = set()
             self._mapping[dimension] = x
             return x
 
-    def __setitem__(self, dimension: URIRef, value: Set[URIRef]) -> None:
+    def __setitem__(self, dimension: Node, value: set[Node]) -> None:
         self._mapping[dimension] = value
 
     def __str__(self) -> str:
@@ -60,7 +60,7 @@ class SemType:
             )
         )
 
-    def to_dict(self) -> Dict[URIRef, List[URIRef]]:
+    def to_dict(self) -> dict[Node, list[Node]]:
         return {
             d: list(subclasses)
             for d, subclasses in self._mapping.items()
@@ -89,8 +89,8 @@ class SemType:
 
     @staticmethod
     def project(
-            dimensions: List[Taxonomy],
-            types: Iterable[URIRef],
+            dimensions: list[Taxonomy],
+            types: Iterable[Node],
             fallback_to_root: bool = True) -> SemType:
         """
         This method projects given nodes to all dimensions given as a list of

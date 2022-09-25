@@ -14,9 +14,8 @@ import logging
 import urllib.request
 import itertools
 from importlib import reload
-from rdflib import URIRef, BNode
-from pyAPE import APE, Workflow, ToolsDict
-from typing import List
+from rdflib.term import Node, BNode
+from apey import APE, Workflow, ToolsDict
 
 from quangis.semtype import SemType
 from quangis.namespace import CCD, TOOLS, OWL, RDF, RDFS, ADA, WF
@@ -27,8 +26,8 @@ from quangis.util import uri, shorten
 
 def get_resources(
         tools: Ontology,
-        tool: URIRef,
-        is_output: bool) -> List[BNode]:
+        tool: Node,
+        is_output: bool) -> list[Node]:
     """
     Get the input/output resource nodes associated with a tool.
     """
@@ -45,7 +44,7 @@ def get_resources(
     return resources
 
 
-def get_types(tools: Ontology, resource: BNode) -> List[URIRef]:
+def get_types(tools: Ontology, resource: Node) -> list[Node]:
     """
     Returns a list of types of some tool input/output resource.
     """
@@ -53,7 +52,7 @@ def get_types(tools: Ontology, resource: BNode) -> List[URIRef]:
 
 
 def ape_tools(
-        tools: Ontology, dimensions: List[Taxonomy]) -> ToolsDict:
+        tools: Ontology, dimensions: list[Taxonomy]) -> ToolsDict:
     """
     Project tool annotations with the projection function, convert it to a
     dictionary that APE understands
@@ -86,7 +85,7 @@ def ape_tools(
 def ape_taxonomy(
         types: Ontology,
         tools: Ontology,
-        dimensions: List[Taxonomy]) -> Ontology:
+        dimensions: list[Taxonomy]) -> Ontology:
     """
     Extracts a taxonomy of toolnames from the tool description combined with a
     core OWL taxonomy of types.
@@ -103,8 +102,7 @@ def ape_taxonomy(
     # Only keep subclass nodes intersecting with exactly one dimension
     for (o, p, s) in itertools.chain(
             types.triples((None, RDFS.subClassOf, None)),
-            types.triples((None, RDF.type, OWL.Class))
-            ):
+            types.triples((None, RDF.type, OWL.Class))):
         if type(s) != BNode and type(o) != BNode \
                 and s != o and s != OWL.Nothing and \
                 types.dimensionality(o, [d.root for d in dimensions]) == 1:
@@ -128,7 +126,7 @@ class WorkflowSynthesis(APE):
             self,
             types: Ontology,
             tools: Ontology,
-            dimensions: List[Taxonomy]):
+            dimensions: list[Taxonomy]):
         super().__init__(
             taxonomy=ape_taxonomy(types, tools, dimensions),
             tools=ape_tools(tools, dimensions),
@@ -137,11 +135,11 @@ class WorkflowSynthesis(APE):
             dimensions=[d.root for d in dimensions]
         )
 
-    def run(self, *nargs, **kwargs) -> List[Workflow]:
+    def run(self, *nargs, **kwargs) -> list[Workflow]:
         return super().run(*nargs, **kwargs)
 
 
-def get_data(fn: str, dimensions: List[Taxonomy]) -> List[SemType]:
+def get_data(fn: str, dimensions: list[Taxonomy]) -> list[SemType]:
     """
     Read a newline-separated file of SemTypes represented by comma-separated
     URIs.
@@ -174,7 +172,7 @@ def download_if_missing(path: str, url: str) -> str:
     return path
 
 
-if __name__ == 'main':
+if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description="Wrapper for APE that synthesises CCD workflows"
     )
@@ -227,8 +225,8 @@ if __name__ == 'main':
 
     if not args.types:
         args.types = download_if_missing(
-           path="CoreConceptData.rdf",
-           url="http://geographicknowledge.de/vocab/CoreConceptData.rdf"
+            path="CoreConceptData.rdf",
+            url="http://geographicknowledge.de/vocab/CoreConceptData.rdf"
         )
 
     if not args.tools:
@@ -267,7 +265,7 @@ if __name__ == 'main':
             solutions=args.solutions)
         for s in solutions:
             print("Solution:")
-            print(s.to_rdf().serialize(format="turtle").decode("utf-8"))
+            print(s.serialize(format="turtle").encode("utf-8"))
 
         running_total += len(solutions)
         logging.info("Running total: {}".format(running_total))

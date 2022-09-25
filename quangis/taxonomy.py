@@ -5,8 +5,7 @@ Methods and datatypes to manipulate taxonomies.
 from __future__ import annotations
 
 import logging
-from rdflib import URIRef
-from typing import List, Optional, Dict
+from rdflib.term import Node
 
 from quangis import error
 from quangis.ontology import Ontology
@@ -24,24 +23,25 @@ class Taxonomy(object):
     removed into a minimal set of subsumption relations.
     """
 
-    def __init__(self, root: URIRef):
+    def __init__(self, root: Node):
         self._root = root
-        self._parents: Dict[URIRef, URIRef] = {}
-        self._depth: Dict[URIRef, int] = {}
+        self._parents: dict[Node, Node] = {}
+        self._depth: dict[Node, int] = {}
 
     def __str__(self, node=None, level=0) -> str:
         node = node or self._root
 
-        result = "\t"*level + "`- " + shorten(node) + " (" + str(self._depth.get(node, 0)) + ")\n"
+        result = ("\t" * level + "`- " + shorten(node) + " ("
+            + str(self._depth.get(node, 0)) + ")\n")
         for child in self.children(node):
-            result += self.__str__(node=child, level=level+1)
+            result += self.__str__(node=child, level=level + 1)
         return result
 
     @property
-    def root(self) -> URIRef:
+    def root(self) -> Node:
         return self._root
 
-    def depth(self, node: URIRef) -> int:
+    def depth(self, node: Node) -> int:
         d = self._depth.get(node)
         if d:
             return d
@@ -50,23 +50,23 @@ class Taxonomy(object):
         else:
             raise error.Key("node does not exist")
 
-    def parent(self, node: URIRef) -> Optional[URIRef]:
+    def parent(self, node: Node) -> Node | None:
         return self._parents.get(node)
 
-    def children(self, node: URIRef) -> List[URIRef]:
+    def children(self, node: Node) -> list[Node]:
         # Not the most efficient, but fine for our purposes since trees will be
         # small and we hardly ever need to query for children
         return [k for k, v in self._parents.items() if v == node]
 
-    def contains(self, node: URIRef):
+    def contains(self, node: Node):
         return node == self.root or node in self._parents
 
-    def subsumes(self, superconcept: URIRef, concept: URIRef) -> bool:
+    def subsumes(self, superconcept: Node, concept: Node) -> bool:
         parent = self.parent(concept)
         return concept == superconcept or \
             bool(parent and self.subsumes(superconcept, parent))
 
-    def add(self, parent: URIRef, child: URIRef):
+    def add(self, parent: Node, child: Node):
         if child == self.root:
             raise error.Cycle()
 
@@ -102,8 +102,8 @@ class Taxonomy(object):
     @staticmethod
     def from_ontology(
             ontology: Ontology,
-            root: URIRef,
-            predicate: URIRef = RDFS.subClassOf) -> Taxonomy:
+            root: Node,
+            predicate: Node = RDFS.subClassOf) -> Taxonomy:
 
         result = Taxonomy(root)
 

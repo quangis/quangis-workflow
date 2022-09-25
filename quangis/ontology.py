@@ -6,9 +6,9 @@ from __future__ import annotations
 
 import rdflib
 import owlrl
-from rdflib import Graph, URIRef
+from rdflib import Graph
 from rdflib.term import Node
-from typing import Iterable, List
+from typing import Iterable
 
 from quangis.namespace import RDFS, namespaces
 
@@ -24,8 +24,8 @@ class Ontology(Graph):
         for prefix, ns in namespaces.items():
             self.bind(prefix, str(ns))
 
-    def dimensionality(self, concept: URIRef,
-                       dimensions: Iterable[URIRef]) -> int:
+    def dimensionality(self, concept: Node,
+                       dimensions: Iterable[Node]) -> int:
         """
         By how many dimensions is the given concept subsumed?
         """
@@ -37,7 +37,7 @@ class Ontology(Graph):
         """
         owlrl.DeductiveClosure(owlrl.RDFS_Semantics).expand(self)
 
-    def subsumed_by(self, concept: URIRef, superconcept: URIRef) -> bool:
+    def subsumed_by(self, concept: Node, superconcept: Node) -> bool:
         """
         Is a concept subsumed by a superconcept in this ontology?
         """
@@ -46,7 +46,7 @@ class Ontology(Graph):
             s == superconcept or self.subsumed_by(s, superconcept)
             for s in self.objects(subject=concept, predicate=RDFS.subClassOf))
 
-    def leaves(self) -> List[Node]:
+    def leaves(self) -> list[Node]:
         """
         Determine the exterior nodes of a taxonomy.
         """
