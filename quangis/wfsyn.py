@@ -65,15 +65,23 @@ def ape_tools(
                 'label': shorten(tool),
                 'taxonomyOperations': [tool],
                 'inputs': [
-                    SemType.project(
-                        dimensions, get_types(tools, resource)
-                    ).to_dict()
+                    {
+                        k: list(v)
+                        for k, v in
+                        SemType.project(
+                            dimensions, get_types(tools, resource)
+                        ).items()
+                    }
                     for resource in get_resources(tools, tool, is_output=False)
                 ],
                 'outputs': [
-                    SemType.project(
-                        dimensions, get_types(tools, resource)
-                    ).downcast().to_dict()
+                    {
+                        k: list(v)
+                        for k, v in
+                        SemType.project(
+                            dimensions, get_types(tools, resource)
+                        ).downcast().items()
+                    }
                     for resource in get_resources(tools, tool, is_output=True)
                 ]
             }

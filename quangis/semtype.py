@@ -1,5 +1,5 @@
 """
-A semantic type is 
+A semantic type is a mapping between type dimensions and corresponding types.
 
 These methods are used to construct semantic dimensions (subsumption trees) for
 a given list of superconcepts that identify these dimensions. It returns a
@@ -17,9 +17,10 @@ from typing import Iterable
 from quangis.taxonomy import Taxonomy
 from quangis.namespace import CCD
 from quangis.util import shorten
+from collections import defaultdict
 
 
-class SemType:
+class SemType(defaultdict):
     """
     Ontological classes of semantic types for input and output data across
     different semantic dimensions.
@@ -32,22 +33,10 @@ class SemType:
         We represent a datatype as a mapping from RDF dimension nodes to one or
         more of its subclasses.
         """
-
+        super().__init__(set)
         if mapping:
-            self._mapping = mapping
-        else:
-            self._mapping = {}
-
-    def __getitem__(self, dimension: Node) -> set[Node]:
-        if dimension in self._mapping:
-            return self._mapping[dimension]
-        else:
-            x: set[Node] = set()
-            self._mapping[dimension] = x
-            return x
-
-    def __setitem__(self, dimension: Node, value: set[Node]) -> None:
-        self._mapping[dimension] = value
+            for k, v in mapping.items():
+                self[k] = set(v)
 
     def __str__(self) -> str:
         return "{{{}}}".format(
@@ -56,41 +45,29 @@ class SemType:
                     shorten(dimension),
                     ", ".join(shorten(c) for c in classes)
                 )
-                for dimension, classes in self._mapping.items()
+                for dimension, classes in self.items()
             )
         )
 
-    def to_dict(self) -> dict[Node, list[Node]]:
-        return {
-            d: list(subclasses)
-            for d, subclasses in self._mapping.items()
-            if subclasses
-        }
-
-    def downcast(self) -> SemType:
+    def downcast(self, target={
+            CCD.NominalA: CCD.PlainNominalA,
+            CCD.OrdinalA: CCD.PlainOrdinalA,
+            CCD.IntervalA: CCD.PlainIntervalA,
+            CCD.RatioA: CCD.PlainRatioA}) -> SemType:
         """
-        Return a new SemType in which certain nodes are downcast to
-        identifiable leaf nodes. APE has a closed world assumption, in that it
-        considers the set of leaf nodes it knows about as exhaustive: it will
-        never consider branch nodes as valid answers.
+        APE has a closed world assumption, in that it considers the set of leaf
+        nodes it knows about as exhaustive. This method returns a new `SemType`
+        in which certain branch nodes are cast to identifiable leaf nodes, so
+        that they can be considered as valid answers.
         """
 
         return SemType({
-            dimension: set(self._downcast.get(n, n) for n in classes)
-            for dimension, classes in self._mapping.items()
+            dimension: set(target.get(n, n) for n in classes)
+            for dimension, classes in self.items()
         })
 
-    _downcast = {
-        CCD.NominalA: CCD.PlainNominalA,
-        CCD.OrdinalA: CCD.PlainOrdinalA,
-        CCD.IntervalA: CCD.PlainIntervalA,
-        CCD.RatioA: CCD.PlainRatioA
-    }
-
     @staticmethod
-    def project(
-            dimensions: list[Taxonomy],
-            types: Iterable[Node],
+    def project(dimensions: list[Taxonomy], types: Iterable[Node],
             fallback_to_root: bool = True) -> SemType:
         """
         This method projects given nodes to all dimensions given as a list of
@@ -123,6 +100,6 @@ class SemType:
 
             # If there is no suitable node, just project to the root of the
             # dimension
-            if fallback_to_root and not result[dim]:
+            if fallback_to_root and dim not in result:
                 result[dim] = {dim}
         return result
