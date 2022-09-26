@@ -13,9 +13,12 @@ import argparse
 import logging
 import urllib.request
 import itertools
+from itertools import count
 from importlib import reload
 from rdflib.term import Node, BNode
 from apey import APE, Workflow, ToolsDict
+from cct import cct
+from transformation_algebra.util.common import build_transformation
 
 from quangis.semtype import SemType
 from quangis.namespace import CCD, TOOLS, OWL, RDF, RDFS, ADA, WF
@@ -213,7 +216,7 @@ if __name__ == '__main__':
     parser.add_argument(
         '-n', '--solutions',
         type=int,
-        default=5,
+        default=1,
         help="number of solution workflows attempted of find")
 
     parser.add_argument(
@@ -240,8 +243,7 @@ if __name__ == '__main__':
     if not args.tools:
         args.tools = download_if_missing(
             path="ToolDescription.ttl",
-            url="https://raw.githubusercontent.com/simonscheider/"
-                "QuAnGIS/master/ToolRepository/ToolDescription.ttl"
+            url="https://raw.githubusercontent.com/quangis/cct/master/tools/tools.ttl"
         )
 
     logging.info("Dimensions: {}".format(", ".join(
@@ -272,8 +274,11 @@ if __name__ == '__main__':
             outputs=[o],
             solutions=args.solutions)
         for s in solutions:
-            print("Solution:")
-            print(s.serialize(format="turtle").encode("utf-8"))
+            fn = f"solution{shorten(s.root)}.ttl"
+            print("Building transformation graph...")
+            g = build_transformation(cct, tools, s)
+            print(f"Writing solution {fn}")
+            g.serialize(fn, format="ttl")
 
         running_total += len(solutions)
         logging.info("Running total: {}".format(running_total))

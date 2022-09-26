@@ -18,6 +18,7 @@ ADA = Namespace("http://geographicknowledge.de/vocab/AnalysisData.rdf#")
 WF = Namespace("http://geographicknowledge.de/vocab/Workflow.rdf#")
 GIS = Namespace("http://geographicknowledge.de/vocab/GISConcepts.rdf#")
 TOOLS = Namespace("http://geographicknowledge.de/vocab/GISTools.rdf#")
+EX = Namespace('https://example.com/#')
 
 # Also provide a mapping for easy programmatic access
 namespaces = {
