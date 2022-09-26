@@ -6,16 +6,20 @@ import tempfile
 import json
 import jpype
 import jpype.imports
+from itertools import count
 from rdflib import Graph, BNode, URIRef
 from rdflib.term import Node
 from rdflib.namespace import Namespace, RDF
-from typing import Iterable, Tuple, Dict, List, Union
+from typing import Iterable, Tuple, Dict, List, Union, Iterator
 from typing_extensions import TypedDict
+from transformation_algebra.namespace import EX
 
 import apey.data
 
+# https://repo1.maven.org/maven2/io/github/sanctuuary/APE/2.0.3/APE-2.0.3.jar
+
 # We need version 1.1.5's API; lower versions won't work
-CLASS_PATH = pyAPE.data.get('APE-1.1.5-executable.jar', url=(
+CLASS_PATH = apey.data.get('APE-1.1.5-executable.jar', url=(
     'https://github.com/sanctuuary/APE'
     '/releases/download/v1.1.5/APE-1.1.5-executable.jar'))
 jpype.startJVM(classpath=[str(CLASS_PATH)])
@@ -34,9 +38,9 @@ import nl.uu.cs.ape.sat.core.solutionStructure  # noqa: E402
 ToolDict = TypedDict('ToolDict', {
     'id': str,
     'label': str,
-    'inputs': List[Dict[URIRef, List[URIRef]]],
-    'outputs': List[Dict[URIRef, List[URIRef]]],
-    'taxonomyOperations': List[URIRef]
+    'inputs': List[Dict[Node, List[Node]]],
+    'outputs': List[Dict[Node, List[Node]]],
+    'taxonomyOperations': List[Node]
 })
 
 
@@ -47,7 +51,7 @@ ToolsDict = TypedDict('ToolsDict', {
 
 
 "Type of semantic type nodes, represented as a dictionary of rdflib nodes."
-TypeNode = Dict[URIRef, List[URIRef]]
+TypeNode = Dict[Node, List[Node]]
 
 
 class APE(object):
@@ -60,20 +64,19 @@ class APE(object):
             taxonomy: Union[str, Graph],
             tools: Union[str, ToolsDict],
             namespace: Namespace,
-            tool_root: URIRef,
-            dimensions: List[URIRef],
+            tool_root: Node,
+            dimensions: List[Node],
             strictToolAnnotations: bool = True):
 
         # Serialize if we weren't given paths
         if isinstance(taxonomy, Graph):
             fd, taxonomy_file = tempfile.mkstemp(prefix='apey-', suffix='.rdf')
-            with open(fd, 'w') as f:
-                taxonomy.serialize(destination=f, format='xml')
+            taxonomy.serialize(destination=taxonomy_file, format='xml')
         else:
             taxonomy_file = taxonomy
 
         if isinstance(tools, dict):
-            fd, tools_file = tempfile.mkstemp(prefix='pyAPE-', suffix='.json')
+            fd, tools_file = tempfile.mkstemp(prefix='apey-', suffix='.json')
             with open(fd, 'w') as f:
                 json.dump(tools, f)
         else:
@@ -100,6 +103,7 @@ class APE(object):
     def run(self,
             inputs: Iterable[TypeNode],
             outputs: Iterable[TypeNode],
+            names: Iterator[URIRef] = (EX[f"solution{i}"] for i in count()),
             solution_length: Tuple[int, int] = (1, 10),
             solutions: int = 10,
             timeout: int = 600) -> List[Workflow]:
@@ -125,7 +129,7 @@ class APE(object):
         result = self.ape.runSynthesis(config)
 
         return [
-            Workflow(result.get(i))
+            Workflow(result.get(i), root=next(names))
             for i in range(result.getNumberOfSolutions())
         ]
 
@@ -161,14 +165,15 @@ class Workflow(Graph):
 
     def __init__(
             self,
-            java_wf: nl.uu.cs.ape.sat.core.solutionStructure.SolutionWorkflow):
+            java_wf: nl.uu.cs.ape.sat.core.solutionStructure.SolutionWorkflow,
+            root: URIRef):
         """
         Create RDF graph from Java object.
         """
 
         super().__init__()
 
-        self.root: Node = BNode()
+        self.root: Node = root
         self.resources: Dict[str, Node] = {}
         self.add((self.root, RDF.type, WF.Workflow))
 
@@ -202,7 +207,7 @@ class Workflow(Graph):
 
         return mod_node
 
-    def add_resource(self, type_node: nl.uu.cs.ape.sat.models.Type) -> BNode:
+    def add_resource(self, type_node: nl.uu.cs.ape.sat.models.Type) -> Node:
         """
         Add a blank node representing a resource of the given type to the RDF
         graph, and return it.
