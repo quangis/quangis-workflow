@@ -17,7 +17,7 @@ from typing import Iterable
 
 from quangis.namespace import CCD, RDFS
 from quangis.util import shorten
-from collections import defaultdict, deque
+from collections import deque
 
 
 class Dimension(Graph):
@@ -39,7 +39,7 @@ class Dimension(Graph):
         f(root)
 
     def contains(self, node: Node) -> bool:
-        return any(self[node])
+        return (node, None, None) in self or (None, None, node) in self
 
     def parents(self, node: Node) -> Iterable[Node]:
         return self.objects(node, RDFS.subClassOf)
@@ -51,20 +51,36 @@ class Dimension(Graph):
 
 
 # TODO there can be multiple things in a single dimension?
-class SemType(defaultdict):
+class SemType(dict):
     """
     Ontological classes of semantic types for input and output data across
     different semantic dimensions.
     """
 
-    def __init__(self, mapping: dict[Dimension, set[Node]] = dict()):
+    def __init__(self, *dimensions: Dimension):
         """
         We represent a datatype as a mapping from RDF dimension nodes to one or
         more of its subclasses.
         """
-        super().__init__(set)
-        for k, v in mapping.items():
-            self[k] = set(v)
+        super().__init__()
+        for d in dimensions:
+            self[d] = set()
+
+    def __getitem__(self, k: Dimension | Node) -> set[Node]:
+        return super().__getitem__(
+            k if isinstance(k, Dimension) else self.dimension(k))
+
+    def __setitem__(self, k: Dimension | Node, v: set[Node]) -> None:
+        return super().__setitem__(
+            k if isinstance(k, Dimension) else self.dimension(k), v)
+
+    def dimension(self, key: Node) -> Dimension:
+        """
+        Convert the root of a dimension to the corresponding dimension.
+        """
+        key, = (d for d in self.keys() if d.root == key)
+        assert isinstance(key, Dimension)
+        return key
 
     def __str__(self) -> str:
         return "{{{}}}".format(
@@ -88,11 +104,9 @@ class SemType(defaultdict):
         in which certain branch nodes are cast to identifiable leaf nodes, so
         that they can be considered as valid answers.
         """
-
-        return SemType({
-            dimension: set(target.get(n, n) for n in classes)
-            for dimension, classes in self.items()
-        })
+        for dimension, classes in self.items():
+            self[dimension] = set(target.get(n, n) for n in classes)
+        return self
 
     @staticmethod
     def project(dimensions: Iterable[Dimension], types: Iterable[Node]) -> SemType:
@@ -103,15 +117,14 @@ class SemType(defaultdict):
         dimension (ie a node that belongs to exactly one dimension).
         """
 
-        result = SemType()
+        result = SemType(*dimensions)
 
         for d in dimensions:
             other_dimensions = list(d2 for d2 in dimensions if d2 is not d)
             for node in types:
-                if d.contains(node):
-                    continue
-
                 projection: list[Node] = []
+                if not d.contains(node):
+                    continue
 
                 queue = deque([node])
                 while len(queue) > 0:
@@ -123,5 +136,4 @@ class SemType(defaultdict):
                             projection.append(current)
 
                 result[d].update(projection)
-
         return result
