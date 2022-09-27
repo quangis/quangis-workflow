@@ -17,7 +17,6 @@ from typing import Iterable
 
 from quangis.namespace import CCD, RDFS
 from quangis.util import shorten
-from collections import deque
 
 
 class Dimension(Graph):
@@ -126,11 +125,11 @@ class SemType(dict):
                 if not d.contains(node):
                     continue
 
-                queue = deque([node])
-                while len(queue) > 0:
-                    current = queue.pop()
+                stack = [node]
+                while len(stack) > 0:
+                    current = stack.pop()
                     if any(d2.contains(current) for d2 in other_dimensions):
-                        queue.extend(d.parents(current))
+                        stack.extend(d.parents(current))
                     else:
                         if not any(d.subsume(p, current) for p in projection):
                             projection.append(current)
