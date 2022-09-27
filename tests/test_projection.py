@@ -1,9 +1,8 @@
 import unittest
 
+from rdflib import Graph
 from quangis.namespace import EM, CCD
-from quangis.semtype import SemType
-from quangis.ontology import Ontology
-from quangis.taxonomy import Taxonomy
+from quangis.semtype import SemType, Dimension
 
 
 class TestProjection(unittest.TestCase):
@@ -11,13 +10,15 @@ class TestProjection(unittest.TestCase):
     def test_projection(self):
         """
         To test the correctness of the class projection based on a list of
-        examples. More of an integration test, I suppose.
+        examples.
         """
 
-        ccd = Ontology.from_rdf('CoreConceptData.rdf')
+        ccd = Graph()
+        ccd.parse('CoreConceptData.rdf', format='xml')
+
         dimensions = [
-            Taxonomy.from_ontology(ccd, dimension)
-            for dimension in [CCD.CoreConceptQ, CCD.LayerA, CCD.NominalA]
+            Dimension(root, source=ccd)
+            for root in [CCD.CoreConceptQ, CCD.LayerA, CCD.NominalA]
         ]
 
         testnodes = [
@@ -44,7 +45,7 @@ class TestProjection(unittest.TestCase):
         ]
 
         for ix, node in enumerate(testnodes):
-            p = SemType.project(dimensions, [node], fallback_to_root=False)
+            p = SemType.project(dimensions, [node])
             self.assertEqual(p[CCD.CoreConceptQ], set(correctCC[ix]))
             self.assertEqual(p[CCD.LayerA], set(correctLayerA[ix]))
             self.assertEqual(p[CCD.NominalA], set(correctNominalA[ix]))
