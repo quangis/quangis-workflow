@@ -13,14 +13,10 @@ from quangis.util import shorten
 from rdflib import Graph
 
 
-class Taxonomy(object):
+class Dimension(object):
     """
-    A taxonomy is a subsumption tree: unique subclass relations to a single
-    root. Since in general, a directed acyclic graph cannot be turned into a
-    tree (see Topological ordering of a DAG), this will raise an error if there
-    is a cycle or if something is a subclass of two classes that are not
-    subclasses to eachother. However, transitive relations are automatically
-    removed into a minimal set of subsumption relations.
+    A semantic dimension is a directed acyclic graph of semantic subclasses
+    belonging to that dimension.
     """
 
     def __init__(self, root: Node):
@@ -101,9 +97,9 @@ class Taxonomy(object):
 
     @staticmethod
     def from_graph(ontology: Graph, root: Node,
-            predicate: Node = RDFS.subClassOf) -> Taxonomy:
+            predicate: Node = RDFS.subClassOf) -> Dimension:
 
-        result = Taxonomy(root)
+        result = Dimension(root)
 
         def f(node):
             for child in ontology.subjects(predicate, node):

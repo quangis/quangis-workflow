@@ -22,7 +22,7 @@ from transformation_algebra.util.common import build_transformation
 
 from quangis.semtype import SemType
 from quangis.namespace import CCD, TOOLS, OWL, RDF, RDFS, ADA, WF
-from quangis.taxonomy import Taxonomy
+from quangis.dimension import Dimension
 from quangis.util import uri, shorten
 
 
@@ -53,7 +53,7 @@ def get_types(tools: Graph, resource: Node) -> list[Node]:
     return list(tools.objects(resource, RDF.type))
 
 
-def ape_tools(tools: Graph, dimensions: list[Taxonomy]) -> ToolsDict:
+def ape_tools(tools: Graph, dimensions: list[Dimension]) -> ToolsDict:
     """
     Project tool annotations with the projection function, convert it to a
     dictionary that APE understands
@@ -92,7 +92,7 @@ def ape_tools(tools: Graph, dimensions: list[Taxonomy]) -> ToolsDict:
 
 
 def ape_taxonomy(
-        types: Graph, tools: Graph, dimensions: list[Taxonomy]) -> Graph:
+        types: Graph, tools: Graph, dimensions: list[Dimension]) -> Graph:
     """
     Extracts a taxonomy of toolnames from the tool description combined with a
     core OWL taxonomy of types.
@@ -131,7 +131,7 @@ class WorkflowSynthesis(APE):
     the form we want it to.
     """
 
-    def __init__(self, types: Graph, tools: Graph, dimensions: list[Taxonomy]):
+    def __init__(self, types: Graph, tools: Graph, dimensions: list[Dimension]):
         super().__init__(
             taxonomy=ape_taxonomy(types, tools, dimensions),
             tools=ape_tools(tools, dimensions),
@@ -144,7 +144,7 @@ class WorkflowSynthesis(APE):
         return super().run(*nargs, **kwargs)
 
 
-def get_data(fn: str, dimensions: list[Taxonomy]) -> list[SemType]:
+def get_data(fn: str, dimensions: list[Dimension]) -> list[SemType]:
     """
     Read a newline-separated file of SemTypes represented by comma-separated
     URIs.
@@ -251,7 +251,7 @@ if __name__ == '__main__':
     tools.parse(args.tools, format='ttl')
 
     logging.info("Compute subsumption trees for the dimensions...")
-    dimensions = [Taxonomy.from_graph(types, d) for d in args.dimension]
+    dimensions = [Dimension.from_graph(types, d) for d in args.dimension]
 
     logging.info("Starting APE...")
     wfsyn = WorkflowSynthesis(types=types, tools=tools, dimensions=dimensions)
