@@ -38,6 +38,9 @@ class Dimension(Graph):
 
         f(root)
 
+    def contains(self, node: Node) -> bool:
+        return any(self[node])
+
     def parents(self, node: Node) -> Iterable[Node]:
         return self.objects(node, RDFS.subClassOf)
 
@@ -105,7 +108,7 @@ class SemType(defaultdict):
         for d in dimensions:
             other_dimensions = list(d2 for d2 in dimensions if d2 is not d)
             for node in types:
-                if node not in d:
+                if d.contains(node):
                     continue
 
                 projection: list[Node] = []
@@ -113,7 +116,7 @@ class SemType(defaultdict):
                 queue = deque([node])
                 while len(queue) > 0:
                     current = queue.pop()
-                    if any(current in d2 for d2 in other_dimensions):
+                    if any(d2.contains(current) for d2 in other_dimensions):
                         queue.extend(d.parents(current))
                     else:
                         if not any(d.subsume(p, current) for p in projection):

@@ -113,7 +113,7 @@ def ape_taxonomy(
                 or s == o or s == OWL.Nothing):
             continue
 
-        if sum(1 for dim in dimensions if o in dim) == 1:
+        if sum(1 for dim in dimensions if dim.contains(o)) == 1:
             taxonomy.add((o, p, s))
 
     # Add common upper class for all data types
