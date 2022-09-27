@@ -12,9 +12,9 @@ import os.path
 import argparse
 import logging
 import urllib.request
-import itertools
-from itertools import count
+from itertools import chain, product
 from importlib import reload
+from rdflib import Graph
 from rdflib.term import Node, BNode
 from apey import APE, Workflow, ToolsDict
 from cct import cct
@@ -22,13 +22,12 @@ from transformation_algebra.util.common import build_transformation
 
 from quangis.semtype import SemType
 from quangis.namespace import CCD, TOOLS, OWL, RDF, RDFS, ADA, WF
-from quangis.ontology import Ontology
 from quangis.taxonomy import Taxonomy
 from quangis.util import uri, shorten
 
 
 def get_resources(
-        tools: Ontology,
+        tools: Graph,
         tool: Node,
         is_output: bool) -> list[Node]:
     """
@@ -47,15 +46,14 @@ def get_resources(
     return resources
 
 
-def get_types(tools: Ontology, resource: Node) -> list[Node]:
+def get_types(tools: Graph, resource: Node) -> list[Node]:
     """
     Returns a list of types of some tool input/output resource.
     """
     return list(tools.objects(resource, RDF.type))
 
 
-def ape_tools(
-        tools: Ontology, dimensions: list[Taxonomy]) -> ToolsDict:
+def ape_tools(tools: Graph, dimensions: list[Taxonomy]) -> ToolsDict:
     """
     Project tool annotations with the projection function, convert it to a
     dictionary that APE understands
@@ -94,15 +92,13 @@ def ape_tools(
 
 
 def ape_taxonomy(
-        types: Ontology,
-        tools: Ontology,
-        dimensions: list[Taxonomy]) -> Ontology:
+        types: Graph, tools: Graph, dimensions: list[Taxonomy]) -> Graph:
     """
     Extracts a taxonomy of toolnames from the tool description combined with a
     core OWL taxonomy of types.
     """
 
-    taxonomy = Ontology()
+    taxonomy = Graph()
 
     for (s, p, o) in tools.triples((None, TOOLS.implements, None)):
         taxonomy.add((o, RDFS.subClassOf, s))
@@ -110,13 +106,15 @@ def ape_taxonomy(
         taxonomy.add((o, RDF.type, OWL.Class))
         taxonomy.add((s, RDFS.subClassOf, TOOLS.Tool))
 
-    # Only keep subclass nodes intersecting with exactly one dimension
-    for (o, p, s) in itertools.chain(
+    # Only keep subclass nodes that intersect with exactly one dimension
+    for o, p, s in chain(
             types.triples((None, RDFS.subClassOf, None)),
             types.triples((None, RDF.type, OWL.Class))):
-        if type(s) != BNode and type(o) != BNode \
-                and s != o and s != OWL.Nothing and \
-                types.dimensionality(o, [d.root for d in dimensions]) == 1:
+        if (isinstance(s, BNode) or isinstance(o, BNode)
+                or s == o or s == OWL.Nothing):
+            continue
+
+        if sum(1 for d in dimensions if d.contains(o)) == 1:
             taxonomy.add((o, p, s))
 
     # Add common upper class for all data types
@@ -133,11 +131,7 @@ class WorkflowSynthesis(APE):
     the form we want it to.
     """
 
-    def __init__(
-            self,
-            types: Ontology,
-            tools: Ontology,
-            dimensions: list[Taxonomy]):
+    def __init__(self, types: Graph, tools: Graph, dimensions: list[Taxonomy]):
         super().__init__(
             taxonomy=ape_taxonomy(types, tools, dimensions),
             tools=ape_tools(tools, dimensions),
@@ -251,11 +245,13 @@ if __name__ == '__main__':
     )))
 
     logging.info("Reading RDF...")
-    types = Ontology.from_rdf(args.types)
-    tools = Ontology.from_rdf(args.tools)
+    types = Graph()
+    types.parse(args.types, format='xml')
+    tools = Graph()
+    tools.parse(args.tools, format='ttl')
 
     logging.info("Compute subsumption trees for the dimensions...")
-    dimensions = [Taxonomy.from_ontology(types, d) for d in args.dimension]
+    dimensions = [Taxonomy.from_graph(types, d) for d in args.dimension]
 
     logging.info("Starting APE...")
     wfsyn = WorkflowSynthesis(types=types, tools=tools, dimensions=dimensions)
@@ -267,7 +263,7 @@ if __name__ == '__main__':
     outputs = get_data(args.outputs, dimensions)
 
     running_total = 0
-    for i, o in itertools.product(inputs, outputs):
+    for i, o in product(inputs, outputs):
         logging.info("Running synthesis for {} -> {}".format(i, o))
         solutions = wfsyn.run(
             inputs=[i],
