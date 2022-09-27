@@ -114,7 +114,7 @@ def ape_taxonomy(
                 or s == o or s == OWL.Nothing):
             continue
 
-        if sum(1 for d in dimensions if d.contains(o)) == 1:
+        if sum(1 for dim in dimensions if o in dim) == 1:
             taxonomy.add((o, p, s))
 
     # Add common upper class for all data types
@@ -251,7 +251,7 @@ if __name__ == '__main__':
     tools.parse(args.tools, format='ttl')
 
     logging.info("Compute subsumption trees for the dimensions...")
-    dimensions = [Dimension.from_graph(types, d) for d in args.dimension]
+    dimensions = [Dimension(d, types) for d in args.dimension]
 
     logging.info("Starting APE...")
     wfsyn = WorkflowSynthesis(types=types, tools=tools, dimensions=dimensions)

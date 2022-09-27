@@ -81,10 +81,10 @@ class SemType(defaultdict):
             for node in types:
                 projected_node: Node | None = node
                 while projected_node and any(
-                        other_dimension.contains(projected_node)
+                        projected_node in other_dimension
                         for other_dimension in dimensions
                         if other_dimension is not dimension):
-                    projected_node = dimension.parent(projected_node)
+                    projected_node = dimension.parents(projected_node)
                 if projected_node:
                     result[dim].add(projected_node)
 
