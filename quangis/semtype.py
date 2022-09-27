@@ -17,7 +17,7 @@ from typing import Iterable
 
 from quangis.namespace import CCD, RDFS
 from quangis.util import shorten
-from collections import defaultdict
+from collections import defaultdict, deque
 
 
 class Dimension(Graph):
@@ -38,8 +38,13 @@ class Dimension(Graph):
 
         f(root)
 
-    def parents(self, node: Node) -> list[Node]:
-        return list(self.objects(node, RDFS.subClassOf))
+    def parents(self, node: Node) -> Iterable[Node]:
+        return self.objects(node, RDFS.subClassOf)
+
+    def subsume(self, subclass: Node, superclass: Node) -> bool:
+        return (subclass, RDFS.subClassOf, superclass) in self \
+            or any(self.subsume(parent, superclass)
+                for parent in self.parents(subclass))
 
 
 # TODO there can be multiple things in a single dimension?
@@ -49,7 +54,7 @@ class SemType(defaultdict):
     different semantic dimensions.
     """
 
-    def __init__(self, mapping: dict[Node, set[Node]] = dict()):
+    def __init__(self, mapping: dict[Dimension, set[Node]] = dict()):
         """
         We represent a datatype as a mapping from RDF dimension nodes to one or
         more of its subclasses.
@@ -62,7 +67,7 @@ class SemType(defaultdict):
         return "{{{}}}".format(
             "; ".join(
                 "{} = {}".format(
-                    shorten(dimension),
+                    shorten(dimension.root),
                     ", ".join(shorten(c) for c in classes)
                 )
                 for dimension, classes in self.items()
@@ -87,31 +92,33 @@ class SemType(defaultdict):
         })
 
     @staticmethod
-    def project(dimensions: Iterable[Dimension], types: Iterable[Node],
-            fallback_to_root: bool = True) -> SemType:
+    def project(dimensions: Iterable[Dimension], types: Iterable[Node]) -> SemType:
         """
         Projects type nodes to the given dimensions. Any type that is subsumed
-        by at least one dimension can be projected to the closest parent in the
-        corresponding subsumption tree which belongs to the core of that
-        dimension (ie the a node that belongs to exactly one dimension).
+        by at least one dimension can be projected to the closest parent(s) in
+        the corresponding taxonomy graph which belongs to the core of that
+        dimension (ie a node that belongs to exactly one dimension).
         """
 
         result = SemType()
 
-        for dimension in dimensions:
-            dim = dimension.root
+        for d in dimensions:
+            other_dimensions = list(d2 for d2 in dimensions if d2 is not d)
             for node in types:
-                projected_node: Node | None = node
-                while projected_node and any(
-                        projected_node in other_dimension
-                        for other_dimension in dimensions
-                        if other_dimension is not dimension):
-                    projected_node = dimension.parents(projected_node)
-                if projected_node:
-                    result[dim].add(projected_node)
+                if node not in d:
+                    continue
 
-            # If there is no suitable node, just project to the root of the
-            # dimension
-            if fallback_to_root and dim not in result:
-                result[dim] = {dim}
+                projection: list[Node] = []
+
+                queue = deque([node])
+                while len(queue) > 0:
+                    current = queue.pop()
+                    if any(current in d2 for d2 in other_dimensions):
+                        queue.extend(d.parents(current))
+                    else:
+                        if not any(d.subsume(p, current) for p in projection):
+                            projection.append(current)
+
+                result[d].update(projection)
+
         return result
