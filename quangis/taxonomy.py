@@ -8,9 +8,60 @@ import logging
 from rdflib.term import Node
 
 from quangis import error
-from quangis.ontology import Ontology
-from quangis.namespace import RDFS
+from quangis.namespace import RDFS, namespaces
 from quangis.util import shorten
+import rdflib
+import owlrl
+from rdflib import Graph
+from typing import Iterable
+
+
+class Ontology(Graph):
+    """
+    An ontology is simply an RDF graph.
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        for prefix, ns in namespaces.items():
+            self.bind(prefix, str(ns))
+
+    def dimensionality(self, concept: Node,
+                       dimensions: Iterable[Node]) -> int:
+        """
+        By how many dimensions is the given concept subsumed?
+        """
+        return sum(1 for d in dimensions if self.subsumed_by(concept, d))
+
+    def expand(self) -> None:
+        """
+        Expand deductive closure under RDFS semantics.
+        """
+        owlrl.DeductiveClosure(owlrl.RDFS_Semantics).expand(self)
+
+    def subsumed_by(self, concept: Node, superconcept: Node) -> bool:
+        """
+        Is a concept subsumed by a superconcept in this ontology?
+        """
+        # TODO assumes that RDFS.subClassOf graph is not cyclical
+        return concept == superconcept or any(
+            s == superconcept or self.subsumed_by(s, superconcept)
+            for s in self.objects(subject=concept, predicate=RDFS.subClassOf))
+
+    def leaves(self) -> list[Node]:
+        """
+        Determine the exterior nodes of a taxonomy.
+        """
+        return [
+            n for n in self.subjects(predicate=RDFS.subClassOf, object=None)
+            if not (None, RDFS.subClassOf, n) in self]
+
+    @staticmethod
+    def from_rdf(path: str, format: str = None) -> Ontology:
+        g = Ontology()
+        g.parse(path, format=format or rdflib.util.guess_format(path))
+        return g
 
 
 class Taxonomy(object):
