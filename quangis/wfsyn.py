@@ -20,9 +20,8 @@ from apey import APE, Workflow, ToolsDict
 from cct import cct
 from transformation_algebra.util.common import build_transformation
 
-from quangis.semtype import SemType
+from quangis.semtype import SemType, Dimension
 from quangis.namespace import CCD, TOOLS, OWL, RDF, RDFS, ADA, WF
-from quangis.dimension import Dimension
 from quangis.util import uri, shorten
 
 

@@ -11,13 +11,35 @@ of concepts from different semantic dimensions.
 
 from __future__ import annotations
 
+from rdflib import Graph
 from rdflib.term import Node
 from typing import Iterable
 
-from quangis.dimension import Dimension
-from quangis.namespace import CCD
+from quangis.namespace import CCD, RDFS
 from quangis.util import shorten
 from collections import defaultdict
+
+
+class Dimension(Graph):
+    """
+    A semantic dimension is a directed acyclic graph of semantic subclasses
+    belonging to that dimension.
+    """
+
+    def __init__(self, root: Node, source: Graph):
+        super().__init__()
+        self.root = root
+
+        def f(node):
+            for child in source.subjects(RDFS.subClassOf, node):
+                # TODO catch cycles
+                self.add((child, RDFS.subClassOf, node))
+                f(child)
+
+        f(root)
+
+    def parents(self, node: Node) -> list[Node]:
+        return list(self.objects(node, RDFS.subClassOf))
 
 
 # TODO there can be multiple things in a single dimension?
