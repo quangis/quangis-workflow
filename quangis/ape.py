@@ -134,22 +134,42 @@ class APE(object):
         if tools != tools_file:
             os.remove(tools_file)
 
+    def type(self, is_output: bool, t: DimTypes) -> j_ape.models.Type:
+        """
+        Convert `DimTypes` to the corresponding APE structure.
+        """
+
+        obj = j_json.JSONObject()
+        for dimension, classes in t.items():
+            array = j_json.JSONArray()
+            for c in classes:
+                array.put(str(c))
+            obj.put(str(dimension.root), array)
+
+        return j_ape.models.Type.taxonomyInstanceFromJson(
+            obj, self.setup, is_output)
+
+    def type_array(self, is_output: bool,
+            types: Iterable[DimTypes]) -> j_json.JSONArray:
+
+        return j_util.Arrays.asList(*(
+            self.type(is_output, t) for t in types))
+
     def run(self,
             inputs: Iterable[DimTypes],
             outputs: Iterable[DimTypes],
             names: Iterator[URIRef] = (EX[f"solution{i}"] for i in count()),
             solution_length: tuple[int, int] = (1, 10),
             solutions: int = 10,
-            timeout: int = 600) -> Iterator[Workflow]:
+            timeout: int = 600,
+            output_dir: Path = Path(".")) -> Iterator[Workflow]:
 
-        inputs = j_util.Arrays.asList(*(
-            self.type_node(i, False) for i in inputs))
-        outputs = j_util.Arrays.asList(*(
-            self.type_node(o, True) for o in outputs))
+        inputs = self.type_array(False, inputs)
+        outputs = self.type_array(True, outputs)
 
         config = j_ape.configuration.APERunConfig\
             .builder()\
-            .withSolutionDirPath(".")\
+            .withSolutionDirPath(str(output_dir))\
             .withConstraintsJSON(j_json.JSONObject())\
             .withSolutionMinLength(solution_length[0])\
             .withSolutionMaxLength(solution_length[1])\
@@ -164,28 +184,9 @@ class APE(object):
 
         for i in range(result.getNumberOfSolutions()):
             uri: URIRef = next(names)
-            ape_wf: j_ape.core.solutionStructure.SolutionWorkflow = result.get(i)
-            yield Workflow(ape_wf, root=uri)
-
-    def type_node(
-            self,
-            typenode: DimTypes,
-            is_output: bool = False) -> j_ape.models.Type:
-        """
-        Convert dictionary representing a semantic type to the Java objects
-        defined .
-        """
-
-        setup: j_ape.utils.APEDomainSetup = self.setup
-        obj = j_json.JSONObject()
-        for dimension, classes in typenode.items():
-            arr = j_json.JSONArray()
-            for c in classes:
-                arr.put(str(c))
-            obj.put(str(dimension.root), arr)
-
-        return j_ape.models.Type.taxonomyInstanceFromJson(
-            obj, setup, is_output)
+            wf = Workflow(uri)
+            wf.add_wf(result.get(i))
+            yield wf
 
 
 WF = Namespace("http://geographicknowledge.de/vocab/Workflow.rdf#")
@@ -194,63 +195,68 @@ WF = Namespace("http://geographicknowledge.de/vocab/Workflow.rdf#")
 class Workflow(Graph):
     """
     A single solution workflow represented as an RDF graph in the
-    http://geographicknowledge.de/vocab/Workflow.rdf# namespace.
+    <http://geographicknowledge.de/vocab/Workflow.rdf#> namespace.
     """
 
-    def __init__(
-            self,
-            java_wf: j_ape.core.solutionStructure.SolutionWorkflow,
-            root: URIRef):
+    def __init__(self, root: URIRef):
         """
         Create RDF graph from Java object.
         """
 
         super().__init__()
 
+        # Map APE's tool applications and resources to RDF ones
         self.root: Node = root
-        self.resources: dict[str, Node] = {}
+        self.apps: dict[j_ape.core.solutionStructure.ModuleNode, Node] = dict()
+        self.resources: dict[j_ape.models.Type, Node] = dict()
+
+    def add_wf(self, workflow: j_ape.core.solutionStructure.SolutionWorkflow):
         self.add((self.root, RDF.type, WF.Workflow))
 
-        for src in java_wf.getWorkflowInputTypeStates():
-            node = self.add_resource(src)
+        for source in workflow.getWorkflowInputTypeStates():
+            node = self.add_resource(source)
             self.add((self.root, WF.source, node))
 
-        for mod in java_wf.getModuleNodes():
-            self.add_module(mod)
+        for module in workflow.getModuleNodes():
+            self.add_app(module)
 
-    def add_module(
-            self,
-            mod: j_ape.core.solutionStructure.ModuleNode) -> Node:
+    def add_app(self, module: j_ape.core.solutionStructure.ModuleNode) -> Node:
         """
         Add a blank node representing a tool module to the RDF graph, and
         return it.
         """
-        mod_node = BNode()
-        tool_node = URIRef(mod.getNodeLongLabel())
 
-        self.add((self.root, WF.edge, mod_node))
-        self.add((mod_node, WF.applicationOf, tool_node))
+        try:
+            return self.apps[module]
+        except KeyError:
+            app = BNode()
+            tool = URIRef(module.getNodeLongLabel())
 
-        for src in mod.getInputTypes():
-            node = self.add_resource(src)
-            self.add((mod_node, WF.input, node))
+            self.add((self.root, WF.edge, app))
+            self.add((app, WF.applicationOf, tool))
 
-        for dst in mod.getOutputTypes():
-            node = self.add_resource(dst)
-            self.add((mod_node, WF.output, node))
+            in_preds = (WF.input1, WF.input2, WF.input3)
+            for in_pred, type in zip(in_preds, module.getInputTypes()):
+                resource = self.add_resource(type)
+                self.add((app, in_pred, resource))
 
-        return mod_node
+            out_preds = (WF.output, WF.output2, WF.output3)
+            for out_pred, type in zip(out_preds, module.getOutputTypes()):
+                resource = self.add_resource(type)
+                self.add((app, out_pred, resource))
 
-    def add_resource(self, type_node: j_ape.models.Type) -> Node:
+            return app
+
+    def add_resource(self, type: j_ape.models.Type) -> Node:
         """
         Add a blank node representing a resource of the given type to the RDF
         graph, and return it.
         """
-        name = type_node.getShortNodeID()
-        node = self.resources.get(name)
-        if not node:
-            node = self.resources[name] = BNode()
-            for t in type_node.getTypes():
+        try:
+            return self.resources[type]
+        except KeyError:
+            resource = self.resources[type] = BNode()
+            for t in type.getTypes():
                 type_node = URIRef(t.getPredicateLongLabel())
-                self.add((node, RDF.type, type_node))
-        return node
+                self.add((resource, RDF.type, type_node))
+            return resource
