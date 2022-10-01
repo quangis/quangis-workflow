@@ -13,7 +13,7 @@ from __future__ import annotations
 
 from rdflib import Graph
 from rdflib.term import Node
-from typing import Iterable
+from typing import Iterable, MutableMapping, Iterator
 
 from quangis.namespace import CCD, RDFS
 from quangis.util import shorten
@@ -50,7 +50,7 @@ class Dimension(Graph):
 
 
 # TODO there can be multiple things in a single dimension?
-class SemType(dict):
+class SemType(MutableMapping[Dimension, set[Node]]):
     """
     Ontological classes of semantic types for input and output data across
     different semantic dimensions.
@@ -62,22 +62,30 @@ class SemType(dict):
         more of its subclasses.
         """
         super().__init__()
-        for d in dimensions:
-            self[d] = set()
+        self.data: dict[Dimension, set[Node]] = {d: set() for d in dimensions}
+
+    def __len__(self) -> int:
+        return len(self.data)
+
+    def __delitem__(self, k: Dimension) -> None:
+        del self.data[k]
+
+    def __iter__(self) -> Iterator[Dimension]:
+        return iter(self.data)
 
     def __getitem__(self, k: Dimension | Node) -> set[Node]:
-        return super().__getitem__(
+        return self.data.__getitem__(
             k if isinstance(k, Dimension) else self.dimension(k))
 
     def __setitem__(self, k: Dimension | Node, v: set[Node]) -> None:
-        return super().__setitem__(
+        return self.data.__setitem__(
             k if isinstance(k, Dimension) else self.dimension(k), v)
 
     def dimension(self, key: Node) -> Dimension:
         """
         Convert the root of a dimension to the corresponding dimension.
         """
-        key, = (d for d in self.keys() if d.root == key)
+        key, = (d for d in self.data.keys() if d.root == key)
         assert isinstance(key, Dimension)
         return key
 
@@ -88,7 +96,7 @@ class SemType(dict):
                     shorten(dimension.root),
                     ", ".join(shorten(c) for c in classes)
                 )
-                for dimension, classes in self.items()
+                for dimension, classes in self.data.items()
             )
         )
 
