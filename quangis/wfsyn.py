@@ -20,7 +20,7 @@ from cct import cct
 from transformation_algebra.util.common import build_transformation
 
 from quangis.ape import APE, Workflow, ToolsDict
-from quangis.semtype import SemType, Dimension
+from quangis.dimtypes import DimTypes, Dimension
 from quangis.namespace import CCD, TOOLS, OWL, RDF, RDFS, ADA, WF
 from quangis.util import uri, shorten
 
@@ -68,7 +68,7 @@ def ape_tools(tools: Graph, dimensions: list[Dimension]) -> ToolsDict:
                     {
                         k: list(v)
                         for k, v in
-                        SemType.project(
+                        DimensionalTypes.project(
                             dimensions, get_types(tools, resource)
                         ).items()
                     }
@@ -78,7 +78,7 @@ def ape_tools(tools: Graph, dimensions: list[Dimension]) -> ToolsDict:
                     {
                         k: list(v)
                         for k, v in
-                        SemType.project(
+                        DimensionalTypes.project(
                             dimensions, get_types(tools, resource)
                         ).downcast().items()
                     }
@@ -143,9 +143,9 @@ class WorkflowSynthesis(APE):
         return super().run(*nargs, **kwargs)
 
 
-def get_data(fn: str, dimensions: list[Dimension]) -> list[SemType]:
+def get_data(fn: str, dimensions: list[Dimension]) -> list[DimTypes]:
     """
-    Read a newline-separated file of SemTypes represented by comma-separated
+    Read a newline-separated file of `DimTypes` represented by comma-separated
     URIs.
     """
     result = []
@@ -153,7 +153,7 @@ def get_data(fn: str, dimensions: list[Dimension]) -> list[SemType]:
         for line in f.readlines():
             types = (x.strip() for x in line.split("#")[0].split(","))
             result.append(
-                SemType.project(dimensions, [uri(t) for t in types if t])
+                DimTypes.project(dimensions, [uri(t) for t in types if t])
             )
     return result
 

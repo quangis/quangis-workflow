@@ -1,5 +1,6 @@
 """
-A semantic type is a mapping between type dimensions and corresponding types.
+A dimensional type resource is a mapping between type dimensions and
+corresponding semantic types.
 
 These methods are used to construct semantic dimensions (subsumption trees) for
 a given list of superconcepts that identify these dimensions. It returns a
@@ -50,7 +51,7 @@ class Dimension(Graph):
 
 
 # TODO there can be multiple things in a single dimension?
-class SemType(MutableMapping[Dimension, set[Node]]):
+class DimTypes(MutableMapping[Dimension, set[Node]]):
     """
     Ontological classes of semantic types for input and output data across
     different semantic dimensions.
@@ -104,10 +105,10 @@ class SemType(MutableMapping[Dimension, set[Node]]):
             CCD.NominalA: CCD.PlainNominalA,
             CCD.OrdinalA: CCD.PlainOrdinalA,
             CCD.IntervalA: CCD.PlainIntervalA,
-            CCD.RatioA: CCD.PlainRatioA}) -> SemType:
+            CCD.RatioA: CCD.PlainRatioA}) -> Types:
         """
         APE has a closed world assumption, in that it considers the set of leaf
-        nodes it knows about as exhaustive. This method returns a new `SemType`
+        nodes it knows about as exhaustive. This method returns a new `Types`
         in which certain branch nodes are cast to identifiable leaf nodes, so
         that they can be considered as valid answers.
         """
@@ -116,7 +117,7 @@ class SemType(MutableMapping[Dimension, set[Node]]):
         return self
 
     @staticmethod
-    def project(dimensions: Iterable[Dimension], types: Iterable[Node]) -> SemType:
+    def project(dimensions: Iterable[Dimension], types: Iterable[Node]) -> Types:
         """
         Projects type nodes to the given dimensions. Any type that is subsumed
         by at least one dimension can be projected to the closest parent(s) in
@@ -124,7 +125,7 @@ class SemType(MutableMapping[Dimension, set[Node]]):
         dimension (ie a node that belongs to exactly one dimension).
         """
 
-        result = SemType(*dimensions)
+        result = DimTypes(*dimensions)
 
         for d in dimensions:
             other_dimensions = list(d2 for d2 in dimensions if d2 is not d)

@@ -22,7 +22,7 @@ from typing import Iterable, Iterator
 from typing_extensions import TypedDict
 from transformation_algebra.namespace import EX
 
-from quangis.semtype import SemType
+from quangis.dimtypes import DimTypes
 
 
 def data(filename: str, url: str | None = None) -> Path:
@@ -135,8 +135,8 @@ class APE(object):
             os.remove(tools_file)
 
     def run(self,
-            inputs: Iterable[SemType],
-            outputs: Iterable[SemType],
+            inputs: Iterable[DimTypes],
+            outputs: Iterable[DimTypes],
             names: Iterator[URIRef] = (EX[f"solution{i}"] for i in count()),
             solution_length: tuple[int, int] = (1, 10),
             solutions: int = 10,
@@ -169,7 +169,7 @@ class APE(object):
 
     def type_node(
             self,
-            typenode: SemType,
+            typenode: DimTypes,
             is_output: bool = False) -> j_ape.models.Type:
         """
         Convert dictionary representing a semantic type to the Java objects
