@@ -22,6 +22,8 @@ from typing import Iterable, Iterator
 from typing_extensions import TypedDict
 from transformation_algebra.namespace import EX
 
+from quangis.semtype import SemType
+
 
 def data(filename: str, url: str | None = None) -> Path:
     """
@@ -86,10 +88,6 @@ ToolsDict = TypedDict('ToolsDict', {
 })
 
 
-"Type of semantic type nodes, represented as a dictionary of rdflib nodes."
-TypeNode = dict[Node, list[Node]]
-
-
 class APE(object):
     """
     An interface to JVM. After initialization, use `.run()` to run APE.
@@ -137,8 +135,8 @@ class APE(object):
             os.remove(tools_file)
 
     def run(self,
-            inputs: Iterable[TypeNode],
-            outputs: Iterable[TypeNode],
+            inputs: Iterable[SemType],
+            outputs: Iterable[SemType],
             names: Iterator[URIRef] = (EX[f"solution{i}"] for i in count()),
             solution_length: tuple[int, int] = (1, 10),
             solutions: int = 10,
@@ -171,7 +169,7 @@ class APE(object):
 
     def type_node(
             self,
-            typenode: TypeNode,
+            typenode: SemType,
             is_output: bool = False) -> j_ape.models.Type:
         """
         Convert dictionary representing a semantic type to the Java objects
@@ -184,7 +182,7 @@ class APE(object):
             arr = j_json.JSONArray()
             for c in classes:
                 arr.put(str(c))
-            obj.put(str(dimension), arr)
+            obj.put(str(dimension.root), arr)
 
         return j_ape.models.Type.taxonomyInstanceFromJson(
             obj, setup, is_output)
