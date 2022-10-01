@@ -65,15 +65,10 @@ CLASS_PATH = data('APE-1.1.5-executable.jar', url=(
 jpype.startJVM(classpath=[str(CLASS_PATH)])
 
 # Java imports
-import java.io  # noqa: E402
-import java.util  # noqa: E402
-import org.json  # noqa: E402
-import nl.uu.cs.ape.sat as sat  # noqa: E402
-import nl.uu.cs.ape.sat  # noqa: E402
-import nl.uu.cs.ape.sat.configuration  # noqa: E402
-import nl.uu.cs.ape.sat.models  # noqa: E402
-import nl.uu.cs.ape.sat.utils  # noqa: E402
-import nl.uu.cs.ape.sat.core.solutionStructure  # noqa: E402
+import java.io as j_io  # noqa: E402
+import java.util as j_util  # noqa: E402
+import org.json as j_json  # noqa: E402
+import nl.uu.cs.ape.sat as j_ape  # noqa: E402
 
 
 ToolDict = TypedDict('ToolDict', {
@@ -124,15 +119,15 @@ class APE(object):
             tools_file = tools
 
         # Set up APE in JVM
-        self.config = nl.uu.cs.ape.sat.configuration.APECoreConfig(
-            java.io.File(taxonomy_file),
+        self.config = j_ape.configuration.APECoreConfig(
+            j_io.File(taxonomy_file),
             str(namespace),
             str(tool_root),
-            java.util.Arrays.asList(*map(str, dimensions)),
-            java.io.File(tools_file),
+            j_util.Arrays.asList(*map(str, dimensions)),
+            j_io.File(tools_file),
             strictToolAnnotations
         )
-        self.ape = nl.uu.cs.ape.sat.APE(self.config)
+        self.ape = j_ape.APE(self.config)
         self.setup = self.ape.getDomainSetup()
 
         # Safe to delete since APE should have read the files now
@@ -149,15 +144,15 @@ class APE(object):
             solutions: int = 10,
             timeout: int = 600) -> Iterator[Workflow]:
 
-        inputs = java.util.Arrays.asList(*(
+        inputs = j_util.Arrays.asList(*(
             self.type_node(i, False) for i in inputs))
-        outputs = java.util.Arrays.asList(*(
+        outputs = j_util.Arrays.asList(*(
             self.type_node(o, True) for o in outputs))
 
-        config = nl.uu.cs.ape.sat.configuration.APERunConfig\
+        config = j_ape.configuration.APERunConfig\
             .builder()\
             .withSolutionDirPath(".")\
-            .withConstraintsJSON(org.json.JSONObject())\
+            .withConstraintsJSON(j_json.JSONObject())\
             .withSolutionMinLength(solution_length[0])\
             .withSolutionMaxLength(solution_length[1])\
             .withMaxNoSolutions(solutions)\
@@ -171,27 +166,27 @@ class APE(object):
 
         for i in range(result.getNumberOfSolutions()):
             uri: URIRef = next(names)
-            ape_wf: nl.uu.cs.ape.sat.core.solutionStructure.SolutionWorkflow = result.get(i)
+            ape_wf: j_ape.core.solutionStructure.SolutionWorkflow = result.get(i)
             yield Workflow(ape_wf, root=uri)
 
     def type_node(
             self,
             typenode: TypeNode,
-            is_output: bool = False) -> nl.uu.cs.ape.sat.models.Type:
+            is_output: bool = False) -> j_ape.models.Type:
         """
         Convert dictionary representing a semantic type to the Java objects
         defined .
         """
 
-        setup: nl.uu.cs.ape.sat.utils.APEDomainSetup = self.setup
-        obj = org.json.JSONObject()
+        setup: j_ape.utils.APEDomainSetup = self.setup
+        obj = j_json.JSONObject()
         for dimension, classes in typenode.items():
-            arr = org.json.JSONArray()
+            arr = j_json.JSONArray()
             for c in classes:
                 arr.put(str(c))
             obj.put(str(dimension), arr)
 
-        return nl.uu.cs.ape.sat.models.Type.taxonomyInstanceFromJson(
+        return j_ape.models.Type.taxonomyInstanceFromJson(
             obj, setup, is_output)
 
 
@@ -206,7 +201,7 @@ class Workflow(Graph):
 
     def __init__(
             self,
-            java_wf: nl.uu.cs.ape.sat.core.solutionStructure.SolutionWorkflow,
+            java_wf: j_ape.core.solutionStructure.SolutionWorkflow,
             root: URIRef):
         """
         Create RDF graph from Java object.
@@ -227,7 +222,7 @@ class Workflow(Graph):
 
     def add_module(
             self,
-            mod: nl.uu.cs.ape.sat.core.solutionStructure.ModuleNode) -> Node:
+            mod: j_ape.core.solutionStructure.ModuleNode) -> Node:
         """
         Add a blank node representing a tool module to the RDF graph, and
         return it.
@@ -248,7 +243,7 @@ class Workflow(Graph):
 
         return mod_node
 
-    def add_resource(self, type_node: nl.uu.cs.ape.sat.models.Type) -> Node:
+    def add_resource(self, type_node: j_ape.models.Type) -> Node:
         """
         Add a blank node representing a resource of the given type to the RDF
         graph, and return it.
