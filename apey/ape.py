@@ -1,25 +1,65 @@
+"""
+A Pythonic interface to the Automated Pipeline Explorer
+<https://github.com/sanctuuary/APE> for workflow synthesis.
+"""
+
 from __future__ import annotations
 
+import sys
 import os
 import os.path
 import tempfile
 import json
+import urllib
 import jpype
 import jpype.imports
+from pathlib import Path
 from itertools import count
 from rdflib import Graph, BNode, URIRef
 from rdflib.term import Node
 from rdflib.namespace import Namespace, RDF
-from typing import Iterable, Tuple, Dict, List, Union, Iterator
+from typing import Iterable, Iterator
 from typing_extensions import TypedDict
 from transformation_algebra.namespace import EX
 
-import apey.data
+
+def data(filename: str, url: str | None = None) -> Path:
+    """
+    Get a file from the directory where we store application-specific data
+    files, or download it if it's not present.
+    """
+
+    if sys.platform.startswith("win"):
+        path = Path(os.getenv("LOCALAPPDATA"))
+    elif sys.platform.startswith("darwin"):
+        path = Path("~/Library/Application Support")
+    elif sys.platform.startswith("linux"):
+        path = Path(os.getenv("XDG_DATA_HOME", "~/.local/share"))
+    else:
+        raise RuntimeError("Unsupported platform")
+
+    path = Path(path).expanduser() / "apey" / filename
+
+    try:
+        path.mkdir(parents=True)
+    except FileExistsError:
+        pass
+
+    if not path.exists():
+        if url:
+            print(
+                f"Could not find data file {path}; now downloading from {url}",
+                file=sys.stderr)
+            urllib.request.urlretrieve(url, filename=path)
+        else:
+            raise FileNotFoundError
+
+    return path
+
 
 # https://repo1.maven.org/maven2/io/github/sanctuuary/APE/2.0.3/APE-2.0.3.jar
-
 # We need version 1.1.5's API; lower versions won't work
-CLASS_PATH = apey.data.get('APE-1.1.5-executable.jar', url=(
+CLASS_PATH = data('APE-1.1.5-executable.jar', url=(
     'https://github.com/sanctuuary/APE'
     '/releases/download/v1.1.5/APE-1.1.5-executable.jar'))
 jpype.startJVM(classpath=[str(CLASS_PATH)])
@@ -28,6 +68,7 @@ jpype.startJVM(classpath=[str(CLASS_PATH)])
 import java.io  # noqa: E402
 import java.util  # noqa: E402
 import org.json  # noqa: E402
+import nl.uu.cs.ape.sat as sat  # noqa: E402
 import nl.uu.cs.ape.sat  # noqa: E402
 import nl.uu.cs.ape.sat.configuration  # noqa: E402
 import nl.uu.cs.ape.sat.models  # noqa: E402
@@ -38,20 +79,20 @@ import nl.uu.cs.ape.sat.core.solutionStructure  # noqa: E402
 ToolDict = TypedDict('ToolDict', {
     'id': str,
     'label': str,
-    'inputs': List[Dict[Node, List[Node]]],
-    'outputs': List[Dict[Node, List[Node]]],
-    'taxonomyOperations': List[Node]
+    'inputs': list[dict[Node, list[Node]]],
+    'outputs': list[dict[Node, list[Node]]],
+    'taxonomyOperations': list[Node]
 })
 
 
 "Type of tools, comparable to the JSON format expected by APE."
 ToolsDict = TypedDict('ToolsDict', {
-    'functions': List[ToolDict]
+    'functions': list[ToolDict]
 })
 
 
 "Type of semantic type nodes, represented as a dictionary of rdflib nodes."
-TypeNode = Dict[Node, List[Node]]
+TypeNode = dict[Node, list[Node]]
 
 
 class APE(object):
@@ -61,11 +102,11 @@ class APE(object):
 
     def __init__(
             self,
-            taxonomy: Union[str, Graph],
-            tools: Union[str, ToolsDict],
+            taxonomy: str | Graph,
+            tools: str | ToolsDict,
             namespace: Namespace,
             tool_root: Node,
-            dimensions: List[Node],
+            dimensions: list[Node],
             strictToolAnnotations: bool = True):
 
         # Serialize if we weren't given paths
@@ -104,9 +145,9 @@ class APE(object):
             inputs: Iterable[TypeNode],
             outputs: Iterable[TypeNode],
             names: Iterator[URIRef] = (EX[f"solution{i}"] for i in count()),
-            solution_length: Tuple[int, int] = (1, 10),
+            solution_length: tuple[int, int] = (1, 10),
             solutions: int = 10,
-            timeout: int = 600) -> List[Workflow]:
+            timeout: int = 600) -> Iterator[Workflow]:
 
         inputs = java.util.Arrays.asList(*(
             self.type_node(i, False) for i in inputs))
@@ -128,10 +169,10 @@ class APE(object):
 
         result = self.ape.runSynthesis(config)
 
-        return [
-            Workflow(result.get(i), root=next(names))
-            for i in range(result.getNumberOfSolutions())
-        ]
+        for i in range(result.getNumberOfSolutions()):
+            uri: URIRef = next(names)
+            ape_wf: nl.uu.cs.ape.sat.core.solutionStructure.SolutionWorkflow = result.get(i)
+            yield Workflow(ape_wf, root=uri)
 
     def type_node(
             self,
@@ -174,7 +215,7 @@ class Workflow(Graph):
         super().__init__()
 
         self.root: Node = root
-        self.resources: Dict[str, Node] = {}
+        self.resources: dict[str, Node] = {}
         self.add((self.root, RDF.type, WF.Workflow))
 
         for src in java_wf.getWorkflowInputTypeStates():
