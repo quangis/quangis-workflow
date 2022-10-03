@@ -60,11 +60,13 @@ def get_data(fn: Path, dimensions: list[Dimension]) -> Iterator[DimTypes]:
     """
     with open(fn, 'r') as f:
         for line in f.readlines():
-            types = [uri(t)
-                for x in line.split("#")[0].split(",")
-                if (t := x.strip())
-            ]
-            yield DimTypes({d: [t] for d, t in zip(dimensions, types)})
+            line = line.strip()
+            if line:
+                types = [uri(t)
+                    for x in line.split("#")[0].split(",")
+                    if (t := x.strip())
+                ]
+                yield DimTypes({d: [t] for d, t in zip(dimensions, types)})
 
 
 def download_if_missing(path: Path, url: str) -> Path:

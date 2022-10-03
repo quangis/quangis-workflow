@@ -18,7 +18,6 @@ data_dir = Path(__file__).parent.parent / "data"
 tools_file = download_if_missing(build_dir / "ToolDescription.ttl",
     "https://raw.githubusercontent.com/simonscheider/QuAnGIS/master/"
     "ToolRepository/ToolDescription.ttl")
-    # "https://raw.githubusercontent.com/quangis/cct/master/tools/tools.ttl"
 
 types_file = download_if_missing(build_dir / "CoreConceptData.rdf",
     "http://geographicknowledge.de/vocab/CoreConceptData.rdf")
@@ -42,10 +41,7 @@ running_total = 0
 for i, o in product(inputs, outputs):
     print("Running synthesis for {} -> {}".format(i, o))
 
-    solutions = wfsyn.run(
-        inputs=[i],
-        outputs=[o],
-        solutions=1)
+    solutions = wfsyn.run(inputs=[i], outputs=[o], solutions=1)
     for solution in solutions:
         running_total += 1
         solution.serialize(build_dir / f"solution{running_total}.ttl",

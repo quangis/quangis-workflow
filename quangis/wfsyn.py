@@ -95,10 +95,6 @@ class CCDWorkflowSynthesis(APE):
         taxonomy.base = CCD
 
         for s, o in self.types.subject_objects(RDFS.subClassOf):
-            # parents = list(taxonomy.objects(s, RDFS.subClassOf))
-            # if parents:
-            #     continue
-
             # Only keep nodes that intersect with exactly one dimension
             if sum(1 for dim in self.dimensions if dim.contains(s)) == 1:
                 taxonomy.add((s, RDFS.subClassOf, o))
