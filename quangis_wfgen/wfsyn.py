@@ -12,10 +12,10 @@ from rdflib import Graph
 from rdflib.term import Node
 from rdflib.util import guess_format
 from typing import Iterable
-from quangis.util import shorten
-from quangis.ape import APE, Workflow, ToolsDict
-from quangis.dimtypes import DimTypes, Dimension
-from quangis.namespace import CCD, TOOLS, OWL, RDF, RDFS, ADA, WF
+from quangis_wfgen.util import shorten
+from quangis_wfgen.ape import APE, Workflow, ToolsDict
+from quangis_wfgen.dimtypes import DimTypes, Dimension
+from quangis_wfgen.namespace import CCD, TOOLS, OWL, RDF, RDFS, ADA, WF
 
 
 class CCDWorkflowSynthesis(APE):

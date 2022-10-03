@@ -16,11 +16,8 @@ The tool specification must also contains a description of their
 functionality, by means of a [CCT][cct] expression in which those inputs 
 and outputs occur as variables.
 
-Example run:
-
-    python3 -m quangis
-
-To run tests, simply run `nose2`.
+To generate workflows, run `python -m quangis_wfgen`. To run (rather 
+limited) tests, run `nose2`.
 
 
 [ccd]: http://geographicknowledge.de/vocab/CoreConceptData.rdf

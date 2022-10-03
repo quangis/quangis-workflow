@@ -7,10 +7,10 @@ from typing import Iterator
 # from cct import cct
 # from transformation_algebra.util.common import build_transformation
 
-from quangis.namespace import CCD, EM
-from quangis.wfsyn import CCDWorkflowSynthesis
-from quangis.util import download_if_missing, build_dir
-from quangis.dimtypes import DimTypes, Dimension
+from quangis_wfgen.namespace import CCD, EM
+from quangis_wfgen.wfsyn import CCDWorkflowSynthesis
+from quangis_wfgen.util import download_if_missing, build_dir
+from quangis_wfgen.dimtypes import DimTypes, Dimension
 
 tools = download_if_missing(build_dir / "ToolDescription.ttl",
     "https://raw.githubusercontent.com/simonscheider/QuAnGIS/master/"

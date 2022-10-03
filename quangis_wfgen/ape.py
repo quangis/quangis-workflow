@@ -17,8 +17,8 @@ from typing import Iterable, Iterator
 from typing_extensions import TypedDict
 from transformation_algebra.namespace import EX
 
-from quangis.dimtypes import DimTypes
-from quangis.util import build_dir, download_if_missing
+from quangis_wfgen.dimtypes import DimTypes
+from quangis_wfgen.util import build_dir, download_if_missing
 
 
 # https://repo1.maven.org/maven2/io/github/sanctuuary/APE/2.0.3/APE-2.0.3.jar

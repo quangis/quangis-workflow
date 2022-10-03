@@ -16,7 +16,7 @@ from rdflib import Graph
 from rdflib.term import Node
 from typing import Iterable, MutableMapping, Iterator, Mapping
 
-from quangis.namespace import CCD, RDFS
+from quangis_wfgen.namespace import CCD, RDFS
 
 
 class Dimension(Graph):

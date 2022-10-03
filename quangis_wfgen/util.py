@@ -9,7 +9,7 @@ from pathlib import Path
 from rdflib import URIRef, BNode, Literal
 from rdflib.term import Node
 
-from quangis.namespace import namespaces
+from quangis_wfgen.namespace import namespaces
 
 root_dir = Path(__file__).parent.parent
 build_dir = root_dir / "build"
