@@ -8,9 +8,7 @@ import urllib.request
 from pathlib import Path
 from rdflib import URIRef, BNode, Literal
 from rdflib.term import Node
-from typing import Iterator
 
-from quangis.dimtypes import Dimension, DimTypes
 from quangis.namespace import namespaces
 
 root_dir = Path(__file__).parent.parent
@@ -51,22 +49,6 @@ def uri(short: str) -> URIRef:
         if short.startswith(pre.lower()):
             return ns[short[len(pre) + 1:]]
     raise RuntimeError
-
-
-def get_data(fn: Path, dimensions: list[Dimension]) -> Iterator[DimTypes]:
-    """
-    Read a newline-separated file of type nodes represented by comma-separated
-    URIs.
-    """
-    with open(fn, 'r') as f:
-        for line in f.readlines():
-            line = line.strip()
-            if line:
-                types = [uri(t)
-                    for x in line.split("#")[0].split(",")
-                    if (t := x.strip())
-                ]
-                yield DimTypes({d: [t] for d, t in zip(dimensions, types)})
 
 
 def download_if_missing(path: Path, url: str) -> Path:

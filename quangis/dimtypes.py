@@ -14,10 +14,9 @@ from __future__ import annotations
 
 from rdflib import Graph
 from rdflib.term import Node
-from typing import Iterable, MutableMapping, Iterator
+from typing import Iterable, MutableMapping, Iterator, Mapping
 
 from quangis.namespace import CCD, RDFS
-from quangis.taxonomy import Taxonomy
 
 
 class Dimension(Graph):
@@ -57,17 +56,21 @@ class DimTypes(MutableMapping[Dimension, set[Node]]):
     """
 
     def __init__(self,
-            dimensions: list[Dimension] | dict[Dimension, Iterable[Node]]):
+            dimensions: list[Dimension] | Mapping[Dimension, Iterable[Node]],
+            types: Iterable[Node] | None = None):
         """
         We represent a datatype as a mapping from RDF dimension nodes to one or
         more of its subclasses.
         """
         super().__init__()
         self.data: dict[Dimension, set[Node]]
-        if isinstance(dimensions, dict):
+        if isinstance(dimensions, Mapping) and types is None:
             self.data = {k: set(v) for k, v in dimensions.items()}
         else:
-            self.data = {k: set() for k in dimensions}
+            if types:
+                self.data = {k: {t} for k, t in zip(dimensions, types)}
+            else:
+                self.data = {k: set() for k in dimensions}
 
     def __str__(self) -> str:
         return str({str(k.root): list(v) for k, v in self.items()})
