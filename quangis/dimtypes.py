@@ -17,6 +17,7 @@ from rdflib.term import Node
 from typing import Iterable, MutableMapping, Iterator
 
 from quangis.namespace import CCD, RDFS
+from quangis.taxonomy import Taxonomy
 
 
 class Dimension(Graph):
@@ -55,13 +56,18 @@ class DimTypes(MutableMapping[Dimension, set[Node]]):
     Types for input and output data across different semantic dimensions.
     """
 
-    def __init__(self, *dimensions: Dimension):
+    def __init__(self,
+            dimensions: list[Dimension] | dict[Dimension, Iterable[Node]]):
         """
         We represent a datatype as a mapping from RDF dimension nodes to one or
         more of its subclasses.
         """
         super().__init__()
-        self.data: dict[Dimension, set[Node]] = {d: set() for d in dimensions}
+        self.data: dict[Dimension, set[Node]]
+        if isinstance(dimensions, dict):
+            self.data = {k: set(v) for k, v in dimensions.items()}
+        else:
+            self.data = {k: set() for k in dimensions}
 
     def __str__(self) -> str:
         return str({str(k.root): list(v) for k, v in self.items()})
@@ -76,8 +82,8 @@ class DimTypes(MutableMapping[Dimension, set[Node]]):
         return iter(self.data)
 
     def __getitem__(self, k: Dimension | Node) -> set[Node]:
-        return self.data.__getitem__(
-            k if isinstance(k, Dimension) else self.dimension(k))
+        d = k if isinstance(k, Dimension) else self.dimension(k)
+        return self.data.__getitem__(d)  # or {d.root} to fall back to root
 
     def __setitem__(self, k: Dimension | Node, v: set[Node]) -> None:
         return self.data.__setitem__(
@@ -117,7 +123,7 @@ class DimTypes(MutableMapping[Dimension, set[Node]]):
         """
 
         dimensions, types = list(dimensions), list(types)
-        result = DimTypes(*dimensions)
+        result = DimTypes(dimensions)
 
         for d in dimensions:
             other_dimensions = list(d2 for d2 in dimensions if d2 is not d)
@@ -136,4 +142,6 @@ class DimTypes(MutableMapping[Dimension, set[Node]]):
                             projection.append(current)
 
                 result[d].update(projection)
+            if not result[d]:
+                result[d] = {d.root}
         return result
