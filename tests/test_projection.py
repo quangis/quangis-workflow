@@ -4,6 +4,7 @@ from pathlib import Path
 from rdflib import Graph
 from quangis.namespace import EM, CCD
 from quangis.dimtypes import DimTypes, Dimension
+from quangis.util import build_dir
 
 
 class TestProjection(unittest.TestCase):
@@ -15,7 +16,7 @@ class TestProjection(unittest.TestCase):
         """
 
         ccd = Graph()
-        ccd.parse(Path(__file__).parent.parent / 'data' / 'CoreConceptData.rdf', format='xml')
+        ccd.parse(build_dir / 'CoreConceptData.rdf', format='xml')
 
         dimensions = [
             Dimension(root, source=ccd)
@@ -47,9 +48,12 @@ class TestProjection(unittest.TestCase):
 
         for ix, node in enumerate(testnodes):
             p = DimTypes.project(dimensions, [node])
-            self.assertEqual(p[CCD.CoreConceptQ], set(correctCC[ix]))
-            self.assertEqual(p[CCD.LayerA], set(correctLayerA[ix]))
-            self.assertEqual(p[CCD.NominalA], set(correctNominalA[ix]))
+            self.assertEqual(p[CCD.CoreConceptQ],
+                set(correctCC[ix]) or {CCD.CoreConceptQ})
+            self.assertEqual(p[CCD.LayerA],
+                set(correctLayerA[ix]) or {CCD.LayerA})
+            self.assertEqual(p[CCD.NominalA],
+                set(correctNominalA[ix]) or {CCD.NominalA})
 
 
 if __name__ == '__main__':
