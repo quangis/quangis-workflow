@@ -116,6 +116,7 @@ class DimTypes(MutableMapping[Dimension, set[Node]]):
         dimension (ie a node that belongs to exactly one dimension).
         """
 
+        dimensions, types = list(dimensions), list(types)
         result = DimTypes(*dimensions)
 
         for d in dimensions:
