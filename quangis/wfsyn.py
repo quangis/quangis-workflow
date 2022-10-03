@@ -5,8 +5,12 @@ we want it to.
 
 """
 
+from __future__ import annotations
+
+from pathlib import Path
 from rdflib import Graph
 from rdflib.term import Node
+from rdflib.util import guess_format
 from typing import Iterable
 from quangis.util import shorten
 from quangis.ape import APE, Workflow, ToolsDict
@@ -20,11 +24,22 @@ class CCDWorkflowSynthesis(APE):
     the form we want it to.
     """
 
-    def __init__(self, ccd_types: Graph, tools: Graph, dimensions: list[Node]):
+    def __init__(self, types: Graph | Path, tools: Graph | Path,
+            dimension_roots: list[Node]):
 
-        self.dimensions = [Dimension(d, ccd_types) for d in dimensions]
-        self.types = ccd_types
-        self.tools = tools
+        if isinstance(types, Graph):
+            self.types = types
+        else:
+            self.types = Graph()
+            self.types.parse(types, format=guess_format(types))
+
+        if isinstance(tools, Graph):
+            self.tools = tools
+        else:
+            self.tools = Graph()
+            self.tools.parse(tools, format=guess_format(tools))
+
+        self.dimensions = [Dimension(d, self.types) for d in dimension_roots]
 
         super().__init__(
             taxonomy=self.ape_type_taxonomy() + self.ape_tool_taxonomy(),

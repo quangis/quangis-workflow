@@ -3,8 +3,6 @@ Generate workflows using APE with the CCD type taxonomy and the GIS tool
 ontology.
 """
 
-from pathlib import Path
-from rdflib import Graph
 from typing import Iterator
 # from cct import cct
 # from transformation_algebra.util.common import build_transformation
@@ -14,19 +12,14 @@ from quangis.wfsyn import CCDWorkflowSynthesis
 from quangis.util import download_if_missing, build_dir
 from quangis.dimtypes import DimTypes, Dimension
 
-tools_file = download_if_missing(build_dir / "ToolDescription.ttl",
+tools = download_if_missing(build_dir / "ToolDescription.ttl",
     "https://raw.githubusercontent.com/simonscheider/QuAnGIS/master/"
     "ToolRepository/ToolDescription.ttl")
 
-types_file = download_if_missing(build_dir / "CoreConceptData.rdf",
+types = download_if_missing(build_dir / "CoreConceptData.rdf",
     "http://geographicknowledge.de/vocab/CoreConceptData.rdf")
 
-types = Graph()
-types.parse(types_file, format='xml')
-tools = Graph()
-tools.parse(tools_file, format='ttl')
-
-dimensions = [CCD.CoreConceptQ, CCD.LayerA, CCD.NominalA]
+dimension_roots = [CCD.CoreConceptQ, CCD.LayerA, CCD.NominalA]
 sources = [
     (CCD.FieldQ, CCD.VectorTessellationA, CCD.PlainNominalA),  # Vector Coverage
     (CCD.FieldQ, CCD.VectorTessellationA, CCD.PlainOrdinalA),  # Contour
@@ -102,8 +95,8 @@ def generate_io(dimensions: list[Dimension]) \
 
 
 print("Starting APE")
-wfsyn = CCDWorkflowSynthesis(ccd_types=types, tools=tools,
-    dimensions=dimensions)
+wfsyn = CCDWorkflowSynthesis(types=types, tools=tools,
+    dimension_roots=dimension_roots)
 print("Started APE")
 
 running_total = 0
