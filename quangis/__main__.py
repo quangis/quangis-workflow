@@ -14,8 +14,6 @@ from quangis.wfsyn import CCDWorkflowSynthesis
 from quangis.util import download_if_missing, build_dir
 from quangis.dimtypes import DimTypes, Dimension
 
-data_dir = Path(__file__).parent.parent / "data"
-
 tools_file = download_if_missing(build_dir / "ToolDescription.ttl",
     "https://raw.githubusercontent.com/simonscheider/QuAnGIS/master/"
     "ToolRepository/ToolDescription.ttl")
@@ -29,11 +27,62 @@ tools = Graph()
 tools.parse(tools_file, format='ttl')
 
 dimensions = [CCD.CoreConceptQ, CCD.LayerA, CCD.NominalA]
+sources = [
+    (CCD.FieldQ, CCD.VectorTessellationA, CCD.PlainNominalA),  # Vector Coverage
+    (CCD.FieldQ, CCD.VectorTessellationA, CCD.PlainOrdinalA),  # Contour
+    (CCD.FieldQ, CCD.PointA, CCD.PlainIntervalA),  # PointMeasures
+    (CCD.FieldQ, CCD.PointA, CCD.PlainRatioA),  # PointMeasures
+    (CCD.FieldQ, CCD.LineA, CCD.PlainIntervalA),  # LineMeasures (isolines)
+    (CCD.FieldQ, CCD.LineA, CCD.PlainRatioA),  # LineMeasures (isolines)
+    (CCD.FieldQ, CCD.PlainVectorRegionA, CCD.PlainNominalA),  # Patch
+    (CCD.FieldQ, CCD.RasterA, CCD.PlainIntervalA),  # Field Raster
+    (CCD.FieldQ, CCD.RasterA, CCD.PlainRatioA),  # Field Raster
 
-print("Starting APE")
-wfsyn = CCDWorkflowSynthesis(ccd_types=types, tools=tools,
-    dimensions=dimensions)
-print("Started APE")
+    (CCD.AmountQ, CCD.RasterA, CCD.CountA),  # Count Raster
+    (CCD.AmountQ, CCD.PlainVectorRegionA, CCD.CountA),  # Count Vector
+    (CCD.AmountQ, CCD.PointA, CCD.CountA),  # Count Vector
+
+    (CCD.ObjectQ, CCD.VectorTessellationA, CCD.PlainNominalA),  # Lattice
+    (CCD.ObjectQ, CCD.VectorTessellationA, CCD.PlainOrdinalA),  # Lattice
+    (CCD.ObjectQ, CCD.VectorTessellationA, CCD.PlainIntervalA),  # Lattice
+    (CCD.ObjectQ, CCD.VectorTessellationA, EM.ERA),  # Lattice
+    (CCD.ObjectQ, CCD.VectorTessellationA, EM.IRA),  # Lattice
+    (CCD.ObjectQ, CCD.VectorTessellationA, CCD.PlainRatioA),  # Lattice
+    (CCD.ObjectQ, CCD.VectorTessellationA, CCD.CountA),  # Lattice
+
+    (CCD.ObjectQ, CCD.PlainVectorRegionA, CCD.PlainNominalA),  # ObjectRegion
+    (CCD.ObjectQ, CCD.PlainVectorRegionA, CCD.PlainOrdinalA),  # ObjectRegion
+    (CCD.ObjectQ, CCD.PlainVectorRegionA, CCD.PlainIntervalA),  # ObjectRegion
+    (CCD.ObjectQ, CCD.PlainVectorRegionA, EM.ERA),  # ObjectRegion
+    (CCD.ObjectQ, CCD.PlainVectorRegionA, EM.IRA),  # ObjectRegion
+    (CCD.ObjectQ, CCD.PlainVectorRegionA, CCD.PlainRatioA),  # ObjectRegion
+    (CCD.ObjectQ, CCD.PlainVectorRegionA, CCD.CountA),  # ObjectRegion
+
+    (CCD.ObjectQ, CCD.PointA, CCD.PlainNominalA),  # ObjectPoint
+    (CCD.ObjectQ, CCD.PointA, CCD.PlainOrdinalA),  # ObjectPoint
+    (CCD.ObjectQ, CCD.PointA, CCD.PlainIntervalA),  # ObjectPoint
+    (CCD.ObjectQ, CCD.PointA, EM.ERA),  # ObjectPoint
+    (CCD.ObjectQ, CCD.PointA, EM.IRA),  # ObjectPoint
+    (CCD.ObjectQ, CCD.PointA, CCD.PlainRatioA),  # ObjectPoint
+    (CCD.ObjectQ, CCD.PointA, CCD.CountA),  # ObjectPoint
+]
+goals = [
+    (CCD.FieldQ, CCD.PlainVectorRegionA, CCD.NominalA),
+    (CCD.FieldQ, CCD.VectorTessellationA, CCD.NominalA),
+    (CCD.FieldQ, CCD.VectorTessellationA, CCD.OrdinalA),
+    (CCD.FieldQ, CCD.RasterA, CCD.IntervalA),
+    (CCD.FieldQ, CCD.RasterA, CCD.RatioA),
+
+    (CCD.ObjectQ, CCD.VectorTessellationA, CCD.IntervalA),
+    (CCD.ObjectQ, CCD.VectorTessellationA, EM.ERA),
+    (CCD.ObjectQ, CCD.VectorTessellationA, EM.IRA),
+    (CCD.ObjectQ, CCD.VectorTessellationA, CCD.CountA),
+
+    (CCD.ObjectQ, CCD.PlainVectorRegionA, CCD.IntervalA),
+    (CCD.ObjectQ, CCD.PlainVectorRegionA, EM.ERA),
+    (CCD.ObjectQ, CCD.PlainVectorRegionA, EM.IRA),
+    (CCD.ObjectQ, CCD.PlainVectorRegionA, CCD.CountA),
+]
 
 
 def generate_io(dimensions: list[Dimension]) \
@@ -43,65 +92,6 @@ def generate_io(dimensions: list[Dimension]) \
     which one input is drawn from the following sources, and the other is the
     same as the output without the measurement level.
     """
-
-    sources = [
-        (CCD.FieldQ, CCD.VectorTessellationA, CCD.PlainNominalA),  # Vector Coverage
-        (CCD.FieldQ, CCD.VectorTessellationA, CCD.PlainOrdinalA),  # Contour
-        (CCD.FieldQ, CCD.PointA, CCD.PlainIntervalA),  # PointMeasures
-        (CCD.FieldQ, CCD.PointA, CCD.PlainRatioA),  # PointMeasures
-        (CCD.FieldQ, CCD.LineA, CCD.PlainIntervalA),  # LineMeasures (isolines)
-        (CCD.FieldQ, CCD.LineA, CCD.PlainRatioA),  # LineMeasures (isolines)
-        (CCD.FieldQ, CCD.PlainVectorRegionA, CCD.PlainNominalA),  # Patch
-        (CCD.FieldQ, CCD.RasterA, CCD.PlainIntervalA),  # Field Raster
-        (CCD.FieldQ, CCD.RasterA, CCD.PlainRatioA),  # Field Raster
-
-        (CCD.AmountQ, CCD.RasterA, CCD.CountA),  # Count Raster
-        (CCD.AmountQ, CCD.PlainVectorRegionA, CCD.CountA),  # Count Vector
-        (CCD.AmountQ, CCD.PointA, CCD.CountA),  # Count Vector
-
-        (CCD.ObjectQ, CCD.VectorTessellationA, CCD.PlainNominalA),  # Lattice
-        (CCD.ObjectQ, CCD.VectorTessellationA, CCD.PlainOrdinalA),  # Lattice
-        (CCD.ObjectQ, CCD.VectorTessellationA, CCD.PlainIntervalA),  # Lattice
-        (CCD.ObjectQ, CCD.VectorTessellationA, EM.ERA),  # Lattice
-        (CCD.ObjectQ, CCD.VectorTessellationA, EM.IRA),  # Lattice
-        (CCD.ObjectQ, CCD.VectorTessellationA, CCD.PlainRatioA),  # Lattice
-        (CCD.ObjectQ, CCD.VectorTessellationA, CCD.CountA),  # Lattice
-
-        (CCD.ObjectQ, CCD.PlainVectorRegionA, CCD.PlainNominalA),  # ObjectRegion
-        (CCD.ObjectQ, CCD.PlainVectorRegionA, CCD.PlainOrdinalA),  # ObjectRegion
-        (CCD.ObjectQ, CCD.PlainVectorRegionA, CCD.PlainIntervalA),  # ObjectRegion
-        (CCD.ObjectQ, CCD.PlainVectorRegionA, EM.ERA),  # ObjectRegion
-        (CCD.ObjectQ, CCD.PlainVectorRegionA, EM.IRA),  # ObjectRegion
-        (CCD.ObjectQ, CCD.PlainVectorRegionA, CCD.PlainRatioA),  # ObjectRegion
-        (CCD.ObjectQ, CCD.PlainVectorRegionA, CCD.CountA),  # ObjectRegion
-
-        (CCD.ObjectQ, CCD.PointA, CCD.PlainNominalA),  # ObjectPoint
-        (CCD.ObjectQ, CCD.PointA, CCD.PlainOrdinalA),  # ObjectPoint
-        (CCD.ObjectQ, CCD.PointA, CCD.PlainIntervalA),  # ObjectPoint
-        (CCD.ObjectQ, CCD.PointA, EM.ERA),  # ObjectPoint
-        (CCD.ObjectQ, CCD.PointA, EM.IRA),  # ObjectPoint
-        (CCD.ObjectQ, CCD.PointA, CCD.PlainRatioA),  # ObjectPoint
-        (CCD.ObjectQ, CCD.PointA, CCD.CountA),  # ObjectPoint
-    ]
-
-    goals = [
-        (CCD.FieldQ, CCD.PlainVectorRegionA, CCD.NominalA),
-        (CCD.FieldQ, CCD.VectorTessellationA, CCD.NominalA),
-        (CCD.FieldQ, CCD.VectorTessellationA, CCD.OrdinalA),
-        (CCD.FieldQ, CCD.RasterA, CCD.IntervalA),
-        (CCD.FieldQ, CCD.RasterA, CCD.RatioA),
-
-        (CCD.ObjectQ, CCD.VectorTessellationA, CCD.IntervalA),
-        (CCD.ObjectQ, CCD.VectorTessellationA, EM.ERA),
-        (CCD.ObjectQ, CCD.VectorTessellationA, EM.IRA),
-        (CCD.ObjectQ, CCD.VectorTessellationA, CCD.CountA),
-
-        (CCD.ObjectQ, CCD.PlainVectorRegionA, CCD.IntervalA),
-        (CCD.ObjectQ, CCD.PlainVectorRegionA, EM.ERA),
-        (CCD.ObjectQ, CCD.PlainVectorRegionA, EM.IRA),
-        (CCD.ObjectQ, CCD.PlainVectorRegionA, CCD.CountA),
-    ]
-
     for goal_tuple in goals:
         goal = DimTypes(dimensions, goal_tuple)
         source1 = DimTypes(goal)
@@ -110,6 +100,11 @@ def generate_io(dimensions: list[Dimension]) \
             source2 = DimTypes(dimensions, source_tuple)
             yield [source1, source2], [goal]
 
+
+print("Starting APE")
+wfsyn = CCDWorkflowSynthesis(ccd_types=types, tools=tools,
+    dimensions=dimensions)
+print("Started APE")
 
 running_total = 0
 for inputs, outputs in generate_io(wfsyn.dimensions):
