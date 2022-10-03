@@ -2,9 +2,13 @@
 Various utility functions.
 """
 
+import urllib.request
+from pathlib import Path
 from rdflib import URIRef, BNode, Literal
 from rdflib.term import Node
+from typing import Iterator
 
+from quangis.dimtypes import Dimension, DimTypes
 from quangis.namespace import namespaces
 
 
@@ -27,11 +31,36 @@ def shorten(node: Node) -> str:
     return str(node)
 
 
-def uri(string: str) -> URIRef:
+# TODO temporary
+def uri(short: str) -> URIRef:
+    for pre, ns in namespaces.items():
+        if short.startswith(pre.lower()):
+            return ns[short[len(pre) + 1:]]
+    raise RuntimeError
+
+
+def get_data(fn: Path, dimensions: list[Dimension]) -> Iterator[DimTypes]:
     """
-    Convert a possibly shortened string to a URIRef.
+    Read a newline-separated file of type nodes represented by comma-separated
+    URIs.
     """
-    for prefix, ns in namespaces.items():
-        if string.startswith(prefix + ":"):
-            return getattr(ns, string[len(prefix) + 1:])
-    return URIRef(string)
+    with open(fn, 'r') as f:
+        for line in f.readlines():
+            types = list(uri(t)
+                for x in line.split("#")[0].split(",") if (t := x.strip()))
+            yield DimTypes.project(dimensions, types)
+
+
+def download_if_missing(path: Path, url: str) -> Path:
+    """
+    Make sure that a file exists by downloading it if it doesn't exist. Return
+    filename.
+    """
+
+    directory = path.parent
+    directory.mkdir(exist_ok=True)
+    if not path.exists():
+        print(f"{path} not found; now downloading from {url}")
+        urllib.request.urlretrieve(url, filename=path)
+
+    return path

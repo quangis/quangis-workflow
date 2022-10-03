@@ -18,9 +18,7 @@ and outputs occur as variables.
 
 Example run:
 
-    python3 -m quangis.wfsyn \
-        --tools ToolDescription.rdf \
-        --types http://geographicknowledge.de/vocab/CoreConceptData.rdf
+    python3 -m quangis
 
 To run tests, simply run `nose2`.
 

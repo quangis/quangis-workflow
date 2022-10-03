@@ -17,7 +17,6 @@ from rdflib.term import Node
 from typing import Iterable, MutableMapping, Iterator
 
 from quangis.namespace import CCD, RDFS
-from quangis.util import shorten
 
 
 class Dimension(Graph):
@@ -53,8 +52,7 @@ class Dimension(Graph):
 # TODO there can be multiple things in a single dimension?
 class DimTypes(MutableMapping[Dimension, set[Node]]):
     """
-    Ontological classes of semantic types for input and output data across
-    different semantic dimensions.
+    Types for input and output data across different semantic dimensions.
     """
 
     def __init__(self, *dimensions: Dimension):
@@ -64,6 +62,9 @@ class DimTypes(MutableMapping[Dimension, set[Node]]):
         """
         super().__init__()
         self.data: dict[Dimension, set[Node]] = {d: set() for d in dimensions}
+
+    def __str__(self) -> str:
+        return str({str(k.root): list(v) for k, v in self.items()})
 
     def __len__(self) -> int:
         return len(self.data)
@@ -90,22 +91,11 @@ class DimTypes(MutableMapping[Dimension, set[Node]]):
         assert isinstance(key, Dimension)
         return key
 
-    def __str__(self) -> str:
-        return "{{{}}}".format(
-            "; ".join(
-                "{} = {}".format(
-                    shorten(dimension.root),
-                    ", ".join(shorten(c) for c in classes)
-                )
-                for dimension, classes in self.data.items()
-            )
-        )
-
     def downcast(self, target={
             CCD.NominalA: CCD.PlainNominalA,
             CCD.OrdinalA: CCD.PlainOrdinalA,
             CCD.IntervalA: CCD.PlainIntervalA,
-            CCD.RatioA: CCD.PlainRatioA}) -> Types:
+            CCD.RatioA: CCD.PlainRatioA}) -> DimTypes:
         """
         APE has a closed world assumption, in that it considers the set of leaf
         nodes it knows about as exhaustive. This method returns a new `Types`
@@ -117,7 +107,8 @@ class DimTypes(MutableMapping[Dimension, set[Node]]):
         return self
 
     @staticmethod
-    def project(dimensions: Iterable[Dimension], types: Iterable[Node]) -> Types:
+    def project(dimensions: Iterable[Dimension],
+            types: Iterable[Node]) -> DimTypes:
         """
         Projects type nodes to the given dimensions. Any type that is subsumed
         by at least one dimension can be projected to the closest parent(s) in

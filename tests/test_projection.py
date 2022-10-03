@@ -1,5 +1,6 @@
 import unittest
 
+from pathlib import Path
 from rdflib import Graph
 from quangis.namespace import EM, CCD
 from quangis.dimtypes import DimTypes, Dimension
@@ -14,7 +15,7 @@ class TestProjection(unittest.TestCase):
         """
 
         ccd = Graph()
-        ccd.parse('CoreConceptData.rdf', format='xml')
+        ccd.parse(Path(__file__).parent.parent / 'data' / 'CoreConceptData.rdf', format='xml')
 
         dimensions = [
             Dimension(root, source=ccd)

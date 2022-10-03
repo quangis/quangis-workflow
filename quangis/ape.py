@@ -93,13 +93,8 @@ class APE(object):
     An interface to JVM. After initialization, use `.run()` to run APE.
     """
 
-    def __init__(
-            self,
-            taxonomy: str | Graph,
-            tools: str | ToolsDict,
-            namespace: Namespace,
-            tool_root: Node,
-            dimensions: list[Node],
+    def __init__(self, taxonomy: str | Graph, tools: str | ToolsDict,
+            namespace: Namespace, tool_root: Node, dimensions: list[Node],
             strictToolAnnotations: bool = True):
 
         # Serialize if we weren't given paths
@@ -116,23 +111,22 @@ class APE(object):
         else:
             tools_file = tools
 
-        # Set up APE in JVM
-        self.config = j_ape.configuration.APECoreConfig(
-            j_io.File(taxonomy_file),
-            str(namespace),
-            str(tool_root),
-            j_util.Arrays.asList(*map(str, dimensions)),
-            j_io.File(tools_file),
-            strictToolAnnotations
-        )
-        self.ape = j_ape.APE(self.config)
-        self.setup = self.ape.getDomainSetup()
+        try:
+            # Set up APE in JVM
+            self.config = j_ape.configuration.APECoreConfig(
+                j_io.File(taxonomy_file), str(namespace), str(tool_root),
+                j_util.Arrays.asList(*map(str, dimensions)),
+                j_io.File(tools_file), strictToolAnnotations
+            )
+            self.ape = j_ape.APE(self.config)
+            self.setup = self.ape.getDomainSetup()
 
-        # Safe to delete since APE should have read the files now
-        if taxonomy != taxonomy_file:
-            os.remove(taxonomy_file)
-        if tools != tools_file:
-            os.remove(tools_file)
+        finally:
+            # Safe to delete since APE should have read the files now
+            if taxonomy != taxonomy_file:
+                os.remove(taxonomy_file)
+            if tools != tools_file:
+                os.remove(tools_file)
 
     def type(self, is_output: bool, t: DimTypes) -> j_ape.models.Type:
         """
