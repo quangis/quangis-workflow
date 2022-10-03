@@ -2,6 +2,8 @@
 Various utility functions.
 """
 
+import os
+import sys
 import urllib.request
 from pathlib import Path
 from rdflib import URIRef, BNode, Literal
@@ -10,6 +12,18 @@ from typing import Iterator
 
 from quangis.dimtypes import Dimension, DimTypes
 from quangis.namespace import namespaces
+
+root_dir = Path(__file__).parent.parent
+build_dir = root_dir / "build"
+
+if sys.platform.startswith("win"):
+    local_dir = Path(os.getenv("LOCALAPPDATA"))
+elif sys.platform.startswith("darwin"):
+    local_dir = Path("~/Library/Application Support")
+elif sys.platform.startswith("linux"):
+    local_dir = Path(os.getenv("XDG_DATA_HOME", "~/.local/share"))
+else:
+    raise RuntimeError("Unsupported platform")
 
 
 def shorten(node: Node) -> str:
@@ -48,7 +62,10 @@ def get_data(fn: Path, dimensions: list[Dimension]) -> Iterator[DimTypes]:
         for line in f.readlines():
             types = list(uri(t)
                 for x in line.split("#")[0].split(",") if (t := x.strip()))
-            yield DimTypes.project(dimensions, types)
+            dt = DimTypes(*dimensions)
+            for t, d in zip(types, dimensions):
+                dt[d].add(t)
+            yield dt
 
 
 def download_if_missing(path: Path, url: str) -> Path:

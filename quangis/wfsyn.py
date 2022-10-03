@@ -6,9 +6,8 @@ we want it to.
 """
 
 from rdflib import Graph
-from rdflib.term import Node, BNode
+from rdflib.term import Node
 from typing import Iterable
-from itertools import chain
 from quangis.util import shorten
 from quangis.ape import APE, Workflow, ToolsDict
 from quangis.dimtypes import DimTypes, Dimension
@@ -96,9 +95,9 @@ class CCDWorkflowSynthesis(APE):
         taxonomy.base = CCD
 
         for s, o in self.types.subject_objects(RDFS.subClassOf):
-            parents = list(taxonomy.objects(s, RDFS.subClassOf))
-            if parents:
-                print(f"{s} already has parent")
+            # parents = list(taxonomy.objects(s, RDFS.subClassOf))
+            # if parents:
+            #     continue
 
             # Only keep nodes that intersect with exactly one dimension
             if sum(1 for dim in self.dimensions if dim.contains(s)) == 1:

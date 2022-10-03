@@ -5,12 +5,7 @@ A Pythonic interface to the Automated Pipeline Explorer
 
 from __future__ import annotations
 
-import sys
-import os
-import os.path
-import tempfile
 import json
-import urllib
 import jpype
 import jpype.imports
 from pathlib import Path
@@ -23,45 +18,12 @@ from typing_extensions import TypedDict
 from transformation_algebra.namespace import EX
 
 from quangis.dimtypes import DimTypes
-
-
-def data(filename: str, url: str | None = None) -> Path:
-    """
-    Get a file from the directory where we store application-specific data
-    files, or download it if it's not present.
-    """
-
-    if sys.platform.startswith("win"):
-        path = Path(os.getenv("LOCALAPPDATA"))
-    elif sys.platform.startswith("darwin"):
-        path = Path("~/Library/Application Support")
-    elif sys.platform.startswith("linux"):
-        path = Path(os.getenv("XDG_DATA_HOME", "~/.local/share"))
-    else:
-        raise RuntimeError("Unsupported platform")
-
-    path = Path(path).expanduser() / "apey" / filename
-
-    try:
-        path.mkdir(parents=True)
-    except FileExistsError:
-        pass
-
-    if not path.exists():
-        if url:
-            print(
-                f"Could not find data file {path}; now downloading from {url}",
-                file=sys.stderr)
-            urllib.request.urlretrieve(url, filename=path)
-        else:
-            raise FileNotFoundError
-
-    return path
+from quangis.util import build_dir, download_if_missing
 
 
 # https://repo1.maven.org/maven2/io/github/sanctuuary/APE/2.0.3/APE-2.0.3.jar
 # We need version 1.1.5's API; lower versions won't work
-CLASS_PATH = data('APE-1.1.5-executable.jar', url=(
+CLASS_PATH = download_if_missing(build_dir / 'APE-1.1.5-executable.jar', url=(
     'https://github.com/sanctuuary/APE'
     '/releases/download/v1.1.5/APE-1.1.5-executable.jar'))
 jpype.startJVM(classpath=[str(CLASS_PATH)])
@@ -93,40 +55,33 @@ class APE(object):
     An interface to JVM. After initialization, use `.run()` to run APE.
     """
 
-    def __init__(self, taxonomy: str | Graph, tools: str | ToolsDict,
+    def __init__(self, taxonomy: Path | Graph, tools: Path | ToolsDict,
             namespace: Namespace, tool_root: Node, dimensions: list[Node],
+            build_dir: Path = build_dir,
             strictToolAnnotations: bool = True):
 
         # Serialize if we weren't given paths
         if isinstance(taxonomy, Graph):
-            fd, taxonomy_file = tempfile.mkstemp(prefix='apey-', suffix='.rdf')
+            taxonomy_file = build_dir / "taxonomy.rdf"
             taxonomy.serialize(destination=taxonomy_file, format='xml')
         else:
             taxonomy_file = taxonomy
 
         if isinstance(tools, dict):
-            fd, tools_file = tempfile.mkstemp(prefix='apey-', suffix='.json')
-            with open(fd, 'w') as f:
-                json.dump(tools, f)
+            tools_file = build_dir / "tools.json"
+            with open(tools_file, 'w') as f:
+                json.dump(tools, f, indent=4)
         else:
             tools_file = tools
 
-        try:
-            # Set up APE in JVM
-            self.config = j_ape.configuration.APECoreConfig(
-                j_io.File(taxonomy_file), str(namespace), str(tool_root),
-                j_util.Arrays.asList(*map(str, dimensions)),
-                j_io.File(tools_file), strictToolAnnotations
-            )
-            self.ape = j_ape.APE(self.config)
-            self.setup = self.ape.getDomainSetup()
-
-        finally:
-            # Safe to delete since APE should have read the files now
-            if taxonomy != taxonomy_file:
-                os.remove(taxonomy_file)
-            if tools != tools_file:
-                os.remove(tools_file)
+        # Set up APE in JVM
+        self.config = j_ape.configuration.APECoreConfig(
+            j_io.File(str(taxonomy_file)), str(namespace), str(tool_root),
+            j_util.Arrays.asList(*map(str, dimensions)),
+            j_io.File(str(tools_file)), strictToolAnnotations
+        )
+        self.ape = j_ape.APE(self.config)
+        self.setup = self.ape.getDomainSetup()
 
     def type(self, is_output: bool, t: DimTypes) -> j_ape.models.Type:
         """
