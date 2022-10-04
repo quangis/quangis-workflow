@@ -23,7 +23,8 @@ from wfgen.util import build_dir, download
 
 MVN = "https://repo1.maven.org/maven2"
 JAR = [
-    f"{MVN}/io/github/sanctuuary/APE/2.0.3/APE-2.0.3-executable.jar"
+    f"{MVN}/io/github/sanctuuary/APE/1.1.12/APE-1.1.12-executable.jar"
+    # f"{MVN}/io/github/sanctuuary/APE/2.0.3/APE-2.0.3-executable.jar"
 ]
 jpype.startJVM(classpath=[str(download(j)) for j in JAR])
 
@@ -31,7 +32,7 @@ jpype.startJVM(classpath=[str(download(j)) for j in JAR])
 import java.io as j_io  # noqa: E402
 import java.util as j_util  # noqa: E402
 import org.json as j_json  # noqa: E402
-import nl.uu.cs.ape as j_ape  # noqa: E402
+import nl.uu.cs.ape.sat as j_ape  # noqa: E402
 
 
 ToolDict = TypedDict('ToolDict', {
