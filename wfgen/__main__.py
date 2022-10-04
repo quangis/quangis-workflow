@@ -30,9 +30,11 @@ sources = [
     (CCD.FieldQ, CCD.RasterA, CCD.PlainIntervalA),  # Field Raster
     (CCD.FieldQ, CCD.RasterA, CCD.PlainRatioA),  # Field Raster
 
-    (CCD.AmountQ, CCD.RasterA, CCD.CountA),  # Count Raster
-    (CCD.AmountQ, CCD.PlainVectorRegionA, CCD.CountA),  # Count Vector
-    (CCD.AmountQ, CCD.PointA, CCD.CountA),  # Count Vector
+    # Commented out because there are actually no tools which accept this
+    # input, which makes APE very very mad.
+    # (CCD.AmountQ, CCD.RasterA, CCD.CountA),  # Count Raster
+    # (CCD.AmountQ, CCD.PlainVectorRegionA, CCD.CountA),  # Count Vector
+    # (CCD.AmountQ, CCD.PointA, CCD.CountA),  # Count Vector
 
     (CCD.ObjectQ, CCD.VectorTessellationA, CCD.PlainNominalA),  # Lattice
     (CCD.ObjectQ, CCD.VectorTessellationA, CCD.PlainOrdinalA),  # Lattice
