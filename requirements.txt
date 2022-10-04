@@ -1,3 +1,4 @@
 Jpype1
 rdflib
-transformation_algebra
+git+https://github.com/quangis/cct.git#egg=cct
+git+https://github.com/quangis/transformation-algebra.git@develop#egg=transformation_algebra

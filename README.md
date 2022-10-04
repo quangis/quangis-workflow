@@ -26,8 +26,11 @@ weaved into a graph of conceptual transformations via the
 
 ## Usage
 
-Java and Python must be installed. To generate workflows, run `python -m 
-wfgen`. To run (rather limited) tests, run `nose2`.
+Java 1.8+ and Python 3.9+ must be installed, along with the dependencies 
+in [`requirements.txt`](requirements.txt). The correct version of APE 
+and other required data files will automatically be downloaded. To 
+generate workflows, run `python -m wfgen`. To run (rather limited) 
+tests, install and run `nose2`.
 
 
 [ccd]: http://geographicknowledge.de/vocab/CoreConceptData.rdf
