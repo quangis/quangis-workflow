@@ -9,15 +9,14 @@ from typing import Iterator
 
 from wfgen.namespace import CCD, EM
 from wfgen.generator import WorkflowGenerator
-from wfgen.util import download_if_missing, build_dir
+from wfgen.util import download, build_dir
 from wfgen.types import Type, Dimension
 
-tools = download_if_missing(build_dir / "ToolDescription.ttl",
+tools = download(
     "https://raw.githubusercontent.com/simonscheider/QuAnGIS/master/"
     "ToolRepository/ToolDescription.ttl")
 
-types = download_if_missing(build_dir / "CoreConceptData.rdf",
-    "http://geographicknowledge.de/vocab/CoreConceptData.rdf")
+types = download("http://geographicknowledge.de/vocab/CoreConceptData.rdf")
 
 dimension_roots = [CCD.CoreConceptQ, CCD.LayerA, CCD.NominalA]
 sources = [
@@ -105,7 +104,7 @@ for d in gen.dimensions:
 running_total = 0
 for inputs, outputs in generate_io(gen.dimensions):
     print("Generating workflows for:", inputs, "->", outputs)
-    for solution in gen.run(inputs=inputs, outputs=outputs, solutions=1):
+    for solution in gen.run(inputs, outputs, solutions=1):
         running_total += 1
         solution.serialize(build_dir / f"solution-{running_total}.ttl",
             format="ttl")

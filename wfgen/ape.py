@@ -19,15 +19,16 @@ from rdflib.namespace import Namespace, RDF
 from transformation_algebra.namespace import EX
 
 from wfgen.types import Type
-from wfgen.util import build_dir, download_if_missing
+from wfgen.util import build_dir, download
 
 
 # https://repo1.maven.org/maven2/io/github/sanctuuary/APE/2.0.3/APE-2.0.3.jar
 # We need version 1.1.5's API; lower versions won't work
-CLASS_PATH = download_if_missing(build_dir / 'APE-1.1.5-executable.jar', url=(
-    'https://github.com/sanctuuary/APE'
-    '/releases/download/v1.1.5/APE-1.1.5-executable.jar'))
-jpype.startJVM(classpath=[str(CLASS_PATH)])
+CLASS_PATH = [
+    'https://github.com/sanctuuary/APE/releases/download/v1.1.5/'
+    'APE-1.1.5-executable.jar'
+]
+jpype.startJVM(classpath=[str(download(c)) for c in CLASS_PATH])
 
 # Java imports
 import java.io as j_io  # noqa: E402
