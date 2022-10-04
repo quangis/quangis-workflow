@@ -51,7 +51,8 @@ class Type(MutableMapping[Dimension, set[Node]]):
     """
 
     def __init__(self,
-            dimensions: list[Dimension] | Mapping[Dimension, Iterable[Node]],
+            dimensions: Iterable[Dimension]
+                | Mapping[Dimension, Iterable[Node]],
             types: Iterable[Node] | None = None):
         """
         We represent a datatype as a mapping from RDF dimension nodes to one or
@@ -59,13 +60,13 @@ class Type(MutableMapping[Dimension, set[Node]]):
         """
         super().__init__()
         self.data: dict[Dimension, set[Node]]
-        if isinstance(dimensions, Mapping) and types is None:
+
+        if types is not None:
+            self.data = {k: {t} for k, t in zip(dimensions, types)}
+        elif isinstance(dimensions, Mapping):
             self.data = {k: set(v) for k, v in dimensions.items()}
         else:
-            if types:
-                self.data = {k: {t} for k, t in zip(dimensions, types)}
-            else:
-                self.data = {k: set() for k in dimensions}
+            self.data = {k: set() for k in dimensions}
 
     def __str__(self) -> str:
         return str({str(k.root): list(v) for k, v in self.items()})
@@ -98,16 +99,12 @@ class Type(MutableMapping[Dimension, set[Node]]):
         assert isinstance(key, Dimension)
         return key
 
-    def downcast(self, target={
-            CCD.NominalA: CCD.PlainNominalA,
-            CCD.OrdinalA: CCD.PlainOrdinalA,
-            CCD.IntervalA: CCD.PlainIntervalA,
-            CCD.RatioA: CCD.PlainRatioA}) -> Type:
+    def downcast(self, target: Mapping[Node, Node]) -> Type:
         """
         APE has a closed world assumption, in that it considers the set of leaf
-        nodes it knows about as exhaustive. This method returns a new `Types`
-        in which certain branch nodes are cast to identifiable leaf nodes, so
-        that they can be considered as valid answers.
+        nodes it knows about as exhaustive. This method can be used to cast
+        certain branch nodes to identifiable leaf nodes, so that they can be
+        considered as valid answers.
         """
         for dimension, classes in self.items():
             self[dimension] = set(target.get(n, n) for n in classes)

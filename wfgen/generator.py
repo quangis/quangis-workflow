@@ -58,6 +58,12 @@ class WorkflowGenerator(APE):
         input_predicates = (WF.input1, WF.input2, WF.input3)
         output_predicates = (WF.output, WF.output2, WF.output3)
 
+        casts = {
+            CCD.NominalA: CCD.PlainNominalA,
+            CCD.OrdinalA: CCD.PlainOrdinalA,
+            CCD.IntervalA: CCD.PlainIntervalA,
+            CCD.RatioA: CCD.PlainRatioA}
+
         return {
             'functions': [
                 {
@@ -81,7 +87,7 @@ class WorkflowGenerator(APE):
                             for k, v in Type.project(
                                 self.dimensions,
                                 self.tools.objects(output, RDF.type)
-                            ).downcast().items()
+                            ).downcast(casts).items()
                         }
                         for p in output_predicates
                         if (output := self.tools.value(tool, p, any=False))
