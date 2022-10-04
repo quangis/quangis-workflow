@@ -17,8 +17,8 @@ EM = Namespace("http://geographicknowledge.de/vocab/ExtensiveMeasures.rdf#")
 ADA = Namespace("http://geographicknowledge.de/vocab/AnalysisData.rdf#")
 WF = Namespace("http://geographicknowledge.de/vocab/Workflow.rdf#")
 GIS = Namespace("http://geographicknowledge.de/vocab/GISConcepts.rdf#")
-TOOLS = Namespace("http://geographicknowledge.de/vocab/GISTools.rdf#")
-# TOOLS = Namespace("https://github.com/quangis/cct/blob/master/tools/tools.ttl#")
+# TOOLS = Namespace("http://geographicknowledge.de/vocab/GISTools.rdf#")
+TOOLS = Namespace("https://github.com/quangis/cct/blob/master/tools/tools.ttl#")
 EX = Namespace('https://example.com/#')
 
 # Also provide a mapping for easy programmatic access

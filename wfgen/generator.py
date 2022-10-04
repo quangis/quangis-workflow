@@ -6,9 +6,7 @@ we want it to.
 
 from __future__ import annotations
 
-from pathlib import Path
 from rdflib import Graph
-from rdflib.term import Node
 from rdflib.util import guess_format
 from typing import Iterable
 
@@ -19,7 +17,7 @@ from wfgen.namespace import CCD, TOOLS, OWL, RDF, RDFS, ADA, WF
 
 
 def graph(url: str) -> Graph:
-    path = download(url)
+    path = download(url.rstrip("#"))
     g = Graph()
     g.parse(path, format=guess_format(path))
     return g
@@ -32,12 +30,9 @@ class WorkflowGenerator(APE):
     """
 
     def __init__(self):
-
         dimension_roots = [CCD.CoreConceptQ, CCD.LayerA, CCD.NominalA]
-        self.types = graph(
-            "http://geographicknowledge.de/vocab/CoreConceptData.rdf")
-        self.tools = graph(
-            "https://raw.githubusercontent.com/quangis/cct/master/tools/tools.ttl")
+        self.types = graph(CCD)
+        self.tools = graph(TOOLS)
         self.dimensions = [Dimension(d, self.types, CCD)
             for d in dimension_roots]
 

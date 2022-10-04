@@ -13,7 +13,7 @@ from wfgen.util import build_dir
 from wfgen.types import Type, Dimension
 
 sources = [
-    (CCD.FieldQ, CCD.VectorTessellationA, CCD.PlainNominalA),  # Vector Coverage
+    (CCD.FieldQ, CCD.VectorTessellationA, CCD.PlainNominalA),  # VectorCoverage
     (CCD.FieldQ, CCD.VectorTessellationA, CCD.PlainOrdinalA),  # Contour
     (CCD.FieldQ, CCD.PointA, CCD.PlainIntervalA),  # PointMeasures
     (CCD.FieldQ, CCD.PointA, CCD.PlainRatioA),  # PointMeasures
@@ -101,10 +101,8 @@ for inputs, outputs in generate_io(gen.dimensions):
     print("Generating workflows for:", inputs, "->", outputs)
     for solution in gen.run(inputs, outputs, solutions=1):
         running_total += 1
-        # cct_solution = build_transformation(cct, gen.tools, solution)
-        # print("Building transformation graph...")
-        # print(g.serialize(format="ttl"))
-        # g.serialize(f"solution{shorten(solution.root)}.ttl", format="ttl")
-        solution.serialize(build_dir / f"solution-{running_total}.ttl",
+        print("Found a solution; building transformation graph...")
+        cct_solution = build_transformation(cct, gen.tools, solution)
+        cct_solution.serialize(build_dir / f"solution-{running_total}.ttl",
             format="ttl")
     print("Running total: {}".format(running_total))
