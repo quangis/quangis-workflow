@@ -39,7 +39,8 @@ class CCDWorkflowSynthesis(APE):
             self.tools = Graph()
             self.tools.parse(tools, format=guess_format(tools))
 
-        self.dimensions = [Dimension(d, self.types) for d in dimension_roots]
+        self.dimensions = [Dimension(d, self.types, CCD)
+            for d in dimension_roots]
 
         super().__init__(
             taxonomy=self.ape_type_taxonomy() + self.ape_tool_taxonomy(),

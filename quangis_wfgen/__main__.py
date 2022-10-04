@@ -95,14 +95,18 @@ def generate_io(dimensions: list[Dimension]) \
 
 
 print("Starting APE")
-wfsyn = CCDWorkflowSynthesis(types=types, tools=tools,
+gen = CCDWorkflowSynthesis(types=types, tools=tools,
     dimension_roots=dimension_roots)
-print("Started APE")
+
+print("Produce dimension trees")
+for d in gen.dimensions:
+    name = str(d.root).split("#")[1]
+    d.serialize(build_dir / f"dimension_{name}.ttl", format="ttl")
 
 running_total = 0
-for inputs, outputs in generate_io(wfsyn.dimensions):
-    solutions = wfsyn.run(inputs=inputs, outputs=outputs, solutions=1)
-    for solution in solutions:
+for inputs, outputs in generate_io(gen.dimensions):
+    print("Generating workflows for:", inputs, "->", outputs)
+    for solution in gen.run(inputs=inputs, outputs=outputs, solutions=1):
         running_total += 1
         solution.serialize(build_dir / f"solution{running_total}.ttl",
             format="ttl")

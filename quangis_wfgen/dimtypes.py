@@ -14,6 +14,7 @@ from __future__ import annotations
 
 from rdflib import Graph
 from rdflib.term import Node
+from rdflib.namespace import Namespace
 from typing import Iterable, MutableMapping, Iterator, Mapping
 
 from quangis_wfgen.namespace import CCD, RDFS
@@ -25,9 +26,11 @@ class Dimension(Graph):
     belonging to that dimension.
     """
 
-    def __init__(self, root: Node, source: Graph):
+    def __init__(self, root: Node, source: Graph, namespace: Namespace | None):
         super().__init__()
         self.root = root
+        if namespace:
+            self.bind("", namespace)
 
         def f(node):
             for child in source.subjects(RDFS.subClassOf, node):
@@ -74,6 +77,9 @@ class DimTypes(MutableMapping[Dimension, set[Node]]):
 
     def __str__(self) -> str:
         return str({str(k.root): list(v) for k, v in self.items()})
+
+    def __repr__(self) -> str:
+        return str(self)
 
     def __len__(self) -> int:
         return len(self.data)
