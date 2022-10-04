@@ -27,18 +27,8 @@ class WorkflowGenerator(APE):
     def __init__(self, types: Graph | Path, tools: Graph | Path,
             dimension_roots: list[Node]):
 
-        if isinstance(types, Graph):
-            self.types = types
-        else:
-            self.types = Graph()
-            self.types.parse(types, format=guess_format(types))
-
-        if isinstance(tools, Graph):
-            self.tools = tools
-        else:
-            self.tools = Graph()
-            self.tools.parse(tools, format=guess_format(tools))
-
+        self.types = self.graph(types)
+        self.tools = self.graph(tools)
         self.dimensions = [Dimension(d, self.types, CCD)
             for d in dimension_roots]
 
@@ -49,6 +39,14 @@ class WorkflowGenerator(APE):
             namespace=CCD,
             dimensions=[d.root for d in self.dimensions]
         )
+
+    def graph(self, graph: Graph | Path) -> Graph:
+        if isinstance(graph, Graph):
+            return graph
+        else:
+            g = Graph()
+            g.parse(graph, format=guess_format(graph))
+            return g
 
     def ape_tools(self) -> ToolsDict:
         """

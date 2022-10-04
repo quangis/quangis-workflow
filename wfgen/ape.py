@@ -6,15 +6,16 @@ A Pythonic interface to the Automated Pipeline Explorer
 from __future__ import annotations
 
 import json
-import jpype
-import jpype.imports
 from pathlib import Path
 from itertools import count
+from typing import Iterable, Iterator
+from typing_extensions import TypedDict
+
+import jpype
+import jpype.imports
 from rdflib import Graph, BNode, URIRef
 from rdflib.term import Node
 from rdflib.namespace import Namespace, RDF
-from typing import Iterable, Iterator
-from typing_extensions import TypedDict
 from transformation_algebra.namespace import EX
 
 from wfgen.types import Type

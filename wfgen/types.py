@@ -10,7 +10,7 @@ from rdflib.term import Node
 from rdflib.namespace import Namespace
 from typing import Iterable, MutableMapping, Iterator, Mapping
 
-from wfgen.namespace import CCD, RDFS
+from wfgen.namespace import RDFS
 
 
 class Dimension(Graph):
