@@ -21,20 +21,17 @@ from transformation_algebra.namespace import EX
 from wfgen.types import Type
 from wfgen.util import build_dir, download
 
-
-# https://repo1.maven.org/maven2/io/github/sanctuuary/APE/2.0.3/APE-2.0.3.jar
-# We need version 1.1.5's API; lower versions won't work
-CLASS_PATH = [
-    'https://github.com/sanctuuary/APE/releases/download/v1.1.5/'
-    'APE-1.1.5-executable.jar'
+MVN = "https://repo1.maven.org/maven2"
+JAR = [
+    f"{MVN}/io/github/sanctuuary/APE/2.0.3/APE-2.0.3-executable.jar"
 ]
-jpype.startJVM(classpath=[str(download(c)) for c in CLASS_PATH])
+jpype.startJVM(classpath=[str(download(j)) for j in JAR])
 
 # Java imports
 import java.io as j_io  # noqa: E402
 import java.util as j_util  # noqa: E402
 import org.json as j_json  # noqa: E402
-import nl.uu.cs.ape.sat as j_ape  # noqa: E402
+import nl.uu.cs.ape as j_ape  # noqa: E402
 
 
 ToolDict = TypedDict('ToolDict', {
