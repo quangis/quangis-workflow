@@ -4,21 +4,14 @@ ontology.
 """
 
 from typing import Iterator
-# from cct import cct
-# from transformation_algebra.util.common import build_transformation
+from cct import cct
+from transformation_algebra.util.common import build_transformation
 
 from wfgen.namespace import CCD, EM
 from wfgen.generator import WorkflowGenerator
-from wfgen.util import download, build_dir
+from wfgen.util import build_dir
 from wfgen.types import Type, Dimension
 
-tools = download(
-    "https://raw.githubusercontent.com/simonscheider/QuAnGIS/master/"
-    "ToolRepository/ToolDescription.ttl")
-
-types = download("http://geographicknowledge.de/vocab/CoreConceptData.rdf")
-
-dimension_roots = [CCD.CoreConceptQ, CCD.LayerA, CCD.NominalA]
 sources = [
     (CCD.FieldQ, CCD.VectorTessellationA, CCD.PlainNominalA),  # Vector Coverage
     (CCD.FieldQ, CCD.VectorTessellationA, CCD.PlainOrdinalA),  # Contour
@@ -96,7 +89,7 @@ def generate_io(dimensions: list[Dimension]) \
 
 
 print("Starting APE")
-gen = WorkflowGenerator(types, tools, dimension_roots)
+gen = WorkflowGenerator()
 
 print("Produce dimension trees")
 for d in gen.dimensions:
@@ -108,10 +101,10 @@ for inputs, outputs in generate_io(gen.dimensions):
     print("Generating workflows for:", inputs, "->", outputs)
     for solution in gen.run(inputs, outputs, solutions=1):
         running_total += 1
-        solution.serialize(build_dir / f"solution-{running_total}.ttl",
-            format="ttl")
+        # cct_solution = build_transformation(cct, gen.tools, solution)
         # print("Building transformation graph...")
-        # g = build_transformation(cct, tools, solution)
         # print(g.serialize(format="ttl"))
         # g.serialize(f"solution{shorten(solution.root)}.ttl", format="ttl")
+        solution.serialize(build_dir / f"solution-{running_total}.ttl",
+            format="ttl")
     print("Running total: {}".format(running_total))

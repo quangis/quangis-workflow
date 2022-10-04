@@ -12,10 +12,17 @@ from rdflib.term import Node
 from rdflib.util import guess_format
 from typing import Iterable
 
-from wfgen.util import shorten
+from wfgen.util import shorten, download
 from wfgen.ape import APE, Workflow, ToolsDict
 from wfgen.types import Type, Dimension
 from wfgen.namespace import CCD, TOOLS, OWL, RDF, RDFS, ADA, WF
+
+
+def graph(url: str) -> Graph:
+    path = download(url)
+    g = Graph()
+    g.parse(path, format=guess_format(path))
+    return g
 
 
 class WorkflowGenerator(APE):
@@ -24,11 +31,13 @@ class WorkflowGenerator(APE):
     the form we want it to.
     """
 
-    def __init__(self, types: Graph | Path, tools: Graph | Path,
-            dimension_roots: list[Node]):
+    def __init__(self):
 
-        self.types = self.graph(types)
-        self.tools = self.graph(tools)
+        dimension_roots = [CCD.CoreConceptQ, CCD.LayerA, CCD.NominalA]
+        self.types = graph(
+            "http://geographicknowledge.de/vocab/CoreConceptData.rdf")
+        self.tools = graph(
+            "https://raw.githubusercontent.com/quangis/cct/master/tools/tools.ttl")
         self.dimensions = [Dimension(d, self.types, CCD)
             for d in dimension_roots]
 
@@ -39,14 +48,6 @@ class WorkflowGenerator(APE):
             namespace=CCD,
             dimensions=[d.root for d in self.dimensions]
         )
-
-    def graph(self, graph: Graph | Path) -> Graph:
-        if isinstance(graph, Graph):
-            return graph
-        else:
-            g = Graph()
-            g.parse(graph, format=guess_format(graph))
-            return g
 
     def ape_tools(self) -> ToolsDict:
         """
