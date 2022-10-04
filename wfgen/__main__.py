@@ -3,6 +3,7 @@ Generate workflows using APE with the CCD type taxonomy and the GIS tool
 ontology.
 """
 
+from rdflib import Graph, RDFS, Literal
 from typing import Iterator
 from cct import cct
 from transformation_algebra.util.common import build_transformation
@@ -102,7 +103,18 @@ for inputs, outputs in generate_io(gen.dimensions):
     for solution in gen.run(inputs, outputs, solutions=1):
         running_total += 1
         print("Found a solution; building transformation graph...")
-        cct_solution = build_transformation(cct, gen.tools, solution)
-        cct_solution.serialize(build_dir / f"solution-{running_total}.ttl",
-            format="ttl")
+        wf: Graph
+        try:
+            wf = build_transformation(cct, gen.tools, solution)
+            success = True
+        # TODO transformation-algebra-specific errors
+        except Exception as e:
+            success = False
+            print(f"Could not construct transformation graph: {e}")
+            wf = solution
+            wf.add((solution.root, RDFS.comment,
+                Literal("could not construct transformation graph")))
+
+        name = f"{'' if success else 'partial-'}solution-{running_total}.ttl"
+        wf.serialize(build_dir / name, format="ttl")
     print("Running total: {}".format(running_total))
