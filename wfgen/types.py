@@ -1,13 +1,6 @@
 """
-A dimensional type resource is a mapping between type dimensions and
-corresponding semantic types.
-
-These methods are used to construct semantic dimensions (subsumption trees) for
-a given list of superconcepts that identify these dimensions. It returns a
-projection function which projects any subsumed node to all given dimensions.
-None is returned if the node cannot be projected to this dimension. The method
-is used to clean annotations such that we can represent them as a conjunction
-of concepts from different semantic dimensions.
+This module defines a multi-dimensional type, which is a mapping between
+dimensions of semantic types, and an intersection of types from that dimension.
 """
 
 from __future__ import annotations
@@ -17,7 +10,7 @@ from rdflib.term import Node
 from rdflib.namespace import Namespace
 from typing import Iterable, MutableMapping, Iterator, Mapping
 
-from quangis_wfgen.namespace import CCD, RDFS
+from wfgen.namespace import CCD, RDFS
 
 
 class Dimension(Graph):
@@ -52,8 +45,7 @@ class Dimension(Graph):
                 for parent in self.parents(subclass))
 
 
-# TODO there can be multiple things in a single dimension?
-class DimTypes(MutableMapping[Dimension, set[Node]]):
+class Type(MutableMapping[Dimension, set[Node]]):
     """
     Types for input and output data across different semantic dimensions.
     """
@@ -110,7 +102,7 @@ class DimTypes(MutableMapping[Dimension, set[Node]]):
             CCD.NominalA: CCD.PlainNominalA,
             CCD.OrdinalA: CCD.PlainOrdinalA,
             CCD.IntervalA: CCD.PlainIntervalA,
-            CCD.RatioA: CCD.PlainRatioA}) -> DimTypes:
+            CCD.RatioA: CCD.PlainRatioA}) -> Type:
         """
         APE has a closed world assumption, in that it considers the set of leaf
         nodes it knows about as exhaustive. This method returns a new `Types`
@@ -123,7 +115,7 @@ class DimTypes(MutableMapping[Dimension, set[Node]]):
 
     @staticmethod
     def project(dimensions: Iterable[Dimension],
-            types: Iterable[Node]) -> DimTypes:
+            types: Iterable[Node]) -> Type:
         """
         Projects type nodes to the given dimensions. Any type that is subsumed
         by at least one dimension can be projected to the closest parent(s) in
@@ -132,7 +124,7 @@ class DimTypes(MutableMapping[Dimension, set[Node]]):
         """
 
         dimensions, types = list(dimensions), list(types)
-        result = DimTypes(dimensions)
+        result = Type(dimensions)
 
         for d in dimensions:
             other_dimensions = list(d2 for d2 in dimensions if d2 is not d)

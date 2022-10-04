@@ -2,7 +2,6 @@
 """
 Higher-level APE wrapper that takes input and produces output in the RDF form
 we want it to.
-
 """
 
 from __future__ import annotations
@@ -12,13 +11,14 @@ from rdflib import Graph
 from rdflib.term import Node
 from rdflib.util import guess_format
 from typing import Iterable
-from quangis_wfgen.util import shorten
-from quangis_wfgen.ape import APE, Workflow, ToolsDict
-from quangis_wfgen.dimtypes import DimTypes, Dimension
-from quangis_wfgen.namespace import CCD, TOOLS, OWL, RDF, RDFS, ADA, WF
+
+from wfgen.util import shorten
+from wfgen.ape import APE, Workflow, ToolsDict
+from wfgen.types import Type, Dimension
+from wfgen.namespace import CCD, TOOLS, OWL, RDF, RDFS, ADA, WF
 
 
-class CCDWorkflowSynthesis(APE):
+class WorkflowGenerator(APE):
     """
     A wrapper around the lower-level APE wrapper that takes input and output in
     the form we want it to.
@@ -67,7 +67,7 @@ class CCDWorkflowSynthesis(APE):
                     'inputs': [
                         {
                             k.root: list(v)
-                            for k, v in DimTypes.project(
+                            for k, v in Type.project(
                                 self.dimensions,
                                 self.tools.objects(input, RDF.type)
                             ).items()
@@ -78,7 +78,7 @@ class CCDWorkflowSynthesis(APE):
                     'outputs': [
                         {
                             k.root: list(v)
-                            for k, v in DimTypes.project(
+                            for k, v in Type.project(
                                 self.dimensions,
                                 self.tools.objects(output, RDF.type)
                             ).downcast().items()

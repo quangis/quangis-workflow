@@ -17,8 +17,8 @@ from typing import Iterable, Iterator
 from typing_extensions import TypedDict
 from transformation_algebra.namespace import EX
 
-from quangis_wfgen.dimtypes import DimTypes
-from quangis_wfgen.util import build_dir, download_if_missing
+from wfgen.types import Type
+from wfgen.util import build_dir, download_if_missing
 
 
 # https://repo1.maven.org/maven2/io/github/sanctuuary/APE/2.0.3/APE-2.0.3.jar
@@ -83,9 +83,9 @@ class APE(object):
         self.ape = j_ape.APE(self.config)
         self.setup = self.ape.getDomainSetup()
 
-    def type(self, is_output: bool, t: DimTypes) -> j_ape.models.Type:
+    def type(self, is_output: bool, t: Type) -> j_ape.models.Type:
         """
-        Convert `DimTypes` to the corresponding APE structure.
+        Convert `Type` to the corresponding APE structure.
         """
 
         obj = j_json.JSONObject()
@@ -99,14 +99,14 @@ class APE(object):
             obj, self.setup, is_output)
 
     def type_array(self, is_output: bool,
-            types: Iterable[DimTypes]) -> j_json.JSONArray:
+            types: Iterable[Type]) -> j_json.JSONArray:
 
         return j_util.Arrays.asList(*(
             self.type(is_output, t) for t in types))
 
     def run(self,
-            inputs: Iterable[DimTypes],
-            outputs: Iterable[DimTypes],
+            inputs: Iterable[Type],
+            outputs: Iterable[Type],
             names: Iterator[URIRef] = (EX[f"solution{i}"] for i in count()),
             solution_length: tuple[int, int] = (1, 10),
             solutions: int = 10,

@@ -2,26 +2,15 @@
 Various utility functions.
 """
 
-import os
-import sys
 import urllib.request
 from pathlib import Path
 from rdflib import URIRef, BNode, Literal
 from rdflib.term import Node
 
-from quangis_wfgen.namespace import namespaces
+from wfgen.namespace import namespaces
 
 root_dir = Path(__file__).parent.parent
 build_dir = root_dir / "build"
-
-if sys.platform.startswith("win"):
-    local_dir = Path(os.getenv("LOCALAPPDATA"))
-elif sys.platform.startswith("darwin"):
-    local_dir = Path("~/Library/Application Support")
-elif sys.platform.startswith("linux"):
-    local_dir = Path(os.getenv("XDG_DATA_HOME", "~/.local/share"))
-else:
-    raise RuntimeError("Unsupported platform")
 
 
 def shorten(node: Node) -> str:

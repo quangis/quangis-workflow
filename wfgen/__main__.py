@@ -7,10 +7,10 @@ from typing import Iterator
 # from cct import cct
 # from transformation_algebra.util.common import build_transformation
 
-from quangis_wfgen.namespace import CCD, EM
-from quangis_wfgen.wfsyn import CCDWorkflowSynthesis
-from quangis_wfgen.util import download_if_missing, build_dir
-from quangis_wfgen.dimtypes import DimTypes, Dimension
+from wfgen.namespace import CCD, EM
+from wfgen.generator import WorkflowGenerator
+from wfgen.util import download_if_missing, build_dir
+from wfgen.types import Type, Dimension
 
 tools = download_if_missing(build_dir / "ToolDescription.ttl",
     "https://raw.githubusercontent.com/simonscheider/QuAnGIS/master/"
@@ -79,36 +79,35 @@ goals = [
 
 
 def generate_io(dimensions: list[Dimension]) \
-        -> Iterator[tuple[list[DimTypes], list[DimTypes]]]:
+        -> Iterator[tuple[list[Type], list[Type]]]:
     """
     To start with, we generate workflows with two inputs and one output, of
     which one input is drawn from the following sources, and the other is the
     same as the output without the measurement level.
     """
     for goal_tuple in goals:
-        goal = DimTypes(dimensions, goal_tuple)
-        source1 = DimTypes(goal)
+        goal = Type(dimensions, goal_tuple)
+        source1 = Type(goal)
         source1[CCD.NominalA] = {CCD.NominalA}
         for source_tuple in sources:
-            source2 = DimTypes(dimensions, source_tuple)
+            source2 = Type(dimensions, source_tuple)
             yield [source1, source2], [goal]
 
 
 print("Starting APE")
-gen = CCDWorkflowSynthesis(types=types, tools=tools,
-    dimension_roots=dimension_roots)
+gen = WorkflowGenerator(types, tools, dimension_roots)
 
 print("Produce dimension trees")
 for d in gen.dimensions:
     name = str(d.root).split("#")[1]
-    d.serialize(build_dir / f"dimension_{name}.ttl", format="ttl")
+    d.serialize(build_dir / f"dimension-{name}.ttl", format="ttl")
 
 running_total = 0
 for inputs, outputs in generate_io(gen.dimensions):
     print("Generating workflows for:", inputs, "->", outputs)
     for solution in gen.run(inputs=inputs, outputs=outputs, solutions=1):
         running_total += 1
-        solution.serialize(build_dir / f"solution{running_total}.ttl",
+        solution.serialize(build_dir / f"solution-{running_total}.ttl",
             format="ttl")
         # print("Building transformation graph...")
         # g = build_transformation(cct, tools, solution)

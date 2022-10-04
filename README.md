@@ -27,7 +27,7 @@ weaved into a graph of conceptual transformations via the
 ## Usage
 
 Java and Python must be installed. To generate workflows, run `python -m 
-quangis_wfgen`. To run (rather limited) tests, run `nose2`.
+wfgen`. To run (rather limited) tests, run `nose2`.
 
 
 [ccd]: http://geographicknowledge.de/vocab/CoreConceptData.rdf
