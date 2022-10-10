@@ -117,10 +117,10 @@ for inputs, outputs in generate_io(gen.dimensions):
         except Exception as e:
             success = False
             print(f"Could not construct transformation graph: {e}")
-            wf = solution
-            wf.add((solution.root, RDFS.comment,
-                Literal("could not construct transformation graph")))
+            wf_enriched.add((solution.root, RDFS.comment,
+                Literal(f"could not construct transformation graph: {e}")))
 
-        name = f"{'' if success else 'partial-'}solution-{running_total}.ttl"
-        wf.serialize(build_dir / name, format="ttl")
+        name = f"solution-{running_total}{'' if success else '-error'}"
+        wf_enriched.serialize(build_dir / (name + ".ttl"), format="ttl")
+        wf_enriched.visualize(build_dir / (name + ".dot"))
     print("Running total: {}".format(running_total))
