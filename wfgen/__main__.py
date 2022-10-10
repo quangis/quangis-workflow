@@ -6,7 +6,8 @@ ontology.
 from rdflib import Graph, RDFS, Literal
 from typing import Iterator
 from cct import cct
-from transformation_algebra.util.common import build_transformation
+from transformation_algebra.graph import TransformationGraph
+from transformation_algebra.workflow import WorkflowGraph
 
 from wfgen.namespace import CCD, EM
 from wfgen.generator import WorkflowGenerator
@@ -105,7 +106,12 @@ for inputs, outputs in generate_io(gen.dimensions):
         print("Found a solution; building transformation graph...")
         wf: Graph
         try:
-            wf = build_transformation(cct, gen.tools, solution)
+            wf = WorkflowGraph(cct, gen.tools)
+            wf += solution
+            wf.refresh()
+            wf_enriched = TransformationGraph(cct)
+            wf_enriched.add_workflow(wf)
+            wf_enriched += solution
             success = True
         # TODO transformation-algebra-specific errors
         except Exception as e:
