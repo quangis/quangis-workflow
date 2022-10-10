@@ -15,6 +15,8 @@ from wfgen.ape import APE, Workflow, ToolsDict
 from wfgen.types import Type, Dimension
 from wfgen.namespace import CCD, TOOLS, OWL, RDF, RDFS, ADA, WF
 
+TOOLS2 = "https://raw.githubusercontent.com/quangis/cct/master/tools/tools.ttl"
+
 
 def graph(url: str) -> Graph:
     path = download(url.rstrip("#"))
@@ -32,7 +34,7 @@ class WorkflowGenerator(APE):
     def __init__(self):
         dimension_roots = [CCD.CoreConceptQ, CCD.LayerA, CCD.NominalA]
         self.types = graph(CCD)
-        self.tools = graph(TOOLS)
+        self.tools = graph(TOOLS2)
         self.dimensions = [Dimension(d, self.types, CCD)
             for d in dimension_roots]
 
