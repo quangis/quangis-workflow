@@ -13,10 +13,10 @@ from typing_extensions import TypedDict
 
 import jpype
 import jpype.imports
-from rdflib import Graph, BNode, URIRef
+from rdflib import Graph, BNode, URIRef, Literal
 from rdflib.term import Node
-from rdflib.namespace import Namespace, RDF
-from transformation_algebra.namespace import EX
+from rdflib.namespace import Namespace, RDF, RDFS
+from transformation_algebra.namespace import EX, shorten
 
 from wfgen.types import Type
 from wfgen.util import build_dir, download
@@ -205,7 +205,10 @@ class Workflow(Graph):
             return self.resources[type]
         except KeyError:
             resource = self.resources[type] = BNode()
+            type_labels = []
             for t in type.getTypes():
                 type_node = URIRef(t.getPredicateLongLabel())
+                type_labels.append(shorten(type_node))
                 self.add((resource, RDF.type, type_node))
+            self.add((resource, RDFS.label, Literal(", ".join(type_labels))))
             return resource
