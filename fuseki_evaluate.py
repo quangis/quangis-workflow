@@ -12,7 +12,7 @@ import threading
 from pathlib import Path
 from typing import ContextManager
 from transformation_algebra.util.store import TransformationStore
-from .evaluate import write_evaluations
+from evaluate import write_evaluations
 
 
 ROOT = Path(__file__).parent
