@@ -195,6 +195,9 @@ class Workflow(Graph):
 
             out_preds = (WF.output, WF.output2, WF.output3)
             for out_pred, type in zip(out_preds, module.getOutputTypes()):
+                # Workaround
+                if not list(type.getTypes()):
+                    break
                 resource = self.add_resource(type)
                 self.add((app, out_pred, resource))
 
