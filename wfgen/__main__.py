@@ -104,14 +104,13 @@ for inputs, outputs in generate_io(gen.dimensions):
     for solution in gen.run(inputs, outputs, solutions=1):
         running_total += 1
         print("Found a solution; building transformation graph...")
-        wf: Graph
+        wf = WorkflowGraph(cct, gen.tools)
+        wf += solution
+        wf.refresh()
         try:
-            wf = WorkflowGraph(cct, gen.tools)
-            wf += solution
-            wf.refresh()
             wf_enriched = TransformationGraph(cct)
-            wf_enriched.add_workflow(wf)
             wf_enriched += solution
+            wf_enriched.add_workflow(wf)
             success = True
         # TODO transformation-algebra-specific errors
         except Exception as e:
