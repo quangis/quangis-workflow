@@ -8,6 +8,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 from itertools import count
+import typing
 from typing import Iterable, Iterator
 from typing_extensions import TypedDict
 
@@ -111,6 +112,7 @@ class APE(object):
             solution_length: tuple[int, int] = (1, 10),
             solutions: int = 10,
             timeout: int = 600,
+            use_workflow_input: typing.Literal["NONE", "ONE", "ALL"] = "ALL",
             output_dir: Path = Path(".")) -> Iterator[Workflow]:
 
         inputs = self.type_array(False, inputs)
@@ -127,6 +129,8 @@ class APE(object):
             .withProgramInputs(inputs)\
             .withProgramOutputs(outputs)\
             .withApeDomainSetup(self.setup)\
+            .withUseWorkflowInput(getattr(j_ape.models.enums.ConfigEnum,
+                use_workflow_input))\
             .build()
 
         result = self.ape.runSynthesis(config)
