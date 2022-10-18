@@ -12,8 +12,6 @@ from rdflib.term import Node
 from wfgen.namespace import namespaces
 
 root_dir = Path(__file__).parent.parent
-build_dir = root_dir / "build"
-
 
 def shorten(node: Node) -> str:
     """
@@ -42,17 +40,20 @@ def uri(short: str) -> URIRef:
     raise RuntimeError
 
 
-def download(url: str, path: Path | None = None) -> Path:
+def download(url: str, dest_dir: Path | None = None,
+        name: str | None = None) -> Path:
     """
     Make sure that a file exists by downloading it if it doesn't exist. Return
     filename.
     """
-    if not path:
-        path = build_dir / Path(url).name
+    if not dest_dir:
+        dest_dir = root_dir
+    if not name:
+        name = Path(url).name
 
-    assert isinstance(path, Path)
-    directory = path.parent
-    directory.mkdir(exist_ok=True)
+    assert isinstance(dest_dir, Path)
+    path = dest_dir / name
+    dest_dir.mkdir(exist_ok=True)
     if not path.exists():
         print(f"{path} not found; now downloading from {url}")
         urllib.request.urlretrieve(url, filename=path)

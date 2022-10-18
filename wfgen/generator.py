@@ -6,6 +6,7 @@ we want it to.
 
 from __future__ import annotations
 
+from pathlib import Path
 from rdflib import Graph
 from rdflib.util import guess_format
 from typing import Iterable
@@ -18,8 +19,8 @@ from wfgen.namespace import CCD, TOOLS, OWL, RDF, RDFS, ADA, WF
 TOOLS2 = "https://raw.githubusercontent.com/quangis/cct/master/tools/tools.ttl"
 
 
-def graph(url: str) -> Graph:
-    path = download(url.rstrip("#"))
+def graph(url: str, build_dir: Path) -> Graph:
+    path = download(url.rstrip("#"), dest_dir=build_dir)
     g = Graph()
     g.parse(path, format=guess_format(path))
     return g
@@ -31,10 +32,10 @@ class WorkflowGenerator(APE):
     the form we want it to.
     """
 
-    def __init__(self):
+    def __init__(self, build_dir: Path):
         dimension_roots = [CCD.CoreConceptQ, CCD.LayerA, CCD.NominalA]
-        self.types = graph(CCD)
-        self.tools = graph(TOOLS2)
+        self.types = graph(CCD, build_dir)
+        self.tools = graph(TOOLS2, build_dir)
         self.dimensions = [Dimension(d, self.types, CCD)
             for d in dimension_roots]
 
@@ -43,6 +44,7 @@ class WorkflowGenerator(APE):
             tools=self.ape_tools(),
             tool_root=TOOLS.Tool,
             namespace=CCD,
+            build_dir=build_dir,
             dimensions=[d.root for d in self.dimensions]
         )
 

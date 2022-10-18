@@ -2,6 +2,7 @@
 # files in this context
 *.rdf
 *.ttl
+*.jar
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

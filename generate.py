@@ -5,13 +5,13 @@ ontology.
 """
 
 from rdflib import RDFS, Literal
+from pathlib import Path
 from cct import cct
 from transformation_algebra.graph import TransformationGraph
 from transformation_algebra.workflow import WorkflowGraph
 
 from wfgen.namespace import CCD, EM
 from wfgen.generator import WorkflowGenerator
-from wfgen.util import build_dir
 from wfgen.types import Type
 
 sources = [
@@ -74,9 +74,9 @@ goals = [
 ]
 
 
-def generate_workflows():
+def generate_workflows(build_dir: Path = Path(__file__).parent / "build"):
     print("Starting APE")
-    gen = WorkflowGenerator()
+    gen = WorkflowGenerator(build_dir)
 
     print("Produce dimension trees")
     for d in gen.dimensions:

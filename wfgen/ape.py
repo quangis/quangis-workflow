@@ -20,7 +20,7 @@ from rdflib.namespace import Namespace, RDF, RDFS
 from transformation_algebra.namespace import EX, shorten
 
 from wfgen.types import Type
-from wfgen.util import build_dir, download
+from wfgen.util import download
 
 MVN = "https://repo1.maven.org/maven2"
 JAR = [
@@ -58,7 +58,7 @@ class APE(object):
 
     def __init__(self, taxonomy: Path | Graph, tools: Path | ToolsDict,
             namespace: Namespace, tool_root: Node, dimensions: list[Node],
-            build_dir: Path = build_dir,
+            build_dir: Path = Path("."),
             strictToolAnnotations: bool = True):
 
         # Serialize if we weren't given paths
