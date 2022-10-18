@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """
 Generate workflows using APE with the CCD type taxonomy and the GIS tool
 ontology.
@@ -94,6 +95,8 @@ def generate_workflows():
             source2 = Type(gen.dimensions, source_tuple)
             inputs_outputs.append(([source1, source2], [goal]))
 
+    # Use the methods in this package to generate a workflow via APE, then add
+    # cct transformation graphs on top
     running_total = 0
     for inputs, outputs in inputs_outputs:
         print("Generating workflows for:", inputs, "->", outputs)
