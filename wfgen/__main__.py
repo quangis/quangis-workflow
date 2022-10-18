@@ -3,8 +3,7 @@ Generate workflows using APE with the CCD type taxonomy and the GIS tool
 ontology.
 """
 
-from rdflib import Graph, RDFS, Literal
-from typing import Iterator
+from rdflib import RDFS, Literal
 from cct import cct
 from transformation_algebra.graph import TransformationGraph
 from transformation_algebra.workflow import WorkflowGraph
@@ -12,7 +11,7 @@ from transformation_algebra.workflow import WorkflowGraph
 from wfgen.namespace import CCD, EM
 from wfgen.generator import WorkflowGenerator
 from wfgen.util import build_dir
-from wfgen.types import Type, Dimension
+from wfgen.types import Type
 
 sources = [
     (CCD.FieldQ, CCD.VectorTessellationA, CCD.PlainNominalA),  # VectorCoverage
@@ -74,52 +73,53 @@ goals = [
 ]
 
 
-def generate_io(dimensions: list[Dimension]) \
-        -> Iterator[tuple[list[Type], list[Type]]]:
-    """
-    To start with, we generate workflows with two inputs and one output, of
-    which one input is drawn from the following sources, and the other is the
-    same as the output without the measurement level.
-    """
+def generate_workflows():
+    print("Starting APE")
+    gen = WorkflowGenerator()
+
+    print("Produce dimension trees")
+    for d in gen.dimensions:
+        name = str(d.root).split("#")[1]
+        d.serialize(build_dir / f"dimension-{name}.ttl", format="ttl")
+
+    # To start with, we generate workflows with two inputs and one output, of
+    # which one input is drawn from the following sources, and the other is the
+    # same as the output without the measurement level.
+    inputs_outputs: list[tuple[list[Type], list[Type]]] = []
     for goal_tuple in goals:
-        goal = Type(dimensions, goal_tuple)
+        goal = Type(gen.dimensions, goal_tuple)
         source1 = Type(goal)
         source1[CCD.NominalA] = {CCD.NominalA}
         for source_tuple in sources:
-            source2 = Type(dimensions, source_tuple)
-            yield [source1, source2], [goal]
+            source2 = Type(gen.dimensions, source_tuple)
+            inputs_outputs.append(([source1, source2], [goal]))
+
+    running_total = 0
+    for inputs, outputs in inputs_outputs:
+        print("Generating workflows for:", inputs, "->", outputs)
+        for solution in gen.run(inputs, outputs, solutions=1):
+            running_total += 1
+            print("Found a solution; building transformation graph...")
+            wf = WorkflowGraph(cct, gen.tools)
+            wf += solution
+            wf.refresh()
+            try:
+                wf_enriched = TransformationGraph(cct)
+                wf_enriched += solution
+                wf_enriched.add_workflow(wf)
+                success = True
+            # TODO transformation-algebra-specific errors
+            except Exception as e:
+                success = False
+                print(f"Could not construct transformation graph: {e}")
+                wf_enriched.add((solution.root, RDFS.comment,
+                    Literal(f"could not construct transformation graph: {e}")))
+
+            name = f"solution-{running_total}{'' if success else '-error'}"
+            wf_enriched.serialize(build_dir / (name + ".ttl"), format="ttl")
+            wf_enriched.visualize(build_dir / (name + ".dot"))
+        print("Running total: {}".format(running_total))
 
 
-print("Starting APE")
-gen = WorkflowGenerator()
-
-print("Produce dimension trees")
-for d in gen.dimensions:
-    name = str(d.root).split("#")[1]
-    d.serialize(build_dir / f"dimension-{name}.ttl", format="ttl")
-
-running_total = 0
-for inputs, outputs in generate_io(gen.dimensions):
-    print("Generating workflows for:", inputs, "->", outputs)
-    for solution in gen.run(inputs, outputs, solutions=1):
-        running_total += 1
-        print("Found a solution; building transformation graph...")
-        wf = WorkflowGraph(cct, gen.tools)
-        wf += solution
-        wf.refresh()
-        try:
-            wf_enriched = TransformationGraph(cct)
-            wf_enriched += solution
-            wf_enriched.add_workflow(wf)
-            success = True
-        # TODO transformation-algebra-specific errors
-        except Exception as e:
-            success = False
-            print(f"Could not construct transformation graph: {e}")
-            wf_enriched.add((solution.root, RDFS.comment,
-                Literal(f"could not construct transformation graph: {e}")))
-
-        name = f"solution-{running_total}{'' if success else '-error'}"
-        wf_enriched.serialize(build_dir / (name + ".ttl"), format="ttl")
-        wf_enriched.visualize(build_dir / (name + ".dot"))
-    print("Running total: {}".format(running_total))
+if __name__ == "__main__":
+    generate_workflows()
