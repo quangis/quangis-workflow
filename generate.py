@@ -95,32 +95,32 @@ def generate_workflows(build_dir: Path = Path(__file__).parent / "build"):
             source2 = Type(gen.dimensions, source_tuple)
             inputs_outputs.append(([source1, source2], [goal]))
 
-    # Use the methods in this package to generate a workflow via APE, then add
-    # cct transformation graphs on top
     running_total = 0
     for inputs, outputs in inputs_outputs:
         print("Generating workflows for:", inputs, "->", outputs)
         for solution in gen.run(inputs, outputs, solutions=1):
             running_total += 1
-            print("Found a solution; building transformation graph...")
-            wf = WorkflowGraph(cct, gen.tools)
-            wf += solution
-            wf.refresh()
-            try:
-                wf_enriched = TransformationGraph(cct)
-                wf_enriched += solution
-                wf_enriched.add_workflow(wf)
-                success = True
-            # TODO transformation-algebra-specific errors
-            except Exception as e:
-                success = False
-                print(f"Could not construct transformation graph: {e}")
-                wf_enriched.add((solution.root, RDFS.comment,
-                    Literal(f"could not construct transformation graph: {e}")))
+            name = f"solution-{running_total}"
+            solution.serialize(build_dir / (name + ".ttl"), format="ttl")
+            # print("Found a solution; building transformation graph...")
+            # wf = WorkflowGraph(cct, gen.tools)
+            # wf += solution
+            # wf.refresh()
+            # try:
+            #     wf_enriched = TransformationGraph(cct)
+            #     wf_enriched += solution
+            #     wf_enriched.add_workflow(wf)
+            #     success = True
+            # # TODO transformation-algebra-specific errors
+            # except Exception as e:
+            #     success = False
+            #     print(f"Could not construct transformation graph: {e}")
+            #     wf_enriched.add((solution.root, RDFS.comment,
+            #         Literal(f"could not construct transformation graph: {e}")))
 
-            name = f"solution-{running_total}{'' if success else '-error'}"
-            wf_enriched.serialize(build_dir / (name + ".ttl"), format="ttl")
-            wf_enriched.visualize(build_dir / (name + ".dot"))
+            # name = f"solution-{running_total}{'' if success else '-error'}"
+            # wf_enriched.serialize(build_dir / (name + ".ttl"), format="ttl")
+            # wf_enriched.visualize(build_dir / (name + ".dot"))
         print("Running total: {}".format(running_total))
 
 

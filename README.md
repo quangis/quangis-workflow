@@ -5,32 +5,36 @@ the [QuAnGIS](https://questionbasedanalysis.com/) project. The program
 synthesizes GIS workflows from a specification of GIS tools, using the 
 [Automated Pipeline Explorer][ape].
 
-## Overview
+### Overview
 
 There are two steps to the process: assembling a pipeline of tools, and 
 annotating the conceptual steps they perform.
 
-For the first step, datatypes and implementations are relevant. 
+1. For the first step, datatypes and implementations are relevant. 
 Therefore, the inputs and outputs of each tool in the 
 [specification][tools] are annotated with core concept datatypes 
 according to the [CCD][ccd] ontology. This is translated to a format 
 that APE understands. APE is then instructed to generate workflows for 
-different possible input/output data configurations.
+different possible input/output data configurations. To perform this 
+step, run `python generate.py`.
 
-The second step involves abstracting away from implementation details. 
-For this, the tools are also annotated with a description of their 
-functionality by means of a [CCT][cct] expression. This information is 
-weaved into a graph of conceptual transformations via the 
-[`transformation-algebra`][ta] library.
+2. The second step involves abstracting away from implementation 
+details. For this, the tools are also annotated with a description of 
+their functionality by means of a [CCT][cct] expression. This 
+information is weaved into a graph of conceptual transformations via the 
+[`transformation-algebra`][ta] library. To perform this step, run the 
+following on the generated workflows:
+
+    python -m transformation_algebra graph -L cct -T build/tools.ttl \
+        --skip-error build/solution-*.ttl
 
 
-## Usage
+### Dependencies
 
 Java 1.8+ and Python 3.9+ must be installed, along with the dependencies 
 in [`requirements.txt`](requirements.txt). The correct version of APE 
-and other required data files will automatically be downloaded. To 
-generate workflows, run `python generate.py`. To run (rather limited) 
-tests, install and run `nose2`.
+and other required data files will automatically be downloaded. To run 
+(rather limited) tests, install and run `nose2`.
 
 
 [ccd]: http://geographicknowledge.de/vocab/CoreConceptData.rdf
