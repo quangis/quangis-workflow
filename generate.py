@@ -4,12 +4,7 @@ Generate workflows using APE with the CCD type taxonomy and the GIS tool
 ontology.
 """
 
-from rdflib import RDFS, Literal
 from pathlib import Path
-from cct import cct
-from transformation_algebra.graph import TransformationGraph
-from transformation_algebra.workflow import WorkflowGraph
-
 from wfgen.namespace import CCD, EM
 from wfgen.generator import WorkflowGenerator
 from wfgen.types import Type
@@ -74,14 +69,9 @@ goals = [
 ]
 
 
-def generate_workflows(build_dir: Path = Path(__file__).parent / "build"):
-    print("Starting APE")
+def generate_workflows():
+    build_dir = Path(__file__).parent / "build"
     gen = WorkflowGenerator(build_dir)
-
-    print("Produce dimension trees")
-    for d in gen.dimensions:
-        name = str(d.root).split("#")[1]
-        d.serialize(build_dir / f"dimension-{name}.ttl", format="ttl")
 
     # To start with, we generate workflows with two inputs and one output, of
     # which one input is drawn from the following sources, and the other is the
@@ -97,31 +87,11 @@ def generate_workflows(build_dir: Path = Path(__file__).parent / "build"):
 
     running_total = 0
     for inputs, outputs in inputs_outputs:
-        print("Generating workflows for:", inputs, "->", outputs)
         for solution in gen.run(inputs, outputs, solutions=1):
             running_total += 1
-            name = f"solution-{running_total}"
-            solution.serialize(build_dir / (name + ".ttl"), format="ttl")
-            # print("Found a solution; building transformation graph...")
-            # wf = WorkflowGraph(cct, gen.tools)
-            # wf += solution
-            # wf.refresh()
-            # try:
-            #     wf_enriched = TransformationGraph(cct)
-            #     wf_enriched += solution
-            #     wf_enriched.add_workflow(wf)
-            #     success = True
-            # # TODO transformation-algebra-specific errors
-            # except Exception as e:
-            #     success = False
-            #     print(f"Could not construct transformation graph: {e}")
-            #     wf_enriched.add((solution.root, RDFS.comment,
-            #         Literal(f"could not construct transformation graph: {e}")))
-
-            # name = f"solution-{running_total}{'' if success else '-error'}"
-            # wf_enriched.serialize(build_dir / (name + ".ttl"), format="ttl")
-            # wf_enriched.visualize(build_dir / (name + ".dot"))
-        print("Running total: {}".format(running_total))
+            path = build_dir / f"solution-{running_total}.ttl"
+            print(f"Writing solution: {path}")
+            solution.serialize(path, format="ttl")
 
 
 if __name__ == "__main__":
