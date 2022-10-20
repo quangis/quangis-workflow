@@ -108,7 +108,7 @@ class APE(object):
     def run(self,
             inputs: Iterable[Type],
             outputs: Iterable[Type],
-            names: Iterator[URIRef] = (EX[f"solution{i}"] for i in count()),
+            prefix: URIRef = EX["solution"],
             solution_length: tuple[int, int] = (1, 10),
             solutions: int = 10,
             timeout: int = 600,
@@ -136,7 +136,7 @@ class APE(object):
         result = self.ape.runSynthesis(config)
 
         for i in range(result.getNumberOfSolutions()):
-            uri: URIRef = next(names)
+            uri: URIRef = prefix + str(i + 1)
             wf = Workflow(uri)
             wf.add_wf(result.get(i))
             yield wf

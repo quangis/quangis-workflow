@@ -5,9 +5,10 @@ ontology.
 """
 
 from pathlib import Path
-from wfgen.namespace import CCD, EM
+from wfgen.namespace import CCD, EM, EX
 from wfgen.generator import WorkflowGenerator
 from wfgen.types import Type
+from transformation_algebra.namespace import shorten
 
 sources = [
     (CCD.FieldQ, CCD.VectorTessellationA, CCD.PlainNominalA),  # VectorCoverage
@@ -86,10 +87,11 @@ def generate_workflows():
             inputs_outputs.append(([source1, source2], [goal]))
 
     running_total = 0
-    for inputs, outputs in inputs_outputs:
-        for solution in gen.run(inputs, outputs, solutions=1):
+    for run, (inputs, outputs) in enumerate(inputs_outputs):
+        for solution in gen.run(inputs, outputs, solutions=1,
+                prefix=EX[f"run{run}-solution"]):
             running_total += 1
-            path = build_dir / f"solution-{running_total}.ttl"
+            path = build_dir / f"{shorten(solution.root)}.ttl"
             print(f"Writing solution: {path}")
             solution.serialize(path, format="ttl")
 
