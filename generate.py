@@ -77,19 +77,21 @@ def generate_workflows():
     # To start with, we generate workflows with two inputs and one output, of
     # which one input is drawn from the following sources, and the other is the
     # same as the output without the measurement level.
-    inputs_outputs: list[tuple[list[Type], list[Type]]] = []
+    inputs_outputs: list[tuple[str, list[Type], list[Type]]] = []
     for goal_tuple in goals:
         goal = Type(gen.dimensions, goal_tuple)
+        goal_str = "+".join(shorten(g) for g in goal_tuple)
         source1 = Type(goal)
         source1[CCD.NominalA] = {CCD.NominalA}
         for source_tuple in sources:
             source2 = Type(gen.dimensions, source_tuple)
-            inputs_outputs.append(([source1, source2], [goal]))
+            source_str = "+".join(shorten(s) for s in source_tuple)
+            inputs_outputs.append((f"{source_str}_{goal_str}_",
+                [source1, source2], [goal]))
 
     running_total = 0
-    for run, (inputs, outputs) in enumerate(inputs_outputs):
-        for solution in gen.run(inputs, outputs, solutions=1,
-                prefix=EX[f"run{run}-solution"]):
+    for run, (name, inputs, outputs) in enumerate(inputs_outputs):
+        for solution in gen.run(inputs, outputs, solutions=1, prefix=EX[name]):
             running_total += 1
             path = build_dir / f"{shorten(solution.root)}.ttl"
             print(f"Writing solution: {path}")
