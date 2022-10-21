@@ -6,9 +6,10 @@ dimensions of semantic types, and an intersection of types from that dimension.
 from __future__ import annotations
 
 from rdflib import Graph
-from rdflib.term import Node
+from rdflib.term import Node, URIRef
 from rdflib.namespace import Namespace
 from typing import Iterable, MutableMapping, Iterator, Mapping
+from transformation_algebra.namespace import shorten
 
 from wfgen.namespace import RDFS
 
@@ -73,6 +74,10 @@ class Type(MutableMapping[Dimension, set[Node]]):
 
     def __repr__(self) -> str:
         return str(self)
+
+    def short(self, separator: str = "*") -> str:
+        return separator.join(sorted(
+            shorten(x) for xs in self.data.values() for x in xs))
 
     def __len__(self) -> int:
         return len(self.data)

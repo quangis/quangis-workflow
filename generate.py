@@ -80,20 +80,19 @@ def generate_workflows():
     inputs_outputs: list[tuple[str, list[Type], list[Type]]] = []
     for goal_tuple in goals:
         goal = Type(gen.dimensions, goal_tuple)
-        goal_str = "+".join(shorten(g) for g in goal_tuple)
         source1 = Type(goal)
         source1[CCD.NominalA] = {CCD.NominalA}
         for source_tuple in sources:
             source2 = Type(gen.dimensions, source_tuple)
-            source_str = "+".join(shorten(s) for s in source_tuple)
-            inputs_outputs.append((f"{source_str}_{goal_str}_",
+            inputs_outputs.append((
+                f"{source1.short()}+{source2.short()}_{goal.short()}_",
                 [source1, source2], [goal]))
 
     running_total = 0
     for run, (name, inputs, outputs) in enumerate(inputs_outputs):
         for solution in gen.run(inputs, outputs, solutions=1, prefix=EX[name]):
             running_total += 1
-            path = build_dir / f"{shorten(solution.root)}.ttl"
+            path = build_dir / f"solution{running_total}.ttl"
             print(f"Writing solution: {path}")
             solution.serialize(path, format="ttl")
 
