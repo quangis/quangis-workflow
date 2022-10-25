@@ -10,7 +10,7 @@ _:AdministrativeAreas
 _:RegionalPopulationCounts
     type: "R(Obj, Reg * Count)".
 
-[] a :Task;
+<https://example.com/task/InfrastructureAccessShikoku> a :Task;
     # :question "What is the percentage of rural population within 2km distance to all-season roads in Shikoku, Japan?";
     :implementation <https://example.com/#InfrastructureAccessShikoku>;
     :input _:Roads, _:AdminstrativeAreas, _:RegionalPopulationCounts;

@@ -8,7 +8,7 @@ _:DEM
 _:PourPoint
     type: "R(Obj, Reg * Nom)".
 
-[] a :Task;
+<https://example.com/task/FloodsVermont> a :Task;
     # :question "What is the stream runoff during a predicted rainstorm in Vermont, US?";
     :implementation <https://example.com/#FloodsVermont>;
     :input _:DEM, _:PourPoint;

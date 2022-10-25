@@ -10,7 +10,7 @@ _:PlannedRoads
 _:DeforestedArea
     type: "R(Loc, Bool)".
 
-[] a :Task;
+<https://example.com/task/DeforestationAmazon> a :Task;
     # :question "What is the impact of roads on deforestation in the Amazon rainforest?";
     :implementation <https://example.com/#DeforestationAmazon>;
     :input _:ExistingRoads, _:PlannedRoads, _:DeforestedArea;
