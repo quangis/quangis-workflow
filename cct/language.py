@@ -9,14 +9,11 @@ Module containing the core concept transformation algebra. Usage:
      └─╼ objects data : R1(Obj)
 """
 
-from rdflib import BNode, RDF
-from transformation_algebra.type import Type, Top, Product, Constraint, \
-    TypeInstance, TypeOperation, TypeAlias, TypeOperator, \
-    with_parameters, _
-from transformation_algebra.lang import TA, Language
-from transformation_algebra.expr import Operator
-from transformation_algebra.graph import TransformationGraph
-from transformation_algebra.query import TransformationQuery
+from transforge.type import Type, Constraint, \
+    TypeInstance, TypeAlias, TypeOperator, \
+    with_parameters, _, Top
+from transforge.lang import Language
+from transforge.expr import Operator
 
 
 # Types ######################################################################
@@ -609,8 +606,8 @@ groupby = Operator(
 cct = Language(
     scope=locals(),
     namespace=("cct", "https://github.com/quangis/cct#"),
-    include_top=True,
     canon={
+        Top,
         Val,
         R1(Val),
         R2(Reg, Qlt),
@@ -625,4 +622,3 @@ cct = Language(
         R3(Loc, Qlt, Loc),
         R3(Obj, Obj, Obj)
     })
-

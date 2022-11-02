@@ -1,7 +1,7 @@
-@prefix : <https://github.com/quangis/transformation-algebra#>.
-@prefix from: <https://github.com/quangis/transformation-algebra#from>.
+@prefix : <https://github.com/quangis/transforge#>.
+@prefix from: <https://github.com/quangis/transforge#from>.
 @prefix type: <https://github.com/quangis/cct#type>.
-@prefix via: <https://github.com/quangis/transformation_algebra#via>.
+@prefix via: <https://github.com/quangis/transforge#via>.
 
 _:UrbanAreas
     type: "R(Obj, Reg * Nom)".

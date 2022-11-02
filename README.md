@@ -13,17 +13,17 @@ transformation algebra of the
 -   Encodings of the underlying tasks can be found in the 
     [tasks/](tasks/) directory.
 
-The `transformation-algebra` module can also be used as a command-line 
-interface to manipulate this data. You can also use it to get 
-visualizations and diagnostics information. Run `python -m 
-transformation_algebra --help` for a full overview of its capabilities.
+The `transforge` module can also be used as a command-line interface to 
+manipulate this data. You can also use it to get visualizations and 
+diagnostics information. Run `transforge --help` for a full overview of 
+its capabilities.
 
 -   The `graph` subcommand can use the CCT expressions of the 
     [tools](tools/tools.ttl) to turn [workflow](workflows/) graphs into 
     transformation graphs, and write them to a file or upload them to a 
     graph store. For example:
     ```
-    python -m transformation_algebra graph \
+    transforge graph \
         --language=cct --tools=tools/tools.ttl \
         workflows/*.ttl -o output.trig
     ```
@@ -33,7 +33,7 @@ transformation_algebra --help` for a full overview of its capabilities.
     CSV files that show which workflows are retrieved for which task 
     descriptions. For example:
     ```
-    python -m transformation_algebra query --language=cct \
+    transforge query --language=cct \
         --backend fuseki --server https://localhost:3030/cct \
         tasks/*.ttl -o output.csv
     ```
@@ -53,25 +53,20 @@ To perform sanity checks, run `nose2`.
 
 ## Installation
 
-It is based on the 
-[transformation-algebra](https://github.com/quangis/transformation-algebra) 
+It is based on the [transforge](https://github.com/quangis/transforge) 
 package developed for this project, which you will need to have 
 installed.
 
-    pip3 install 'transformation-algebra>=0.2.0'
-
-Since v0.2 is not yet released as of the time of writing, you will 
-probably need to install the development branch of the library.
-
+    pip3 install 'transforge>=0.2.0'
 
 ## Development
 
-During development, you likely want to install editable versions of the 
-two modules:
+During development, you likely want to install editable development 
+versions of the two modules:
 
-    git clone --branch develop https://github.com/quangis/transformation-algebra
+    git clone --branch develop https://github.com/quangis/transforge
     git clone https://github.com/quangis/cct
-    pip3 install --editable transformation-algebra/
+    pip3 install --editable transforge/
     pip3 install --editable cct/
 
 

@@ -9,10 +9,10 @@ from itertools import chain, product
 from pathlib import Path
 from rdflib.term import Node
 
-from transformation_algebra import TransformationQuery
-from transformation_algebra.namespace import TA, EX
-from transformation_algebra.util.store import TransformationStore
-from transformation_algebra.util.common import (graph, build_transformation)
+from transforge import TransformationQuery
+from transforge.namespace import TA, EX
+from transforge.util.store import TransformationStore
+from transforge.util.common import (graph, build_transformation)
 from cct.language import cct
 
 STORE_TYPE = "fuseki"
