@@ -23,8 +23,7 @@ its capabilities.
     transformation graphs, and write them to a file or upload them to a 
     graph store. For example:
     ```
-    transforge graph \
-        --language=cct --tools=tools/tools.ttl \
+    transforge graph cct --tools=tools/tools.ttl \
         workflows/*.ttl -o output.trig
     ```
 
@@ -33,8 +32,7 @@ its capabilities.
     CSV files that show which workflows are retrieved for which task 
     descriptions. For example:
     ```
-    transforge query --language=cct \
-        --backend fuseki --server https://localhost:3030/cct \
+    transforge query cct --server fuseki@https://localhost:3030/cct \
         tasks/*.ttl -o output.csv
     ```
 
