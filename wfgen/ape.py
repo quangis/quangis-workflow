@@ -7,7 +7,6 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from itertools import count
 import typing
 from typing import Iterable, Iterator
 from typing_extensions import TypedDict
@@ -17,7 +16,7 @@ import jpype.imports
 from rdflib import Graph, BNode, URIRef, Literal
 from rdflib.term import Node
 from rdflib.namespace import Namespace, RDF, RDFS
-from transformation_algebra.namespace import EX, shorten
+from transforge.namespace import EX, shorten
 
 from wfgen.types import Type
 from wfgen.util import download

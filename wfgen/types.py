@@ -6,10 +6,10 @@ dimensions of semantic types, and an intersection of types from that dimension.
 from __future__ import annotations
 
 from rdflib import Graph
-from rdflib.term import Node, URIRef
+from rdflib.term import Node
 from rdflib.namespace import Namespace
 from typing import Iterable, MutableMapping, Iterator, Mapping
-from transformation_algebra.namespace import shorten
+from transforge.namespace import shorten
 
 from wfgen.namespace import RDFS
 

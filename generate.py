@@ -8,7 +8,6 @@ from pathlib import Path
 from wfgen.namespace import CCD, EM, EX
 from wfgen.generator import WorkflowGenerator
 from wfgen.types import Type
-from transformation_algebra.namespace import shorten
 
 sources = [
     (CCD.FieldQ, CCD.VectorTessellationA, CCD.PlainNominalA),  # VectorCoverage
