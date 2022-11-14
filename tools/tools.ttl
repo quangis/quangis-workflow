@@ -192,7 +192,7 @@ _:out10_2 a ccd:ObjectQ, ccd:VectorRegionA, ccd:CountA.
 #Flow direction raster
 tools:FlowDirection a :CompleteToolSpecification;
     wf:input1 [ a ccd:FieldRaster, ccd:IntervalA ]; ## DEM
-    wf:output [ a ccd:FieldRaster, ccd:RatioA ];
+    wf:output [ a ccd:FieldRaster, ccd:NominalA ];
     rdfs:comment
         "Computes a grid graph of flow directions from a DEM.";
     cct:expression
@@ -200,7 +200,7 @@ tools:FlowDirection a :CompleteToolSpecification;
 
 #Flow direction accumulation
 tools:FlowAccumulation a :CompleteToolSpecification;
-    wf:input1 [ a ccd:FieldRaster, ccd:RatioA ]; ##needs to be a direction
+    wf:input1 [ a ccd:FieldRaster, ccd:NominalA ]; ##needs to be a direction
     wf:output [ a ccd:FieldRaster, ccd:RatioA ];
     rdfs:comment
         "Accumulates flow directions into areas reachable downstream.";
@@ -394,7 +394,7 @@ tools:SelectFeaturesCoverageToExistenceVector a :CompleteToolSpecification;
     rdfs:comment
         "Select patches of a coverage by attribute";
     cct:expression
-        "revert (select eq (1: Coverages(Nom)) (-: Nom))".
+        "revert (select eq (invert (1: Field(Itv)): Coverages(Nom)) (-: Nom))".
 _:in111_2 
     wf:proxyFor _:in111;
     a ccd:Coverage.
