@@ -192,7 +192,7 @@ _:out10_2 a ccd:ObjectQ, ccd:VectorRegionA, ccd:CountA.
 #Flow direction raster
 tools:FlowDirection a :CompleteToolSpecification;
     wf:input1 [ a ccd:FieldRaster, ccd:IntervalA ]; ## DEM
-    wf:output [ a ccd:FieldRaster, ccd:NominalA ];
+    wf:output [ a ccd:FieldRaster, ccd:CyclicA ];
     rdfs:comment
         "Computes a grid graph of flow directions from a DEM.";
     cct:expression
@@ -200,7 +200,7 @@ tools:FlowDirection a :CompleteToolSpecification;
 
 #Flow direction accumulation
 tools:FlowAccumulation a :CompleteToolSpecification;
-    wf:input1 [ a ccd:FieldRaster, ccd:NominalA ]; ##needs to be a direction
+    wf:input1 [ a ccd:FieldRaster, ccd:CyclicA ]; ##needs to be a direction
     wf:output [ a ccd:FieldRaster, ccd:RatioA ];
     rdfs:comment
         "Accumulates flow directions into areas reachable downstream.";
@@ -1014,7 +1014,9 @@ tools:SelectLayerContourToExistenceVector a :CompleteToolSpecification;
         "revert (select (compose2 notj leq) (1: Contour) (-: Ord))".
 _:in11_13
     wf:proxyFor _:in11;
-    a ccd:Contour.
+    a ccd:FieldQ, ccd:VectorTessellationA, ccd:OrdinalA.
+    # Contour is a coverage that is a subclass of coverage and ordinalA, and
+    # therefore also allows field rasters, which we don't want in this context.
 _:out12_13
     wf:proxyFor _:out12;
     a ccd:FieldQ, ccd:PlainVectorRegionA, ccd:OrdinalA.
@@ -1040,7 +1042,9 @@ tools:SelectLayerCoverageToExistenceVector a :CompleteToolSpecification;
         "revert (select eq (1: Coverages(Nom)) (-: Nom))".
 _:in11_15
     wf:proxyFor _:in11;
-    a ccd:Coverage.
+    a ccd:FieldQ, ccd:VectorTessellationA.
+    # Coverage is defined as a subclass of FieldQ and TesselationA, and
+    # therefore also allows field rasters, which we don't want in this context.
 _:out12_15
     wf:proxyFor _:out12;
     a ccd:FieldQ, ccd:PlainVectorRegionA.
