@@ -246,7 +246,7 @@ getobjectnames = Operator(
 )
 generateobjects = Operator(
     "make objects from other objects (e.g. random points)",
-    type=R2(Obj, Reg * x) ** R2(Obj, Reg * Nom)
+    type=lambda x: R2(Obj, Reg * x) ** R2(Obj, Reg * Nom)
 )
 generateobjectsfromrel= Operator(
     "make objects from object relations (e.g. routes)",
