@@ -244,6 +244,14 @@ getobjectnames = Operator(
     type=R1(Nom) ** R2(Obj, Nom),
     body=lambda x: apply(nominalize, pi2(apply(objectify, x)))
 )
+generateobjects = Operator(
+    "make objects from other objects (e.g. random points)",
+    type=R2(Obj, Reg * x) ** R2(Obj, Reg * Nom)
+)
+generateobjectsfromrel= Operator(
+    "make objects from object relations (e.g. routes)",
+    type=R3(Obj, Reg, Obj) ** R2(Obj, Reg * Nom)
+)
 invert = Operator(
     "invert a field, generating a coverage",
     type=lambda x: R2(Loc, x) ** R2(x, Reg) [x < Val],
