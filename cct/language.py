@@ -361,7 +361,7 @@ nDist = Operator(
 nRoutes = Operator(
     "compute network routes (with distances) between objects",
     type=(R2(Obj, Reg) ** R2(Obj, Reg)
-          ** R3(Obj, Ratio, Obj) ** R2(Obj, Reg * Ratio))
+          ** R3(Obj, Ratio, Obj) ** R3(Obj, Reg, Obj))
 )
 lVis = Operator(
     "build a visibility relation between locations using a DEM",
