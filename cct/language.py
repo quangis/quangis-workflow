@@ -244,6 +244,10 @@ getobjectnames = Operator(
     type=R1(Nom) ** R2(Obj, Nom),
     body=lambda x: apply(nominalize, pi2(apply(objectify, x)))
 )
+objectfromobjects = Operator(
+    "make object from collection of objects",
+    type=lambda x: R1(Obj) ** Obj
+)
 generateobjects = Operator(
     "make objects from other objects (e.g. random points)",
     type=lambda x: R2(Obj, Reg * x) ** R2(Obj, Reg * Nom)
@@ -272,6 +276,12 @@ getamounts = Operator(
     "get amounts from object based amount qualities",
     type=lambda x: ObjectInfo(x) ** R2(Reg, x) [x <= Ratio],
     body=lambda x: join(groupby(get, get_attrL(x)), get_attrR(x))
+)
+
+intersect = Operator(
+    "intersect two regions",
+    type=Reg ** Reg ** Reg,
+    body = lambda x, y: reify(set_inters(deify(x), deify(y)))
 )
 
 # Operators on quantified relations
@@ -348,6 +358,12 @@ orTopo = Operator(
 )
 
 # Network operations
+
+consIntersect = Operator(
+    "construct a binary relation by intersecting object regions",
+    type=R2(Obj, Reg)** R2(Obj, Reg) ** R3(Obj, Reg, Obj),
+    body=lambda x, y: prod3(prod(intersect, x, y))
+)
 
 nbuild = Operator(
     "build a network from objects with impedance values",
@@ -490,6 +506,10 @@ prod3 = Operator(
          "relations. The keys of the nested relations become two keys of "
          "the quantified relation."),
     type=lambda x, y, z: R2(z, R2(x, y)) ** R3(x, y, z),
+)
+prod_3 = Operator(
+    doc=("prod_3 is the inverse of prod3."),
+    type=lambda x, y, z: R3(x, y, z) ** R2(z, R2(x, y)),
 )
 
 # Projection (π)
