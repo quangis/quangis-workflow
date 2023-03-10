@@ -33,7 +33,7 @@ Count = TypeOperator(supertype=Ratio)
 R1 = TypeOperator(params=1)
 R2 = TypeOperator(params=2)
 R3 = TypeOperator(params=3)
-
+List = TypeOperator(params =1)
 
 # Previously, we had types that looked like R1(x), R3(x, y, z), etcetera.
 # Everything is now expressed in terms of the R relation and Product/Unit
@@ -178,6 +178,20 @@ max = Operator(
 sum = Operator(
     "summing up values",
     type=lambda y: R2(Val, y) ** y [y <= Ratio]
+)
+conslistrel = Operator(
+    "construct list from relation",
+    type=lambda x,y: R2(x, y) ** R2(x, List(y)),
+    body= lambda x: apply1 (addlist (emptylist)) (x)
+)
+addlistrel = Operator(
+    "add to list from relation",
+    type=lambda x,y: R2(x, List(y)) ** R2(x, y) ** R2(x, List(y)),
+    body= lambda x, y: apply2 (addlist) (x) (y)
+)
+diversity = Operator(
+    "calculating diversity of values (entropy)",
+    type=lambda x, y: R2(x, List(y)) ** R2(x, Ratio) [y <= Ratio]
 )
 contentsum = Operator(
     "summing up content amounts (regions and their values)",
@@ -458,6 +472,14 @@ apply = Operator(
 # Set operations
 
 # This should be a single operator, nest: R(x, y)
+addlist=Operator(
+    "construct a list",
+    type=lambda x: List(x) ** x ** List(x)
+)
+emptylist = Operator(
+    "empty list",
+    type=lambda x:List(x)
+)
 nest = Operator(
     "put value in unary relation",
     type=lambda x: x ** R1(x)
@@ -469,6 +491,10 @@ nest2 = Operator(
 nest3 = Operator(
     "put values in ternary relation",
     type=lambda x, y, z: x ** y ** z ** R3(x, y, z)
+)
+consTuple = Operator(
+    "put values in ternary relation",
+    type=lambda x, y, z: R2(x, y) ** R2(x, z)** R2(x, y * z)
 )
 # There should be an empty relation operator
 # This should have both key and value, and the relation should come last
