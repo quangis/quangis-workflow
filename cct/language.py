@@ -13,7 +13,7 @@ from transforge.type import Type, Constraint, \
     TypeInstance, TypeAlias, TypeOperator, \
     with_parameters, _, Top
 from transforge.lang import Language
-from transforge.expr import Operator
+from transforge.expr import Operator, Source
 
 
 # Types ######################################################################
@@ -131,6 +131,10 @@ disj = Operator(
 classify = Operator(
     "classification table",
     type=Itv ** Ord
+)
+empty = Operator(
+    "empty relation",
+    type=lambda rel: rel ** Bool
 )
 
 # Aggregations of collections
@@ -360,11 +364,15 @@ orTopo = Operator(
 # Network operations
 
 consIntersect = Operator(
-    "construct a binary relation by intersecting object regions",
-    type=R2(Obj, Reg)** R2(Obj, Reg) ** R3(Obj, Reg, Obj),
-    body=lambda x, y: prod3(prod(intersect, x, y))
+    "constructs a quantified relation of intersections of object regions (excluding empty intersections)",
+    type=R2(Obj, Reg) ** R2(Obj, Reg) ** R3(Obj, Reg, Obj),
+    body=lambda x, y: select (compose(notj,empty))(prod3(prod(intersect, x, y)))
 )
-
+nIntersections = Operator(
+    "constructs intersection objects (of minimal cardinality) between object (line) regions",
+    type=R2(Obj, Reg) ** R2(Obj, Reg) ** R2(Obj, Reg),
+    body=lambda x, y: groupby (merge) (groupbyL (objectfromobjects) (select (compose (notj) (leq)) (prod3(apply1 (groupby (count)) (prod_3 (consIntersect (x, y))))) (Source(Count))))
+)
 nbuild = Operator(
     "build a network from objects with impedance values",
     type=ObjectInfo(Ratio) ** R3(Obj, Ratio, Obj)
