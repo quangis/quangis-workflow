@@ -238,6 +238,11 @@ accumulate = Operator(
     "finds all locations reachable from a given location",
     type=R2(Loc, Loc) ** R2(Loc, R1(Loc))
 )
+kernelDensity = Operator(
+    "computes a field of distance and attribute - weighted density of objects",
+    type=R2(Obj, Reg * Ratio) ** R2(Loc, Ratio),
+    body=lambda x: groupbyL (compose(sum, (apply2(product, (get_attrR(x)))))) (loDist (Source(R1(Loc))) (get_attrL(x)))
+)
 
 # Conversions
 
