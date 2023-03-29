@@ -5,9 +5,9 @@ ontology.
 """
 
 from pathlib import Path
-from wfgen.namespace import CCD, EM, EX
-from wfgen.generator import WorkflowGenerator
-from wfgen.types import Type
+from quangis_wf_gen.namespace import CCD, EM, EX
+from quangis_wf_gen.generator import WorkflowGenerator
+from quangis_wf_gen.types import Type
 
 sources = [
     (CCD.FieldQ, CCD.VectorTessellationA, CCD.PlainNominalA),  # VectorCoverage

@@ -11,7 +11,7 @@ from rdflib.namespace import Namespace
 from typing import Iterable, MutableMapping, Iterator, Mapping
 from transforge.namespace import shorten
 
-from wfgen.namespace import RDFS
+from quangis_wf_gen.namespace import RDFS
 
 
 class Dimension(Graph):

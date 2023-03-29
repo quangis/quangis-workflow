@@ -11,10 +11,10 @@ from rdflib import Graph
 from rdflib.util import guess_format
 from typing import Iterable
 
-from wfgen.util import shorten, download
-from wfgen.ape import APE, Workflow, ToolsDict
-from wfgen.types import Type, Dimension
-from wfgen.namespace import CCD, TOOLS, OWL, RDF, RDFS, ADA, WF
+from quangis_wf_gen.util import shorten, download
+from quangis_wf_gen.ape import APE, Workflow, ToolsDict
+from quangis_wf_gen.types import Type, Dimension
+from quangis_wf_gen.namespace import CCD, TOOLS, OWL, RDF, RDFS, ADA, WF
 
 TOOLS2 = "https://raw.githubusercontent.com/quangis/cct/master/tools/tools.ttl"
 
@@ -22,7 +22,7 @@ TOOLS2 = "https://raw.githubusercontent.com/quangis/cct/master/tools/tools.ttl"
 def graph(url: str, build_dir: Path) -> Graph:
     path = download(url.rstrip("#"), dest_dir=build_dir)
     g = Graph()
-    g.parse(path, format=guess_format(path))
+    g.parse(path, format=guess_format(str(path)))
     return g
 
 
