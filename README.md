@@ -24,16 +24,16 @@ The second step involves abstracting away from implementation details.
 For this, the tools are also annotated with a description of their 
 functionality by means of a [CCT][cct] expression. This information is 
 weaved into a graph of conceptual transformations via the 
-[`transformation-algebra`][ta] library. To perform this step, run the 
-following on the generated workflows:
+[`transforge`][tf] library. To perform this step, run the following on 
+the generated workflows:
 
-    python -m transformation_algebra graph -L cct -T build/tools.ttl \
+    transforge graph -L cct -T build/tools.ttl \
         --skip-error build/solution-*.ttl
 
 Finally, to query tasks like those 
 [here](https://github.com/quangis/cct/tree/master/tasks):
 
-    python -m transformation_algebra query -L cct tasks/*.ttl
+    transforge query -L cct tasks/*.ttl
 
 
 ### Dependencies
@@ -49,6 +49,6 @@ and other required data files will automatically be downloaded. To run
 [ape]: https://github.com/sanctuuary/APE
 [aped]: https://ape-framework.readthedocs.io/
 [cct]: https://github.com/quangis/cct
-[ta]: https://github.com/quangis/transformation-algebra
+[tf]: https://github.com/quangis/transforge
 [tools]: https://raw.githubusercontent.com/quangis/cct/master/tools/tools.ttl
 [tools2]: https://github.com/simonscheider/QuAnGIS/tree/master/ToolRepository/ToolDescription.ttl
