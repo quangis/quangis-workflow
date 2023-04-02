@@ -9,7 +9,7 @@ from pathlib import Path
 from rdflib import URIRef, BNode, Literal
 from rdflib.term import Node
 
-from quangis_wf_gen.namespace import namespaces
+from quangis_workflows.namespace import namespaces
 
 root_dir = Path(__file__).parent.parent
 
