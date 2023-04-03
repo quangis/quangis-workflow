@@ -3,7 +3,7 @@ This module holds the RDF namespaces that we use frequently.
 """
 
 import sys
-from rdflib import Namespace, Graph
+from rdflib import Namespace, Graph, URIRef
 from rdflib.namespace import NamespaceManager
 from typing import Mapping
 
@@ -38,3 +38,10 @@ def namespace_manager(
     for prefix, namespace in namespaces.items():
         _g.bind(prefix.lower(), namespace)
     return NamespaceManager(_g)
+
+
+def n3(
+        node: URIRef,
+        nm: NamespaceManager = namespace_manager()
+) -> str:
+    return node.n3(nm)

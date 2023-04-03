@@ -10,9 +10,7 @@ from rdflib.term import Node, URIRef
 from rdflib.namespace import Namespace
 from typing import Iterable, MutableMapping, Iterator, Mapping
 
-from quangis_workflows.namespace import RDFS, namespace_manager
-
-nm = namespace_manager()
+from quangis_workflows.namespace import RDFS, n3
 
 
 class Dimension(Graph):
@@ -59,7 +57,7 @@ class Polytype(MutableMapping[Dimension, set[URIRef]]):
                 | Mapping[Dimension, Iterable[URIRef]],
             types: Iterable[URIRef] | None = None):
         """
-        We represent a datatype as a mapping from RDF dimension nodes to one or
+        We represent a datatype as a mapping from RDF dimension nodes to one or 
         more of its subclasses.
         """
         super().__init__()
@@ -73,14 +71,11 @@ class Polytype(MutableMapping[Dimension, set[URIRef]]):
             self.data = {k: set() for k in dimensions}
 
     def __str__(self) -> str:
-        return str({str(k.root): list(v) for k, v in self.items()})
-
-    def __repr__(self) -> str:
-        return str(self)
+        return str({n3(k.root): {n3(v) for v in vs} for k, vs in self.items()})
 
     def short(self, separator: str = "&") -> str:
         types = set(x for xs in self.data.values() for x in xs)
-        return separator.join(sorted(t.n3(nm) for t in types))
+        return separator.join(sorted(n3(t) for t in types))
 
     def __len__(self) -> int:
         return len(self.data)
@@ -122,9 +117,10 @@ class Polytype(MutableMapping[Dimension, set[URIRef]]):
     def project(dimensions: Iterable[Dimension],
             types: Iterable[Node]) -> Polytype:
         """
-        Projects type nodes to the given dimensions. Any type that is subsumed
-        by at least one dimension can be projected to the closest parent(s) in
-        the corresponding taxonomy graph which belongs to the core of that
+        An alternative constructor for a `Polytype` that projects type nodes to 
+        the given dimensions. Any type that is subsumed by at least one 
+        dimension can be projected to the closest parent(s) in the 
+        corresponding taxonomy graph which belongs to the core of that 
         dimension (ie a node that belongs to exactly one dimension).
         """
 
@@ -154,15 +150,22 @@ class Polytype(MutableMapping[Dimension, set[URIRef]]):
         return result
 
     @staticmethod
-    def assign(dimensions: Iterable[Dimension],
+    def assemble(dimensions: Iterable[Dimension],
             types: Iterable[Node]) -> Polytype:
         """
-        An alternative constructor, like `project`, but without the magic.
+        An alternative constructor for a `Polytype`. It simply adds every type 
+        to the dimensions it's part of.
         """
         dimensions, types = list(dimensions), list(types)
         result = Polytype(dimensions)
-        for d in dimensions:
-            for t in types:
+        for t in types:
+            assert isinstance(t, URIRef)
+            n = 0
+            for d in dimensions:
                 if d.contains(t):
                     result[d].add(t)
+                    n += 1
+            if n < 1:
+                raise RuntimeError(f"Type {t} is not part of any dimension.")
+
         return result
