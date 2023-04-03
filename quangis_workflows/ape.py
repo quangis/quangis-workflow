@@ -18,7 +18,7 @@ from rdflib.term import Node
 from rdflib.namespace import Namespace, RDF, RDFS
 from transforge.namespace import EX, shorten
 
-from quangis_workflows.types import Type
+from quangis_workflows.types import Polytype
 from quangis_workflows.util import download
 
 MVN = "https://repo1.maven.org/maven2"
@@ -83,9 +83,9 @@ class APE(object):
         self.ape = j_ape.APE(self.config)
         self.setup = self.ape.getDomainSetup()
 
-    def type(self, is_output: bool, t: Type) -> j_ape.models.Type:
+    def type(self, is_output: bool, t: Polytype) -> j_ape.models.Type:
         """
-        Convert `Type` to the corresponding APE structure.
+        Convert `Polytype` to the corresponding APE structure.
         """
 
         obj = j_json.JSONObject()
@@ -99,14 +99,14 @@ class APE(object):
             obj, self.setup, is_output)
 
     def type_array(self, is_output: bool,
-            types: Iterable[Type]) -> j_json.JSONArray:
+            types: Iterable[Polytype]) -> j_json.JSONArray:
 
         return j_util.Arrays.asList(*(
             self.type(is_output, t) for t in types))
 
     def run(self,
-            inputs: Iterable[Type],
-            outputs: Iterable[Type],
+            inputs: Iterable[Polytype],
+            outputs: Iterable[Polytype],
             prefix: URIRef = EX["solution"],
             solution_length: tuple[int, int] = (1, 10),
             solutions: int = 10,

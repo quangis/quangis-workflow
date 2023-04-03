@@ -13,6 +13,7 @@ from quangis_workflows.namespace import namespaces
 
 root_dir = Path(__file__).parent.parent
 
+
 def shorten(node: Node) -> str:
     """
     Return RDF node as string, possibly shortened.

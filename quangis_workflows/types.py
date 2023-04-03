@@ -6,23 +6,26 @@ dimensions of semantic types, and an intersection of types from that dimension.
 from __future__ import annotations
 
 from rdflib import Graph
-from rdflib.term import Node
+from rdflib.term import Node, URIRef
 from rdflib.namespace import Namespace
 from typing import Iterable, MutableMapping, Iterator, Mapping
-from transforge.namespace import shorten
 
-from quangis_workflows.namespace import RDFS
+from quangis_workflows.namespace import RDFS, namespace_manager
+
+nm = namespace_manager()
 
 
 class Dimension(Graph):
     """
-    A semantic dimension is a directed acyclic graph of semantic subclasses
-    belonging to that dimension.
+    A semantic dimension is a directed acyclic graph of classes belonging to 
+    that dimension. The graph represents the subclass structure.
     """
 
-    def __init__(self, root: Node, source: Graph, namespace: Namespace | None):
+    def __init__(self, root: Node, source: Graph,
+            namespace: Namespace | None = None):
         super().__init__()
-        self.root = root
+        assert isinstance(root, URIRef)
+        self.root: URIRef = root
         if namespace:
             self.bind("", namespace)
 
@@ -37,8 +40,8 @@ class Dimension(Graph):
     def contains(self, node: Node) -> bool:
         return (node, None, None) in self or (None, None, node) in self
 
-    def parents(self, node: Node) -> Iterable[Node]:
-        return self.objects(node, RDFS.subClassOf)
+    def parents(self, node: Node) -> Iterable[URIRef]:
+        return self.objects(node, RDFS.subClassOf)  # type: ignore
 
     def subsume(self, subclass: Node, superclass: Node) -> bool:
         return (subclass, RDFS.subClassOf, superclass) in self \
@@ -46,21 +49,21 @@ class Dimension(Graph):
                 for parent in self.parents(subclass))
 
 
-class Type(MutableMapping[Dimension, set[Node]]):
+class Polytype(MutableMapping[Dimension, set[URIRef]]):
     """
-    Types for input and output data across different semantic dimensions.
+    A single type representing types across multiple semantic dimensions.
     """
 
     def __init__(self,
             dimensions: Iterable[Dimension]
-                | Mapping[Dimension, Iterable[Node]],
-            types: Iterable[Node] | None = None):
+                | Mapping[Dimension, Iterable[URIRef]],
+            types: Iterable[URIRef] | None = None):
         """
         We represent a datatype as a mapping from RDF dimension nodes to one or
         more of its subclasses.
         """
         super().__init__()
-        self.data: dict[Dimension, set[Node]]
+        self.data: dict[Dimension, set[URIRef]]
 
         if types is not None:
             self.data = {k: {t} for k, t in zip(dimensions, types)}
@@ -75,9 +78,9 @@ class Type(MutableMapping[Dimension, set[Node]]):
     def __repr__(self) -> str:
         return str(self)
 
-    def short(self, separator: str = "*") -> str:
-        return separator.join(sorted(
-            shorten(x) for xs in self.data.values() for x in xs))
+    def short(self, separator: str = "&") -> str:
+        types = set(x for xs in self.data.values() for x in xs)
+        return separator.join(sorted(t.n3(nm) for t in types))
 
     def __len__(self) -> int:
         return len(self.data)
@@ -88,11 +91,11 @@ class Type(MutableMapping[Dimension, set[Node]]):
     def __iter__(self) -> Iterator[Dimension]:
         return iter(self.data)
 
-    def __getitem__(self, k: Dimension | Node) -> set[Node]:
+    def __getitem__(self, k: Dimension | Node) -> set[URIRef]:
         d = k if isinstance(k, Dimension) else self.dimension(k)
         return self.data.__getitem__(d)  # or {d.root} to fall back to root
 
-    def __setitem__(self, k: Dimension | Node, v: set[Node]) -> None:
+    def __setitem__(self, k: Dimension | Node, v: set[URIRef]) -> None:
         return self.data.__setitem__(
             k if isinstance(k, Dimension) else self.dimension(k), v)
 
@@ -104,7 +107,7 @@ class Type(MutableMapping[Dimension, set[Node]]):
         assert isinstance(key, Dimension)
         return key
 
-    def downcast(self, target: Mapping[Node, Node]) -> Type:
+    def downcast(self, mapping: Mapping[URIRef, URIRef]) -> Polytype:
         """
         APE has a closed world assumption, in that it considers the set of leaf
         nodes it knows about as exhaustive. This method can be used to cast
@@ -112,12 +115,12 @@ class Type(MutableMapping[Dimension, set[Node]]):
         considered as valid answers.
         """
         for dimension, classes in self.items():
-            self[dimension] = set(target.get(n, n) for n in classes)
+            self[dimension] = set(mapping.get(n, n) for n in classes)
         return self
 
     @staticmethod
     def project(dimensions: Iterable[Dimension],
-            types: Iterable[Node]) -> Type:
+            types: Iterable[Node]) -> Polytype:
         """
         Projects type nodes to the given dimensions. Any type that is subsumed
         by at least one dimension can be projected to the closest parent(s) in
@@ -126,16 +129,17 @@ class Type(MutableMapping[Dimension, set[Node]]):
         """
 
         dimensions, types = list(dimensions), list(types)
-        result = Type(dimensions)
+        result = Polytype(dimensions)
 
         for d in dimensions:
             other_dimensions = list(d2 for d2 in dimensions if d2 is not d)
             for node in types:
-                projection: list[Node] = []
+                assert isinstance(node, URIRef)
+                projection: list[URIRef] = []
                 if not d.contains(node):
                     continue
 
-                stack = [node]
+                stack: list[URIRef] = [node]
                 while len(stack) > 0:
                     current = stack.pop()
                     if any(d2.contains(current) for d2 in other_dimensions):
@@ -147,4 +151,18 @@ class Type(MutableMapping[Dimension, set[Node]]):
                 result[d].update(projection)
             if not result[d]:
                 result[d] = {d.root}
+        return result
+
+    @staticmethod
+    def assign(dimensions: Iterable[Dimension],
+            types: Iterable[Node]) -> Polytype:
+        """
+        An alternative constructor, like `project`, but without the magic.
+        """
+        dimensions, types = list(dimensions), list(types)
+        result = Polytype(dimensions)
+        for d in dimensions:
+            for t in types:
+                if d.contains(t):
+                    result[d].add(t)
         return result

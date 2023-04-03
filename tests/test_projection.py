@@ -2,9 +2,10 @@ import unittest
 
 from pathlib import Path
 from rdflib import Graph
-from quangis.namespace import EM, CCD
-from quangis.dimtypes import DimTypes, Dimension
-from quangis.util import build_dir
+from quangis_workflows.namespace import EM, CCD
+from quangis_workflows.types import Polytype, Dimension
+
+build_dir = Path(__file__).parent.parent / "build"
 
 
 class TestProjection(unittest.TestCase):
@@ -47,7 +48,7 @@ class TestProjection(unittest.TestCase):
         ]
 
         for ix, node in enumerate(testnodes):
-            p = DimTypes.project(dimensions, [node])
+            p = Polytype.project(dimensions, [node])
             self.assertEqual(p[CCD.CoreConceptQ],
                 set(correctCC[ix]) or {CCD.CoreConceptQ})
             self.assertEqual(p[CCD.LayerA],

@@ -3,7 +3,9 @@ This module holds the RDF namespaces that we use frequently.
 """
 
 import sys
-from rdflib import Namespace
+from rdflib import Namespace, Graph
+from rdflib.namespace import NamespaceManager
+from typing import Mapping
 
 TEST = Namespace("http://www.semanticweb.org/test#")
 FOAF = Namespace("http://xmlns.com/foaf/0.1/")
@@ -27,3 +29,12 @@ namespaces = {
     k.lower(): v for k, v in sys.modules[__name__].__dict__.items()
     if isinstance(v, Namespace)
 }
+
+
+def namespace_manager(
+        namespaces: Mapping[str, Namespace] = namespaces
+) -> NamespaceManager:
+    _g = Graph()
+    for prefix, namespace in namespaces.items():
+        _g.bind(prefix.lower(), namespace)
+    return NamespaceManager(_g)
