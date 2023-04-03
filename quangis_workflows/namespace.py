@@ -3,9 +3,11 @@ This module holds the RDF namespaces that we use frequently.
 """
 
 import sys
-from rdflib import Namespace, Graph, URIRef
+from rdflib import Namespace, Graph
+from rdflib.term import Node, URIRef
 from rdflib.namespace import NamespaceManager
 from typing import Mapping
+from cct import cct  # type: ignore
 
 TEST = Namespace("http://www.semanticweb.org/test#")
 FOAF = Namespace("http://xmlns.com/foaf/0.1/")
@@ -23,6 +25,7 @@ GIS = Namespace("http://geographicknowledge.de/vocab/GISConcepts.rdf#")
 TOOLS = Namespace("https://github.com/quangis/cct/blob/master/tools/tools.ttl#")
 REPO = Namespace("https://github.com/quangis/quangis-workflow-generator#")
 EX = Namespace('https://example.com/#')
+CCT = cct.namespace
 
 # Also provide a mapping for easy programmatic access
 namespaces = {
@@ -41,7 +44,8 @@ def namespace_manager(
 
 
 def n3(
-        node: URIRef,
+        node: Node,
         nm: NamespaceManager = namespace_manager()
 ) -> str:
+    assert isinstance(node, URIRef)
     return node.n3(nm)
