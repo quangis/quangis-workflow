@@ -9,47 +9,64 @@ from rdflib import Graph
 from rdflib.term import Node, URIRef
 from rdflib.namespace import Namespace
 from typing import Iterable, MutableMapping, Iterator, Mapping
+from itertools import product
 
 from quangis_workflows.namespace import RDFS, n3
 
 
-class Dimension(Graph):
+class Dimension(object):
     """
     A semantic dimension is a directed acyclic graph of classes belonging to 
     that dimension. The graph represents the subclass structure.
     """
 
-    def __init__(self, root: Node, source: Graph,
+    def __init__(self, root: Node,
+            source: Graph | Mapping[URIRef, Iterable[URIRef]],
             namespace: Namespace | None = None):
         super().__init__()
+
         assert isinstance(root, URIRef)
         self.root: URIRef = root
+        self.graph: Graph = Graph()
+
         if namespace:
-            self.bind("", namespace)
+            self.graph.bind("", namespace)
 
         def f(node):
-            for child in source.subjects(RDFS.subClassOf, node):
-                # TODO catch cycles
-                self.add((child, RDFS.subClassOf, node))
-                f(child)
+            if isinstance(source, Graph):
+                children = source.subjects(RDFS.subClassOf, node)
+            else:
+                try:
+                    children = source[node]
+                except KeyError:
+                    children = ()
 
+            for child in children:
+                self.graph.add((child, RDFS.subClassOf, node))
+                if (None, None, child) not in self.graph:
+                    f(child)
         f(root)
 
-    def contains(self, node: Node) -> bool:
-        return (node, None, None) in self or (None, None, node) in self
+    def __contains__(self, node: Node) -> bool:
+        return ((node, None, None) in self.graph
+            or (None, None, node) in self.graph)
 
     def parents(self, node: Node) -> Iterable[URIRef]:
-        return self.objects(node, RDFS.subClassOf)  # type: ignore
+        return self.graph.objects(node, RDFS.subClassOf)  # type: ignore
 
-    def subsume(self, subclass: Node, superclass: Node) -> bool:
-        return (subclass, RDFS.subClassOf, superclass) in self \
+    def subsume(self, subclass: Node, superclass: Node,
+            strict: bool = False) -> bool:
+        return (
+            (not strict and subclass == superclass)
+            or (subclass, RDFS.subClassOf, superclass) in self.graph
             or any(self.subsume(parent, superclass)
-                for parent in self.parents(subclass))
+                for parent in self.parents(subclass)))
 
 
 class Polytype(MutableMapping[Dimension, set[URIRef]]):
     """
-    A single type representing types across multiple semantic dimensions.
+    A type representing an intersection of types (represented by RDF nodes) 
+    across multiple semantic dimensions.
     """
 
     def __init__(self,
@@ -57,25 +74,33 @@ class Polytype(MutableMapping[Dimension, set[URIRef]]):
                 | Mapping[Dimension, Iterable[URIRef]],
             types: Iterable[URIRef] | None = None):
         """
-        We represent a datatype as a mapping from RDF dimension nodes to one or 
-        more of its subclasses.
+        A polytype associates each given dimension with a conjunction of 
+        classes in that dimension.
+
+        This corresponds to the subtaxonomies and classes in the domain 
+        ontology of APE; see also:
+        <https://ape-framework.readthedocs.io/en/latest/docs/specifications/setup.html#referencing-the-domain-model>
         """
         super().__init__()
+
+        self.dimensions: list[Dimension] = list(dimensions)
+
+        self.dimension: dict[URIRef, Dimension] = {
+            d.root: d for d in self.dimensions}
         self.data: dict[Dimension, set[URIRef]]
 
         if types is not None:
-            self.data = {k: {t} for k, t in zip(dimensions, types)}
+            self.data = {k: {t} for k, t in zip(self.dimensions, types)}
         elif isinstance(dimensions, Mapping):
             self.data = {k: set(v) for k, v in dimensions.items()}
         else:
-            self.data = {k: set() for k in dimensions}
+            self.data = {k: set() for k in self.dimensions}
 
     def __str__(self) -> str:
-        return str({n3(k.root): {n3(v) for v in vs} for k, vs in self.items()})
-
-    def short(self, separator: str = "&") -> str:
-        types = set(x for xs in self.data.values() for x in xs)
-        return separator.join(sorted(n3(t) for t in types))
+        return "; ".join(
+            f"{', '.join(n3(v) for v in vs)} (in {n3(k.root)})"
+            for k, vs in self.items()
+        )
 
     def __len__(self) -> int:
         return len(self.data)
@@ -86,32 +111,44 @@ class Polytype(MutableMapping[Dimension, set[URIRef]]):
     def __iter__(self) -> Iterator[Dimension]:
         return iter(self.data)
 
-    def __getitem__(self, k: Dimension | Node) -> set[URIRef]:
-        d = k if isinstance(k, Dimension) else self.dimension(k)
-        return self.data.__getitem__(d)  # or {d.root} to fall back to root
+    def __getitem__(self, k: Dimension | URIRef) -> set[URIRef]:
+        dimension = k if isinstance(k, Dimension) else self.dimension[k]
+        return self.data.__getitem__(dimension)  # `or {d.root}` as fallback
 
-    def __setitem__(self, k: Dimension | Node, v: set[URIRef]) -> None:
-        return self.data.__setitem__(
-            k if isinstance(k, Dimension) else self.dimension(k), v)
+    def __setitem__(self, k: Dimension | URIRef, v: Iterable[URIRef]) -> None:
+        dimension = k if isinstance(k, Dimension) else self.dimension[k]
+        types = set()
+        for t in v:
+            if t not in dimension:
+                raise RuntimeError
+            else:
+                types.add(t)
+        return self.data.__setitem__(dimension, types)
 
-    def dimension(self, key: Node) -> Dimension:
-        """
-        Convert the root of a dimension to the corresponding dimension.
-        """
-        key, = (d for d in self.data.keys() if d.root == key)
-        assert isinstance(key, Dimension)
-        return key
+    def short(self, separator: str = ", ") -> str:
+        types = set(x for xs in self.data.values() for x in xs)
+        return separator.join(sorted(n3(t) for t in types))
 
     def downcast(self, mapping: Mapping[URIRef, URIRef]) -> Polytype:
         """
-        APE has a closed world assumption, in that it considers the set of leaf
-        nodes it knows about as exhaustive. This method can be used to cast
-        certain branch nodes to identifiable leaf nodes, so that they can be
-        considered as valid answers.
+        This method can be used to cast certain branch nodes to identifiable 
+        leaf nodes, so that they can be considered as valid answers. This is 
+        useful because APE has a closed world assumption, in that it considers 
+        the set of leaf nodes it knows about as exhaustive.
         """
         for dimension, classes in self.items():
             self[dimension] = set(mapping.get(n, n) for n in classes)
         return self
+
+    def subtype(self, other: Polytype, strict: bool = False) -> bool:
+        if self.dimensions != other.dimensions:
+            return False
+
+        for d in self.dimensions:
+            if not all(d.subsume(a, b, strict=strict)
+                    for a, b in product(self[d], other[d])):
+                return False
+        return True
 
     @staticmethod
     def project(dimensions: Iterable[Dimension],
@@ -132,13 +169,13 @@ class Polytype(MutableMapping[Dimension, set[URIRef]]):
             for node in types:
                 assert isinstance(node, URIRef)
                 projection: list[URIRef] = []
-                if not d.contains(node):
+                if node not in d:
                     continue
 
                 stack: list[URIRef] = [node]
                 while len(stack) > 0:
                     current = stack.pop()
-                    if any(d2.contains(current) for d2 in other_dimensions):
+                    if any(current in d2 for d2 in other_dimensions):
                         stack.extend(d.parents(current))
                     else:
                         if not any(d.subsume(p, current) for p in projection):
@@ -162,7 +199,7 @@ class Polytype(MutableMapping[Dimension, set[URIRef]]):
             assert isinstance(t, URIRef)
             n = 0
             for d in dimensions:
-                if d.contains(t):
+                if t in d:
                     result[d].add(t)
                     n += 1
             if n < 1:
