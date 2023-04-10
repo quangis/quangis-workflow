@@ -125,9 +125,11 @@ class Polytype(MutableMapping[Dimension, set[URIRef]]):
                 types.add(t)
         return self.data.__setitem__(dimension, types)
 
+    def uris(self) -> set[URIRef]:
+        return set(x for xs in self.data.values() for x in xs)
+
     def short(self, separator: str = ", ") -> str:
-        types = set(x for xs in self.data.values() for x in xs)
-        return separator.join(sorted(n3(t) for t in types))
+        return separator.join(sorted(n3(t) for t in self.uris()))
 
     def downcast(self, mapping: Mapping[URIRef, URIRef]) -> Polytype:
         """
