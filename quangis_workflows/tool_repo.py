@@ -168,7 +168,7 @@ class ToolRepository(object):
             # supertype of those in the spec (and the outputs are a subtype), 
             # then the action is more general than the spec. Other way around, 
             # it is more specific. (If both are true, the spec matches the 
-            # action; if neither are true, then they are independent.)
+            # action exactly; if neither are true, then they are independent.)
             spec_sig_in = self._sig_in[candidate_spec]
             spec_sig_out = self._sig_out[candidate_spec]
             specCoversAction = (
@@ -184,7 +184,10 @@ class ToolRepository(object):
                     for t_action, t_spec in zip(action_sig_out, spec_sig_out))
             )
 
-            # TODO Do we take into account permutations of the inputs?
+            # TODO Do we take into account permutations of the inputs? We 
+            # probably should, because even in the one test workflow, `wffood`, 
+            # there are two uses of `SelectLayerByLocationPointObjects`, in 
+            # which the order of the inputs is flipped.
 
             if specCoversAction:
                 assert not superspec
@@ -224,8 +227,9 @@ class ToolRepository(object):
         return spec
 
     def collect(self, wf: ConcreteWorkflow):
+        print(wf.root)
         for action, impl in wf.subject_objects(WF.applicationOf):
-            if action == wf.root:
+            if impl == wf.root:
                 continue
             print(f"Analyzing an application of {n3(impl)}:")
             spec = self.analyze_action(wf, action)
@@ -246,6 +250,8 @@ class ToolRepositoryGraph(GraphList):
         self.bind("data", DATA)
 
         for spec, implementations in repo._implementations.items():
+
+            self.add((spec, RDF.type, TOOLS.Spec))
             for impl in implementations:
                 self.add((spec, TOOLS.implementedBy, impl))
 
@@ -384,6 +390,6 @@ class ConcreteWorkflow(Graph):
 
 if __name__ == "__main__":
     cwf = ConcreteWorkflow.from_file(
-        root_dir / "wffood.ttl", TOOLS.wfcrime_route)
+        root_dir / "wffood.ttl", TOOLS.wffood)
     repo = ToolRepository()
     repo.collect(cwf)
