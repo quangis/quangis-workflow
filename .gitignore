@@ -1,8 +1,8 @@
 # We don't want to commit ontologies to this repository, since they are output
 # files in this context
-*.rdf
-*.ttl
-*.jar
+build/*.rdf
+build/*.ttl
+build/*.jar
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

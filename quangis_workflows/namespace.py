@@ -25,6 +25,7 @@ GIS = Namespace("http://geographicknowledge.de/vocab/GISConcepts.rdf#")
 TOOLS = Namespace("https://github.com/quangis/cct/blob/master/tools/tools.ttl#")
 REPO = Namespace("https://github.com/quangis/quangis-workflow-generator#")
 EX = Namespace('https://example.com/#')
+DATA = Namespace("https://github.com/quangis/cct/blob/master/tools/data.ttl#")
 CCT = cct.namespace
 
 # Also provide a mapping for easy programmatic access

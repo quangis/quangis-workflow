@@ -39,7 +39,7 @@ from collections import defaultdict
 from cct import cct  # type: ignore
 import transforge as tf
 from transforge.namespace import shorten
-from quangis_workflows.namespace import n3, WF, RDF, CCD, CCT, TOOLS
+from quangis_workflows.namespace import n3, WF, RDF, CCD, CCT, TOOLS, DATA
 from quangis_workflows.types import Polytype, Dimension
 
 root_dir = Path(__file__).parent.parent
@@ -87,6 +87,7 @@ class GraphList(Graph):
 
 Spec = URIRef
 Tool = URIRef
+Impl = URIRef
 
 
 class ToolRepository(object):
@@ -97,12 +98,17 @@ class ToolRepository(object):
     def __init__(self, *nargs, **kwargs) -> None:
         super().__init__(*nargs, **kwargs)
 
-        self._implementations: dict[Spec, set[Tool]] = defaultdict(set)
+        # Associate specs with the implementations of those specs.
+        self._implementations: dict[Spec, set[Impl]] = defaultdict(set)
 
-        # Map abstract tools to input and output types
+        # Map specs to input and output signatures.
         self._sig_in: dict[Spec, list[Polytype]] = {}
         self._sig_out: dict[Spec, list[Polytype]] = {}
         self._sig_sem: dict[Spec, tf.Expr] = {}
+
+        # Concrete tool implementations
+        self.tools: set[Impl] = set()
+        self.schemas: dict[Impl, Graph] = dict()
 
     def __contains__(self, spec: Spec) -> bool:
         return spec in self._implementations
@@ -120,14 +126,22 @@ class ToolRepository(object):
 
     def analyze_action(self, wf: ConcreteWorkflow, action: Node) -> Spec:
         """
-        Analyze a single action (application of a tool) and figure out what 
-        spec it belongs to. As a side-effect, update the repository of tool 
-        specifications if necessary.
+        Analyze a single action (application of a tool or workflow) and figure 
+        out what spec it belongs to. As a side-effect, update the repository of 
+        tool specifications if necessary.
         """
-        tool = wf.tool(action)
+        impl = wf.implementation(action)
         action_sig_in = wf.sig_in(action)
         action_sig_out = wf.sig_out(action)
         # action_sig_sem = wf.sig_sem(action)
+
+        # Is this implemented by ensemble of tools or a single concrete tool?
+        if (impl, RDF.type, WF.Workflow) in wf:
+            if impl not in self.schemas:
+                subwf = wf.extract_subworkflow(impl)
+                self.schemas[impl] = subwf
+        else:
+            self.tools.add(impl)
 
         # Now there are three possibilities:
         # - there is already a "super"spec that covers this action;
@@ -140,7 +154,7 @@ class ToolRepository(object):
 
         for candidate_spec in self._implementations:
             # Is the URI the same?
-            if tool not in self._implementations[candidate_spec]:
+            if impl not in self._implementations[candidate_spec]:
                 continue
 
             # Is the CCT term the same?
@@ -187,7 +201,7 @@ class ToolRepository(object):
         # corresponding tool/workflow as one of its implementations
         if superspec:
             spec = superspec
-            self._implementations[superspec].add(tool)
+            self._implementations[superspec].add(impl)
 
         # If the action is a more general version of existing spec(s), then we 
         # must update the outdated specs.
@@ -201,8 +215,8 @@ class ToolRepository(object):
 
         # If neither of the above is true, the action merits an all-new spec
         else:
-            spec = self.generate_name(tool)
-            self._implementations[spec].add(tool)
+            spec = self.generate_name(impl)
+            self._implementations[spec].add(impl)
             self._sig_in[spec] = action_sig_in
             self._sig_out[spec] = action_sig_out
             # self._sig_sem[spec] = action_sig_sem
@@ -210,8 +224,10 @@ class ToolRepository(object):
         return spec
 
     def collect(self, wf: ConcreteWorkflow):
-        for action, tool in wf.subject_objects(WF.applicationOf):
-            print(f"Analyzing an application of {n3(tool)}:")
+        for action, impl in wf.subject_objects(WF.applicationOf):
+            if action == wf.root:
+                continue
+            print(f"Analyzing an application of {n3(impl)}:")
             spec = self.analyze_action(wf, action)
             print(f"Part of {spec}")
         print(self.graph().serialize(format="turtle"))
@@ -227,6 +243,7 @@ class ToolRepositoryGraph(GraphList):
 
         self.bind("", TOOLS)
         self.bind("ccd", CCD)
+        self.bind("data", DATA)
 
         for spec, implementations in repo._implementations.items():
             for impl in implementations:
@@ -240,8 +257,17 @@ class ToolRepositoryGraph(GraphList):
             self.add((spec, TOOLS.output,
                 self.add_list([self.add_artefact(t) for t in sig])))
 
+        # TODO Share purposes?
         for spec, expr in repo._sig_sem.items():
-            self.add((spec, CCT.expression, Literal(str(expr))))
+            purpose = BNode()
+            self.add((spec, TOOLS.purpose, purpose))
+            self.add((purpose, CCT.expression, Literal(str(expr))))
+
+        for tool in repo.tools:
+            self.add((tool, RDF.type, TOOLS.ConcreteTool))
+
+        for tool, wf in repo.schemas.items():
+            self += wf
 
     def add_artefact(self, type: Polytype) -> Node:
         artefact = BNode()
@@ -249,16 +275,12 @@ class ToolRepositoryGraph(GraphList):
             self.add((artefact, RDF.type, uri))
         return artefact
 
-    def remove_spec(self, spec: URIRef):
-        self.remove((spec, CCT.expression, None))
-        for predicate in (TOOLS.input, TOOLS.output):
-            for artefact_list in self.objects(spec, predicate):
-                for artefact in self.get_list(artefact_list):
-                    self.remove((artefact, RDF.type, None))
-                self.remove_list(artefact_list)
-
 
 class ConcreteWorkflow(Graph):
+    """
+    Concrete workflow in old format.
+    """
+
     def __init__(self, root: URIRef, *nargs, **kwargs):
         self.root = root
         super().__init__(*nargs, **kwargs)
@@ -270,29 +292,87 @@ class ConcreteWorkflow(Graph):
         expr_string = self.value(action, CCT.expression, any=False)
         return cct.parse(expr_string, defaults=True)
 
-    def tool(self, action: Node) -> URIRef:
-        tool = self.value(action, WF.applicationOf, any=False)
-        assert isinstance(tool, URIRef)
-        return tool
+    def implementation(self, action: Node) -> URIRef:
+        impl = self.value(action, WF.applicationOf, any=False)
+        assert isinstance(impl, URIRef)
+        return impl
 
-    def sig_out(self, action: Node) -> list[Polytype]:
+    def inputs(self, action: Node) -> Iterator[Node]:
+        for i in count(start=1):
+            artefact = self.value(action, WF[f"input{i}"], any=False)
+            if artefact:
+                yield artefact
+            else:
+                break
+
+    def output(self, action: Node) -> Node:
         artefact_out = self.value(action, WF.output, any=False)
         assert artefact_out
-        return [self.type(artefact_out)]
+        return artefact_out
+
+    def sig_out(self, action: Node) -> list[Polytype]:
+        return [self.type(self.output(action))]
 
     def sig_in(self, action: Node) -> list[Polytype]:
-        result = []
-        for i in count(start=1):
-            artefact_in = self.value(action, WF[f"input{i}"], any=False)
-            if not artefact_in:
-                break
-            result.append(self.type(artefact_in))
-        return result
+        return [self.type(artefact) for artefact in self.inputs(action)]
+
+    def workflow_io(self, root: Node) -> tuple[set[Node], set[Node]]:
+        """
+        Find the inputs and outputs of a workflow by looking at which inputs 
+        and outputs of the actions aren't themselves given to or from other 
+        actions.
+        """
+        inputs: set[Node] = set()
+        outputs: set[Node] = set()
+        for action in self.objects(root, WF.edge):
+            inputs.update(self.inputs(action))
+            outputs.add(self.output(action))
+
+        ginputs = inputs - outputs
+        goutputs = outputs - inputs
+        # assert len(goutputs) == 1, f"""There must be exactly 1 output, but 
+        # {n3(root)} has {len(goutputs)}."""
+        assert set(self.objects(root, WF.source)) == ginputs, """The sources of 
+        the workflow don't match with the inputs"""
+
+        return ginputs, goutputs
 
     @staticmethod
     def from_file(path: str | Path, root: URIRef) -> ConcreteWorkflow:
         g = ConcreteWorkflow(root)
         g.parse(path, format="turtle")
+        return g
+
+    def extract_subworkflow(self, root: Node) -> Graph:
+        """
+        Extract a schematic workflow from a concrete one.
+        """
+
+        g = GraphList()
+
+        assert (root, RDF.type, WF.Workflow) in self
+        assert root is not self.root
+
+        # Concrete artefacts and actions to schematic ones
+        schematic: dict[Node, BNode] = defaultdict(BNode)
+
+        g.add((root, RDF.type, TOOLS.Workflow))
+
+        for action in self.objects(root, WF.edge):
+            impl = self.implementation(action)
+            inputs_list = g.add_list([artefact  # schematic[artefact]
+                for artefact in self.inputs(action)])
+            outputs_list = g.add_list([self.output(action)])
+            g.add((root, TOOLS.action, schematic[action]))
+            g.add((schematic[action], TOOLS.input, inputs_list))
+            g.add((schematic[action], TOOLS.implementedBy, impl))
+            g.add((schematic[action], TOOLS.outputs, outputs_list))
+
+        sources, targets = self.workflow_io(root)
+        g.add((root, TOOLS.input, g.add_list(
+            [s for s in sources])))
+        g.add((root, TOOLS.output, g.add_list(
+            [t for t in targets])))
         return g
 
 
