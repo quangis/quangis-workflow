@@ -30,7 +30,7 @@ from __future__ import annotations
 from rdflib import Graph
 from rdflib.term import Node, BNode, URIRef, Literal
 from pathlib import Path
-from itertools import count
+from itertools import count, chain
 from random import choices
 import string
 from typing import Iterator, Sequence
@@ -354,25 +354,31 @@ class ConcreteWorkflow(Graph):
         assert root is not self.root
 
         # Concrete artefacts and actions to schematic ones
-        schematic: dict[Node, BNode] = defaultdict(BNode)
-
-        g.add((root, RDF.type, TOOLS.Workflow))
+        schematic: dict[Node, BNode] = dict()
 
         for action in self.objects(root, WF.edge):
+
+            if action not in schematic:
+                schematic[action] = BNode()
+            for artefact in chain(self.inputs(action), [self.output(action)]):
+                if artefact not in schematic:
+                    schematic[artefact] = BNode(shorten(artefact))
+
             impl = self.implementation(action)
-            inputs_list = g.add_list([artefact  # schematic[artefact]
+            inputs_list = g.add_list([schematic[artefact]
                 for artefact in self.inputs(action)])
-            outputs_list = g.add_list([self.output(action)])
+            outputs_list = g.add_list([schematic[self.output(action)]])
             g.add((root, TOOLS.action, schematic[action]))
             g.add((schematic[action], TOOLS.input, inputs_list))
             g.add((schematic[action], TOOLS.implementedBy, impl))
             g.add((schematic[action], TOOLS.outputs, outputs_list))
 
         sources, targets = self.workflow_io(root)
+        g.add((root, RDF.type, TOOLS.Workflow))
         g.add((root, TOOLS.input, g.add_list(
-            [s for s in sources])))
+            [schematic[s] for s in sources])))
         g.add((root, TOOLS.output, g.add_list(
-            [t for t in targets])))
+            [schematic[t] for t in targets])))
         return g
 
 
