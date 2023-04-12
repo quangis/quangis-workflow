@@ -1,13 +1,10 @@
-#!/usr/bin/env python3
-"""
-Generate workflows using APE with the CCD type taxonomy and the GIS tool
-ontology.
-"""
+from __future__ import annotations
 
+from plumbum import cli  # type: ignore
 from pathlib import Path
 from quangis_workflows.namespace import CCD, EM, EX
 from quangis_workflows.generator import WorkflowGenerator
-from quangis_workflows.types import Type
+from quangis_workflows.types import Polytype
 
 sources = [
     (CCD.FieldQ, CCD.VectorTessellationA, CCD.PlainNominalA),  # VectorCoverage
@@ -69,20 +66,25 @@ goals = [
 ]
 
 
-def generate_workflows():
+def generate_workflows() -> None:
+    """
+    Generate workflows using APE with the CCD type taxonomy and the GIS tool
+    ontology.
+    """
+
     build_dir = Path(__file__).parent / "build"
     gen = WorkflowGenerator(build_dir)
 
     # To start with, we generate workflows with two inputs and one output, of
     # which one input is drawn from the following sources, and the other is the
     # same as the output without the measurement level.
-    inputs_outputs: list[tuple[str, list[Type], list[Type]]] = []
+    inputs_outputs: list[tuple[str, list[Polytype], list[Polytype]]] = []
     for goal_tuple in goals:
-        goal = Type(gen.dimensions, goal_tuple)
-        source1 = Type(goal)
+        goal = Polytype(gen.dimensions, goal_tuple)
+        source1 = Polytype(goal)
         source1[CCD.NominalA] = {CCD.NominalA}
         for source_tuple in sources:
-            source2 = Type(gen.dimensions, source_tuple)
+            source2 = Polytype(gen.dimensions, source_tuple)
             inputs_outputs.append((
                 f"{source1.short()}+{source2.short()}_{goal.short()}_",
                 [source1, source2], [goal]))
@@ -96,5 +98,21 @@ def generate_workflows():
             solution.serialize(path, format="ttl")
 
 
-if __name__ == "__main__":
-    generate_workflows()
+class CLI(cli.Application):
+    """
+    Generate workflows using APE with the CCD type taxonomy and the GIS tool
+    ontology.
+    """
+
+    PROGNAME = "quangis-wf-gen"
+
+    def main(self, *args):
+        generate_workflows()
+
+
+def main():
+    CLI.run()
+
+
+if __name__ == '__main__':
+    main()

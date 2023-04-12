@@ -1,11 +1,14 @@
-# quangis-workflow-generator
+# quangis-workflows
 
-This repository contains the implementation for workflow generation in 
-the [QuAnGIS](https://questionbasedanalysis.com/) project. The program 
-synthesizes GIS workflows from a specification of GIS tools, using the 
-[Automated Pipeline Explorer][ape].
+As part of the [QuAnGIS](https://questionbasedanalysis.com/) project, 
+this program can **synthesize** GIS workflows from a specification of 
+GIS tools, using the [Automated Pipeline Explorer][ape]. It can also 
+extract specifications of GIS tools from manually constructed workflows; 
+as drawn from [this 
+repository](https://github.com/quangis/QuAnGIS_workflow_annotation).
 
-### Overview
+
+### Generation
 
 There are two steps to the process: assembling a pipeline of tools, and 
 annotating the conceptual steps they perform.
@@ -16,9 +19,9 @@ Therefore, the inputs and outputs of each tool in the
 according to the [CCD][ccd] ontology. This is translated to a format 
 that APE understands. APE is then instructed to generate workflows for 
 different possible input/output data configurations. To perform this 
-step:
+step, run:
 
-    python generate.py
+    quangis-wf-gen
 
 The second step involves abstracting away from implementation details. 
 For this, the tools are also annotated with a description of their 
