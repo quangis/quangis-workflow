@@ -233,7 +233,7 @@ class ToolRepository(object):
             if action == wf.root:
                 continue
             # print(f"Analyzing an application of {n3(impl)}:")
-            spec = self.analyze_action(wf, action)
+            self.analyze_action(wf, action)
             # print(f"Part of {spec}")
         print(self.graph().serialize(format="turtle"))
 
@@ -255,12 +255,15 @@ class ToolRepositoryGraph(GraphList):
                 self.add((spec, TOOLS.implementedBy, impl))
 
         for spec, sig in repo._sig_in.items():
-            self.add((spec, TOOLS.input,
-                self.add_list([self.add_artefact(t) for t in sig])))
+            for i, t in enumerate(sig, start=1):
+                a = self.add_artefact(t)
+                self.add((spec, TOOLS.input, a))
+                self.add((a, TOOLS.id, Literal(i)))
 
         for spec, sig in repo._sig_out.items():
-            self.add((spec, TOOLS.output,
-                self.add_list([self.add_artefact(t) for t in sig])))
+            for t in sig:
+                a = self.add_artefact(t)
+                self.add((spec, TOOLS.output, a))
 
         # TODO Share purposes?
         for spec, expr in repo._sig_sem.items():
@@ -375,7 +378,7 @@ class ConcreteWorkflow(Graph):
 
     def extract_workflow_schema(self, wf: Node) -> Graph:
         """
-        Extract a schematic workflow from a concrete one.
+        Extract a schematic workflow from a concrete one ("workflow instance").
         """
 
         g = GraphList()
@@ -386,8 +389,20 @@ class ConcreteWorkflow(Graph):
         # Concrete artefacts and actions to schematic ones
         schematic: dict[Node, BNode] = dict()
 
-        for action in self.objects(wf, WF.edge):
+        g.add((wf, RDF.type, TOOLS.WorkflowSchema))
 
+        # Figure out inputs/outputs to the workflow; add IDs where necessary
+        sources, targets = self.workflow_io(wf)
+        for i, artefact in enumerate(sources, start=1):
+            a = schematic[artefact] = BNode(shorten(artefact))
+            g.add((wf, TOOLS.input, a))
+            g.add((a, TOOLS.id, Literal(i)))
+        for artefact in targets:
+            a = schematic[artefact] = BNode(shorten(artefact))
+            g.add((wf, TOOLS.output, a))
+
+        # Figure out intermediate actions
+        for action in self.objects(wf, WF.edge):
             if action not in schematic:
                 schematic[action] = BNode()
             for artefact in chain(self.inputs(action), [self.output(action)]):
@@ -395,18 +410,11 @@ class ConcreteWorkflow(Graph):
                     schematic[artefact] = BNode(shorten(artefact))
 
             impl = self.implementation(action)
-            inputs_list = g.add_list([schematic[artefact]
-                for artefact in self.inputs(action)])
-            outputs_list = g.add_list([schematic[self.output(action)]])
             g.add((wf, TOOLS.action, schematic[action]))
-            g.add((schematic[action], TOOLS.input, inputs_list))
-            g.add((schematic[action], TOOLS.implementedBy, impl))
-            g.add((schematic[action], TOOLS.outputs, outputs_list))
+            g.add((schematic[action], TOOLS.do, impl))
+            for artefact in self.inputs(action):
+                g.add((schematic[action], TOOLS.input, schematic[artefact]))
+            g.add((schematic[action], TOOLS.output, 
+                schematic[self.output(action)]))
 
-        sources, targets = self.workflow_io(wf)
-        g.add((wf, RDF.type, TOOLS.Workflow))
-        g.add((wf, TOOLS.input, g.add_list(
-            [schematic[s] for s in sources])))
-        g.add((wf, TOOLS.output, g.add_list(
-            [schematic[t] for t in targets])))
         return g
