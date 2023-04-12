@@ -270,11 +270,8 @@ class ToolRepositoryGraph(GraphList):
                 a = self.add_artefact(t)
                 self.add((spec, TOOLS.output, a))
 
-        # TODO Share purposes?
         for spec, expr in repo._sig_sem.items():
-            purpose = BNode()
-            self.add((spec, TOOLS.purpose, purpose))
-            self.add((purpose, CCT.expression, Literal(str(expr))))
+            self.add((spec, TOOLS.purpose, Literal(str(expr))))
 
         for tool in repo.tools:
             self.add((tool, RDF.type, TOOLS.ConcreteTool))
