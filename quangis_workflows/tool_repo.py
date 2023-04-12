@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-This module is work-in-progerss. It does two things:
+This module is work-in-progress. It does two things:
 
 -   It collects *abstract tools* from *concrete workflows*.
 -   It turns the *concrete workflow* into abstract.
@@ -29,6 +29,7 @@ CCT types.
 from __future__ import annotations
 from rdflib import Graph
 from rdflib.term import Node, BNode, URIRef, Literal
+from rdflib.util import guess_format
 from pathlib import Path
 from itertools import count, chain
 from random import choices
@@ -168,7 +169,7 @@ class ToolRepository(object):
             # supertype of those in the spec (and the outputs are a subtype), 
             # then the action is more general than the spec. Other way around, 
             # it is more specific. (If both are true, the spec matches the 
-            # action exactly; if neither are true, then they are independent.)
+            # action; if neither are true, then they are independent.)
             spec_sig_in = self._sig_in[candidate_spec]
             spec_sig_out = self._sig_out[candidate_spec]
             specCoversAction = (
@@ -184,10 +185,7 @@ class ToolRepository(object):
                     for t_action, t_spec in zip(action_sig_out, spec_sig_out))
             )
 
-            # TODO Do we take into account permutations of the inputs? We 
-            # probably should, because even in the one test workflow, `wffood`, 
-            # there are two uses of `SelectLayerByLocationPointObjects`, in 
-            # which the order of the inputs is flipped.
+            # TODO Do we take into account permutations of the inputs?
 
             if specCoversAction:
                 assert not superspec
@@ -227,9 +225,8 @@ class ToolRepository(object):
         return spec
 
     def collect(self, wf: ConcreteWorkflow):
-        print(wf.root)
         for action, impl in wf.subject_objects(WF.applicationOf):
-            if impl == wf.root:
+            if action == wf.root:
                 continue
             print(f"Analyzing an application of {n3(impl)}:")
             spec = self.analyze_action(wf, action)
@@ -250,8 +247,6 @@ class ToolRepositoryGraph(GraphList):
         self.bind("data", DATA)
 
         for spec, implementations in repo._implementations.items():
-
-            self.add((spec, RDF.type, TOOLS.Spec))
             for impl in implementations:
                 self.add((spec, TOOLS.implementedBy, impl))
 
@@ -287,12 +282,35 @@ class ConcreteWorkflow(Graph):
     Concrete workflow in old format.
     """
 
-    def __init__(self, root: URIRef, *nargs, **kwargs):
-        self.root = root
+    def __init__(self, *nargs, **kwargs):
+        self._root: Node | None = None
         super().__init__(*nargs, **kwargs)
 
     def type(self, artefact: Node) -> Polytype:
         return Polytype.assemble(dimensions, self.objects(artefact, RDF.type))
+
+    @property
+    def root(self) -> Node:
+        if not self._root:
+            self._root = self.find_root()
+        return self._root
+
+    def find_root(self) -> Node:
+        # To find the root of a workflow, find a Workflow that isn't used as an 
+        # action anywhere; or, if it is, at least make sure that that action 
+        # isn't a step of any other Workflow.
+
+        for wf in self.subjects(RDF.type, WF.Workflow):
+            action_in_other_workflow: Node | None = None
+
+            for action in self.subjects(WF.applicationOf, wf):
+                if self.value(None, WF.edge, action):
+                    action_in_other_workflow = action
+                    break
+
+            if not action_in_other_workflow:
+                return wf
+        raise RuntimeError("Workflow graph has no identifiable root.")
 
     def sig_sem(self, action: Node) -> tf.Expr:
         expr_string = self.value(action, CCT.expression, any=False)
@@ -344,9 +362,9 @@ class ConcreteWorkflow(Graph):
         return ginputs, goutputs
 
     @staticmethod
-    def from_file(path: str | Path, root: URIRef) -> ConcreteWorkflow:
-        g = ConcreteWorkflow(root)
-        g.parse(path, format="turtle")
+    def from_file(path: str | Path, format: str = "") -> ConcreteWorkflow:
+        g = ConcreteWorkflow()
+        g.parse(path, format=format or guess_format(str(path)))
         return g
 
     def extract_subworkflow(self, root: Node) -> Graph:
@@ -386,10 +404,3 @@ class ConcreteWorkflow(Graph):
         g.add((root, TOOLS.output, g.add_list(
             [schematic[t] for t in targets])))
         return g
-
-
-if __name__ == "__main__":
-    cwf = ConcreteWorkflow.from_file(
-        root_dir / "wffood.ttl", TOOLS.wffood)
-    repo = ToolRepository()
-    repo.collect(cwf)
