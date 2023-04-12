@@ -1,11 +1,20 @@
 # quangis-workflows
 
-As part of the [QuAnGIS](https://questionbasedanalysis.com/) project, 
-this program can **synthesize** GIS workflows from a specification of 
-GIS tools, using the [Automated Pipeline Explorer][ape]. It can also 
-extract specifications of GIS tools from manually constructed workflows; 
-as drawn from [this 
-repository](https://github.com/quangis/QuAnGIS_workflow_annotation).
+This program is part of the [QuAnGIS][quangis] project.
+
+-   It can **synthesize** GIS workflows from a specification of GIS 
+    tools, using the [Automated Pipeline Explorer][ape].
+-   It can also extract specifications of GIS tools from manually 
+    constructed workflows, provided they are properly 
+    [annotated][annot].
+
+
+### Extraction
+
+Assuming that RDF files containing manually annotated workflows are in 
+the `ttl/` directory, the tool repository is built using:
+
+    quangis-tool-repo ttl/*.ttl
 
 
 ### Generation
@@ -47,6 +56,8 @@ and other required data files will automatically be downloaded. To run
 (rather limited) tests, install and run `nose2`.
 
 
+[annot]: https://github.com/quangis/QuAnGIS_workflow_annotation
+[quangis]: https://questionbasedanalysis.com/
 [ccd]: http://geographicknowledge.de/vocab/CoreConceptData.rdf
 [jpype]: https://jpype.readthedocs.io/
 [ape]: https://github.com/sanctuuary/APE
