@@ -139,7 +139,7 @@ class ToolRepository(object):
         # Is this implemented by ensemble of tools or a single concrete tool?
         if (impl, RDF.type, WF.Workflow) in wf:
             if impl not in self.schemas:
-                subwf = wf.extract_subworkflow(impl)
+                subwf = wf.extract_workflow_schema(impl)
                 self.schemas[impl] = subwf
         else:
             self.tools.add(impl)
@@ -185,7 +185,11 @@ class ToolRepository(object):
                     for t_action, t_spec in zip(action_sig_out, spec_sig_out))
             )
 
-            # TODO Do we take into account permutations of the inputs?
+            # TODO Do we take into account permutations of the inputs? We 
+            # probably should, since even in the one test that I did (wffood), 
+            # we see that SelectLayerByLocationPointObjects has two variants 
+            # with just the order of the inputs flipped. Actually, it might be 
+            # a better idea to identify by ID instead of order.
 
             if specCoversAction:
                 assert not superspec
@@ -228,9 +232,9 @@ class ToolRepository(object):
         for action, impl in wf.subject_objects(WF.applicationOf):
             if action == wf.root:
                 continue
-            print(f"Analyzing an application of {n3(impl)}:")
+            # print(f"Analyzing an application of {n3(impl)}:")
             spec = self.analyze_action(wf, action)
-            print(f"Part of {spec}")
+            # print(f"Part of {spec}")
         print(self.graph().serialize(format="turtle"))
 
     def graph(self) -> ToolRepositoryGraph:
@@ -340,23 +344,25 @@ class ConcreteWorkflow(Graph):
     def sig_in(self, action: Node) -> list[Polytype]:
         return [self.type(artefact) for artefact in self.inputs(action)]
 
-    def workflow_io(self, root: Node) -> tuple[set[Node], set[Node]]:
+    def workflow_io(self, wf: Node) -> tuple[set[Node], set[Node]]:
         """
         Find the inputs and outputs of a workflow by looking at which inputs 
         and outputs of the actions aren't themselves given to or from other 
         actions.
         """
+        assert (wf, RDF.type, WF.Workflow) in self
+
         inputs: set[Node] = set()
         outputs: set[Node] = set()
-        for action in self.objects(root, WF.edge):
+        for action in self.objects(wf, WF.edge):
             inputs.update(self.inputs(action))
             outputs.add(self.output(action))
-
         ginputs = inputs - outputs
         goutputs = outputs - inputs
+
         # assert len(goutputs) == 1, f"""There must be exactly 1 output, but 
-        # {n3(root)} has {len(goutputs)}."""
-        assert set(self.objects(root, WF.source)) == ginputs, """The sources of 
+        # {n3(wf)} has {len(goutputs)}."""
+        assert set(self.objects(wf, WF.source)) == ginputs, """The sources of 
         the workflow don't match with the inputs"""
 
         return ginputs, goutputs
@@ -367,20 +373,20 @@ class ConcreteWorkflow(Graph):
         g.parse(path, format=format or guess_format(str(path)))
         return g
 
-    def extract_subworkflow(self, root: Node) -> Graph:
+    def extract_workflow_schema(self, wf: Node) -> Graph:
         """
         Extract a schematic workflow from a concrete one.
         """
 
         g = GraphList()
 
-        assert (root, RDF.type, WF.Workflow) in self
-        assert root is not self.root
+        assert (wf, RDF.type, WF.Workflow) in self
+        assert wf is not self.root
 
         # Concrete artefacts and actions to schematic ones
         schematic: dict[Node, BNode] = dict()
 
-        for action in self.objects(root, WF.edge):
+        for action in self.objects(wf, WF.edge):
 
             if action not in schematic:
                 schematic[action] = BNode()
@@ -392,15 +398,15 @@ class ConcreteWorkflow(Graph):
             inputs_list = g.add_list([schematic[artefact]
                 for artefact in self.inputs(action)])
             outputs_list = g.add_list([schematic[self.output(action)]])
-            g.add((root, TOOLS.action, schematic[action]))
+            g.add((wf, TOOLS.action, schematic[action]))
             g.add((schematic[action], TOOLS.input, inputs_list))
             g.add((schematic[action], TOOLS.implementedBy, impl))
             g.add((schematic[action], TOOLS.outputs, outputs_list))
 
-        sources, targets = self.workflow_io(root)
-        g.add((root, RDF.type, TOOLS.Workflow))
-        g.add((root, TOOLS.input, g.add_list(
+        sources, targets = self.workflow_io(wf)
+        g.add((wf, RDF.type, TOOLS.Workflow))
+        g.add((wf, TOOLS.input, g.add_list(
             [schematic[s] for s in sources])))
-        g.add((root, TOOLS.output, g.add_list(
+        g.add((wf, TOOLS.output, g.add_list(
             [schematic[t] for t in targets])))
         return g
