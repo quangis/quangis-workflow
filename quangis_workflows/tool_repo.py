@@ -40,7 +40,7 @@ from collections import defaultdict
 from cct import cct  # type: ignore
 import transforge as tf
 from transforge.namespace import shorten
-from quangis_workflows.namespace import n3, WF, RDF, CCD, CCT, TOOLS, DATA
+from quangis_workflows.namespace import WF, RDF, CCD, CCT, TOOLS, DATA
 from quangis_workflows.types import Polytype, Dimension
 
 root_dir = Path(__file__).parent.parent
@@ -125,7 +125,8 @@ class ToolRepository(object):
             return self.generate_name(base)
         return name
 
-    def analyze_action(self, wf: ConcreteWorkflow, action: Node) -> Spec:
+    def analyze_action(self, wf: ConcreteWorkflow,
+            action: Node) -> Spec | None:
         """
         Analyze a single action (application of a tool or workflow) and figure 
         out what spec it belongs to. As a side-effect, update the repository of 
@@ -134,7 +135,10 @@ class ToolRepository(object):
         impl = wf.implementation(action)
         action_sig_in = wf.sig_in(action)
         action_sig_out = wf.sig_out(action)
-        # action_sig_sem = wf.sig_sem(action)
+        action_sig_sem = wf.sig_sem(action)
+
+        if not action_sig_sem:
+            return None
 
         # Is this implemented by ensemble of tools or a single concrete tool?
         if (impl, RDF.type, WF.Workflow) in wf:
@@ -159,17 +163,17 @@ class ToolRepository(object):
                 continue
 
             # Is the CCT term the same?
-            # if not self._sig_sem[candidate_spec].match(action_sig_sem):
+            if not self._sig_sem[candidate_spec].match(action_sig_sem):
                 # TODO Note that non-matching CCT doesn't mean that tools are 
                 # actually semantically different. Some degree of manual 
                 # intervention might be necessary.
-                # continue
+                continue
 
             # As for the CCD signature: if the inputs of the action are a 
             # supertype of those in the spec (and the outputs are a subtype), 
             # then the action is more general than the spec. Other way around, 
             # it is more specific. (If both are true, the spec matches the 
-            # action; if neither are true, then they are independent.)
+            # action exactly; if neither are true, then they are independent.)
             spec_sig_in = self._sig_in[candidate_spec]
             spec_sig_out = self._sig_out[candidate_spec]
             specCoversAction = (
@@ -224,7 +228,7 @@ class ToolRepository(object):
             self._implementations[spec].add(impl)
             self._sig_in[spec] = action_sig_in
             self._sig_out[spec] = action_sig_out
-            # self._sig_sem[spec] = action_sig_sem
+            self._sig_sem[spec] = action_sig_sem
 
         return spec
 
@@ -248,6 +252,7 @@ class ToolRepositoryGraph(GraphList):
 
         self.bind("", TOOLS)
         self.bind("ccd", CCD)
+        self.bind("cct", CCT)
         self.bind("data", DATA)
 
         for spec, implementations in repo._implementations.items():
@@ -289,7 +294,7 @@ class ConcreteWorkflow(Graph):
     Concrete workflow in old format.
     """
 
-    def __init__(self, *nargs, **kwargs):
+    def __init__(self, *nargs, **kwargs) -> None:
         self._root: Node | None = None
         super().__init__(*nargs, **kwargs)
 
@@ -319,9 +324,12 @@ class ConcreteWorkflow(Graph):
                 return wf
         raise RuntimeError("Workflow graph has no identifiable root.")
 
-    def sig_sem(self, action: Node) -> tf.Expr:
+    def sig_sem(self, action: Node) -> tf.Expr | None:
         expr_string = self.value(action, CCT.expression, any=False)
-        return cct.parse(expr_string, defaults=True)
+        if expr_string:
+            return cct.parse(expr_string, defaults=True)
+        else:
+            return None
 
     def implementation(self, action: Node) -> URIRef:
         impl = self.value(action, WF.applicationOf, any=False)
@@ -411,7 +419,7 @@ class ConcreteWorkflow(Graph):
 
             impl = self.implementation(action)
             g.add((wf, TOOLS.action, schematic[action]))
-            g.add((schematic[action], TOOLS.do, impl))
+            g.add((schematic[action], TOOLS.apply, impl))
             for artefact in self.inputs(action):
                 g.add((schematic[action], TOOLS.input, schematic[artefact]))
             g.add((schematic[action], TOOLS.output, 
