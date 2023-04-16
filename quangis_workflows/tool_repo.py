@@ -35,10 +35,8 @@ from itertools import count, chain
 from random import choices
 import string
 from typing import Iterator
-from collections import defaultdict
 
 from cct import cct  # type: ignore
-import transforge as tf
 from transforge.namespace import shorten
 from quangis_workflows.namespace import WF, RDF, CCD, CCT, TOOLS, DATA
 from quangis_workflows.types import Polytype, Dimension
@@ -52,9 +50,101 @@ dimensions = [
     for root in [CCD.CoreConceptQ, CCD.LayerA, CCD.NominalA]
 ]
 
-Spec = URIRef
-Tool = URIRef
-Impl = URIRef
+
+class EmptyTransformationError(Exception):
+    pass
+
+
+class Action(object):
+    pass
+
+
+class Signature(object):
+    """A tool signature is an abstract specification of a tool. It may 
+    correspond to one or more concrete tools, or even ensembles of tools. It 
+    must describe the format of its input and output (ie the core concept 
+    datatypes) and it must describe its purpose (in terms of a core concept 
+    transformation expression).
+
+    A signature may be implemented by multiple (workflows of) concrete tools, 
+    because, for example, a tool could be implemented in both QGIS and ArcGIS. 
+    Conversely, multiple specifications may be implemented by the same concrete 
+    tool/workflow, if it can be used in multiple contexts --- in the same way 
+    that a hammer can be used both to drive a nail into a plank of wood or to 
+    break a piggy bank."""
+
+    def __init__(self,
+            inputs: dict[str, Polytype],
+            outputs: dict[str, Polytype],
+            transformation: str) -> None:
+        self.inputs: dict[str, Polytype] = inputs
+        self.outputs: dict[str, Polytype] = outputs
+        self.transformation: str = transformation
+
+        self.uri: URIRef | None = None
+        self.description: str | None = None
+        self.implementations: set[URIRef] = set()
+
+        self.inputs_keys = set(inputs.keys())
+        self.outputs_keys = set(outputs.keys())
+        self.transformation_p = cct.parse(transformation, defaults=True)
+
+    def match_implementation(self, candidate: Signature) -> bool:
+        """Check that the implementations (tools or workflows) in the candidate 
+        signature are also in the current one."""
+        raise NotImplementedError
+
+    def match_purpose(self, candidate: Signature) -> bool:
+        """Check that the expression of the candidate matches the expression 
+        associated with this one. Note that a non-matching expression doesn't 
+        mean that tools are actually semantically different, since there are 
+        multiple ways to express the same idea (consider `compose f g x` vs 
+        `f(g(x))`). Therefore, some manual intervention may be necessary."""
+        return self.transformation_p.match(candidate.transformation_p)
+
+    def match_datatype(self, candidate: Signature) -> bool:
+        """If the inputs in the candidate signature are subtypes of the ones in 
+        this one (and the outputs are supertypes), then this signature *covers* 
+        the other signature. If the reverse is true, then this signature is 
+        narrower than what the candidate one requires, which suggests that it 
+        should be generalized. If the candidate signature is neither covered by 
+        this one nor generalizes it, then the two signatures are 
+        independent."""
+
+        # For now, we do not take into account permutations. We probably 
+        # should, since even in the one test that I did (wffood), we see that 
+        # SelectLayerByLocationPointObjects has two variants with just the 
+        # order of the inputs flipped.
+        if not (self.inputs_keys == candidate.inputs_keys
+                and self.outputs_keys == candidate.outputs_keys):
+            return False
+
+        return (
+            all(candidate.inputs[k1].subtype(self.inputs[k2])
+                for k1, k2 in zip(self.inputs_keys, self.inputs_keys))
+            and all(self.outputs[k1].subtype(candidate.outputs[k2])
+                for k1, k2 in zip(self.inputs_keys, self.inputs_keys))
+        )
+
+    def update(self, other: Signature) -> None:
+        """Update this spec with information from another spec."""
+        pass
+
+    @staticmethod
+    def propose(wf: ConcreteWorkflow, action: Node) -> Signature:
+        """Create a new candidate signature from an action in a workflow."""
+        tfm = wf.transformation(action)
+        if not tfm:
+            raise EmptyTransformationError
+        sig = Signature(
+            inputs={str(i): wf.type(artefact)
+                for i, artefact in enumerate(wf.inputs(action))},
+            outputs={str(i): wf.type(artefact)
+                for i, artefact in enumerate(wf.outputs(action))},
+            transformation=tfm
+        )
+        sig.implementations.add(wf.implementation(action))
+        return sig
 
 
 class ToolRepository(object):
@@ -65,22 +155,21 @@ class ToolRepository(object):
     def __init__(self, *nargs, **kwargs) -> None:
         super().__init__(*nargs, **kwargs)
 
-        # Associate specs with the implementations of those specs.
-        self._implementations: dict[Spec, set[Impl]] = defaultdict(set)
+        # Signatures (abstract tools)
+        # self.sigs: dict[URIRef, Signature] = dict()
+        # self.signatures: set[Signature] = set()
+        self.signatures: dict[URIRef, Signature] = dict()
 
-        # Map specs to input and output signatures.
-        self._sig_in: dict[Spec, list[Polytype]] = {}
-        self._sig_out: dict[Spec, list[Polytype]] = {}
-        self._sig_sem: dict[Spec, tf.Expr] = {}
+        # Concrete tools
+        self.tools: set[URIRef] = set()
 
-        # Concrete tool implementations
-        self.tools: set[Impl] = set()
-        self.schemas: dict[Impl, Graph] = dict()
+        # Ensembles of concrete tools (workflow schemas)
+        self.workflows: dict[URIRef, Graph] = dict()
 
-    def __contains__(self, spec: Spec) -> bool:
-        return spec in self._implementations
+    def __contains__(self, sig: URIRef) -> bool:
+        return sig in self.signatures
 
-    def generate_name(self, base: Tool) -> Spec:
+    def generate_name(self, base: URIRef) -> URIRef:
         """
         Generate a name for an abstract tool based on an existing concrete 
         tool.
@@ -92,111 +181,70 @@ class ToolRepository(object):
         return name
 
     def analyze_action(self, wf: ConcreteWorkflow,
-            action: Node) -> Spec | None:
+            action: Node) -> URIRef | None:
         """
         Analyze a single action (application of a tool or workflow) and figure 
         out what spec it belongs to. As a side-effect, update the repository of 
         tool specifications if necessary.
         """
         impl = wf.implementation(action)
-        action_sig_in = wf.sig_in(action)
-        action_sig_out = wf.sig_out(action)
-        action_sig_sem = wf.sig_sem(action)
 
-        if not action_sig_sem:
+        try:
+            candidate = Signature.propose(wf, action)
+        except EmptyTransformationError:
             return None
 
         # Is this implemented by ensemble of tools or a single concrete tool?
         if (impl, RDF.type, WF.Workflow) in wf:
-            if impl not in self.schemas:
+            if impl not in self.workflows:
                 subwf = wf.extract_workflow_schema(impl)
-                self.schemas[impl] = subwf
+                self.workflows[impl] = subwf
         else:
             self.tools.add(impl)
 
-        # Now there are three possibilities:
-        # - there is already a "super"spec that covers this action;
-        # - this action suggests that one or more existing "sub"specs need to 
-        # be generalized to fit it;
-        # - this action merits an all-new spec.
-
-        superspec: Spec | None = None
-        subspecs: list[Spec] = []
-
-        for candidate_spec in self._implementations:
+        # Find out how other signatures relate to the candidate sig
+        supersig: Signature | None = None
+        subsigs: list[Signature] = []
+        for uri, sig in self.signatures.items():
             # Is the URI the same?
-            if impl not in self._implementations[candidate_spec]:
+            if impl not in sig.implementations:
                 continue
 
-            # Is the CCT term the same?
-            if not self._sig_sem[candidate_spec].match(action_sig_sem):
-                # TODO Note that non-matching CCT doesn't mean that tools are 
-                # actually semantically different. Some degree of manual 
-                # intervention might be necessary.
+            # Is the CCT expression the same?
+            if not candidate.match_purpose(sig):
                 continue
 
-            # As for the CCD signature: if the inputs of the action are a 
-            # supertype of those in the spec (and the outputs are a subtype), 
-            # then the action is more general than the spec. Other way around, 
-            # it is more specific. (If both are true, the spec matches the 
-            # action exactly; if neither are true, then they are independent.)
-            spec_sig_in = self._sig_in[candidate_spec]
-            spec_sig_out = self._sig_out[candidate_spec]
-            specCoversAction = (
-                all(t_action.subtype(t_spec)
-                    for t_action, t_spec in zip(action_sig_in, spec_sig_in))
-                and all(t_spec.subtype(t_action)
-                    for t_action, t_spec in zip(action_sig_out, spec_sig_out))
-            )
-            actionGeneralizesSpec = (
-                all(t_spec.subtype(t_action)
-                    for t_action, t_spec in zip(action_sig_in, spec_sig_in))
-                and all(t_action.subtype(t_spec)
-                    for t_action, t_spec in zip(action_sig_out, spec_sig_out))
-            )
+            # Is the CCD type the same?
+            if candidate.match_datatype(sig):
+                assert not supersig
+                supersig = sig
+            elif sig.match_datatype(candidate):
+                subsigs.append(sig)
 
-            # TODO Do we take into account permutations of the inputs? We 
-            # probably should, since even in the one test that I did (wffood), 
-            # we see that SelectLayerByLocationPointObjects has two variants 
-            # with just the order of the inputs flipped. Actually, it might be 
-            # a better idea to identify by ID instead of order.
+        assert not (supersig and subsigs), """If this assertion fails, the tool 
+        repository already contains too many specs."""
 
-            if specCoversAction:
-                assert not superspec
-                superspec = candidate_spec
-            elif actionGeneralizesSpec:
-                subspecs.append(candidate_spec)
-
-        assert not (superspec and subspecs), """If this assertion fails, the 
-        tool repository already contains too many specs."""
-
-        spec: Spec
-
-        # If there is a spec that covers this action, we simply add the 
+        # If there is a signature that covers this action, we simply add the 
         # corresponding tool/workflow as one of its implementations
-        if superspec:
-            spec = superspec
-            self._implementations[superspec].add(impl)
+        if supersig:
+            supersig.implementations.add(impl)
+            return supersig.uri
 
-        # If the action is a more general version of existing spec(s), then we 
-        # must update the outdated specs.
-        elif subspecs:
-            assert len(subspecs) <= 1, """If there are multiple specs to 
+        # If the signature is a more general version of existing signature(s), 
+        # then we must update the outdated specs.
+        elif subsigs:
+            assert len(subsigs) <= 1, """If there are multiple specs to 
             replace, we must merge specs and deal with changes to the abstract 
             workflow repository, so let's exclude that possibility for now."""
-            spec = subspecs[0]
-            self._sig_in[spec] = action_sig_in
-            self._sig_out[spec] = action_sig_out
+            subsigs[0].inputs = candidate.inputs
+            subsigs[0].outputs = candidate.outputs
+            return subsigs[0].uri
 
         # If neither of the above is true, the action merits an all-new spec
         else:
-            spec = self.generate_name(impl)
-            self._implementations[spec].add(impl)
-            self._sig_in[spec] = action_sig_in
-            self._sig_out[spec] = action_sig_out
-            self._sig_sem[spec] = action_sig_sem
-
-        return spec
+            candidate.uri = self.generate_name(impl)
+            self.signatures[candidate.uri] = candidate
+            return candidate.uri
 
     def collect(self, wf: ConcreteWorkflow):
         for action, impl in wf.subject_objects(WF.applicationOf):
@@ -221,28 +269,27 @@ class ToolRepositoryGraph(Graph):
         self.bind("cct", CCT)
         self.bind("data", DATA)
 
-        for spec, implementations in repo._implementations.items():
-            for impl in implementations:
-                self.add((spec, TOOLS.implementedBy, impl))
+        for sig in repo.signatures.values():
+            assert isinstance(sig.uri, URIRef)
+            for impl in sig.implementations:
+                self.add((sig.uri, TOOLS.implementedBy, impl))
 
-        for spec, sig in repo._sig_in.items():
-            for i, t in enumerate(sig, start=1):
+            for i, t in sig.inputs.items():
                 a = self.add_artefact(t)
-                self.add((spec, TOOLS.input, a))
+                self.add((sig.uri, TOOLS.input, a))
                 self.add((a, TOOLS.id, Literal(i)))
 
-        for spec, sig in repo._sig_out.items():
-            for t in sig:
+            for i, t in sig.outputs.items():
                 a = self.add_artefact(t)
-                self.add((spec, TOOLS.output, a))
+                self.add((sig.uri, TOOLS.output, a))
+                self.add((a, TOOLS.id, Literal(i)))
 
-        for spec, expr in repo._sig_sem.items():
-            self.add((spec, TOOLS.purpose, Literal(str(expr))))
+            self.add((sig.uri, CCT.expression, Literal(sig.transformation)))
 
         for tool in repo.tools:
-            self.add((tool, RDF.type, TOOLS.ConcreteTool))
+            self.add((tool, RDF.type, TOOLS.Tool))
 
-        for tool, wf in repo.schemas.items():
+        for tool, wf in repo.workflows.items():
             self += wf
 
     def add_artefact(self, type: Polytype) -> Node:
@@ -287,12 +334,8 @@ class ConcreteWorkflow(Graph):
                 return wf
         raise RuntimeError("Workflow graph has no identifiable root.")
 
-    def sig_sem(self, action: Node) -> tf.Expr | None:
-        expr_string = self.value(action, CCT.expression, any=False)
-        if expr_string:
-            return cct.parse(expr_string, defaults=True)
-        else:
-            return None
+    def transformation(self, action: Node) -> str | None:
+        return self.value(action, CCT.expression, any=False)
 
     def implementation(self, action: Node) -> URIRef:
         impl = self.value(action, WF.applicationOf, any=False)
@@ -307,16 +350,10 @@ class ConcreteWorkflow(Graph):
             else:
                 break
 
-    def output(self, action: Node) -> Node:
+    def outputs(self, action: Node) -> Iterator[Node]:
         artefact_out = self.value(action, WF.output, any=False)
         assert artefact_out
-        return artefact_out
-
-    def sig_out(self, action: Node) -> list[Polytype]:
-        return [self.type(self.output(action))]
-
-    def sig_in(self, action: Node) -> list[Polytype]:
-        return [self.type(artefact) for artefact in self.inputs(action)]
+        yield artefact_out
 
     def workflow_io(self, wf: Node) -> tuple[set[Node], set[Node]]:
         """
@@ -330,7 +367,7 @@ class ConcreteWorkflow(Graph):
         outputs: set[Node] = set()
         for action in self.objects(wf, WF.edge):
             inputs.update(self.inputs(action))
-            outputs.add(self.output(action))
+            outputs.update(self.outputs(action))
         ginputs = inputs - outputs
         goutputs = outputs - inputs
 
@@ -349,7 +386,8 @@ class ConcreteWorkflow(Graph):
 
     def extract_workflow_schema(self, wf: Node) -> Graph:
         """
-        Extract a schematic workflow from a concrete one ("workflow instance").
+        Extract a schematic workflow (in the TOOLS namespace) from a concrete 
+        one (a workflow instance in the WF namespace).
         """
 
         g = Graph()
@@ -376,7 +414,7 @@ class ConcreteWorkflow(Graph):
         for action in self.objects(wf, WF.edge):
             if action not in schematic:
                 schematic[action] = BNode()
-            for artefact in chain(self.inputs(action), [self.output(action)]):
+            for artefact in chain(self.inputs(action), self.outputs(action)):
                 if artefact not in schematic:
                     schematic[artefact] = BNode(shorten(artefact))
 
@@ -385,7 +423,7 @@ class ConcreteWorkflow(Graph):
             g.add((schematic[action], TOOLS.apply, impl))
             for artefact in self.inputs(action):
                 g.add((schematic[action], TOOLS.input, schematic[artefact]))
-            g.add((schematic[action], TOOLS.output, 
-                schematic[self.output(action)]))
+            for artefact in self.outputs(action):
+                g.add((schematic[action], TOOLS.output, schematic[artefact]))
 
         return g
