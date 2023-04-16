@@ -137,10 +137,10 @@ class Signature(object):
         if not tfm:
             raise EmptyTransformationError
         sig = Signature(
-            inputs={str(i): wf.type(artefact)
-                for i, artefact in enumerate(wf.inputs(action))},
-            outputs={str(i): wf.type(artefact)
-                for i, artefact in enumerate(wf.outputs(action))},
+            inputs={str(id): wf.type(artefact)
+                for i, artefact in enumerate(wf.inputs(action), start=1)},
+            outputs={str(id): wf.type(artefact)
+                for id, artefact in enumerate(wf.outputs(action), start=1)},
             transformation=tfm
         )
         sig.implementations.add(wf.implementation(action))
@@ -248,55 +248,42 @@ class ToolRepository(object):
 
     def collect(self, wf: ConcreteWorkflow):
         for action, impl in wf.subject_objects(WF.applicationOf):
-            if action == wf.root:
-                continue
-            # print(f"Analyzing an application of {n3(impl)}:")
-            self.analyze_action(wf, action)
-            # print(f"Part of {spec}")
+            if action != wf.root:
+                self.analyze_action(wf, action)
         print(self.graph().serialize(format="turtle"))
 
-    def graph(self) -> ToolRepositoryGraph:
-        return ToolRepositoryGraph(self)
+    def graph(self) -> Graph:
+        g = Graph()
+        g.bind("", TOOLS)
+        g.bind("ccd", CCD)
+        g.bind("cct", CCT)
+        g.bind("data", DATA)
 
-
-class ToolRepositoryGraph(Graph):
-
-    def __init__(self, repo: ToolRepository) -> None:
-        super().__init__()
-
-        self.bind("", TOOLS)
-        self.bind("ccd", CCD)
-        self.bind("cct", CCT)
-        self.bind("data", DATA)
-
-        for sig in repo.signatures.values():
+        for sig in self.signatures.values():
             assert isinstance(sig.uri, URIRef)
+
+            g.add((sig.uri, CCT.expression, Literal(sig.transformation)))
+
             for impl in sig.implementations:
-                self.add((sig.uri, TOOLS.implementedBy, impl))
+                g.add((sig.uri, TOOLS.implementedBy, impl))
 
-            for i, t in sig.inputs.items():
-                a = self.add_artefact(t)
-                self.add((sig.uri, TOOLS.input, a))
-                self.add((a, TOOLS.id, Literal(i)))
+            for predicate, artefacts in (
+                    (TOOLS.input, sig.inputs),
+                    (TOOLS.output, sig.outputs)):
+                for id, type in artefacts.items():
+                    artefact = BNode()
+                    g.add((sig.uri, predicate, artefact))
+                    g.add((artefact, TOOLS.id, Literal(id)))
+                    for uri in type.uris():
+                        g.add((artefact, RDF.type, uri))
 
-            for i, t in sig.outputs.items():
-                a = self.add_artefact(t)
-                self.add((sig.uri, TOOLS.output, a))
-                self.add((a, TOOLS.id, Literal(i)))
+        for tool in self.tools:
+            g.add((tool, RDF.type, TOOLS.Tool))
 
-            self.add((sig.uri, CCT.expression, Literal(sig.transformation)))
+        for tool, wf in self.workflows.items():
+            g += wf
 
-        for tool in repo.tools:
-            self.add((tool, RDF.type, TOOLS.Tool))
-
-        for tool, wf in repo.workflows.items():
-            self += wf
-
-    def add_artefact(self, type: Polytype) -> Node:
-        artefact = BNode()
-        for uri in type.uris():
-            self.add((artefact, RDF.type, uri))
-        return artefact
+        return g
 
 
 class ConcreteWorkflow(Graph):
