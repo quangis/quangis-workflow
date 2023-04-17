@@ -38,7 +38,7 @@ from typing import Iterator
 
 from cct import cct  # type: ignore
 from transforge.namespace import shorten
-from quangis_workflows.namespace import WF, RDF, CCD, CCT, TOOLS, DATA
+from quangis_workflows.namespace import WF, RDF, CCD, CCT, TOOLS, DATA, OWL
 from quangis_workflows.types import Polytype, Dimension
 
 root_dir = Path(__file__).parent.parent
@@ -394,13 +394,17 @@ class ConcreteWorkflow(Graph):
         # Figure out inputs/outputs to the workflow; add IDs where necessary
         sources, targets = self.workflow_io(wf)
         for i, artefact in enumerate(sources, start=1):
-            a = schematic[artefact] = named_bnode(artefact)
+            a = BNode()
+            a_real = schematic[artefact] = named_bnode(artefact)
             g.add((wf, TOOLS.input, a))
             g.add((a, TOOLS.id, Literal(i)))
-            g.add((a, RDF.label, Literal(shorten(artefact))))
+            # g.add((a, RDF.label, Literal(shorten(artefact))))
+            g.add((a, OWL.sameAs, a_real))
         for artefact in targets:
-            a = schematic[artefact] = named_bnode(artefact)
+            a = BNode()
+            a_real = schematic[artefact] = named_bnode(artefact)
             g.add((wf, TOOLS.output, a))
+            g.add((a, OWL.sameAs, a_real))
 
         # Figure out intermediate actions
         for action in self.objects(wf, WF.edge):
