@@ -138,7 +138,7 @@ class Signature(object):
             raise EmptyTransformationError
         sig = Signature(
             inputs={str(id): wf.type(artefact)
-                for i, artefact in enumerate(wf.inputs(action), start=1)},
+                for id, artefact in enumerate(wf.inputs(action), start=1)},
             outputs={str(id): wf.type(artefact)
                 for id, artefact in enumerate(wf.outputs(action), start=1)},
             transformation=tfm
@@ -271,10 +271,10 @@ class ToolRepository(object):
             for predicate, artefacts in (
                     (TOOLS.input, sig.inputs),
                     (TOOLS.output, sig.outputs)):
-                for id, type in artefacts.items():
+                for i, type in artefacts.items():
                     artefact = BNode()
                     g.add((sig.uri, predicate, artefact))
-                    g.add((artefact, TOOLS.id, Literal(id)))
+                    g.add((artefact, TOOLS.id, Literal(i)))
                     for uri in type.uris():
                         g.add((artefact, RDF.type, uri))
 
@@ -397,13 +397,14 @@ class ConcreteWorkflow(Graph):
             a = BNode()
             a_real = schematic[artefact] = named_bnode(artefact)
             g.add((wf, TOOLS.input, a))
-            g.add((a, TOOLS.id, Literal(i)))
+            g.add((a, TOOLS.id, Literal(str(i))))
             # g.add((a, RDF.label, Literal(shorten(artefact))))
             g.add((a, OWL.sameAs, a_real))
-        for artefact in targets:
+        for i, artefact in enumerate(targets, start=1):
             a = BNode()
             a_real = schematic[artefact] = named_bnode(artefact)
             g.add((wf, TOOLS.output, a))
+            g.add((a, TOOLS.id, Literal(str(i))))
             g.add((a, OWL.sameAs, a_real))
 
         # Figure out intermediate actions
