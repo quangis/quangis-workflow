@@ -171,11 +171,11 @@ class ToolRepository(object):
         Generate a name for an abstract tool based on an existing concrete 
         tool.
         """
-        id = "".join(choices(string.ascii_letters + string.digits, k=5))
-        name = TOOLS[f"{shorten(base)}_{id}"]
-        if name in self:
-            return self.generate_name(base)
-        return name
+        for i in chain("", count(start=1)):
+            uri = TOOLS[f"{shorten(base)}{i}"]
+            if uri not in self:
+                return uri
+        raise RuntimeError("Unreachable")
 
     def analyze_action(self, wf: ConcreteWorkflow,
             action: Node) -> URIRef | None:
