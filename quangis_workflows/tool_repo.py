@@ -143,7 +143,6 @@ class Signature(object):
                 for id, artefact in enumerate(wf.outputs(action), start=1)},
             transformation=tfm
         )
-        sig.implementations.add(wf.implementation(action))
         return sig
 
 
@@ -156,8 +155,6 @@ class ToolRepository(object):
         super().__init__(*nargs, **kwargs)
 
         # Signatures (abstract tools)
-        # self.sigs: dict[URIRef, Signature] = dict()
-        # self.signatures: set[Signature] = set()
         self.signatures: dict[URIRef, Signature] = dict()
 
         # Concrete tools
@@ -191,14 +188,18 @@ class ToolRepository(object):
 
         try:
             candidate = Signature.propose(wf, action)
+            candidate.implementations.add(impl)
         except EmptyTransformationError:
             return None
+
+        # TODO: Finding the signature should be done differently for a workflow 
+        # than for a concrete tool, because we can work off different 
+        # assumptions. Do so later.
 
         # Is this implemented by ensemble of tools or a single concrete tool?
         if (impl, RDF.type, WF.Workflow) in wf:
             if impl not in self.workflows:
-                subwf = wf.extract_workflow_schema(impl)
-                self.workflows[impl] = subwf
+                self.workflows[impl] = wf.extract_workflow_schema(impl)
         else:
             self.tools.add(impl)
 
@@ -265,7 +266,7 @@ class ToolRepository(object):
             g.add((sig.uri, CCT.expression, Literal(sig.transformation)))
 
             for impl in sig.implementations:
-                g.add((sig.uri, TOOLS.implementedBy, impl))
+                g.add((sig.uri, TOOLS.implementation, impl))
 
             for predicate, artefacts in (
                     (TOOLS.input, sig.inputs),
@@ -382,19 +383,23 @@ class ConcreteWorkflow(Graph):
         assert (wf, RDF.type, WF.Workflow) in self
         assert wf is not self.root
 
-        # Concrete artefacts and actions to schematic ones
-        schematic: dict[Node, BNode] = dict()
+        def named_bnode(artefact: Node) -> BNode:
+            return BNode(f"{shorten(wf)}_{shorten(artefact)}")
 
-        g.add((wf, RDF.type, TOOLS.WorkflowSchema))
+        # Concrete artefacts and actions to schematic ones
+        schematic: dict[Node, Node] = dict()
+
+        g.add((wf, RDF.type, TOOLS.Workflow))
 
         # Figure out inputs/outputs to the workflow; add IDs where necessary
         sources, targets = self.workflow_io(wf)
         for i, artefact in enumerate(sources, start=1):
-            a = schematic[artefact] = BNode(shorten(artefact))
+            a = schematic[artefact] = named_bnode(artefact)
             g.add((wf, TOOLS.input, a))
             g.add((a, TOOLS.id, Literal(i)))
+            g.add((a, RDF.label, Literal(shorten(artefact))))
         for artefact in targets:
-            a = schematic[artefact] = BNode(shorten(artefact))
+            a = schematic[artefact] = named_bnode(artefact)
             g.add((wf, TOOLS.output, a))
 
         # Figure out intermediate actions
@@ -403,7 +408,7 @@ class ConcreteWorkflow(Graph):
                 schematic[action] = BNode()
             for artefact in chain(self.inputs(action), self.outputs(action)):
                 if artefact not in schematic:
-                    schematic[artefact] = BNode(shorten(artefact))
+                    schematic[artefact] = named_bnode(artefact)
 
             impl = self.implementation(action)
             g.add((wf, TOOLS.action, schematic[action]))
