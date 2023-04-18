@@ -263,10 +263,12 @@ class ToolRepository(object):
         for sig in self.signatures.values():
             assert isinstance(sig.uri, URIRef)
 
+            g.add((sig.uri, RDF.type, TOOLS.Signature))
             g.add((sig.uri, CCT.expression, Literal(sig.transformation)))
 
             for impl in sig.implementations:
-                g.add((sig.uri, TOOLS.implementation, impl))
+                # g.add((sig.uri, TOOLS.implementation, impl))
+                g.add((impl, TOOLS.implements, sig.uri))
 
             for predicate, artefacts in (
                     (TOOLS.input, sig.inputs),
