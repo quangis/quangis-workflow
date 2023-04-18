@@ -39,8 +39,7 @@ from typing import Iterator
 from cct import cct  # type: ignore
 from transforge.namespace import shorten
 from quangis_workflows.namespace import (
-    WF, RDF, CCD, CCT, CCT_, TOOLS, TOOL, DATA, OWL, REPO_SUPERTOOL, REPO_SIG, 
-    ARC, n3)
+    WF, RDF, CCD, CCT, CCT_, TOOLS, TOOL, DATA, OWL, SUPERTOOL, SIG, ARC, n3)
 from quangis_workflows.types import Polytype, Dimension
 
 root_dir = Path(__file__).parent.parent
@@ -173,13 +172,13 @@ class ToolRepository(object):
     def __contains__(self, sig: URIRef) -> bool:
         return sig in self.signatures
 
-    def generate_name(self, base: URIRef) -> URIRef:
+    def generate_name(self, base: str) -> URIRef:
         """
         Generate a name for an abstract tool based on an existing concrete 
         tool.
         """
         for i in chain("", count(start=1)):
-            uri = REPO_SIG[f"{shorten(base)}{i}"]
+            uri = SIG[f"{base}{i}"]
             if uri not in self:
                 return uri
         raise RuntimeError("Unreachable")
@@ -192,11 +191,18 @@ class ToolRepository(object):
         tool specifications if necessary.
         """
         impl_name, impl = wf.implementation(action)
+        impl_orig = TOOLS[impl_name]
+
+        if not wf.basic(impl_orig):
+            print(f"""Skipping an application of {n3(impl)} because it 
+            contains subworkflows.""")
+            return None
 
         # Is this implemented by ensemble of tools or a single concrete tool?
-        if (impl, RDF.type, WF.Workflow) in wf:
+        if (impl_orig, RDF.type, WF.Workflow) in wf:
             if impl not in self.workflows:
-                self.workflows[impl] = wf.extract_workflow_schema(impl)
+                self.workflows[impl] = wf.extract_workflow_schema(
+                    impl_orig, impl)
         else:
             self.tools.add(impl)
 
@@ -204,6 +210,8 @@ class ToolRepository(object):
             candidate = Signature.propose(wf, action)
             candidate.implementations.add(impl)
         except EmptyTransformationError:
+            print(f"""Skipping an application of {n3(impl)} because it has no 
+            transformation expression.""")
             return None
 
         # TODO: Finding the signature should be done differently for a workflow 
@@ -256,15 +264,14 @@ class ToolRepository(object):
 
     def collect(self, wf: ConcreteWorkflow):
         for action, _ in wf.subject_objects(WF.applicationOf):
-            if action != wf.root:
-                self.analyze_action(wf, action)
+            self.analyze_action(wf, action)
 
     def graph(self) -> Graph:
         g = Graph()
         g.bind("", TOOL)
         g.bind("tools", TOOLS)
-        g.bind("sig", REPO_SIG)
-        g.bind("supertool", REPO_SUPERTOOL)
+        g.bind("sig", SIG)
+        g.bind("supertool", SUPERTOOL)
         g.bind("ccd", CCD)
         g.bind("cct_", CCT_)
         g.bind("cct", CCT)
@@ -278,7 +285,6 @@ class ToolRepository(object):
 
             for impl in sig.implementations:
                 g.add((sig.uri, TOOL.implementation, impl))
-                g.add((impl, TOOL.implements, sig.uri))
 
             for predicate, artefacts in (
                     (TOOL.input, sig.inputs),
@@ -291,9 +297,6 @@ class ToolRepository(object):
                         g.add((artefact, RDF.type, uri))
 
             g.add((sig.uri, CCT.expression, Literal(sig.transformation)))
-
-        for tool in self.tools:
-            g.add((tool, RDF.type, TOOL.Tool))
 
         for tool, wf in self.workflows.items():
             g += wf
@@ -312,6 +315,17 @@ class ConcreteWorkflow(Graph):
 
     def type(self, artefact: Node) -> Polytype:
         return Polytype.assemble(dimensions, self.objects(artefact, RDF.type))
+
+    def basic(self, impl: Node) -> bool:
+        """Test if an implementation is basic, that is, it is either a concrete 
+        tool or a workflow that does not have subworkflows."""
+
+        if (impl, RDF.type, WF.Workflow) in self:
+            return not any((subimpl, RDF.type, WF.Workflow) in self
+                for action in self.objects(impl, WF.edge)
+                for subimpl in self.objects(action, WF.applicationOf))
+        else:
+            return True
 
     @property
     def root(self) -> Node:
@@ -350,7 +364,7 @@ class ConcreteWorkflow(Graph):
         name = shorten(impl)
 
         if (impl, RDF.type, WF.Workflow) in self:
-            return name, REPO_SUPERTOOL[name]
+            return name, SUPERTOOL[name]
         else:
             return name, tool_to_url(impl)
 
@@ -397,7 +411,7 @@ class ConcreteWorkflow(Graph):
         g.parse(path, format=format or guess_format(str(path)))
         return g
 
-    def extract_workflow_schema(self, wf: Node) -> Graph:
+    def extract_workflow_schema(self, wf: Node, wf_schema: URIRef) -> Graph:
         """
         Extract a schematic workflow (in the TOOL namespace) from a concrete 
         one (a workflow instance in the WF namespace).
@@ -413,6 +427,7 @@ class ConcreteWorkflow(Graph):
 
         # Concrete artefacts and actions to schematic ones
         schematic: dict[Node, Node] = dict()
+        schematic[wf] = wf_schema
 
         g.add((wf, RDF.type, TOOL.Workflow))
 
@@ -421,14 +436,14 @@ class ConcreteWorkflow(Graph):
         for i, artefact in enumerate(sources, start=1):
             a = BNode()
             a_real = schematic[artefact] = named_bnode(artefact)
-            g.add((wf, TOOL.input, a))
+            g.add((schematic[wf], TOOL.input, a))
             g.add((a, TOOL.id, Literal(str(i))))
             # g.add((a, RDF.label, Literal(shorten(artefact))))
             g.add((a, OWL.sameAs, a_real))
         for i, artefact in enumerate(targets, start=1):
             a = BNode()
             a_real = schematic[artefact] = named_bnode(artefact)
-            g.add((wf, TOOL.output, a))
+            g.add((schematic[wf], TOOL.output, a))
             g.add((a, TOOL.id, Literal(str(i))))
             g.add((a, OWL.sameAs, a_real))
 
@@ -440,10 +455,14 @@ class ConcreteWorkflow(Graph):
                 if artefact not in schematic:
                     schematic[artefact] = named_bnode(artefact)
 
-            name, impl = self.implementation(action)
-            assert (impl, RDF.type, WF.Workflow) not in self, \
-                "must be a concrete tool"
-            g.add((wf, TOOL.action, schematic[action]))
+            impl_name, impl = self.implementation(action)
+            impl_orig = TOOLS[impl_name]
+            assert impl_orig == self.value(action, WF.applicationOf, any=False)
+            assert (impl_orig, RDF.type, WF.Workflow) not in self, \
+                f"""actions of {n3(schematic[wf])} must apply only concrete 
+                tools, but {n3(impl)} is a supertool"""
+
+            g.add((schematic[wf], TOOL.action, schematic[action]))
             g.add((schematic[action], TOOL.apply, impl))
             for artefact in self.inputs(action):
                 g.add((schematic[action], TOOL.input, schematic[artefact]))

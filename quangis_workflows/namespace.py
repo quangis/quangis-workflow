@@ -23,15 +23,15 @@ WF = Namespace("http://geographicknowledge.de/vocab/Workflow.rdf#")
 GIS = Namespace("http://geographicknowledge.de/vocab/GISConcepts.rdf#")
 # TOOLS = Namespace("http://geographicknowledge.de/vocab/GISTools.rdf#")
 TOOLS = Namespace("https://github.com/quangis/cct/blob/master/tools/tools.ttl#")
-TOOL = Namespace("https://quangis.github.io/vocab/tool#")
 REPO = Namespace("https://github.com/quangis/quangis-workflow-generator#")
 EX = Namespace('https://example.com/#')
 DATA = Namespace("https://github.com/quangis/cct/blob/master/tools/data.ttl#")
 CCT_ = Namespace("https://github.com/quangis/cct#")
 CCT = cct.namespace
 
-REPO_SIG = Namespace("https://quangis.github.io/repo/signature#")
-REPO_SUPERTOOL = Namespace("https://quangis.github.io/repo/supertool#")
+TOOL = Namespace("https://quangis.github.io/tool/vocab#")
+SIG = Namespace("https://quangis.github.io/tool/signature#")
+SUPERTOOL = Namespace("https://quangis.github.io/tool/super#")
 
 
 ARC = Namespace("https://pro.arcgis.com/en/pro-app/latest/tool-reference/")
