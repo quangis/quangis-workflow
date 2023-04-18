@@ -677,7 +677,7 @@ groupby = Operator(
 
 cct = Language(
     scope=locals(),
-    namespace=("cct", "https://github.com/quangis/cct#"),
+    namespace=("cct", "https://quangis.github.io/cct#"),
     canon={
         Top,
         Val,
