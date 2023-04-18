@@ -24,9 +24,9 @@ class CLI(cli.Application):
 
         repo = ToolRepository()
         for file in FILE:
-            print(file)
             cwf = ConcreteWorkflow.from_file(file)
             repo.collect(cwf)
+        print(repo.graph().serialize(format="turtle"))
 
 
 def main():

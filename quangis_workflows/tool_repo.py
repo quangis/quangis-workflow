@@ -32,13 +32,12 @@ from rdflib.term import Node, BNode, URIRef, Literal
 from rdflib.util import guess_format
 from pathlib import Path
 from itertools import count, chain
-from random import choices
-import string
 from typing import Iterator
 
 from cct import cct  # type: ignore
 from transforge.namespace import shorten
-from quangis_workflows.namespace import WF, RDF, CCD, CCT, TOOLS, DATA, OWL, n3
+from quangis_workflows.namespace import (
+    WF, RDF, CCD, CCT, CCT_, TOOLS, TOOL, TOOLREPO, DATA, OWL, n3)
 from quangis_workflows.types import Polytype, Dimension
 
 root_dir = Path(__file__).parent.parent
@@ -172,7 +171,7 @@ class ToolRepository(object):
         tool.
         """
         for i in chain("", count(start=1)):
-            uri = TOOLS[f"{shorten(base)}{i}"]
+            uri = TOOLREPO[f"{shorten(base)}{i}"]
             if uri not in self:
                 return uri
         raise RuntimeError("Unreachable")
@@ -251,37 +250,40 @@ class ToolRepository(object):
         for action, impl in wf.subject_objects(WF.applicationOf):
             if action != wf.root:
                 self.analyze_action(wf, action)
-        print(self.graph().serialize(format="turtle"))
 
     def graph(self) -> Graph:
         g = Graph()
-        g.bind("", TOOLS)
+        g.bind("", TOOL)
+        g.bind("tools", TOOLS)
+        g.bind("repo", TOOLREPO)
         g.bind("ccd", CCD)
+        g.bind("cct_", CCT_)
         g.bind("cct", CCT)
         g.bind("data", DATA)
 
         for sig in self.signatures.values():
             assert isinstance(sig.uri, URIRef)
 
-            g.add((sig.uri, RDF.type, TOOLS.Signature))
-            g.add((sig.uri, CCT.expression, Literal(sig.transformation)))
+            g.add((sig.uri, RDF.type, TOOL.Signature))
 
             for impl in sig.implementations:
-                # g.add((sig.uri, TOOLS.implementation, impl))
-                g.add((impl, TOOLS.implements, sig.uri))
+                g.add((sig.uri, TOOL.implementation, impl))
+                g.add((impl, TOOL.implements, sig.uri))
 
             for predicate, artefacts in (
-                    (TOOLS.input, sig.inputs),
-                    (TOOLS.output, sig.outputs)):
+                    (TOOL.input, sig.inputs),
+                    (TOOL.output, sig.outputs)):
                 for i, type in artefacts.items():
                     artefact = BNode()
                     g.add((sig.uri, predicate, artefact))
-                    g.add((artefact, TOOLS.id, Literal(i)))
+                    g.add((artefact, TOOL.id, Literal(i)))
                     for uri in type.uris():
                         g.add((artefact, RDF.type, uri))
 
+            g.add((sig.uri, CCT.expression, Literal(sig.transformation)))
+
         for tool in self.tools:
-            g.add((tool, RDF.type, TOOLS.Tool))
+            g.add((tool, RDF.type, TOOL.Tool))
 
         for tool, wf in self.workflows.items():
             g += wf
@@ -325,7 +327,12 @@ class ConcreteWorkflow(Graph):
         raise RuntimeError("Workflow graph has no identifiable root.")
 
     def transformation(self, action: Node) -> str | None:
-        return self.value(action, CCT.expression, any=False)
+        a = self.value(action, CCT_.expression, any=False)
+        if isinstance(a, Literal):
+            return str(a)
+        elif not a:
+            return None
+        raise RuntimeError("must be literal")
 
     def implementation(self, action: Node) -> URIRef:
         impl = self.value(action, WF.applicationOf, any=False)
@@ -377,7 +384,7 @@ class ConcreteWorkflow(Graph):
 
     def extract_workflow_schema(self, wf: Node) -> Graph:
         """
-        Extract a schematic workflow (in the TOOLS namespace) from a concrete 
+        Extract a schematic workflow (in the TOOL namespace) from a concrete 
         one (a workflow instance in the WF namespace).
         """
 
@@ -392,22 +399,22 @@ class ConcreteWorkflow(Graph):
         # Concrete artefacts and actions to schematic ones
         schematic: dict[Node, Node] = dict()
 
-        g.add((wf, RDF.type, TOOLS.Workflow))
+        g.add((wf, RDF.type, TOOL.Workflow))
 
         # Figure out inputs/outputs to the workflow; add IDs where necessary
         sources, targets = self.workflow_io(wf)
         for i, artefact in enumerate(sources, start=1):
             a = BNode()
             a_real = schematic[artefact] = named_bnode(artefact)
-            g.add((wf, TOOLS.input, a))
-            g.add((a, TOOLS.id, Literal(str(i))))
+            g.add((wf, TOOL.input, a))
+            g.add((a, TOOL.id, Literal(str(i))))
             # g.add((a, RDF.label, Literal(shorten(artefact))))
             g.add((a, OWL.sameAs, a_real))
         for i, artefact in enumerate(targets, start=1):
             a = BNode()
             a_real = schematic[artefact] = named_bnode(artefact)
-            g.add((wf, TOOLS.output, a))
-            g.add((a, TOOLS.id, Literal(str(i))))
+            g.add((wf, TOOL.output, a))
+            g.add((a, TOOL.id, Literal(str(i))))
             g.add((a, OWL.sameAs, a_real))
 
         # Figure out intermediate actions
@@ -419,11 +426,11 @@ class ConcreteWorkflow(Graph):
                     schematic[artefact] = named_bnode(artefact)
 
             impl = self.implementation(action)
-            g.add((wf, TOOLS.action, schematic[action]))
-            g.add((schematic[action], TOOLS.apply, impl))
+            g.add((wf, TOOL.action, schematic[action]))
+            g.add((schematic[action], TOOL.apply, impl))
             for artefact in self.inputs(action):
-                g.add((schematic[action], TOOLS.input, schematic[artefact]))
+                g.add((schematic[action], TOOL.input, schematic[artefact]))
             for artefact in self.outputs(action):
-                g.add((schematic[action], TOOLS.output, schematic[artefact]))
+                g.add((schematic[action], TOOL.output, schematic[artefact]))
 
         return g
