@@ -27,6 +27,8 @@ CCT types.
 """
 
 from __future__ import annotations
+
+import re
 from rdflib import Graph
 from rdflib.term import Node, BNode, URIRef, Literal
 from rdflib.util import guess_format
@@ -37,7 +39,8 @@ from typing import Iterator
 from cct import cct  # type: ignore
 from transforge.namespace import shorten
 from quangis_workflows.namespace import (
-    WF, RDF, CCD, CCT, CCT_, TOOLS, TOOL, TOOLREPO, DATA, OWL, n3)
+    WF, RDF, CCD, CCT, CCT_, TOOLS, TOOL, DATA, OWL, REPO_SUPERTOOL, REPO_SIG, 
+    ARC, n3)
 from quangis_workflows.types import Polytype, Dimension
 
 root_dir = Path(__file__).parent.parent
@@ -48,6 +51,11 @@ dimensions = [
     Dimension(root, type_graph)
     for root in [CCD.CoreConceptQ, CCD.LayerA, CCD.NominalA]
 ]
+
+
+def tool_to_url(node: Node, pattern=re.compile(r'(?<!^)(?=[A-Z])')) -> URIRef:
+    name = shorten(node)
+    return ARC[pattern.sub('-', name).lower() + ".htm"]
 
 
 class EmptyTransformationError(Exception):
@@ -171,7 +179,7 @@ class ToolRepository(object):
         tool.
         """
         for i in chain("", count(start=1)):
-            uri = TOOLREPO[f"{shorten(base)}{i}"]
+            uri = REPO_SIG[f"{shorten(base)}{i}"]
             if uri not in self:
                 return uri
         raise RuntimeError("Unreachable")
@@ -183,7 +191,14 @@ class ToolRepository(object):
         out what spec it belongs to. As a side-effect, update the repository of 
         tool specifications if necessary.
         """
-        impl = wf.implementation(action)
+        impl_name, impl = wf.implementation(action)
+
+        # Is this implemented by ensemble of tools or a single concrete tool?
+        if (impl, RDF.type, WF.Workflow) in wf:
+            if impl not in self.workflows:
+                self.workflows[impl] = wf.extract_workflow_schema(impl)
+        else:
+            self.tools.add(impl)
 
         try:
             candidate = Signature.propose(wf, action)
@@ -194,13 +209,6 @@ class ToolRepository(object):
         # TODO: Finding the signature should be done differently for a workflow 
         # than for a concrete tool, because we can work off different 
         # assumptions. Do so later.
-
-        # Is this implemented by ensemble of tools or a single concrete tool?
-        if (impl, RDF.type, WF.Workflow) in wf:
-            if impl not in self.workflows:
-                self.workflows[impl] = wf.extract_workflow_schema(impl)
-        else:
-            self.tools.add(impl)
 
         # Find out how other signatures relate to the candidate sig
         supersig: Signature | None = None
@@ -242,12 +250,12 @@ class ToolRepository(object):
 
         # If neither of the above is true, the action merits an all-new spec
         else:
-            candidate.uri = self.generate_name(impl)
+            candidate.uri = self.generate_name(impl_name)
             self.signatures[candidate.uri] = candidate
             return candidate.uri
 
     def collect(self, wf: ConcreteWorkflow):
-        for action, impl in wf.subject_objects(WF.applicationOf):
+        for action, _ in wf.subject_objects(WF.applicationOf):
             if action != wf.root:
                 self.analyze_action(wf, action)
 
@@ -255,11 +263,13 @@ class ToolRepository(object):
         g = Graph()
         g.bind("", TOOL)
         g.bind("tools", TOOLS)
-        g.bind("repo", TOOLREPO)
+        g.bind("sig", REPO_SIG)
+        g.bind("supertool", REPO_SUPERTOOL)
         g.bind("ccd", CCD)
         g.bind("cct_", CCT_)
         g.bind("cct", CCT)
         g.bind("data", DATA)
+        g.bind("arc", ARC)
 
         for sig in self.signatures.values():
             assert isinstance(sig.uri, URIRef)
@@ -334,10 +344,15 @@ class ConcreteWorkflow(Graph):
             return None
         raise RuntimeError("must be literal")
 
-    def implementation(self, action: Node) -> URIRef:
+    def implementation(self, action: Node) -> tuple[str, URIRef]:
         impl = self.value(action, WF.applicationOf, any=False)
         assert isinstance(impl, URIRef)
-        return impl
+        name = shorten(impl)
+
+        if (impl, RDF.type, WF.Workflow) in self:
+            return name, REPO_SUPERTOOL[name]
+        else:
+            return name, tool_to_url(impl)
 
     def inputs(self, action: Node) -> Iterator[Node]:
         for i in count(start=1):
@@ -425,7 +440,9 @@ class ConcreteWorkflow(Graph):
                 if artefact not in schematic:
                     schematic[artefact] = named_bnode(artefact)
 
-            impl = self.implementation(action)
+            name, impl = self.implementation(action)
+            assert (impl, RDF.type, WF.Workflow) not in self, \
+                "must be a concrete tool"
             g.add((wf, TOOL.action, schematic[action]))
             g.add((schematic[action], TOOL.apply, impl))
             for artefact in self.inputs(action):
