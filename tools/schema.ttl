@@ -1,33 +1,18 @@
-:Purpose a rdfs:Class;
-    rdfs:comment """A purpose contains information about the purpose of a tool 
-    in terms of a `transforge` term.""";
-    rdfs:subClassOf [
-        a owl:Restriction; owl:onProperty tf:term;
-        owl:minQualifiedCardinality 1; owl:maxQualifiedCardinality 1
-    ].
+@prefix : <https://quangis.github.io/tools#> .
+@prefix ccd: <https://quangis.github.io/ccd#> .
+@prefix cct: <https://quangis.github.io/cct#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>.
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
 
 :Implementation a rdfs:Class;
-    rdfs:comment "A reference to a concrete tool.".
+    rdfs:comment "A concrete implementation of a tool.".
 
-:Specification a rdfs:Class;
-    rdfs:comment """A specification is an abstract tool. It may be implemented 
-    by multiple concrete tools, because, for example, a tool could be 
-    implemented in both QGIS and ArcGIS. Conversely, multiple specifications 
-    may be implemented by the same concrete tool, when it can be used in 
-    multiple contexts, in the same way that a hammer can be used both to drive 
-    a nail into a plank of wood or to break a piggy bank.""";
-    rdfs:subClassOf [
-        a owl:Restriction; owl:onProperty :input;
-        owl:minQualifiedCardinality 1; owl:maxQualifiedCardinality 1
-    ], [
-        a owl:Restriction; owl:onProperty :implementedBy;
-        owl:minQualifiedCardinality 1
-    ], [
-        a owl:Restriction; owl:onProperty :output;
-        owl:minQualifiedCardinality 1; owl:maxQualifiedCardinality 1
-    ].
+:Tool a rdfs:Class; rdfs:subClassOf :Implementation;
+    rdfs:comment "A reference to a concrete tool, as implemented in programs 
+    like ArcGIS or QGIS.".
 
-:Workflow a rdfs:Class;
+:Workflow a rdfs:Class; rdfs:subClassOf :Implementation;
     rdfs:comment """A workflow, or more properly, a workflow schema: an 
     ensemble of concrete tools that *collectively* acts as an implementation 
     for something. This is sometimes also referred to as a supertool.""";
@@ -38,76 +23,67 @@
         a owl:Restriction; owl:onProperty :output;
         owl:minQualifiedCardinality 1; owl:maxQualifiedCardinality 1
     ], [
-        a owl:Restriction; owl:onProperty :step;
+        a owl:Restriction; owl:onProperty :action;
         owl:minQualifiedCardinality 1
     ].
 
-:Data a rdfs:Class;
-    rdfs:comment """A single set of data: either source data or data that is 
-    the output of an application of a tool.""".
+:Signature a rdfs:Class;
+    rdfs:comment """A signature is an abstract specification of a tool or 
+    workflow. It may be implemented by multiple tools or workflows, because, 
+    for example, a tool could be implemented in both QGIS and ArcGIS. 
+    Conversely, multiple signatures may be implemented by the same tool, if it 
+    can be used in multiple contexts, in the same way that a hammer can be used 
+    both to drive a nail into a plank of wood or to break a piggy bank.
 
-:DataSeq a rdfs:Class;
-    rdfs:comment """A sequence of data, used to enumerate input and output 
-    nodes for tool specifications or workflows.""";
-    rdfs:subClassOf rdfs:Seq;
-    rdfs:subClassOf [ a owl:Restriction;
-        owl:onProperty rdf:li; owl:allValuesFrom :Data
+    A signature contains information on the format of the input and output, in 
+    terms of core concept datatypes, and information on the purpose, in terms 
+    of a `transforge` term.
+
+    If a signature is given an rdfs:comment, this must be in the abstract, ie. 
+    without reference to the specific data that may have been used in an 
+    action.""";
+    rdfs:subClassOf [
+        a owl:Restriction; owl:onProperty :input;
+        owl:minQualifiedCardinality 1; owl:maxQualifiedCardinality 1
+    ], [
+        a owl:Restriction; owl:onProperty :implementation;
+        owl:minQualifiedCardinality 1
+    ], [
+        a owl:Restriction; owl:onProperty :output;
+        owl:minQualifiedCardinality 1; owl:maxQualifiedCardinality 1
+    ], [
+        a owl:Restriction; owl:onProperty cct:expression;
+        owl:minQualifiedCardinality 1; owl:maxQualifiedCardinality 1
     ].
+
+:Action a rdfs:Class;
+    rdfs:comment """An action is an *application* of an implementation, either 
+    schematic (as in a workflow schema) or concrete (as in a workflow).""".
+
+:Artefact a rdfs:Class;
+    rdfs:comment """A single set of data: either source data or data that is 
+    the output of an action. Can be either schematic or concrete.""".
 
 :input a rdfs:Property;
-    rdfs:domain :Specification, :Workflow;
-    rdfs:range :DataSeq.
+    rdfs:domain :Signature, :Action, :Implementation;
+    rdfs:range :Artefact.
+
 :output a rdfs:Property;
-    rdfs:domain :Specification, :Workflow;
-    rdfs:range :DataSeq.
-:implementedBy a rdfs:Property;
-    rdfs:domain :Specification;
-    rdfs:range :Implementation, :Workflow.
-:purpose a rdfs:Property;
-    rdfs:domain :Specification;
-    rdfs:range :Purpose;.
-:step a rdfs:Property;
+    rdfs:domain :Signature, :Action, :Implementation;
+    rdfs:range :Artefact.
+
+:id a rdfs:Property;
+    rdfs:domain :Artefact;
+    rdfs:range rdf:Literal.
+
+:apply a rdfs:Property;
+    rdfs:domain :Action;
+    rdfs:range :Tool.
+
+:implements a rdfs:Property;
+    rdfs:domain :Implementation;
+    rdfs:range :Signature.
+
+:action a rdfs:Property;
     rdfs:domain :Workflow;
-    rdfs:range :Specification.
-
-# ------------------------------------------------------------------
-
-:tool1 a :Specification;
-    :implementedBy _:schema;
-    :input ([ a ccd:A ] [ a ccd:B ]);
-    :output ([ a ccd:C ]);
-    :purpose [
-        rdfs:comment "Fuffles inputs 1 and 2.";
-        cct:term "fuffle 1 2" ].
-
-:tool2 a :Specification;
-    :implementedBy  _:schema;
-    :input ([ a ccd:D ] [ a ccd:E ]);
-    :output ([ a ccd:F ]);
-    :purpose [
-        rdfs:comment "Stookles inputs 1 and 2.";
-        cct:term "stookle 1 2" ].
-
-_:schema a :Workflow;
-    :input (_:1 _:2);
-    :step [
-        :input (_:1);
-        :implementedBy qgis:toolA;
-        :output (_:3)
-    ], [
-        :input (_:1 _:3);
-        :implementedBy qgis:toolB;
-        :output (_:4)
-    ];
-    :output (_:4).
-
-:tool a :Specification;
-    :implementedBy qgis:toolA, arcgis:toolA;
-    :input ([ a ccd:Raster ]);
-    :output ([ a ccd:Raster ]);
-    :purpose [
-        rdfs:comment "Does something to the first input.";
-        cct:term "something 1" ]
-    ].
-
-
+    rdfs:range :Action.
