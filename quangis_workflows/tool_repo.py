@@ -429,7 +429,7 @@ class ConcreteWorkflow(Graph):
         schematic: dict[Node, Node] = dict()
         schematic[wf] = wf_schema
 
-        g.add((wf, RDF.type, TOOL.Workflow))
+        g.add((schematic[wf], RDF.type, TOOL.Supertool))
 
         # Figure out inputs/outputs to the workflow; add IDs where necessary
         sources, targets = self.workflow_io(wf)
