@@ -45,8 +45,12 @@ def namespace_manager(
 
 
 def n3(
-        node: Node,
+        node: Node | list[Node] | set[Node],
         nm: NamespaceManager = namespace_manager()
 ) -> str:
+    if isinstance(node, list):
+        return f"[{', '.join(n3(x, nm) for x in node)}]"
+    elif isinstance(node, set):
+        return f"{{{', '.join(n3(x, nm) for x in node)}}}"
     assert isinstance(node, URIRef)
     return node.n3(nm)

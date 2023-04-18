@@ -38,7 +38,7 @@ from typing import Iterator
 
 from cct import cct  # type: ignore
 from transforge.namespace import shorten
-from quangis_workflows.namespace import WF, RDF, CCD, CCT, TOOLS, DATA, OWL
+from quangis_workflows.namespace import WF, RDF, CCD, CCT, TOOLS, DATA, OWL, n3
 from quangis_workflows.types import Polytype, Dimension
 
 root_dir = Path(__file__).parent.parent
@@ -123,7 +123,7 @@ class Signature(object):
             all(candidate.inputs[k1].subtype(self.inputs[k2])
                 for k1, k2 in zip(self.inputs_keys, self.inputs_keys))
             and all(self.outputs[k1].subtype(candidate.outputs[k2])
-                for k1, k2 in zip(self.inputs_keys, self.inputs_keys))
+                for k1, k2 in zip(self.outputs_keys, self.outputs_keys))
         )
 
     def update(self, other: Signature) -> None:
@@ -363,8 +363,9 @@ class ConcreteWorkflow(Graph):
 
         # assert len(goutputs) == 1, f"""There must be exactly 1 output, but 
         # {n3(wf)} has {len(goutputs)}."""
-        assert set(self.objects(wf, WF.source)) == ginputs, """The sources of 
-        the workflow don't match with the inputs"""
+        gsources = set(self.objects(wf, WF.source))
+        assert gsources == ginputs, f"""The sources of the workflow {n3(wf)}, 
+        namely {n3(gsources)}, don't match with the inputs {n3(ginputs)}."""
 
         return ginputs, goutputs
 
