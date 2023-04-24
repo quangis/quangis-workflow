@@ -293,7 +293,7 @@ class ToolRepository(object):
             self.analyze_action(wf, action)
 
     def graph(self) -> Graph:
-        g = Graph()
+        g = GraphList()
         g.bind("", TOOL)
         g.bind("tools", TOOLS)
         g.bind("sig", SIG)
@@ -312,15 +312,21 @@ class ToolRepository(object):
             for impl in sig.implementations:
                 g.add((sig.uri, TOOL.implementation, impl))
 
-            for predicate, artefacts in (
-                    (TOOL.input, sig.inputs),
-                    (TOOL.output, sig.outputs)):
-                for i, type in artefacts.items():
-                    artefact = BNode()
-                    g.add((sig.uri, predicate, artefact))
-                    g.add((artefact, TOOL.id, Literal(i)))
-                    for uri in type.uris():
-                        g.add((artefact, RDF.type, uri))
+            inputs = []
+            for i in sig.input_keys:
+                artefact = BNode()
+                for uri in sig.inputs[i].uris():
+                    g.add((artefact, RDF.type, uri))
+                inputs.append(artefact)
+            g.add((sig.uri, TOOL.inputs, g.add_list(inputs)))
+
+            outputs = []
+            for i in sig.output_keys:
+                artefact = BNode()
+                for uri in sig.outputs[i].uris():
+                    g.add((artefact, RDF.type, uri))
+                outputs.append(artefact)
+            g.add((sig.uri, TOOL.outputs, g.add_list(outputs)))
 
             g.add((sig.uri, CCT.expression, Literal(sig.transformation)))
 
