@@ -44,6 +44,8 @@ from quangis_workflows.namespace import (
 from quangis_workflows.types import Polytype, Dimension
 from quangis_workflows.tool2url import tool2url
 
+from transforge.list import GraphList
+
 root_dir = Path(__file__).parent.parent
 type_graph = Graph()
 type_graph.parse(root_dir / "CoreConceptData.rdf", format="xml")
@@ -441,11 +443,11 @@ class ConcreteWorkflow(Graph):
                 yield action
 
     def abstraction(self, wf: Node, repo: ToolRepository, root: Node = None,
-                base: tuple[Graph, dict[Node, Node]] | None = None) -> Graph:
+            base: tuple[GraphList, dict[Node, Node]] | None = None) -> Graph:
         """Convert a (sub-)workflow that uses concrete tools to a workflow that 
         uses only signatures."""
 
-        g, map = base or (Graph(), defaultdict(BNode))
+        g, map = base or (GraphList(), defaultdict(BNode))
         root = root or wf
 
         assert (wf, RDF.type, WF.Workflow) in self
@@ -454,7 +456,7 @@ class ConcreteWorkflow(Graph):
         if wf == root:
             inputs, outputs = self.workflow_io(wf)
             for predicate, artefacts in (
-                    (TOOL.input, inputs), (TOOL.output, outputs)):
+                    (TOOL.source, inputs), (TOOL.target, outputs)):
                 for artefact in artefacts:
                     g.add((wf, predicate, artefact))
 
@@ -465,13 +467,10 @@ class ConcreteWorkflow(Graph):
                 g.add((root, TOOL.action, map[action]))
                 g.add((map[action], TOOL.apply, sig.uri))
 
-                for id, artefact in zip(sig.input_keys, self.inputs(action)):
-                    g.add((map[action], TOOL.input, artefact))
-                    g.add((artefact, TOOL.id, Literal(id)))
-
-                for id, artefact in zip(sig.output_keys, self.outputs(action)):
-                    g.add((map[action], TOOL.output, artefact))
-                    g.add((artefact, TOOL.id, Literal(id)))
+                g.add((map[action], TOOL.input,
+                    g.add_list(list(self.inputs(action)))))
+                g.add((map[action], TOOL.output,
+                    g.add_list(list(self.outputs(action)))))
             else:
                 assert not self.basic(action)
                 subwf = self.value(wf, WF.applicationOf, any=False)
@@ -485,7 +484,7 @@ class ConcreteWorkflow(Graph):
         one (a workflow instance in the WF namespace).
         """
 
-        g = Graph()
+        g = GraphList()
 
         assert (wf, RDF.type, WF.Workflow) in self
         assert wf is not self.root
@@ -499,21 +498,14 @@ class ConcreteWorkflow(Graph):
 
         g.add((schematic[wf], RDF.type, TOOL.Supertool))
 
-        # Figure out inputs/outputs to the workflow; add IDs where necessary
+        # Figure out inputs/outputs to the workflow
         sources, targets = self.workflow_io(wf)
         for i, artefact in enumerate(sources, start=1):
-            a = BNode()
-            a_real = schematic[artefact] = named_bnode(artefact)
-            g.add((schematic[wf], TOOL.input, a))
-            g.add((a, TOOL.id, Literal(str(i))))
-            # g.add((a, RDF.label, Literal(shorten(artefact))))
-            g.add((a, OWL.sameAs, a_real))
+            a = schematic[artefact] = named_bnode(artefact)
+            g.add((schematic[wf], TOOL.source, a))
         for i, artefact in enumerate(targets, start=1):
-            a = BNode()
-            a_real = schematic[artefact] = named_bnode(artefact)
-            g.add((schematic[wf], TOOL.output, a))
-            g.add((a, TOOL.id, Literal(str(i))))
-            g.add((a, OWL.sameAs, a_real))
+            a = schematic[artefact] = named_bnode(artefact)
+            g.add((schematic[wf], TOOL.target, a))
 
         # Figure out intermediate actions
         for action in self.objects(wf, WF.edge):
@@ -532,9 +524,9 @@ class ConcreteWorkflow(Graph):
 
             g.add((schematic[wf], TOOL.action, schematic[action]))
             g.add((schematic[action], TOOL.apply, impl))
-            for artefact in self.inputs(action):
-                g.add((schematic[action], TOOL.input, schematic[artefact]))
-            for artefact in self.outputs(action):
-                g.add((schematic[action], TOOL.output, schematic[artefact]))
+            g.add((schematic[action], TOOL.inputs, g.add_list(
+                [schematic[artefact] for artefact in self.inputs(action)])))
+            g.add((schematic[action], TOOL.outputs, g.add_list(
+                [schematic[artefact] for artefact in self.outputs(action)])))
 
         return g
