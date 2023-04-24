@@ -227,7 +227,8 @@ class ToolRepository(object):
         # Is this implemented by ensemble of tools or a single concrete tool?
         if (impl_orig, RDF.type, WF.Workflow) in wf:
             if impl not in self.supertools:
-                self.supertools[impl] = wf.extract_supertool(impl_orig, impl)
+                self.supertools[impl] = wf.extract_supertool(impl_orig, impl, 
+                    action)
         else:
             self.tools.add(impl)
 
@@ -478,7 +479,8 @@ class ConcreteWorkflow(Graph):
 
         return g
 
-    def extract_supertool(self, wf: Node, wf_schema: URIRef) -> Graph:
+    def extract_supertool(self, wf: Node, wf_schema: URIRef,
+            action: Node) -> Graph:
         """
         Extract a schematic workflow (in the TOOL namespace) from a concrete 
         one (a workflow instance in the WF namespace).
@@ -493,19 +495,25 @@ class ConcreteWorkflow(Graph):
             return BNode(f"{shorten(wf)}_{shorten(artefact)}")
 
         # Concrete artefacts and actions to schematic ones
-        schematic: dict[Node, Node] = dict()
+        schematic: dict[Node, Node] = defaultdict(BNode)
         schematic[wf] = wf_schema
+        map = schematic
 
         g.add((schematic[wf], RDF.type, TOOL.Supertool))
 
         # Figure out inputs/outputs to the workflow
         sources, targets = self.workflow_io(wf)
-        for i, artefact in enumerate(sources, start=1):
-            a = schematic[artefact] = named_bnode(artefact)
-            g.add((schematic[wf], TOOL.source, a))
-        for i, artefact in enumerate(targets, start=1):
-            a = schematic[artefact] = named_bnode(artefact)
-            g.add((schematic[wf], TOOL.target, a))
+        for artefact in sources:
+            schematic[artefact] = named_bnode(artefact)
+        #     g.add((schematic[wf], TOOL.source, a))
+        for artefact in targets:
+            schematic[artefact] = named_bnode(artefact)
+        #     g.add((schematic[wf], TOOL.target, a))
+
+        g.add((map[wf], TOOL.inputs, g.add_list(
+            [map[x] for x in self.inputs(action)])))
+        g.add((map[wf], TOOL.outputs, g.add_list(
+            [map[x] for x in self.outputs(action)])))
 
         # Figure out intermediate actions
         for action in self.objects(wf, WF.edge):

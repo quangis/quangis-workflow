@@ -2,6 +2,7 @@ from __future__ import annotations
 from plumbum import cli  # type: ignore
 import platform
 from glob import glob
+from pathlib import Path
 
 from quangis_workflows.tool_repo import (
     ConcreteWorkflow, ToolRepository)
@@ -20,6 +21,8 @@ class CLI(cli.Application):
             FILE = tuple(globbed for original in FILE
                 for globbed in glob(original))
 
+        FILE = [Path(f) for f in FILE]
+
         # TODO as long as the tool repository cannot be read, we just construct 
         # it from the ground up. Should definitely be changed
         repo = ToolRepository()
@@ -27,11 +30,15 @@ class CLI(cli.Application):
             cwf = ConcreteWorkflow.from_file(file)
             repo.collect(cwf)
 
+        repo.graph().serialize("repo.ttl", format="turtle")
+        repo.graph().serialize("repo.xml", format="xml")
+
         for file in FILE:
             print(file)
             cwf = ConcreteWorkflow.from_file(file)
             g = cwf.abstraction(cwf.root, repo)
-            print(g.serialize(format="turtle"))
+            g.serialize(f"{file.stem}_abstract.xml", format="xml")
+            g.serialize(f"{file.stem}_abstract.ttl", format="turtle")
 
 
 def main():
