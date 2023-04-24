@@ -215,7 +215,7 @@ class ToolRepository(object):
         impl_name, impl = wf.implementation(action)
         impl_orig = TOOLS[impl_name]
 
-        if not (impl_orig, CCT.expression, None) in wf:
+        if (action, CCT.expression, None) not in wf:
             # TODO don't require CCT expression?
             print(f"Skipping an application of {n3(impl)} because it "
                 f"has no CCT expression.""")
@@ -312,6 +312,8 @@ class ToolRepository(object):
 
             for impl in sig.implementations:
                 g.add((sig.uri, TOOL.implementation, impl))
+                if impl in self.supertools:
+                    g.add((impl, TOOL.signature, sig.uri))
 
             inputs = []
             for i in sig.input_keys:
