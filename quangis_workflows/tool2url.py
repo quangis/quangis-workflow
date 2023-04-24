@@ -1,0 +1,36 @@
+# Generated from 
+# https://github.com/quangis/QuAnGIS_workflow_annotation/blob/b7ce914e7f511309d151d58e292c92aa9e85fb29/data_source/tool_label_name_pairs.csv
+
+tool2url = {
+  "Solve": "https://pro.arcgis.com/en/pro-app/latest/tool-reference/network-analyst/solve.htm",
+  "CalculateField": "https://pro.arcgis.com/en/pro-app/latest/tool-reference/data-management/calculate-field.htm",
+  "MakeRouteAnalysisLayer": "https://pro.arcgis.com/en/pro-app/latest/tool-reference/network-analyst/make-route-analysis-layer.htm",
+  "Dissolve": "https://pro.arcgis.com/en/pro-app/latest/tool-reference/data-management/dissolve.htm",
+  "SpatialJoin": "https://pro.arcgis.com/en/pro-app/latest/tool-reference/analysis/spatial-join.htm",
+  "SelectLayerByAttribute": "https://pro.arcgis.com/en/pro-app/latest/tool-reference/data-management/select-layer-by-attribute.htm",
+  "AddJoin": "https://pro.arcgis.com/en/pro-app/latest/tool-reference/data-management/add-join.htm",
+  "ZonalStatisticsAsTable": "https://pro.arcgis.com/en/pro-app/latest/tool-reference/spatial-analyst/zonal-statistics-as-table.htm",
+  "CalculateGeometryAttributes": "https://pro.arcgis.com/en/pro-app/latest/tool-reference/data-management/calculate-geometry-attributes.htm",
+  "AddLocations": "https://pro.arcgis.com/en/pro-app/latest/tool-reference/network-analyst/add-locations.htm",
+  "GenerateNearTable": "https://pro.arcgis.com/en/pro-app/latest/tool-reference/analysis/generate-near-table.htm",
+  "AddFields": "https://pro.arcgis.com/en/pro-app/latest/tool-reference/data-management/add-fields.htm",
+  "AlterField": "https://pro.arcgis.com/en/pro-app/latest/tool-reference/data-management/alter-field-properties.htm",
+  "CopyFeatures": "https://pro.arcgis.com/en/pro-app/latest/tool-reference/data-management/copy-features.htm",
+  "ExportTable": "https://pro.arcgis.com/en/pro-app/latest/tool-reference/conversion/export-table.htm",
+  "KernelDensity": "https://pro.arcgis.com/en/pro-app/latest/tool-reference/spatial-analyst/kernel-density.htm",
+  "AddField": "https://pro.arcgis.com/en/pro-app/latest/tool-reference/data-management/add-field.htm",
+  "BuildNetwork": "https://pro.arcgis.com/en/pro-app/latest/tool-reference/network-analyst/build-network.htm",
+  "Clip": "https://pro.arcgis.com/en/pro-app/latest/tool-reference/analysis/clip.htm",
+  "SummaryStatistics": "https://pro.arcgis.com/en/pro-app/latest/tool-reference/analysis/summary-statistics.htm",
+  "AddGeometryAttributes": "https://pro.arcgis.com/en/pro-app/latest/tool-reference/data-management/add-geometry-attributes.htm",
+  "Intersect": "https://pro.arcgis.com/en/pro-app/latest/tool-reference/analysis/intersect.htm",
+  "CreateNetworkDataset": "https://pro.arcgis.com/en/pro-app/latest/tool-reference/network-analyst/create-network-dataset.htm",
+  "MakeClosestFacilityAnalysisLayer": "https://pro.arcgis.com/en/pro-app/latest/tool-reference/network-analyst/make-closest-facility-analysis-layer.htm",
+  "SelectLayerByLocation": "https://pro.arcgis.com/en/pro-app/latest/tool-reference/data-management/select-layer-by-location.htm",
+  "JoinField": "https://pro.arcgis.com/en/pro-app/latest/tool-reference/data-management/join-field.htm",
+  "Buffer": "https://pro.arcgis.com/en/pro-app/latest/tool-reference/analysis/buffer.htm",
+  "SummarizeWithin": "https://pro.arcgis.com/en/pro-app/latest/tool-reference/analysis/summarize-within.htm",
+  "FeatureToPoint": "https://pro.arcgis.com/en/pro-app/latest/tool-reference/data-management/feature-to-point.htm",
+  "FeatureClassToFeatureClass": "https://pro.arcgis.com/en/pro-app/latest/tool-reference/conversion/feature-class-to-feature-class.htm",
+  "ExportFeatures": "https://pro.arcgis.com/en/pro-app/latest/tool-reference/conversion/export-features.htm"
+}

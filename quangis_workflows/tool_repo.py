@@ -41,6 +41,7 @@ from transforge.namespace import shorten
 from quangis_workflows.namespace import (
     WF, RDF, CCD, CCT, CCT_, TOOLS, TOOL, DATA, OWL, SUPERTOOL, SIG, ARC, n3)
 from quangis_workflows.types import Polytype, Dimension
+from quangis_workflows.tool2url import tool2url
 
 root_dir = Path(__file__).parent.parent
 type_graph = Graph()
@@ -366,7 +367,7 @@ class ConcreteWorkflow(Graph):
         if (impl, RDF.type, WF.Workflow) in self:
             return name, SUPERTOOL[name]
         else:
-            return name, tool_to_url(impl)
+            return name, URIRef(tool2url[name])
 
     def inputs(self, action: Node) -> Iterator[Node]:
         for i in count(start=1):
