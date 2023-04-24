@@ -466,12 +466,12 @@ class ConcreteWorkflow(Graph):
                     g.bind(prefix, ns)
 
         assert (wf, RDF.type, WF.Workflow) in self
-        g.add((root, RDF.type, TOOL.Workflow))
+        g.add((root, RDF.type, WF.Workflow))
 
         if wf == root:
             inputs, outputs = self.workflow_io(wf)
             for predicate, artefacts in (
-                    (TOOL.source, inputs), (TOOL.target, outputs)):
+                    (WF.source, inputs), (WF.target, outputs)):
                 for artefact in artefacts:
                     g.add((wf, predicate, artefact))
 
@@ -479,13 +479,15 @@ class ConcreteWorkflow(Graph):
             if self.basic(action):
                 # assert (action, CCT.expression, None) in self
                 sig = repo.signature(self, action)
-                g.add((root, TOOL.action, map[action]))
-                g.add((map[action], TOOL.apply, sig.uri))
+                g.add((root, WF.edge, map[action]))
+                g.add((map[action], WF.applicationOf, sig.uri))
 
-                g.add((map[action], TOOL.input,
-                    g.add_list(list(self.inputs(action)))))
-                g.add((map[action], TOOL.output,
-                    g.add_list(list(self.outputs(action)))))
+                for i, artefact in enumerate(self.inputs(action), start=1):
+                    g.add((map[action], WF[f"input{i}"], artefact))
+
+                for pred, artefact in zip([WF.output], self.outputs(action)):
+                    g.add((map[action], pred, artefact))
+
             else:
                 assert not self.basic(action)
                 subwf = self.value(wf, WF.applicationOf, any=False)
