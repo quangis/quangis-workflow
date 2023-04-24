@@ -34,6 +34,7 @@ from rdflib.term import Node, BNode, URIRef, Literal
 from rdflib.util import guess_format
 from pathlib import Path
 from itertools import count, chain
+from collections import defaultdict
 from typing import Iterator
 
 from cct import cct  # type: ignore
@@ -56,6 +57,10 @@ dimensions = [
 def tool_to_url(node: Node, pattern=re.compile(r'(?<!^)(?=[A-Z])')) -> URIRef:
     name = shorten(node)
     return ARC[pattern.sub('-', name).lower() + ".htm"]
+
+
+class NoSignatureError(Exception):
+    pass
 
 
 class EmptyTransformationError(Exception):
@@ -92,16 +97,11 @@ class Signature(object):
         self.description: str | None = None
         self.implementations: set[URIRef] = set()
 
-        self.inputs_keys = set(inputs.keys())
-        self.outputs_keys = set(outputs.keys())
+        self.input_keys: list[str] = sorted(inputs.keys())
+        self.output_keys: list[str] = sorted(outputs.keys())
         self.transformation_p = cct.parse(transformation, defaults=True)
 
-    def match_implementation(self, candidate: Signature) -> bool:
-        """Check that the implementations (tools or workflows) in the candidate 
-        signature are also in the current one."""
-        raise NotImplementedError
-
-    def match_purpose(self, candidate: Signature) -> bool:
+    def matches_purpose(self, candidate: Signature) -> bool:
         """Check that the expression of the candidate matches the expression 
         associated with this one. Note that a non-matching expression doesn't 
         mean that tools are actually semantically different, since there are 
@@ -109,7 +109,7 @@ class Signature(object):
         `f(g(x))`). Therefore, some manual intervention may be necessary."""
         return self.transformation_p.match(candidate.transformation_p)
 
-    def match_datatype(self, candidate: Signature) -> bool:
+    def covers_datatype(self, candidate: Signature) -> bool:
         """If the inputs in the candidate signature are subtypes of the ones in 
         this one (and the outputs are supertypes), then this signature *covers* 
         the other signature. If the reverse is true, then this signature is 
@@ -122,15 +122,15 @@ class Signature(object):
         # should, since even in the one test that I did (wffood), we see that 
         # SelectLayerByLocationPointObjects has two variants with just the 
         # order of the inputs flipped.
-        if not (self.inputs_keys == candidate.inputs_keys
-                and self.outputs_keys == candidate.outputs_keys):
+        if not (self.input_keys == candidate.input_keys
+                and self.output_keys == candidate.output_keys):
             return False
 
         return (
             all(candidate.inputs[k1].subtype(self.inputs[k2])
-                for k1, k2 in zip(self.inputs_keys, self.inputs_keys))
+                for k1, k2 in zip(self.input_keys, self.input_keys))
             and all(self.outputs[k1].subtype(candidate.outputs[k2])
-                for k1, k2 in zip(self.outputs_keys, self.outputs_keys))
+                for k1, k2 in zip(self.output_keys, self.output_keys))
         )
 
     def update(self, other: Signature) -> None:
@@ -170,6 +170,10 @@ class ToolRepository(object):
         # Ensembles of concrete tools (workflow schemas)
         self.workflows: dict[URIRef, Graph] = dict()
 
+    @staticmethod
+    def from_file(self) -> ToolRepository:
+        raise NotImplementedError
+
     def __contains__(self, sig: URIRef) -> bool:
         return sig in self.signatures
 
@@ -183,6 +187,18 @@ class ToolRepository(object):
             if uri not in self:
                 return uri
         raise RuntimeError("Unreachable")
+
+    def signature(self, wf: ConcreteWorkflow, action: Node) -> URIRef:
+        """Find out if any signature in this repository matches the action."""
+        impl_name, impl = wf.implementation(action)
+        proposal = Signature.propose(wf, action)
+        for sig in self.signatures.values():
+            if (impl in sig.implementations
+                    and sig.covers_datatype(proposal)
+                    and sig.matches_purpose(proposal)):
+                return sig
+        raise NoSignatureError(f"The repository contains no matching "
+            f"signature for {n3(impl)}")
 
     def analyze_action(self, wf: ConcreteWorkflow,
             action: Node) -> URIRef | None:
@@ -228,14 +244,14 @@ class ToolRepository(object):
                 continue
 
             # Is the CCT expression the same?
-            if not candidate.match_purpose(sig):
+            if not candidate.matches_purpose(sig):
                 continue
 
             # Is the CCD type the same?
-            if candidate.match_datatype(sig):
+            if candidate.covers_datatype(sig):
                 assert not supersig
                 supersig = sig
-            elif sig.match_datatype(candidate):
+            elif sig.covers_datatype(candidate):
                 subsigs.append(sig)
 
         assert not (supersig and subsigs), """If this assertion fails, the tool 
@@ -398,8 +414,7 @@ class ConcreteWorkflow(Graph):
         ginputs = inputs - outputs
         goutputs = outputs - inputs
 
-        # assert len(goutputs) == 1, f"""There must be exactly 1 output, but 
-        # {n3(wf)} has {len(goutputs)}."""
+        # Sanity check
         gsources = set(self.objects(wf, WF.source))
         assert gsources == ginputs, f"""The sources of the workflow {n3(wf)}, 
         namely {n3(gsources)}, don't match with the inputs {n3(ginputs)}."""
@@ -410,6 +425,52 @@ class ConcreteWorkflow(Graph):
     def from_file(path: str | Path, format: str = "") -> ConcreteWorkflow:
         g = ConcreteWorkflow()
         g.parse(path, format=format or guess_format(str(path)))
+        return g
+
+    def high_level_actions(self, wf: Node) -> Iterator[Node]:
+        """Obtain the high-level actions of a workflow --- that is, actions 
+        that are not also part of any subworkflow."""
+        for action in self.objects(wf, WF.edge):
+            if tuple(self.subjects(WF.edge, action)) == (wf,):
+                yield action
+
+    def abstraction(self, wf: Node, repo: ToolRepository, root: Node = None,
+                base: tuple[Graph, dict[Node, Node]] | None = None) -> Graph:
+        """Convert a (sub-)workflow that uses concrete tools to a workflow that 
+        uses only signatures."""
+
+        g, map = base or (Graph(), defaultdict(BNode))
+        root = root or wf
+
+        assert (wf, RDF.type, WF.Workflow) in self
+        g.add((root, RDF.type, TOOL.Workflow))
+
+        if wf == root:
+            inputs, outputs = self.workflow_io(wf)
+            for predicate, artefacts in (
+                    (TOOL.input, inputs), (TOOL.output, outputs)):
+                for artefact in artefacts:
+                    g.add((wf, predicate, map[artefact]))
+
+        for action in self.high_level_actions(wf):
+            if self.basic(action):
+                # assert (action, CCT.expression, None) in self
+                sig = repo.signature(self, action)
+                g.add((root, TOOL.action, map[action]))
+                g.add((map[action], TOOL.apply, sig.uri))
+
+                for id, artefact in zip(sig.input_keys, self.inputs(action)):
+                    g.add((map[action], TOOL.input, map[artefact]))
+                    g.add((map[artefact], TOOL.id, Literal(id)))
+
+                for id, artefact in zip(sig.output_keys, self.outputs(action)):
+                    g.add((map[action], TOOL.output, map[artefact]))
+                    g.add((map[artefact], TOOL.id, Literal(id)))
+            else:
+                assert not self.basic(action)
+                subwf = self.value(wf, WF.applicationOf, any=False)
+                self.convert_to_abstract(subwf, repo, root, (g, map))
+
         return g
 
     def extract_workflow_schema(self, wf: Node, wf_schema: URIRef) -> Graph:
