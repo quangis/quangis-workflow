@@ -40,7 +40,8 @@ from typing import Iterator
 from cct import cct  # type: ignore
 from transforge.namespace import shorten
 from quangis_workflows.namespace import (
-    WF, RDF, CCD, CCT, CCT_, TOOLS, TOOL, DATA, OWL, SUPERTOOL, SIG, ARC, n3)
+    WF, RDF, CCD, CCT, CCT_, TOOLS, TOOL, DATA, OWL, SUPERTOOL, SIG, ARC, n3, 
+    namespaces)
 from quangis_workflows.types import Polytype, Dimension
 from quangis_workflows.tool2url import tool2url
 
@@ -456,6 +457,13 @@ class ConcreteWorkflow(Graph):
 
         g, map = base or (GraphList(), defaultdict(BNode))
         root = root or wf
+
+        if not base:
+            g.base = TOOLS
+            g.bind("", TOOL)
+            for prefix, ns in namespaces.items():
+                if prefix != "tool":
+                    g.bind(prefix, ns)
 
         assert (wf, RDF.type, WF.Workflow) in self
         g.add((root, RDF.type, TOOL.Workflow))
