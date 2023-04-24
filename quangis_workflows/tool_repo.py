@@ -142,7 +142,9 @@ class Signature(object):
         """Create a new candidate signature from an action in a workflow."""
         tfm = wf.transformation(action)
         if not tfm:
-            raise EmptyTransformationError
+            raise EmptyTransformationError(
+                f"An action of {n3(wf.root)} that implements "
+                f"{wf.implementation(action)[0]} has no transformation")
         sig = Signature(
             inputs={str(id): wf.type(artefact)
                 for id, artefact in enumerate(wf.inputs(action), start=1)},
@@ -454,7 +456,7 @@ class ConcreteWorkflow(Graph):
             for predicate, artefacts in (
                     (TOOL.input, inputs), (TOOL.output, outputs)):
                 for artefact in artefacts:
-                    g.add((wf, predicate, map[artefact]))
+                    g.add((wf, predicate, artefact))
 
         for action in self.high_level_actions(wf):
             if self.basic(action):
@@ -464,12 +466,12 @@ class ConcreteWorkflow(Graph):
                 g.add((map[action], TOOL.apply, sig.uri))
 
                 for id, artefact in zip(sig.input_keys, self.inputs(action)):
-                    g.add((map[action], TOOL.input, map[artefact]))
-                    g.add((map[artefact], TOOL.id, Literal(id)))
+                    g.add((map[action], TOOL.input, artefact))
+                    g.add((artefact, TOOL.id, Literal(id)))
 
                 for id, artefact in zip(sig.output_keys, self.outputs(action)):
-                    g.add((map[action], TOOL.output, map[artefact]))
-                    g.add((map[artefact], TOOL.id, Literal(id)))
+                    g.add((map[action], TOOL.output, artefact))
+                    g.add((artefact, TOOL.id, Literal(id)))
             else:
                 assert not self.basic(action)
                 subwf = self.value(wf, WF.applicationOf, any=False)
