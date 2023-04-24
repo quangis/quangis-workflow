@@ -168,7 +168,7 @@ class ToolRepository(object):
         self.tools: set[URIRef] = set()
 
         # Ensembles of concrete tools (workflow schemas)
-        self.workflows: dict[URIRef, Graph] = dict()
+        self.supertools: dict[URIRef, Graph] = dict()
 
     @staticmethod
     def from_file(self) -> ToolRepository:
@@ -210,16 +210,20 @@ class ToolRepository(object):
         impl_name, impl = wf.implementation(action)
         impl_orig = TOOLS[impl_name]
 
-        if not wf.basic(impl_orig):
-            print(f"""Skipping an application of {n3(impl)} because it 
-            contains subworkflows.""")
-            return None
+        if not (impl_orig, CCT.expression, None) in wf:
+            # TODO don't require CCT expression?
+            print(f"Skipping an application of {n3(impl)} because it "
+                f"has no CCT expression.""")
+
+        # if not wf.basic(impl_orig):
+        #     print(f"""Skipping an application of {n3(impl)} because it 
+        #     contains subworkflows.""")
+        #     return None
 
         # Is this implemented by ensemble of tools or a single concrete tool?
         if (impl_orig, RDF.type, WF.Workflow) in wf:
-            if impl not in self.workflows:
-                self.workflows[impl] = wf.extract_workflow_schema(
-                    impl_orig, impl)
+            if impl not in self.supertools:
+                self.supertools[impl] = wf.extract_supertool(impl_orig, impl)
         else:
             self.tools.add(impl)
 
@@ -315,7 +319,7 @@ class ToolRepository(object):
 
             g.add((sig.uri, CCT.expression, Literal(sig.transformation)))
 
-        for tool, wf in self.workflows.items():
+        for tool, wf in self.supertools.items():
             g += wf
 
         return g
@@ -473,7 +477,7 @@ class ConcreteWorkflow(Graph):
 
         return g
 
-    def extract_workflow_schema(self, wf: Node, wf_schema: URIRef) -> Graph:
+    def extract_supertool(self, wf: Node, wf_schema: URIRef) -> Graph:
         """
         Extract a schematic workflow (in the TOOL namespace) from a concrete 
         one (a workflow instance in the WF namespace).
@@ -520,9 +524,9 @@ class ConcreteWorkflow(Graph):
             impl_name, impl = self.implementation(action)
             impl_orig = TOOLS[impl_name]
             assert impl_orig == self.value(action, WF.applicationOf, any=False)
-            assert (impl_orig, RDF.type, WF.Workflow) not in self, \
-                f"""actions of {n3(schematic[wf])} must apply only concrete 
-                tools, but {n3(impl)} is a supertool"""
+            # assert (impl_orig, RDF.type, WF.Workflow) not in self, \
+            #     f"""actions of {n3(schematic[wf])} must apply only concrete 
+            #     tools, but {n3(impl)} is a supertool"""
 
             g.add((schematic[wf], TOOL.action, schematic[action]))
             g.add((schematic[action], TOOL.apply, impl))

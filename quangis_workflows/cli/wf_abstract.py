@@ -28,6 +28,7 @@ class CLI(cli.Application):
             repo.collect(cwf)
 
         for file in FILE:
+            print(file)
             cwf = ConcreteWorkflow.from_file(file)
             g = cwf.abstraction(cwf.root, repo)
             print(g.serialize(format="turtle"))
