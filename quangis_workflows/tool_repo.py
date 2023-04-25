@@ -219,6 +219,7 @@ class ToolRepository(object):
             # TODO don't require CCT expression?
             print(f"Skipping an application of {n3(impl)} because it "
                 f"has no CCT expression.""")
+            # return None
 
         # if not wf.basic(impl_orig):
         #     print(f"""Skipping an application of {n3(impl)} because it 
@@ -513,20 +514,19 @@ class ConcreteWorkflow(Graph):
             return BNode(f"{shorten(wf)}_{shorten(artefact)}")
 
         # Concrete artefacts and actions to schematic ones
-        schematic: dict[Node, Node] = defaultdict(BNode)
-        schematic[wf] = wf_schema
-        map = schematic
+        map: dict[Node, Node] = defaultdict(BNode)
+        map[wf] = wf_schema
 
-        g.add((schematic[wf], RDF.type, TOOL.Supertool))
+        g.add((map[wf], RDF.type, TOOL.Supertool))
 
         # Figure out inputs/outputs to the workflow
         sources, targets = self.workflow_io(wf)
         for artefact in sources:
-            schematic[artefact] = named_bnode(artefact)
-        #     g.add((schematic[wf], TOOL.source, a))
+            map[artefact] = named_bnode(artefact)
+        #     g.add((map[wf], TOOL.source, a))
         for artefact in targets:
-            schematic[artefact] = named_bnode(artefact)
-        #     g.add((schematic[wf], TOOL.target, a))
+            map[artefact] = named_bnode(artefact)
+        #     g.add((map[wf], TOOL.target, a))
 
         g.add((map[wf], TOOL.inputs, g.add_list(
             [map[x] for x in self.inputs(action)])))
@@ -535,24 +535,24 @@ class ConcreteWorkflow(Graph):
 
         # Figure out intermediate actions
         for action in self.objects(wf, WF.edge):
-            if action not in schematic:
-                schematic[action] = BNode()
+            if action not in map:
+                map[action] = BNode()
             for artefact in chain(self.inputs(action), self.outputs(action)):
-                if artefact not in schematic:
-                    schematic[artefact] = named_bnode(artefact)
+                if artefact not in map:
+                    map[artefact] = named_bnode(artefact)
 
             impl_name, impl = self.implementation(action)
             impl_orig = TOOLS[impl_name]
             assert impl_orig == self.value(action, WF.applicationOf, any=False)
             # assert (impl_orig, RDF.type, WF.Workflow) not in self, \
-            #     f"""actions of {n3(schematic[wf])} must apply only concrete 
-            #     tools, but {n3(impl)} is a supertool"""
+            #     f"""actions of {n3(map[wf])} must apply only concrete tools, 
+            #     but {n3(impl)} is a supertool"""
 
-            g.add((schematic[wf], TOOL.action, schematic[action]))
-            g.add((schematic[action], TOOL.apply, impl))
-            g.add((schematic[action], TOOL.inputs, g.add_list(
-                [schematic[artefact] for artefact in self.inputs(action)])))
-            g.add((schematic[action], TOOL.outputs, g.add_list(
-                [schematic[artefact] for artefact in self.outputs(action)])))
+            g.add((map[wf], TOOL.action, map[action]))
+            g.add((map[action], TOOL.apply, impl))
+            g.add((map[action], TOOL.inputs, g.add_list(
+                [map[artefact] for artefact in self.inputs(action)])))
+            g.add((map[action], TOOL.outputs, g.add_list(
+                [map[artefact] for artefact in self.outputs(action)])))
 
         return g
