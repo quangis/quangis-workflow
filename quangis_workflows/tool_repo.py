@@ -143,7 +143,7 @@ class Signature(object):
     @staticmethod
     def propose(wf: ConcreteWorkflow, action: Node) -> Signature:
         """Create a new candidate signature from an action in a workflow."""
-        tfm = wf.transformation(action)
+        tfm = wf.purpose(action)
         if not tfm:
             raise EmptyTransformationError(
                 f"An action of {n3(wf.root)} that implements "
@@ -386,13 +386,13 @@ class ConcreteWorkflow(Graph):
                 return wf
         raise RuntimeError("Workflow graph has no identifiable root.")
 
-    def transformation(self, action: Node) -> str | None:
+    def purpose(self, action: Node) -> str | None:
         a = self.value(action, CCT_.expression, any=False)
         if isinstance(a, Literal):
             return str(a)
         elif not a:
             return None
-        raise RuntimeError("must be literal")
+        raise RuntimeError("Core concept transformation must be literal")
 
     def implementation(self, action: Node) -> tuple[str, URIRef]:
         impl = self.value(action, WF.applicationOf, any=False)
@@ -462,7 +462,7 @@ class ConcreteWorkflow(Graph):
         root = root or wf
 
         if not base:
-            g.base = TOOLS
+            g.base = DATA
             g.bind("", TOOL)
             for prefix, ns in namespaces.items():
                 if prefix != "tool":
@@ -505,54 +505,77 @@ class ConcreteWorkflow(Graph):
         one (a workflow instance in the WF namespace).
         """
 
-        g = GraphList()
+        g = Supertool(self, wf)
 
-        assert (wf, RDF.type, WF.Workflow) in self
-        assert wf is not self.root
+        # assert (wf, RDF.type, WF.Workflow) in self
+        # assert wf is not self.root
 
-        def named_bnode(artefact: Node) -> BNode:
-            return BNode(f"{shorten(wf)}_{shorten(artefact)}")
+        # def named_bnode(artefact: Node) -> BNode:
+        #     return BNode(f"{shorten(wf)}_{shorten(artefact)}")
 
-        # Concrete artefacts and actions to schematic ones
-        map: dict[Node, Node] = defaultdict(BNode)
-        map[wf] = wf_schema
+        # # Concrete artefacts and actions to schematic ones
+        # map: dict[Node, Node] = defaultdict(BNode)
+        # map[wf] = wf_schema
 
-        g.add((map[wf], RDF.type, TOOL.Supertool))
+        # g.add((map[wf], RDF.type, TOOL.Supertool))
 
-        # Figure out inputs/outputs to the workflow
-        sources, targets = self.workflow_io(wf)
-        for artefact in sources:
-            map[artefact] = named_bnode(artefact)
-        #     g.add((map[wf], TOOL.source, a))
-        for artefact in targets:
-            map[artefact] = named_bnode(artefact)
-        #     g.add((map[wf], TOOL.target, a))
+        # # Figure out inputs/outputs to the workflow
+        # sources, targets = self.workflow_io(wf)
+        # for artefact in chain(sources, targets):
+        #     map[artefact] = named_bnode(artefact)
 
-        g.add((map[wf], TOOL.inputs, g.add_list(
-            [map[x] for x in self.inputs(action)])))
-        g.add((map[wf], TOOL.outputs, g.add_list(
-            [map[x] for x in self.outputs(action)])))
+        # g.add((g.root, TOOL.inputs, g.add_list(
+        #     [map[x] for x in self.inputs(action)])))
+        # g.add((g.root, TOOL.outputs, g.add_list(
+        #     [map[x] for x in self.outputs(action)])))
 
         # Figure out intermediate actions
-        for action in self.objects(wf, WF.edge):
-            if action not in map:
-                map[action] = BNode()
-            for artefact in chain(self.inputs(action), self.outputs(action)):
-                if artefact not in map:
-                    map[artefact] = named_bnode(artefact)
+        # for action in self.high_level_actions(wf):
+        #     for artefact in chain(self.inputs(action), self.outputs(action)):
+        #         if artefact not in map:
+        #             map[artefact] = named_bnode(artefact)
 
-            impl_name, impl = self.implementation(action)
-            impl_orig = TOOLS[impl_name]
-            assert impl_orig == self.value(action, WF.applicationOf, any=False)
-            # assert (impl_orig, RDF.type, WF.Workflow) not in self, \
-            #     f"""actions of {n3(map[wf])} must apply only concrete tools, 
-            #     but {n3(impl)} is a supertool"""
+        #     impl_name, impl = self.implementation(action)
+        #     impl_orig = TOOLS[impl_name]
+        #     assert impl_orig == self.value(action, WF.applicationOf, any=False)
 
-            g.add((map[wf], TOOL.action, map[action]))
-            g.add((map[action], TOOL.apply, impl))
-            g.add((map[action], TOOL.inputs, g.add_list(
-                [map[artefact] for artefact in self.inputs(action)])))
-            g.add((map[action], TOOL.outputs, g.add_list(
-                [map[artefact] for artefact in self.outputs(action)])))
+        #     # if (impl_orig, RDF.type, WF.Workflow) not in self, \
+        #     #     f"""actions of {n3(map[wf])} must apply only concrete tools, 
+        #     #     but {n3(impl)} is a supertool"""
+
+        #     g.add((map[wf], TOOL.action, map[action]))
+        #     g.add((map[action], TOOL.apply, impl))
+        #     g.add((map[action], TOOL.inputs, g.add_list(
+        #         [map[artefact] for artefact in self.inputs(action)])))
+        #     g.add((map[action], TOOL.outputs, g.add_list(
+        #         [map[artefact] for artefact in self.outputs(action)])))
 
         return g
+
+
+class Supertool(GraphList):
+    def __init__(self, wf: ConcreteWorkflow, root: Node):
+        super().__init__()
+        self.origin: Graph = wf
+        self.map: dict[Node, Node] = defaultdict(BNode)
+        self.root = self.map[root]
+        self.unfold(root)
+        self.add((self.root, RDF.type, TOOL.Supertool))
+
+    def unfold(self, root: Node) -> None:
+        for action in self.origin.high_level_actions(root):
+            impl = self.origin.value(action, WF.applicationOf, any=False)
+            if (impl, RDF.type, WF.Workflow) in self.origin:
+                self.unfold(impl)
+            else:
+                inputs = [self.map[x] for x in self.origin.inputs(action)]
+                outputs = [self.map[x] for x in self.origin.outputs(action)]
+
+                self.add((self.root, TOOL.action, self.map[action]))
+                self.add((self.map[action], TOOL.apply, impl))
+                self.add((self.map[action], TOOL.inputs, 
+                    self.add_list(outputs)))
+                self.add((self.map[action], TOOL.outputs, 
+                    self.add_list(inputs)))
+
+        pass
