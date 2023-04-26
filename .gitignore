@@ -1,6 +1,8 @@
-build/
-run/
-fuseki/
+# We don't want to commit ontologies to this repository, since they are output
+# files in this context
+build/*.rdf
+build/*.ttl
+build/*.jar
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -10,6 +12,8 @@ __pycache__/
 # Distribution / packaging
 .Python
 build/
+run/
+fuseki/
 develop-eggs/
 dist/
 downloads/

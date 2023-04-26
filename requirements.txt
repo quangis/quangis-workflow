@@ -1,2 +1,3 @@
-transformation_algebra
+Jpype1
 rdflib
+git+https://github.com/quangis/transforge.git@develop#egg=transforge
