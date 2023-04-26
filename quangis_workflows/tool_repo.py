@@ -29,6 +29,8 @@ CCT types.
 from __future__ import annotations
 
 import re
+import random
+import string
 from rdflib import Graph
 from rdflib.term import Node, BNode, URIRef, Literal
 from rdflib.util import guess_format
@@ -227,7 +229,7 @@ class ToolRepository(object):
         # Is this implemented by ensemble of tools or a single concrete tool?
         if (impl_orig, RDF.type, WF.Workflow) in wf:
             if impl not in self.supertools:
-                self.supertools[impl] = wf.extract_supertool(impl_orig, impl)
+                self.supertools[impl] = wf.extract_supertool(action, impl)
         else:
             self.tools.add(impl)
 
@@ -458,8 +460,6 @@ class ConcreteWorkflow(Graph):
             elif (impl, WF.edge, None) in self:
                 yield from self.low_level_actions(impl)
             else:
-                # assert tuple(self.subjects(WF.edge, action)) == (root,), \
-                #     f"{n3(action)} {tuple(self.subjects(WF.edge, action))}, {n3(root)}"
                 yield action
 
     def abstraction(self, wf: Node, repo: ToolRepository, root: Node = None,
@@ -507,21 +507,32 @@ class ConcreteWorkflow(Graph):
 
         return g
 
-    def extract_supertool(self, wf: Node, wf_schema: URIRef) -> Graph:
+    def extract_supertool(self, action: Node, wf_schema: URIRef) -> Graph:
         """Extract a schematic workflow (in the TOOL namespace) from a concrete 
         one (a workflow instance in the WF namespace). Turns all the data nodes 
         into blank nodes."""
-        map: dict[Node, Node] = defaultdict(BNode)
+
+        code = ''.join(random.choice(string.ascii_lowercase) for i in range(4))
+
+        def counter(i=count()) -> BNode:
+            return BNode(f"{code}{next(i)}")
+
+        map: dict[Node, Node] = defaultdict(counter)
 
         g = GraphList()
         g.add((wf_schema, RDF.type, TOOL.Supertool))
-        sources, targets = self.extremities(wf)
-        for s in sources:
-            g.add((wf_schema, WF.source, map[s]))
-        for t in targets:
-            g.add((wf_schema, WF.target, map[t]))
+        g.add((wf_schema, TOOL.inputs,
+            g.add_list(map[s] for s in self.inputs(action))))
 
-        for a in self.low_level_actions(wf):
+        input_data = set()
+        output_data = set()
+
+        root = self.value(action, WF.applicationOf, any=False)
+        for a in self.low_level_actions(root):
+
+            input_data.update(self.inputs(a))
+            output_data.update(self.outputs(a))
+
             impl_name, impl = self.implementation(a)
             g.add((wf_schema, TOOL.action, map[a]))
             g.add((map[a], TOOL.apply, impl))
@@ -529,4 +540,20 @@ class ConcreteWorkflow(Graph):
                 g.add_list(map[x] for x in self.inputs(a))))
             g.add((map[a], TOOL.outputs,
                 g.add_list(map[x] for x in self.outputs(a))))
+
+        g.add((wf_schema, TOOL.outputs,
+            g.add_list(map[t] for t in self.outputs(action))))
+
+        # Sanity check
+        # in1 = input_data - output_data
+        # in2 = set(self.inputs(action))
+        # out1 = output_data - input_data
+        # out2 = set(self.outputs(action))
+        # assert in1 == in2, (f"In {n3(action)}, an application of "
+        #     f"{n3(root)}, the declared inputs {n3(in2)} don't match "
+        #     f"the observed inputs {n3(in1)}")
+        # assert out1 == out2, (f"In {n3(action)}, an application of "
+        #     f"{n3(root)}, the declared outputs {n3(out2)} don't match "
+        #     f"the observed outputs {n3(out1)}")
+
         return g
