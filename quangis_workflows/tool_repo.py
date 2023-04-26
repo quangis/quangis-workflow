@@ -229,8 +229,7 @@ class ToolRepository(object):
         # Is this implemented by ensemble of tools or a single concrete tool?
         if (impl_orig, RDF.type, WF.Workflow) in wf:
             if impl not in self.supertools:
-                self.supertools[impl] = wf.extract_supertool(impl_orig, impl, 
-                    action)
+                self.supertools[impl] = wf.extract_supertool(impl_orig, impl)
         else:
             self.tools.add(impl)
 
@@ -498,14 +497,13 @@ class ConcreteWorkflow(Graph):
 
         return g
 
-    def extract_supertool(self, wf: Node, wf_schema: URIRef,
-            action: Node) -> Graph:
+    def extract_supertool(self, wf: Node, wf_schema: URIRef) -> Graph:
         """
         Extract a schematic workflow (in the TOOL namespace) from a concrete 
         one (a workflow instance in the WF namespace).
         """
 
-        g = Supertool(self, wf)
+        g = self.unfold(wf).schematic(wf_schema)
 
         # assert (wf, RDF.type, WF.Workflow) in self
         # assert wf is not self.root
@@ -552,30 +550,43 @@ class ConcreteWorkflow(Graph):
 
         return g
 
+    def schematic(self, uri: Node) -> GraphList:
+        """Turn a concrete workflow into a schematic workflow by turning all 
+        the data nodes into blank nodes."""
+        g = GraphList()
+        map: dict[Node, Node] = defaultdict(BNode)
+        map[self.root] = uri
+        for a in self.high_level_actions(self.root):
+            impl = self.value(a, WF.applicationOf, any=False)
+            g.add((uri, TOOL.action, map[a]))
+            g.add((map[a], TOOL.apply, impl))
+            g.add((map[a], TOOL.inputs,
+                g.add_list(map[x] for x in self.inputs(a))))
+            g.add((map[a], TOOL.outputs,
+                g.add_list(map[x] for x in self.outputs(a))))
+        return g
 
-class Supertool(GraphList):
-    def __init__(self, wf: ConcreteWorkflow, root: Node):
-        super().__init__()
-        self.origin: Graph = wf
-        self.map: dict[Node, Node] = defaultdict(BNode)
-        self.root = self.map[root]
-        self.unfold(root)
-        self.add((self.root, RDF.type, TOOL.Supertool))
+    def unfold(self, root: Node | None = None,
+            g: Graph | None = None) -> ConcreteWorkflow:
+        """Extract lowest-level workflow into the given graph."""
+        root = root or self.root
 
-    def unfold(self, root: Node) -> None:
-        for action in self.origin.high_level_actions(root):
-            impl = self.origin.value(action, WF.applicationOf, any=False)
-            if (impl, RDF.type, WF.Workflow) in self.origin:
-                self.unfold(impl)
+        if not g:
+            g = ConcreteWorkflow()
+            g.add((g, RDF.type, WF.Workflow))
+
+        for a in self.high_level_actions(root):
+            impl = self.value(a, WF.applicationOf, any=False)
+            if (impl, RDF.type, WF.Workflow) in self:
+                self.unfold(root=impl, g=g)
             else:
-                inputs = [self.map[x] for x in self.origin.inputs(action)]
-                outputs = [self.map[x] for x in self.origin.outputs(action)]
+                g.add((g.root, WF.edge, a))
+                g.add((a, WF.applicationOf, impl))
 
-                self.add((self.root, TOOL.action, self.map[action]))
-                self.add((self.map[action], TOOL.apply, impl))
-                self.add((self.map[action], TOOL.inputs, 
-                    self.add_list(outputs)))
-                self.add((self.map[action], TOOL.outputs, 
-                    self.add_list(inputs)))
+                for i, artefact in enumerate(self.inputs(a), start=1):
+                    pred = TOOL[f"input{i}"]
+                    g.add((a, pred, artefact))
 
-        pass
+                for pred, artefact in zip([TOOL.output], self.outputs(a)):
+                    g.add((a, pred, artefact))
+        return g
