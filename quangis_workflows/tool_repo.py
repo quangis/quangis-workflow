@@ -60,11 +60,6 @@ dimensions = [
 ]
 
 
-def tool_to_url(node: Node, pattern=re.compile(r'(?<!^)(?=[A-Z])')) -> URIRef:
-    name = shorten(node)
-    return ARC[pattern.sub('-', name).lower() + ".htm"]
-
-
 class NoSignatureError(Exception):
     pass
 
@@ -147,9 +142,9 @@ class Signature(object):
         )
 
 
-class ToolRepository(object):
+class RepoSignatures(object):
     """
-    A tool repository contains abstract versions of tools.
+    A signature repository contains abstract versions of tools.
     """
 
     def __init__(self, *nargs, **kwargs) -> None:
@@ -159,13 +154,10 @@ class ToolRepository(object):
         self.signatures: dict[URIRef, Signature] = dict()
 
         # Ensembles of concrete tools (workflow schemas)
-        self.supertools = ToolRepo()
-
-        # Concrete tools
-        self.tools: set[URIRef] = set()
+        self.tools = RepoTools()
 
     @staticmethod
-    def from_file(self) -> ToolRepository:
+    def from_file(self) -> RepoSignatures:
         raise NotImplementedError
 
     def __contains__(self, sig: URIRef) -> bool:
@@ -204,29 +196,16 @@ class ToolRepository(object):
         tool specifications if necessary.
         """
 
-        impl_name, impl = wf.implementation(action)
-        impl_orig = TOOLS[impl_name]
+        impl_orig = wf.value(action, WF.applicationOf, any=False)
+        assert impl_orig
 
-        if (action, CCT_.expression, None) not in wf:
-            print(f"Skipping an application of {n3(impl)} because it "
+        candidate = wf.signature(action)
+        if not candidate.transformation:
+            print(f"Skipping an application of {n3(impl_orig)} because it "
                 f"has no CCT expression.""")
             return None
 
-        # Is this implemented by ensemble of tools or a single concrete tool?
-        if impl_orig and (impl_orig, RDF.type, WF.Workflow) in wf:
-            supertool = wf.extract_supertool(action, impl)
-            if st := self.supertools.find(supertool):
-                impl = st.uri
-            else:
-                self.supertools.register(supertool)
-                impl = supertool.uri
-        else:
-            impl = wf.tool(action)
-            self.tools.add(impl)
-
-        candidate = wf.signature(action)
-        if candidate.transformation:
-            return None
+        impl = self.tools.find_tool(wf, action)
 
         # TODO: Finding the signature should be done differently for a workflow 
         # than for a concrete tool, because we can work off different 
@@ -272,12 +251,12 @@ class ToolRepository(object):
 
         # If neither of the above is true, the action merits an all-new spec
         else:
-            candidate.uri = self.generate_name(impl_name)
+            candidate.uri = self.generate_name(shorten(impl))
             self.signatures[candidate.uri] = candidate
             return candidate.uri
 
     def collect(self, wf: ConcreteWorkflow):
-        for action, _ in wf.subject_objects(WF.applicationOf):
+        for action, impl in wf.subject_objects(WF.applicationOf):
             self.analyze_action(wf, action)
 
     def graph(self) -> Graph:
@@ -299,7 +278,7 @@ class ToolRepository(object):
 
             for impl in sig.implementations:
                 g.add((sig.uri, TOOL.implementation, impl))
-                if impl in self.supertools:
+                if impl in self.tools.supertools:
                     g.add((impl, TOOL.signature, sig.uri))
 
             inputs = []
@@ -320,7 +299,7 @@ class ToolRepository(object):
 
             g.add((sig.uri, CCT.expression, Literal(sig.transformation)))
 
-        for tool, wf in self.supertools.items():
+        for tool, wf in self.tools.supertools.items():
             g += wf
 
         return g
@@ -337,11 +316,6 @@ class ConcreteWorkflow(Graph):
 
     def signature(self, action: Node) -> Signature:
         """Create a new signature proposal from an action in a workflow."""
-        # tfm = self.transformation(action)
-        # if not tfm:
-        #     raise EmptyTransformationError(
-        #         f"An action of {n3(self.root)} that implements "
-        #         f"{self.implementation(action)[0]} has no transformation")
         return Signature(
             inputs=[self.type(artefact) for artefact in self.inputs(action)],
             outputs=[self.type(artefact) for artefact in self.outputs(action)],
@@ -453,7 +427,7 @@ class ConcreteWorkflow(Graph):
                 yield action
 
     def signed_actions(self, root: Node,
-            repo: ToolRepository) -> Iterator[tuple[Node, Signature]]:
+            repo: RepoSignatures) -> Iterator[tuple[Node, Signature]]:
         assert (root, RDF.type, WF.Workflow) in self
         for action in self.high_level_actions(root):
             try:
@@ -467,7 +441,7 @@ class ConcreteWorkflow(Graph):
                     raise
             yield action, sig
 
-    def abstraction(self, wf: Node, repo: ToolRepository, root: Node = None,
+    def abstraction(self, wf: Node, repo: RepoSignatures, root: Node = None,
             base: tuple[GraphList, dict[Node, Node]] | None = None) -> Graph:
         """Convert a (sub-)workflow that uses concrete tools to a workflow that 
         uses only signatures."""
@@ -512,63 +486,45 @@ class ConcreteWorkflow(Graph):
         assert (uri, RDF.type, WF.Workflow) not in self
         return URIRef(tool2url[shorten(uri)])
 
-    def extract_supertool(self, action: Node, wf_schema: URIRef) -> Supertool:
-        """Extract a schematic workflow (in the TOOL namespace) from a concrete 
-        one (a workflow instance in the WF namespace). Turns all the data nodes 
-        into blank nodes."""
 
-        code = ''.join(random.choice(string.ascii_lowercase) for i in range(4))
-
-        map: dict[Node, BNode] = defaultdict(
-            lambda counter=count(): BNode(f"{code}{next(counter)}"))
-
-        g = Supertool(wf_schema,
-            inputs=[map[x] for x in self.inputs(action)],
-            outputs=[map[x] for x in self.outputs(action)])
-
-        root = self.value(action, WF.applicationOf, any=False)
-        assert root
-        for action in self.low_level_actions(root):
-            g.add_action(self.tool(action),
-                [map[x] for x in self.inputs(action)],
-                [map[x] for x in self.outputs(action)])
-        return g
-
-
-class SigRepo(object):
-    pass
-
-
-class ToolRepo(object):
+class RepoTools(object):
     # TODO input/output permutations
 
+    tools = tool2url
+
     def __init__(self) -> None:
-        # Concrete tools
-        self.tools: set[URIRef] = set()
-        # Ensembles of concrete tools
         self.supertools: dict[URIRef, Supertool] = dict()
 
-    def register(self, supertool: Supertool) -> Supertool:
-        supertool.sanity_check()
-        if (supertool.uri in self.supertools and not
-                supertool.match(self.supertools[supertool.uri])):
-            raise RuntimeError
-        self.supertools[supertool.uri] = supertool
-        return supertool
+    def find_tool(self, wf: ConcreteWorkflow, action: Node) -> URIRef:
+        """Find an implementation that matches this action. This is an 
+        expensive operation because, in the case of a supertool, a proposal 
+        supertool is extracted and checked for isomorphism with existing 
+        supertools."""
+        impl = wf.value(action, WF.applicationOf, any=False)
+        assert impl
+        name = shorten(impl)
 
-    def find(self, supertool: Supertool) -> Supertool | None:
+        if (impl, RDF.type, WF.Workflow) in wf:
+            supertool = Supertool(SUPERTOOL[name],
+                inputs=wf.inputs(action),
+                outputs=wf.outputs(action),
+                actions=((wf.tool(sub), wf.inputs(sub), wf.outputs(sub))
+                    for sub in wf.low_level_actions(impl)))
+            supertool = (self.find_supertool(supertool)
+                or self.register_supertool(supertool))
+            return supertool.uri
+        else:
+            return URIRef(tool2url[name])
+
+    def find_supertool(self, supertool: Supertool) -> Supertool | None:
         """Find a supertool even if the name doesn't match."""
 
         if (supertool.uri in self.supertools):
             if supertool.match(self.supertools[supertool.uri]):
                 return self.supertools[supertool.uri]
             else:
-
-                print(supertool.serialize(format="turtle"))
-                print(self.supertools[supertool.uri].serialize(format="turtle"))
-
-                raise RuntimeError(f"{n3(supertool.uri)} was in repo but "
-                    f"doesn't match.")
+                raise RuntimeError(f"{n3(supertool.uri)} is in repo but "
+                    f"doesn't match the given supertool of the same name.")
 
         for st in self.supertools.values():
             if supertool.match(st):
@@ -576,24 +532,45 @@ class ToolRepo(object):
 
         return None
 
+    def register_supertool(self, supertool: Supertool) -> Supertool:
+        supertool.sanity_check()
+        if (supertool.uri in self.supertools and not
+                supertool.match(self.supertools[supertool.uri])):
+            raise RuntimeError
+        self.supertools[supertool.uri] = supertool
+        return supertool
+
 
 class Supertool(GraphList):
     """A supertool is a workflow schema."""
 
-    def __init__(self, uri: URIRef, inputs: list[BNode], outputs: list[BNode]):
+    def __init__(self, uri: URIRef,
+            inputs: Iterable[Node], outputs: Iterable[Node],
+            actions: Iterable[tuple[URIRef, Iterable[Node], Iterable[Node]]]):
+
+        super().__init__()
+
+        code = ''.join(random.choice(string.ascii_lowercase) for i in range(4))
+
+        map: dict[Node, BNode] = defaultdict(
+            lambda counter=count(): BNode(f"{code}{next(counter)}"))
+
         self.uri = uri
-        self.inputs = inputs
-        self.outputs = outputs
+        self.inputs = [map[x] for x in inputs]
+        self.outputs = [map[x] for x in outputs]
         self.all_inputs: set[BNode] = set()
         self.all_outputs: set[BNode] = set()
         self.tools: set[URIRef] = set()
-        super().__init__()
 
         self.add((uri, RDF.type, TOOL.Supertool))
-        self.add((uri, TOOL.inputs, self.add_list(inputs)))
-        self.add((uri, TOOL.outputs, self.add_list(outputs)))
+        self.add((uri, TOOL.inputs, self.add_list(self.inputs)))
+        self.add((uri, TOOL.outputs, self.add_list(self.outputs)))
+        for tool, inputs, outputs in actions:
+            self._add_action(tool,
+                [map[x] for x in inputs],
+                [map[x] for x in outputs])
 
-    def add_action(self, tool: URIRef,
+    def _add_action(self, tool: URIRef,
            inputs: Iterable[BNode], outputs: Iterable[BNode]) -> None:
         inputs = inputs if isinstance(inputs, list) else list(inputs)
         outputs = outputs if isinstance(outputs, list) else list(outputs)

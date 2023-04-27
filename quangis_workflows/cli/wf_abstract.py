@@ -5,7 +5,7 @@ from glob import glob
 from pathlib import Path
 
 from quangis_workflows.tool_repo import (
-    ConcreteWorkflow, ToolRepository)
+    ConcreteWorkflow, RepoSignatures)
 
 
 class CLI(cli.Application):
@@ -25,7 +25,7 @@ class CLI(cli.Application):
 
         # TODO as long as the tool repository cannot be read, we just construct 
         # it from the ground up. Should definitely be changed
-        repo = ToolRepository()
+        repo = RepoSignatures()
         for file in FILE:
             cwf = ConcreteWorkflow.from_file(file)
             repo.collect(cwf)
