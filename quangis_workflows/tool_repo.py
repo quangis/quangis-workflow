@@ -159,7 +159,7 @@ class ToolRepository(object):
         self.signatures: dict[URIRef, Signature] = dict()
 
         # Ensembles of concrete tools (workflow schemas)
-        self.supertools: dict[URIRef, Supertool] = dict()
+        self.supertools = ToolRepo()
 
         # Concrete tools
         self.tools: set[URIRef] = set()
@@ -203,18 +203,25 @@ class ToolRepository(object):
         out what spec it belongs to. As a side-effect, update the repository of 
         tool specifications if necessary.
         """
+
         impl_name, impl = wf.implementation(action)
         impl_orig = TOOLS[impl_name]
 
-        if (action, CCT.expression, None) not in wf:
+        if (action, CCT_.expression, None) not in wf:
             print(f"Skipping an application of {n3(impl)} because it "
                 f"has no CCT expression.""")
+            return None
 
         # Is this implemented by ensemble of tools or a single concrete tool?
-        if (impl_orig, RDF.type, WF.Workflow) in wf:
-            if impl not in self.supertools:
-                self.supertools[impl] = wf.extract_supertool(action, impl)
+        if impl_orig and (impl_orig, RDF.type, WF.Workflow) in wf:
+            supertool = wf.extract_supertool(action, impl)
+            if st := self.supertools.find(supertool):
+                impl = st.uri
+            else:
+                self.supertools.register(supertool)
+                impl = supertool.uri
         else:
+            impl = wf.tool(action)
             self.tools.add(impl)
 
         candidate = wf.signature(action)
@@ -498,6 +505,8 @@ class ConcreteWorkflow(Graph):
         return g
 
     def tool(self, action: Node) -> URIRef:
+        """Assuming that the action represents an application of a concrete 
+        tool, return the link to that tool."""
         uri = self.value(action, WF.applicationOf, any=False)
         assert isinstance(uri, URIRef)
         assert (uri, RDF.type, WF.Workflow) not in self
@@ -524,6 +533,49 @@ class ConcreteWorkflow(Graph):
                 [map[x] for x in self.inputs(action)],
                 [map[x] for x in self.outputs(action)])
         return g
+
+
+class SigRepo(object):
+    pass
+
+
+class ToolRepo(object):
+    # TODO input/output permutations
+
+    def __init__(self) -> None:
+        # Concrete tools
+        self.tools: set[URIRef] = set()
+        # Ensembles of concrete tools
+        self.supertools: dict[URIRef, Supertool] = dict()
+
+    def register(self, supertool: Supertool) -> Supertool:
+        supertool.sanity_check()
+        if (supertool.uri in self.supertools and not
+                supertool.match(self.supertools[supertool.uri])):
+            raise RuntimeError
+        self.supertools[supertool.uri] = supertool
+        return supertool
+
+    def find(self, supertool: Supertool) -> Supertool | None:
+        """Find a supertool even if the name doesn't match."""
+
+        if (supertool.uri in self.supertools):
+            if supertool.match(self.supertools[supertool.uri]):
+                return self.supertools[supertool.uri]
+            else:
+
+                print(supertool.serialize(format="turtle"))
+                print(self.supertools[supertool.uri].serialize(format="turtle"))
+
+                raise RuntimeError(f"{n3(supertool.uri)} was in repo but "
+                    f"doesn't match.")
+
+        for st in self.supertools.values():
+            if supertool.match(st):
+                return st
+
+        return None
+
 
 class Supertool(GraphList):
     """A supertool is a workflow schema."""
@@ -559,9 +611,11 @@ class Supertool(GraphList):
         return other.tools == self.tools and isomorphic(self, other)
 
     def sanity_check(self):
+        """Sanity check."""
         in1 = self.all_inputs - self.all_outputs
         in2 = set(self.inputs)
-        out1 = self.all_outputs - self.all_input
+        out1 = self.all_outputs - self.all_inputs
         out2 = set(self.outputs)
-        assert in1 == in2
-        assert out1 == out2
+        if not (in1 == in2 and out1 == out2):
+            raise RuntimeError(f"In supertool {n3(self.uri)}, there are "
+                f"loose inputs or outputs.")
