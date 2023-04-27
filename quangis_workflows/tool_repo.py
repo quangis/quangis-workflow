@@ -32,12 +32,13 @@ import re
 import random
 import string
 from rdflib import Graph
+from rdflib.compare import isomorphic
 from rdflib.term import Node, BNode, URIRef, Literal
 from rdflib.util import guess_format
 from pathlib import Path
 from itertools import count, chain
 from collections import defaultdict
-from typing import Iterator
+from typing import Iterator, Iterable
 
 from cct import cct  # type: ignore
 from transforge.namespace import shorten
@@ -80,7 +81,7 @@ class Signature(object):
     """A tool signature is an abstract specification of a tool. It may 
     correspond to one or more concrete tools, or even ensembles of tools. It 
     must describe the format of its input and output (ie the core concept 
-    datatypes) and it must describe its purpose (in terms of a core concept 
+    datatypes) and it may describe its purpose (in terms of a core concept 
     transformation expression).
 
     A signature may be implemented by multiple (workflows of) concrete tools, 
@@ -93,11 +94,11 @@ class Signature(object):
     def __init__(self,
             inputs: list[Polytype],
             outputs: list[Polytype],
-            transformation: str,
+            transformation: str | None,
             impl: URIRef | None = None) -> None:
         self.inputs: list[Polytype] = inputs
         self.outputs: list[Polytype] = outputs
-        self.transformation: str = transformation
+        self.transformation: str | None = transformation
 
         self.uri: URIRef | None = None
         self.description: str | None = None
@@ -105,7 +106,8 @@ class Signature(object):
         if impl:
             self.implementations.add(impl)
 
-        self.transformation_p = cct.parse(transformation, defaults=True)
+        self.transformation_p = cct.parse(transformation, defaults=True) \
+            if transformation else None
 
     def covers_implementation(self, candidate: Signature) -> bool:
         return candidate.implementations.issubset(self.implementations)
@@ -116,7 +118,8 @@ class Signature(object):
         mean that tools are actually semantically different, since there are 
         multiple ways to express the same idea (consider `compose f g x` vs 
         `f(g(x))`). Therefore, some manual intervention may be necessary."""
-        return self.transformation_p.match(candidate.transformation_p)
+        return (self.transformation_p and candidate.transformation_p
+            and self.transformation_p.match(candidate.transformation_p))
 
     def subsumes_datatype(self, candidate: Signature) -> bool:
         """If the inputs in the candidate signature are subtypes of the ones in 
@@ -143,9 +146,6 @@ class Signature(object):
                 for k1, k2 in zip(range(ol), range(ol)))
         )
 
-    def update(self, other: Signature) -> None:
-        """Update this spec with information from another spec."""
-        pass
 
 class ToolRepository(object):
     """
@@ -217,12 +217,8 @@ class ToolRepository(object):
         else:
             self.tools.add(impl)
 
-        try:
-            candidate = wf.signature(action)
-            candidate.implementations.add(impl)
-        except EmptyTransformationError:
-            print(f"""Skipping an application of {n3(impl)} because it has no 
-            transformation expression.""")
+        candidate = wf.signature(action)
+        if candidate.transformation:
             return None
 
         # TODO: Finding the signature should be done differently for a workflow 
@@ -333,19 +329,18 @@ class ConcreteWorkflow(Graph):
         super().__init__(*nargs, **kwargs)
 
     def signature(self, action: Node) -> Signature:
-        """Create a new candidate signature from an action in a workflow."""
-        tfm = self.transformation(action)
-        if not tfm:
-            raise EmptyTransformationError(
-                f"An action of {n3(self.root)} that implements "
-                f"{self.implementation(action)[0]} has no transformation")
-        sig = Signature(
+        """Create a new signature proposal from an action in a workflow."""
+        # tfm = self.transformation(action)
+        # if not tfm:
+        #     raise EmptyTransformationError(
+        #         f"An action of {n3(self.root)} that implements "
+        #         f"{self.implementation(action)[0]} has no transformation")
+        return Signature(
             inputs=[self.type(artefact) for artefact in self.inputs(action)],
             outputs=[self.type(artefact) for artefact in self.outputs(action)],
-            transformation=tfm,
+            transformation=self.transformation(action),
             impl=self.implementation(action)[1]
         )
-        return sig
 
     def type(self, artefact: Node) -> Polytype:
         return Polytype.assemble(dimensions, self.objects(artefact, RDF.type))
@@ -502,6 +497,12 @@ class ConcreteWorkflow(Graph):
 
         return g
 
+    def tool(self, action: Node) -> URIRef:
+        uri = self.value(action, WF.applicationOf, any=False)
+        assert isinstance(uri, URIRef)
+        assert (uri, RDF.type, WF.Workflow) not in self
+        return URIRef(tool2url[shorten(uri)])
+
     def extract_supertool(self, action: Node, wf_schema: URIRef) -> Supertool:
         """Extract a schematic workflow (in the TOOL namespace) from a concrete 
         one (a workflow instance in the WF namespace). Turns all the data nodes 
@@ -509,49 +510,58 @@ class ConcreteWorkflow(Graph):
 
         code = ''.join(random.choice(string.ascii_lowercase) for i in range(4))
 
-        def counter(i=count()) -> BNode:
-            return BNode(f"{code}{next(i)}")
+        map: dict[Node, BNode] = defaultdict(
+            lambda counter=count(): BNode(f"{code}{next(counter)}"))
 
-        map: dict[Node, Node] = defaultdict(counter)
-
-        g = Supertool()
-        g.add((wf_schema, RDF.type, TOOL.Supertool))
-        g.add((wf_schema, TOOL.inputs,
-            g.add_list(map[s] for s in self.inputs(action))))
-
-        input_data = set()
-        output_data = set()
+        g = Supertool(wf_schema,
+            inputs=[map[x] for x in self.inputs(action)],
+            outputs=[map[x] for x in self.outputs(action)])
 
         root = self.value(action, WF.applicationOf, any=False)
-        for a in self.low_level_actions(root):
-
-            input_data.update(self.inputs(a))
-            output_data.update(self.outputs(a))
-
-            impl_name, impl = self.implementation(a)
-            g.add((wf_schema, TOOL.action, map[a]))
-            g.add((map[a], TOOL.apply, impl))
-            g.add((map[a], TOOL.inputs,
-                g.add_list(map[x] for x in self.inputs(a))))
-            g.add((map[a], TOOL.outputs,
-                g.add_list(map[x] for x in self.outputs(a))))
-
-        g.add((wf_schema, TOOL.outputs,
-            g.add_list(map[t] for t in self.outputs(action))))
-
-        # Sanity check
-        # in1 = input_data - output_data
-        # in2 = set(self.inputs(action))
-        # out1 = output_data - input_data
-        # out2 = set(self.outputs(action))
-        # assert in1 == in2, (f"In {n3(action)}, an application of "
-        #     f"{n3(root)}, the declared inputs {n3(in2)} don't match "
-        #     f"the observed inputs {n3(in1)}")
-        # assert out1 == out2, (f"In {n3(action)}, an application of "
-        #     f"{n3(root)}, the declared outputs {n3(out2)} don't match "
-        #     f"the observed outputs {n3(out1)}")
-
+        assert root
+        for action in self.low_level_actions(root):
+            g.add_action(self.tool(action),
+                [map[x] for x in self.inputs(action)],
+                [map[x] for x in self.outputs(action)])
         return g
 
 class Supertool(GraphList):
-    pass
+    """A supertool is a workflow schema."""
+
+    def __init__(self, uri: URIRef, inputs: list[BNode], outputs: list[BNode]):
+        self.uri = uri
+        self.inputs = inputs
+        self.outputs = outputs
+        self.all_inputs: set[BNode] = set()
+        self.all_outputs: set[BNode] = set()
+        self.tools: set[URIRef] = set()
+        super().__init__()
+
+        self.add((uri, RDF.type, TOOL.Supertool))
+        self.add((uri, TOOL.inputs, self.add_list(inputs)))
+        self.add((uri, TOOL.outputs, self.add_list(outputs)))
+
+    def add_action(self, tool: URIRef,
+           inputs: Iterable[BNode], outputs: Iterable[BNode]) -> None:
+        inputs = inputs if isinstance(inputs, list) else list(inputs)
+        outputs = outputs if isinstance(outputs, list) else list(outputs)
+        self.all_inputs.update(inputs)
+        self.all_outputs.update(outputs)
+
+        action = BNode()
+        self.tools.add(tool)
+        self.add((self.uri, TOOL.action, action))
+        self.add((action, TOOL.apply, tool))
+        self.add((action, TOOL.inputs, self.add_list(inputs)))
+        self.add((action, TOOL.outputs, self.add_list(outputs)))
+
+    def match(self, other: Supertool) -> bool:
+        return other.tools == self.tools and isomorphic(self, other)
+
+    def sanity_check(self):
+        in1 = self.all_inputs - self.all_outputs
+        in2 = set(self.inputs)
+        out1 = self.all_outputs - self.all_input
+        out2 = set(self.outputs)
+        assert in1 == in2
+        assert out1 == out2
