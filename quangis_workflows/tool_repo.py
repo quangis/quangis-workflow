@@ -220,11 +220,6 @@ class ToolRepository(object):
             print(f"Skipping an application of {n3(impl)} because it "
                 f"has no CCT expression.""")
 
-        # if not wf.basic(impl_orig):
-        #     print(f"""Skipping an application of {n3(impl)} because it 
-        #     contains subworkflows.""")
-        #     return None
-
         # Is this implemented by ensemble of tools or a single concrete tool?
         if (impl_orig, RDF.type, WF.Workflow) in wf:
             if impl not in self.supertools:
@@ -349,17 +344,6 @@ class ConcreteWorkflow(Graph):
 
     def type(self, artefact: Node) -> Polytype:
         return Polytype.assemble(dimensions, self.objects(artefact, RDF.type))
-
-    def basic(self, impl: Node) -> bool:
-        """Test if an implementation is basic, that is, it is either a concrete 
-        tool or a workflow that does not have subworkflows."""
-
-        if (impl, RDF.type, WF.Workflow) in self:
-            return not any((subimpl, RDF.type, WF.Workflow) in self
-                for action in self.objects(impl, WF.edge)
-                for subimpl in self.objects(action, WF.applicationOf))
-        else:
-            return True
 
     @property
     def root(self) -> Node:
