@@ -456,10 +456,24 @@ class ConcreteWorkflow(Graph):
             impl = self.value(action, WF.applicationOf, any=False)
             if impl == root:
                 continue
-            elif (impl, WF.edge, None) in self:
+            elif impl and (impl, WF.edge, None) in self:
                 yield from self.low_level_actions(impl)
             else:
                 yield action
+
+    def signed_actions(self, root: Node,
+            repo: ToolRepository) -> Iterator[tuple[Node, Signature]]:
+        assert (root, RDF.type, WF.Workflow) in self
+        for action in self.high_level_actions(root):
+            try:
+                sig = repo.signature(self, action)
+            except NoSignatureError:
+                impl = self.value(action, WF.applicationOf, any=False)
+                if impl:
+                    yield from self.signed_actions(impl, repo)
+                else:
+                    raise
+            yield action, sig
 
     def abstraction(self, wf: Node, repo: ToolRepository, root: Node = None,
             base: tuple[GraphList, dict[Node, Node]] | None = None) -> Graph:
@@ -481,28 +495,20 @@ class ConcreteWorkflow(Graph):
 
         if wf == root:
             inputs, outputs = self.extremities(wf)
-            for predicate, artefacts in (
-                    (WF.source, inputs), (WF.target, outputs)):
+            for pred, artefacts in ((WF.source, inputs), (WF.target, outputs)):
                 for artefact in artefacts:
-                    g.add((wf, predicate, artefact))
+                    g.add((wf, pred, artefact))
 
-        for action in self.high_level_actions(wf):
-            if self.basic(action):
-                # assert (action, CCT.expression, None) in self
-                sig = repo.signature(self, action)
-                g.add((root, WF.edge, map[action]))
-                g.add((map[action], WF.applicationOf, sig.uri))
+        for action, sig in self.signed_actions(wf, repo):
+            # assert (action, CCT.expression, None) in self
+            g.add((root, WF.edge, map[action]))
+            g.add((map[action], WF.applicationOf, sig.uri))
 
-                for i, artefact in enumerate(self.inputs(action), start=1):
-                    g.add((map[action], WF[f"input{i}"], artefact))
+            for i, artefact in enumerate(self.inputs(action), start=1):
+                g.add((map[action], WF[f"input{i}"], artefact))
 
-                for pred, artefact in zip([WF.output], self.outputs(action)):
-                    g.add((map[action], pred, artefact))
-
-            else:
-                assert not self.basic(action)
-                subwf = self.value(wf, WF.applicationOf, any=False)
-                self.convert_to_abstract(subwf, repo, root, (g, map))
+            for pred, artefact in zip([WF.output], self.outputs(action)):
+                g.add((map[action], pred, artefact))
 
         return g
 
