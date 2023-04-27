@@ -171,11 +171,11 @@ class ToolRepository(object):
         # Signatures (abstract tools)
         self.signatures: dict[URIRef, Signature] = dict()
 
+        # Ensembles of concrete tools (workflow schemas)
+        self.supertools: dict[URIRef, Supertool] = dict()
+
         # Concrete tools
         self.tools: set[URIRef] = set()
-
-        # Ensembles of concrete tools (workflow schemas)
-        self.supertools: dict[URIRef, Graph] = dict()
 
     @staticmethod
     def from_file(self) -> ToolRepository:
@@ -186,8 +186,7 @@ class ToolRepository(object):
 
     def generate_name(self, base: str) -> URIRef:
         """
-        Generate a name for an abstract tool based on an existing concrete 
-        tool.
+        Generate a name for a signature based on an existing concrete tool.
         """
         for i in chain([""], count(start=2)):
             uri = SIG[f"{base}{i}"]
@@ -507,7 +506,7 @@ class ConcreteWorkflow(Graph):
 
         return g
 
-    def extract_supertool(self, action: Node, wf_schema: URIRef) -> Graph:
+    def extract_supertool(self, action: Node, wf_schema: URIRef) -> Supertool:
         """Extract a schematic workflow (in the TOOL namespace) from a concrete 
         one (a workflow instance in the WF namespace). Turns all the data nodes 
         into blank nodes."""
@@ -519,7 +518,7 @@ class ConcreteWorkflow(Graph):
 
         map: dict[Node, Node] = defaultdict(counter)
 
-        g = GraphList()
+        g = Supertool()
         g.add((wf_schema, RDF.type, TOOL.Supertool))
         g.add((wf_schema, TOOL.inputs,
             g.add_list(map[s] for s in self.inputs(action))))
@@ -557,3 +556,6 @@ class ConcreteWorkflow(Graph):
         #     f"the observed outputs {n3(out1)}")
 
         return g
+
+class Supertool(GraphList):
+    pass
