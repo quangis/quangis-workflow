@@ -91,22 +91,26 @@ class Signature(object):
     break a piggy bank."""
 
     def __init__(self,
-            inputs: dict[str, Polytype],
-            outputs: dict[str, Polytype],
-            transformation: str) -> None:
-        self.inputs: dict[str, Polytype] = inputs
-        self.outputs: dict[str, Polytype] = outputs
+            inputs: list[Polytype],
+            outputs: list[Polytype],
+            transformation: str,
+            impl: URIRef | None = None) -> None:
+        self.inputs: list[Polytype] = inputs
+        self.outputs: list[Polytype] = outputs
         self.transformation: str = transformation
 
         self.uri: URIRef | None = None
         self.description: str | None = None
         self.implementations: set[URIRef] = set()
+        if impl:
+            self.implementations.add(impl)
 
-        self.input_keys: list[str] = sorted(inputs.keys())
-        self.output_keys: list[str] = sorted(outputs.keys())
         self.transformation_p = cct.parse(transformation, defaults=True)
 
-    def matches_purpose(self, candidate: Signature) -> bool:
+    def covers_implementation(self, candidate: Signature) -> bool:
+        return candidate.implementations.issubset(self.implementations)
+
+    def matches_transformation(self, candidate: Signature) -> bool:
         """Check that the expression of the candidate matches the expression 
         associated with this one. Note that a non-matching expression doesn't 
         mean that tools are actually semantically different, since there are 
@@ -114,7 +118,7 @@ class Signature(object):
         `f(g(x))`). Therefore, some manual intervention may be necessary."""
         return self.transformation_p.match(candidate.transformation_p)
 
-    def covers_datatype(self, candidate: Signature) -> bool:
+    def subsumes_datatype(self, candidate: Signature) -> bool:
         """If the inputs in the candidate signature are subtypes of the ones in 
         this one (and the outputs are supertypes), then this signature *covers* 
         the other signature. If the reverse is true, then this signature is 
@@ -127,38 +131,21 @@ class Signature(object):
         # should, since even in the one test that I did (wffood), we see that 
         # SelectLayerByLocationPointObjects has two variants with just the 
         # order of the inputs flipped.
-        if not (self.input_keys == candidate.input_keys
-                and self.output_keys == candidate.output_keys):
+        il = len(self.inputs)
+        ol = len(self.outputs)
+        if il != ol:
             return False
 
         return (
             all(candidate.inputs[k1].subtype(self.inputs[k2])
-                for k1, k2 in zip(self.input_keys, self.input_keys))
+                for k1, k2 in zip(range(il), range(il)))
             and all(self.outputs[k1].subtype(candidate.outputs[k2])
-                for k1, k2 in zip(self.output_keys, self.output_keys))
+                for k1, k2 in zip(range(ol), range(ol)))
         )
 
     def update(self, other: Signature) -> None:
         """Update this spec with information from another spec."""
         pass
-
-    @staticmethod
-    def propose(wf: ConcreteWorkflow, action: Node) -> Signature:
-        """Create a new candidate signature from an action in a workflow."""
-        tfm = wf.purpose(action)
-        if not tfm:
-            raise EmptyTransformationError(
-                f"An action of {n3(wf.root)} that implements "
-                f"{wf.implementation(action)[0]} has no transformation")
-        sig = Signature(
-            inputs={str(id): wf.type(artefact)
-                for id, artefact in enumerate(wf.inputs(action), start=1)},
-            outputs={str(id): wf.type(artefact)
-                for id, artefact in enumerate(wf.outputs(action), start=1)},
-            transformation=tfm
-        )
-        return sig
-
 
 class ToolRepository(object):
     """
@@ -194,17 +181,20 @@ class ToolRepository(object):
                 return uri
         raise RuntimeError("Unreachable")
 
-    def signature(self, wf: ConcreteWorkflow, action: Node) -> URIRef:
-        """Find out if any signature in this repository matches the action."""
-        impl_name, impl = wf.implementation(action)
-        proposal = Signature.propose(wf, action)
+    def find(self, proposal: Signature) -> Signature:
+        """Find a signature that matches the proposed signature."""
         for sig in self.signatures.values():
-            if (impl in sig.implementations
-                    and sig.covers_datatype(proposal)
-                    and sig.matches_purpose(proposal)):
+            if (sig.covers_implementation(proposal)
+                    and sig.subsumes_datatype(proposal)
+                    and sig.matches_transformation(proposal)):
                 return sig
+
+        sigs = set(s.uri for s in self.signatures.values()
+            if s.covers_implementation(proposal))
         raise NoSignatureError(f"The repository contains no matching "
-            f"signature for {n3(impl)}")
+            f"signature for an application of {n3(proposal.implementations)}. "
+            f"The following signatures do exist for this tool: "
+            f"{n3(sigs)}")
 
     def analyze_action(self, wf: ConcreteWorkflow,
             action: Node) -> URIRef | None:
@@ -228,7 +218,7 @@ class ToolRepository(object):
             self.tools.add(impl)
 
         try:
-            candidate = Signature.propose(wf, action)
+            candidate = wf.signature(action)
             candidate.implementations.add(impl)
         except EmptyTransformationError:
             print(f"""Skipping an application of {n3(impl)} because it has no 
@@ -248,14 +238,14 @@ class ToolRepository(object):
                 continue
 
             # Is the CCT expression the same?
-            if not candidate.matches_purpose(sig):
+            if not candidate.matches_transformation(sig):
                 continue
 
             # Is the CCD type the same?
-            if candidate.covers_datatype(sig):
+            if candidate.subsumes_datatype(sig):
                 assert not supersig
                 supersig = sig
-            elif sig.covers_datatype(candidate):
+            elif sig.subsumes_datatype(candidate):
                 subsigs.append(sig)
 
         assert not (supersig and subsigs), """If this assertion fails, the tool 
@@ -310,7 +300,7 @@ class ToolRepository(object):
                     g.add((impl, TOOL.signature, sig.uri))
 
             inputs = []
-            for i in sig.input_keys:
+            for i in range(len(sig.inputs)):
                 artefact = BNode()
                 for uri in sig.inputs[i].uris():
                     g.add((artefact, RDF.type, uri))
@@ -318,7 +308,7 @@ class ToolRepository(object):
             g.add((sig.uri, TOOL.inputs, g.add_list(inputs)))
 
             outputs = []
-            for i in sig.output_keys:
+            for i in range(len(sig.outputs)):
                 artefact = BNode()
                 for uri in sig.outputs[i].uris():
                     g.add((artefact, RDF.type, uri))
@@ -341,6 +331,21 @@ class ConcreteWorkflow(Graph):
     def __init__(self, *nargs, **kwargs) -> None:
         self._root: Node | None = None
         super().__init__(*nargs, **kwargs)
+
+    def signature(self, action: Node) -> Signature:
+        """Create a new candidate signature from an action in a workflow."""
+        tfm = self.transformation(action)
+        if not tfm:
+            raise EmptyTransformationError(
+                f"An action of {n3(self.root)} that implements "
+                f"{self.implementation(action)[0]} has no transformation")
+        sig = Signature(
+            inputs=[self.type(artefact) for artefact in self.inputs(action)],
+            outputs=[self.type(artefact) for artefact in self.outputs(action)],
+            transformation=tfm,
+            impl=self.implementation(action)[1]
+        )
+        return sig
 
     def type(self, artefact: Node) -> Polytype:
         return Polytype.assemble(dimensions, self.objects(artefact, RDF.type))
@@ -368,7 +373,7 @@ class ConcreteWorkflow(Graph):
                 return wf
         raise RuntimeError("Workflow graph has no identifiable root.")
 
-    def purpose(self, action: Node) -> str | None:
+    def transformation(self, action: Node) -> str | None:
         a = self.value(action, CCT_.expression, any=False)
         if isinstance(a, Literal):
             return str(a)
@@ -450,10 +455,11 @@ class ConcreteWorkflow(Graph):
         assert (root, RDF.type, WF.Workflow) in self
         for action in self.high_level_actions(root):
             try:
-                sig = repo.signature(self, action)
+                action_sig = self.signature(action)
+                sig = repo.find(action_sig)
             except NoSignatureError:
                 impl = self.value(action, WF.applicationOf, any=False)
-                if impl:
+                if impl and (impl, RDF.type, WF.Workflow) in self:
                     yield from self.signed_actions(impl, repo)
                 else:
                     raise
