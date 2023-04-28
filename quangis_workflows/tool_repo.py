@@ -442,40 +442,34 @@ class ConcreteWorkflow(Graph):
                     raise
             yield action, sig
 
-    def abstraction(self, wf: Node, repo: RepoSignatures, root: Node = None,
-            base: tuple[GraphList, dict[Node, Node]] | None = None) -> Graph:
+    def abstraction(self, root: Node, repo: RepoSignatures) -> Graph:
         """Convert a (sub-)workflow that uses concrete tools to a workflow that 
         uses only signatures."""
 
-        g, map = base or (GraphList(), defaultdict(BNode))
-        root = root or wf
+        g = GraphList()
+        g.base = DATA
+        g.bind("", TOOL)
+        for prefix, ns in namespaces.items():
+            if prefix != "tool":
+                g.bind(prefix, ns)
 
-        if not base:
-            g.base = DATA
-            g.bind("", TOOL)
-            for prefix, ns in namespaces.items():
-                if prefix != "tool":
-                    g.bind(prefix, ns)
-
-        assert (wf, RDF.type, WF.Workflow) in self
+        assert (root, RDF.type, WF.Workflow) in self
         g.add((root, RDF.type, WF.Workflow))
 
-        if wf == root:
-            inputs, outputs = self.extremities(wf)
-            for pred, artefacts in ((WF.source, inputs), (WF.target, outputs)):
-                for artefact in artefacts:
-                    g.add((wf, pred, artefact))
+        inputs, outputs = self.extremities(root)
+        for artefact in inputs:
+            g.add((root, WF.source, artefact))
+        for artefact in outputs:
+            g.add((root, WF.target, artefact))
 
-        for action, sig in self.signed_actions(wf, repo):
-            # assert (action, CCT.expression, None) in self
-            g.add((root, WF.edge, map[action]))
-            g.add((map[action], WF.applicationOf, sig.uri))
-
+        for action, sig in self.signed_actions(root, repo):
+            assert sig.uri
+            g.add((root, WF.edge, action))
+            g.add((action, WF.applicationOf, sig.uri))
             for i, artefact in enumerate(self.inputs(action), start=1):
-                g.add((map[action], WF[f"input{i}"], artefact))
-
+                g.add((action, WF[f"input{i}"], artefact))
             for pred, artefact in zip([WF.output], self.outputs(action)):
-                g.add((map[action], pred, artefact))
+                g.add((action, pred, artefact))
 
         return g
 
