@@ -205,7 +205,8 @@ class RepoSignatures(object):
                 f"has no CCT expression.""")
             return None
 
-        impl = self.tools.find_tool(wf, action)
+        impl_name, impl = wf.tool2(action)
+        impl_uri = self.tools.find_tool(impl)
 
         # TODO: Finding the signature should be done differently for a workflow 
         # than for a concrete tool, because we can work off different 
@@ -236,7 +237,7 @@ class RepoSignatures(object):
         # If there is a signature that covers this action, we simply add the 
         # corresponding tool/workflow as one of its implementations
         if supersig:
-            supersig.implementations.add(impl)
+            supersig.implementations.add(impl_uri)
             return supersig.uri
 
         # If the signature is a more general version of existing signature(s), 
@@ -251,7 +252,7 @@ class RepoSignatures(object):
 
         # If neither of the above is true, the action merits an all-new spec
         else:
-            candidate.uri = self.generate_name(shorten(impl))
+            candidate.uri = self.generate_name(impl_name)
             self.signatures[candidate.uri] = candidate
             return candidate.uri
 
@@ -481,6 +482,30 @@ class ConcreteWorkflow(Graph):
         assert (uri, RDF.type, WF.Workflow) not in self
         return URIRef(tool2url[shorten(uri)])
 
+    def tool2(self: ConcreteWorkflow,
+              action: Node) -> tuple[str, URIRef | Supertool]:
+        """Find an implementation that matches this action. This is an 
+        expensive operation because, in the case of a supertool, a proposal 
+        supertool is extracted and checked for isomorphism with existing 
+        supertools."""
+        impl = self.value(action, WF.applicationOf, any=False)
+        assert impl
+        name = shorten(impl)
+
+        if (impl, RDF.type, WF.Workflow) in self:
+            supertool = Supertool(SUPERTOOL[name],
+                inputs=self.inputs(action),
+                outputs=self.outputs(action),
+                actions=((self.tool(sub), self.inputs(sub), self.outputs(sub))
+                    for sub in self.low_level_actions(impl)))
+            return name, supertool
+        else:
+            return name, URIRef(tool2url[name])
+
+
+class UnknownToolError(Exception):
+    pass
+
 
 class RepoTools(object):
     # TODO input/output permutations
@@ -490,42 +515,29 @@ class RepoTools(object):
     def __init__(self) -> None:
         self.supertools: dict[URIRef, Supertool] = dict()
 
-    def find_tool(self, wf: ConcreteWorkflow, action: Node) -> URIRef:
-        """Find an implementation that matches this action. This is an 
+    def find_tool(self, tool: URIRef | Supertool) -> URIRef:
+        """Find a (super)tool in this tool repository that matches the given 
+        tool, even if the name of the supertool is different. This is an 
         expensive operation because, in the case of a supertool, a proposal 
         supertool is extracted and checked for isomorphism with existing 
         supertools."""
-        impl = wf.value(action, WF.applicationOf, any=False)
-        assert impl
-        name = shorten(impl)
+        if isinstance(tool, Supertool):
 
-        if (impl, RDF.type, WF.Workflow) in wf:
-            supertool = Supertool(SUPERTOOL[name],
-                inputs=wf.inputs(action),
-                outputs=wf.outputs(action),
-                actions=((wf.tool(sub), wf.inputs(sub), wf.outputs(sub))
-                    for sub in wf.low_level_actions(impl)))
-            supertool = (self.find_supertool(supertool)
-                or self.register_supertool(supertool))
-            return supertool.uri
+            if (tool.uri in self.supertools):
+                if tool.match(self.supertools[tool.uri]):
+                    return tool.uri
+                else:
+                    raise UnknownToolError(f"{n3(tool.uri)} can be found, but "
+                        f"doesn't match the given supertool of the same name.")
+
+            for candidate in self.supertools.values():
+                if tool.match(candidate):
+                    return candidate.uri
+
+            raise UnknownToolError(
+                f"{n3(tool.uri)} isn't in the tool repository.")
         else:
-            return URIRef(tool2url[name])
-
-    def find_supertool(self, supertool: Supertool) -> Supertool | None:
-        """Find a supertool even if the name doesn't match."""
-
-        if (supertool.uri in self.supertools):
-            if supertool.match(self.supertools[supertool.uri]):
-                return self.supertools[supertool.uri]
-            else:
-                raise RuntimeError(f"{n3(supertool.uri)} is in repo but "
-                    f"doesn't match the given supertool of the same name.")
-
-        for st in self.supertools.values():
-            if supertool.match(st):
-                return st
-
-        return None
+            return tool
 
     def register_supertool(self, supertool: Supertool) -> Supertool:
         supertool.sanity_check()
