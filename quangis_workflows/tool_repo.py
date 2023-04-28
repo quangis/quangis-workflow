@@ -50,6 +50,8 @@ from quangis_workflows.tool2url import tool2url
 
 from transforge.list import GraphList
 
+cctlang = cct
+
 root_dir = Path(__file__).parent.parent
 type_graph = Graph()
 type_graph.parse(root_dir / "CoreConceptData.rdf", format="xml")
@@ -79,21 +81,20 @@ class Signature(object):
     datatypes) and it may describe its purpose (in terms of a core concept 
     transformation expression).
 
-    A signature may be implemented by multiple (workflows of) concrete tools, 
-    because, for example, a tool could be implemented in both QGIS and ArcGIS. 
-    Conversely, multiple specifications may be implemented by the same concrete 
-    tool/workflow, if it can be used in multiple contexts --- in the same way 
-    that a hammer can be used both to drive a nail into a plank of wood or to 
-    break a piggy bank."""
+    A signature may be implemented by multiple (super)tools, because, for 
+    example, a tool could be implemented in both QGIS and ArcGIS. Conversely, 
+    multiple signatures may be implemented by the same (super)tool, if it can 
+    be used in multiple contexts --- in the same way that a hammer can be used 
+    either to drive a nail into a plank of wood or to break a piggy bank."""
 
     def __init__(self,
             inputs: list[Polytype],
             outputs: list[Polytype],
-            transformation: str | None,
+            cct: str | None,
             impl: URIRef | None = None) -> None:
         self.inputs: list[Polytype] = inputs
         self.outputs: list[Polytype] = outputs
-        self.transformation: str | None = transformation
+        self.cct: str | None = cct
 
         self.uri: URIRef | None = None
         self.description: str | None = None
@@ -101,20 +102,19 @@ class Signature(object):
         if impl:
             self.implementations.add(impl)
 
-        self.transformation_p = cct.parse(transformation, defaults=True) \
-            if transformation else None
+        self.cct_p = cctlang.parse(cct, defaults=True) if cct else None
 
     def covers_implementation(self, candidate: Signature) -> bool:
         return candidate.implementations.issubset(self.implementations)
 
-    def matches_transformation(self, candidate: Signature) -> bool:
+    def matches_cct(self, candidate: Signature) -> bool:
         """Check that the expression of the candidate matches the expression 
         associated with this one. Note that a non-matching expression doesn't 
         mean that tools are actually semantically different, since there are 
         multiple ways to express the same idea (consider `compose f g x` vs 
         `f(g(x))`). Therefore, some manual intervention may be necessary."""
-        return (self.transformation_p and candidate.transformation_p
-            and self.transformation_p.match(candidate.transformation_p))
+        return (self.cct_p and candidate.cct_p
+            and self.cct_p.match(candidate.cct_p))
 
     def subsumes_datatype(self, candidate: Signature) -> bool:
         """If the inputs in the candidate signature are subtypes of the ones in 
@@ -178,7 +178,7 @@ class RepoSignatures(object):
         for sig in self.signatures.values():
             if (sig.covers_implementation(proposal)
                     and sig.subsumes_datatype(proposal)
-                    and sig.matches_transformation(proposal)):
+                    and sig.matches_cct(proposal)):
                 return sig
 
         sigs = set(s.uri for s in self.signatures.values()
@@ -200,7 +200,7 @@ class RepoSignatures(object):
         assert impl_orig
 
         candidate = wf.signature(action)
-        if not candidate.transformation:
+        if not candidate.cct:
             print(f"Skipping an application of {n3(impl_orig)} because it "
                 f"has no CCT expression.""")
             return None
@@ -220,7 +220,7 @@ class RepoSignatures(object):
                 continue
 
             # Is the CCT expression the same?
-            if not candidate.matches_transformation(sig):
+            if not candidate.matches_cct(sig):
                 continue
 
             # Is the CCD type the same?
@@ -297,7 +297,7 @@ class RepoSignatures(object):
                 outputs.append(artefact)
             g.add((sig.uri, TOOL.outputs, g.add_list(outputs)))
 
-            g.add((sig.uri, CCT.expression, Literal(sig.transformation)))
+            g.add((sig.uri, CCT.expression, Literal(sig.cct)))
 
         for tool, wf in self.tools.supertools.items():
             g += wf
@@ -319,7 +319,7 @@ class ConcreteWorkflow(Graph):
         return Signature(
             inputs=[self.type(artefact) for artefact in self.inputs(action)],
             outputs=[self.type(artefact) for artefact in self.outputs(action)],
-            transformation=self.transformation(action),
+            cct=self.cct(action),
             impl=self.implementation(action)[1]
         )
 
@@ -349,8 +349,9 @@ class ConcreteWorkflow(Graph):
                 return wf
         raise RuntimeError("Workflow graph has no identifiable root.")
 
-    def transformation(self, action: Node) -> str | None:
-        a = self.value(action, CCT_.expression, any=False)
+    def cct(self, action: Node) -> str | None:
+        a = (self.value(action, CCT_.expression, any=False) or
+            self.value(action, CCT.expression, any=False))
         if isinstance(a, Literal):
             return str(a)
         elif not a:
