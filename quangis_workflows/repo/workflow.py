@@ -38,14 +38,10 @@ from typing import Iterator
 from cct import cct  # type: ignore
 from transforge.namespace import shorten
 from quangis_workflows.namespace import (
-    WF, RDF, CCD, CCT, CCT_, TOOL, DATA, SUPERTOOL, n3, bind_all)
+    WF, RDF, CCD, CCT, CCT_, n3)
 from quangis_workflows.types import Polytype, Dimension
 from quangis_workflows.repo.tool2url import tool2url
-from quangis_workflows.repo.signature import (SignatureRepo,
-    Signature, NoSignatureError)
-from quangis_workflows.repo.tool import Supertool
 
-from transforge.list import GraphList
 
 cctlang = cct
 
@@ -59,7 +55,7 @@ dimensions = [
 ]
 
 
-class ConcreteWorkflow(Graph):
+class Workflow(Graph):
     """
     Concrete workflow in old format.
     """
@@ -67,6 +63,12 @@ class ConcreteWorkflow(Graph):
     def __init__(self, *nargs, **kwargs) -> None:
         self._root: Node | None = None
         super().__init__(*nargs, **kwargs)
+
+    @staticmethod
+    def from_file(path: str | Path, format: str = "") -> Workflow:
+        g = Workflow()
+        g.parse(path, format=format or guess_format(str(path)))
+        return g
 
     @property
     def root(self) -> Node:
@@ -139,12 +141,6 @@ class ConcreteWorkflow(Graph):
 
         return ginputs, goutputs
 
-    @staticmethod
-    def from_file(path: str | Path, format: str = "") -> ConcreteWorkflow:
-        g = ConcreteWorkflow()
-        g.parse(path, format=format or guess_format(str(path)))
-        return g
-
     def high_level_actions(self, root: Node) -> Iterator[Node]:
         assert (root, RDF.type, WF.Workflow) in self
         for action in self.objects(root, WF.edge):
@@ -162,81 +158,19 @@ class ConcreteWorkflow(Graph):
             else:
                 yield action
 
-    def signed_actions(self, root: Node,
-            repo: SignatureRepo) -> Iterator[tuple[Node, Signature]]:
-        assert (root, RDF.type, WF.Workflow) in self
-
-        for action in self.high_level_actions(root):
-            proposal = self.propose_signature(action)
-            try:
-                sig = repo.find_signature(proposal)
-            except NoSignatureError:
-                impl = self.value(action, WF.applicationOf, any=False)
-                if impl and (impl, RDF.type, WF.Workflow) in self:
-                    yield from self.signed_actions(impl, repo)
-                else:
-                    raise
-            yield action, sig
-
-    def convert_to_signatures(self, root: Node, repo: SignatureRepo) -> Graph:
-        """Convert a (sub-)workflow that uses concrete tools to a workflow that 
-        uses only signatures."""
-
-        g = GraphList()
-        g.base = DATA
-        bind_all(g, default=TOOL)
-
-        assert (root, RDF.type, WF.Workflow) in self
-        g.add((root, RDF.type, WF.Workflow))
-
-        inputs, outputs = self.io(root)
-        for artefact in inputs:
-            g.add((root, WF.source, artefact))
-        for artefact in outputs:
-            g.add((root, WF.target, artefact))
-
-        for action, sig in self.signed_actions(root, repo):
-            assert sig.uri
-            g.add((root, WF.edge, action))
-            g.add((action, WF.applicationOf, sig.uri))
-            for i, artefact in enumerate(self.inputs(action), start=1):
-                g.add((action, WF[f"input{i}"], artefact))
-            for pred, artefact in zip([WF.output], self.outputs(action)):
-                g.add((action, pred, artefact))
-
-        return g
-
     def tool(self, action: Node) -> URIRef:
         """Assuming that the action represents an application of a concrete 
         tool, return the link to that tool."""
         uri = self.value(action, WF.applicationOf, any=False)
         assert isinstance(uri, URIRef)
-        assert (uri, RDF.type, WF.Workflow) not in self
-        return URIRef(tool2url[shorten(uri)])
-
-    def propose_tool(self, action: Node) -> tuple[str, URIRef | Supertool]:
-        """Find an implementation that matches this action. This is an 
-        expensive operation because, in the case of a supertool, a proposal 
-        supertool is extracted for checking."""
-        impl = self.value(action, WF.applicationOf, any=False)
-        assert impl
-        name = shorten(impl)
-
-        if (impl, RDF.type, WF.Workflow) in self:
-            supertool = Supertool(SUPERTOOL[name],
-                inputs=self.inputs(action),
-                outputs=self.outputs(action),
-                actions=((self.tool(sub), self.inputs(sub), self.outputs(sub))
-                    for sub in self.low_level_actions(impl)))
-            return name, supertool
-        else:
-            return name, URIRef(tool2url[name])
-
-    def propose_signature(self, action: Node) -> Signature:
-        """Create a new signature proposal from an action in a workflow."""
-        return Signature(
-            inputs=[self.type(artefact) for artefact in self.inputs(action)],
-            outputs=[self.type(artefact) for artefact in self.outputs(action)],
-            cct=self.cct(action),
-            impl=self.tool(action)
-        )
+        name = shorten(uri)
+        if (uri, RDF.type, WF.Workflow) in self:
+            raise RuntimeError(
+                f"{name} is not a concrete tool, but a subworkflow.")
+        try:
+            uri_real = tool2url[name]
+        except KeyError:
+            raise RuntimeError(
+                f"{name} is a concrete tool, but it is unknown."
+            )
+        return URIRef(uri_real)

@@ -7,11 +7,13 @@ from rdflib.term import URIRef, Node, BNode
 from rdflib.compare import isomorphic
 from typing import Iterable
 from transforge.list import GraphList
+from transforge.namespace import shorten
 
+from quangis_workflows.repo.workflow import Workflow
 from quangis_workflows.repo.tool2url import tool2url
-from quangis_workflows.namespace import n3, RDF, TOOL
+from quangis_workflows.namespace import n3, RDF, TOOL, WF, SUPERTOOL
 
-class UnknownToolError(Exception):
+class ToolNotFoundError(Exception):
     pass
 
 
@@ -44,6 +46,25 @@ class Supertool(GraphList):
             self._add_action(tool,
                 [map[x] for x in inputs],
                 [map[x] for x in outputs])
+
+    @staticmethod
+    def propose(wf: Workflow, action: Node) -> URIRef | Supertool:
+        """Propose a tool or supertool that implements this action. This is an 
+        expensive operation because, in the case of a supertool, a proposal 
+        supertool is extracted."""
+        impl = wf.value(action, WF.applicationOf, any=False)
+        assert impl
+        name = shorten(impl)
+
+        if (impl, RDF.type, WF.Workflow) in wf:
+            supertool = Supertool(SUPERTOOL[name],
+                inputs=wf.inputs(action),
+                outputs=wf.outputs(action),
+                actions=((wf.tool(sub), wf.inputs(sub), wf.outputs(sub))
+                    for sub in wf.low_level_actions(impl)))
+            return supertool
+        else:
+            return URIRef(tool2url[name])
 
     def _add_action(self, tool: URIRef,
            inputs: Iterable[BNode], outputs: Iterable[BNode]) -> None:
@@ -94,16 +115,17 @@ class ToolRepo(object):
                 if tool.match(self.supertools[tool.uri]):
                     return tool.uri
                 else:
-                    raise UnknownToolError(f"{n3(tool.uri)} can be found, but "
-                        f"doesn't match the given supertool of the same name.")
+                    raise ToolNotFoundError(
+                        f"{n3(tool.uri)} can be found, but it does not match"
+                        f"the given supertool of the same name.")
 
             for candidate in self.supertools.values():
                 if tool.match(candidate):
                     return candidate.uri
 
-            raise UnknownToolError(
+            raise ToolNotFoundError(
                 f"There is no supertool like {n3(tool.uri)} in the tool "
-                f" repository.")
+                f"repository.")
         else:
             return tool
 
