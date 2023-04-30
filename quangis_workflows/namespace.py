@@ -68,3 +68,11 @@ def n3(
         return f"{{{', '.join(n3(x, nm) for x in node)}}}"
     assert isinstance(node, URIRef)
     return node.n3(nm)
+
+def bind_all(g: Graph, default: Namespace | None = None):
+    for prefix, namespace in namespaces.items():
+        if namespace != default:
+            g.bind(prefix, namespace)
+        else:
+            g.bind("", namespace)
+Graph.bind_all = bind_all

@@ -42,8 +42,7 @@ from typing import Iterator, Iterable
 from cct import cct  # type: ignore
 from transforge.namespace import shorten
 from quangis_workflows.namespace import (
-    WF, RDF, CCD, CCT, CCT_, TOOLS, TOOL, DATA, SUPERTOOL, SIG, ARC, n3, 
-    namespaces)
+    WF, RDF, CCD, CCT, CCT_, TOOL, DATA, SUPERTOOL, SIG, n3, bind_all)
 from quangis_workflows.types import Polytype, Dimension
 from quangis_workflows.tool2url import tool2url
 
@@ -180,9 +179,10 @@ class RepoSignatures(object):
                     and sig.matches_cct(proposal)):
                 return sig
 
-        sigs = set(s.uri for s in self.signatures.values()
-            if s.covers_implementation(proposal))
-        raise NoSignatureError(f"The repository contains no matching "
+        sigs: set[Node] = set(s.uri for s in self.signatures.values()
+            if s.covers_implementation(proposal) if s.uri)
+        raise NoSignatureError(
+            f"The repository contains no matching "
             f"signature for an application of {n3(proposal.implementations)}. "
             f"The following signatures do exist for this tool: "
             f"{n3(sigs)}")
@@ -261,15 +261,7 @@ class RepoSignatures(object):
 
     def graph(self) -> Graph:
         g = GraphList()
-        g.bind("", TOOL)
-        g.bind("tools", TOOLS)
-        g.bind("sig", SIG)
-        g.bind("supertool", SUPERTOOL)
-        g.bind("ccd", CCD)
-        g.bind("cct_", CCT_)
-        g.bind("cct", CCT)
-        g.bind("data", DATA)
-        g.bind("arc", ARC)
+        bind_all(g, TOOL)
 
         for sig in self.signatures.values():
             assert isinstance(sig.uri, URIRef)
@@ -413,9 +405,9 @@ class ConcreteWorkflow(Graph):
         assert (root, RDF.type, WF.Workflow) in self
 
         for action in self.high_level_actions(root):
-            action_sig = self.signature(action)
+            proposal = self.propose_signature(action)
             try:
-                sig = repo.find_signature(action_sig)
+                sig = repo.find_signature(proposal)
             except NoSignatureError:
                 impl = self.value(action, WF.applicationOf, any=False)
                 if impl and (impl, RDF.type, WF.Workflow) in self:
@@ -430,10 +422,7 @@ class ConcreteWorkflow(Graph):
 
         g = GraphList()
         g.base = DATA
-        g.bind("", TOOL)
-        for prefix, ns in namespaces.items():
-            if prefix != "tool":
-                g.bind(prefix, ns)
+        bind_all(g, default=TOOL)
 
         assert (root, RDF.type, WF.Workflow) in self
         g.add((root, RDF.type, WF.Workflow))
