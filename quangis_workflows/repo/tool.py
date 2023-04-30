@@ -21,9 +21,12 @@ class ToolNotFoundError(Exception):
 class Supertool(GraphList):
     """A supertool is a workflow *schema*."""
 
-    def __init__(self, uri: URIRef,
-            inputs: Iterable[Node], outputs: Iterable[Node],
-            actions: Iterable[tuple[URIRef, Iterable[Node], Iterable[Node]]]):
+    def __init__(self, name: str,
+            inputs: Iterable[Node],
+            outputs: Iterable[Node],
+            actions: Iterable[tuple[URIRef, Iterable[Node], Iterable[Node]]],
+            origin: Node | None = None
+            ) -> None:
 
         super().__init__()
 
@@ -33,7 +36,9 @@ class Supertool(GraphList):
         map: dict[Node, BNode] = defaultdict(
             lambda: BNode(f"{code}{next(counter)}"))
 
-        self.uri = uri
+        self.name = name
+        self.origin = origin
+        self.uri = uri = SUPERTOOL[name]
         self.inputs = [map[x] for x in inputs]
         self.outputs = [map[x] for x in outputs]
         self.all_inputs: set[BNode] = set()
@@ -58,11 +63,12 @@ class Supertool(GraphList):
         name = shorten(impl)
 
         if (impl, RDF.type, WF.Workflow) in wf:
-            supertool = Supertool(SUPERTOOL[name],
+            supertool = Supertool(name,
                 inputs=wf.inputs(action),
                 outputs=wf.outputs(action),
                 actions=((wf.tool(sub), wf.inputs(sub), wf.outputs(sub))
-                    for sub in wf.low_level_actions(impl)))
+                    for sub in wf.low_level_actions(impl)),
+                origin=action)
             return supertool
         else:
             return URIRef(tool2url[name])
@@ -92,7 +98,8 @@ class Supertool(GraphList):
         out1 = self.all_outputs - self.all_inputs
         out2 = set(self.outputs)
         if not (in1 == in2 and out1 == out2):
-            raise RuntimeError(f"In supertool {n3(self.uri)}, there are "
+            raise RuntimeError(f"In supertool '{self.name}', originally "
+                f"in tool application {n3(self.origin)}, there are "
                 f"loose inputs or outputs.")
 
 
@@ -140,7 +147,7 @@ class ToolRepo(object):
 
     def graph(self) -> Graph:
         g = Graph()
-        bind_all(g)
+        bind_all(g, default=TOOL)
         for supertool in self.supertools.values():
             g += supertool
         return g

@@ -200,7 +200,7 @@ class SignatureRepo(object):
 
             for impl in sig.implementations:
                 g.add((sig.uri, TOOL.implementation, impl))
-                g.add((impl, TOOL.signature, sig.uri))
+                # g.add((impl, TOOL.signature, sig.uri))
 
             inputs = []
             for i in range(len(sig.inputs)):
@@ -291,6 +291,7 @@ def update_repositories(sigs: SignatureRepo, tools: ToolRepo,
     else:
         proposal_sig.uri = sigs.generate_name(shorten(impl_orig))
         sigs.signatures[proposal_sig.uri] = proposal_sig
+        proposal_sig.implementations.add(impl_uri)
         return proposal_sig.uri
 
 def update_repositories2(sigs: SignatureRepo, tools: ToolRepo, wf: Workflow):
