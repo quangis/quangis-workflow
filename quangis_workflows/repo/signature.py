@@ -5,7 +5,7 @@ from transforge.list import GraphList
 from itertools import chain, count
 
 from quangis_workflows.types import Polytype
-from quangis_workflows.repo.tool import RepoTools
+from quangis_workflows.repo.tool import ToolRepo
 from quangis_workflows.namespace import bind_all, n3, SIG, CCT, RDF, WF, TOOL
 from cct import cct
 
@@ -84,7 +84,7 @@ class Signature(object):
         )
 
 
-class RepoSignatures(object):
+class SignatureRepo(object):
     """
     A signature repository contains abstract versions of tools.
     """
@@ -94,13 +94,6 @@ class RepoSignatures(object):
 
         # Signatures (abstract tools)
         self.signatures: dict[URIRef, Signature] = dict()
-
-        # Ensembles of concrete tools (workflow schemas)
-        self.tools = RepoTools()
-
-    @staticmethod
-    def from_file(self) -> RepoSignatures:
-        raise NotImplementedError
 
     def __contains__(self, sig: URIRef) -> bool:
         return sig in self.signatures
@@ -126,13 +119,13 @@ class RepoSignatures(object):
         sigs: set[Node] = set(s.uri for s in self.signatures.values()
             if s.covers_implementation(proposal) if s.uri)
         raise NoSignatureError(
-            f"The repository contains no matching "
-            f"signature for an application of {n3(proposal.implementations)}. "
-            f"The following signatures do exist for this tool: "
-            f"{n3(sigs)}")
+            f"The repository contains no signature for an application of "
+            f"{'/'.join(n3(impl) for impl in proposal.implementations)}. "
+            f"The following signatures exist for other applications of this "
+            f"tool: {n3(sigs)}")
 
     def analyze_action(self, wf: ConcreteWorkflow,
-            action: Node) -> URIRef | None:
+            action: Node, toolrepo: ToolRepo) -> URIRef | None:
         """
         Analyze a single action (application of a tool or workflow) and figure 
         out what spec it belongs to. As a side-effect, update the repository of 
@@ -149,7 +142,7 @@ class RepoSignatures(object):
             return None
 
         impl_name, impl = wf.propose_tool(action)
-        impl_uri = self.tools.find_tool(impl)
+        impl_uri = toolrepo.find_tool(impl)
 
         # TODO: Finding the signature should be done differently for a workflow 
         # than for a concrete tool, because we can work off different 
@@ -211,11 +204,11 @@ class RepoSignatures(object):
             assert isinstance(sig.uri, URIRef)
 
             g.add((sig.uri, RDF.type, TOOL.Signature))
+            g.add((sig.uri, CCT.expression, Literal(sig.cct)))
 
             for impl in sig.implementations:
                 g.add((sig.uri, TOOL.implementation, impl))
-                if impl in self.tools.supertools:
-                    g.add((impl, TOOL.signature, sig.uri))
+                g.add((impl, TOOL.signature, sig.uri))
 
             inputs = []
             for i in range(len(sig.inputs)):
@@ -232,10 +225,5 @@ class RepoSignatures(object):
                     g.add((artefact, RDF.type, uri))
                 outputs.append(artefact)
             g.add((sig.uri, TOOL.outputs, g.add_list(outputs)))
-
-            g.add((sig.uri, CCT.expression, Literal(sig.cct)))
-
-        for tool, wf in self.tools.supertools.items():
-            g += wf
 
         return g

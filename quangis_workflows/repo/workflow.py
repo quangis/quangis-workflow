@@ -40,8 +40,8 @@ from transforge.namespace import shorten
 from quangis_workflows.namespace import (
     WF, RDF, CCD, CCT, CCT_, TOOL, DATA, SUPERTOOL, n3, bind_all)
 from quangis_workflows.types import Polytype, Dimension
-from quangis_workflows.tool2url import tool2url
-from quangis_workflows.repo.signature import (RepoSignatures,
+from quangis_workflows.repo.tool2url import tool2url
+from quangis_workflows.repo.signature import (SignatureRepo,
     Signature, NoSignatureError)
 from quangis_workflows.repo.tool import Supertool
 
@@ -163,7 +163,7 @@ class ConcreteWorkflow(Graph):
                 yield action
 
     def signed_actions(self, root: Node,
-            repo: RepoSignatures) -> Iterator[tuple[Node, Signature]]:
+            repo: SignatureRepo) -> Iterator[tuple[Node, Signature]]:
         assert (root, RDF.type, WF.Workflow) in self
 
         for action in self.high_level_actions(root):
@@ -178,7 +178,7 @@ class ConcreteWorkflow(Graph):
                     raise
             yield action, sig
 
-    def convert_to_signatures(self, root: Node, repo: RepoSignatures) -> Graph:
+    def convert_to_signatures(self, root: Node, repo: SignatureRepo) -> Graph:
         """Convert a (sub-)workflow that uses concrete tools to a workflow that 
         uses only signatures."""
 
