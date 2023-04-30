@@ -28,23 +28,22 @@ CCT types.
 
 from __future__ import annotations
 
-import random
-import string
 from rdflib import Graph
-from rdflib.compare import isomorphic
-from rdflib.term import Node, BNode, URIRef, Literal
+from rdflib.term import Node, URIRef, Literal
 from rdflib.util import guess_format
 from pathlib import Path
-from itertools import count, chain
-from collections import defaultdict
-from typing import Iterator, Iterable
+from itertools import count
+from typing import Iterator
 
 from cct import cct  # type: ignore
 from transforge.namespace import shorten
 from quangis_workflows.namespace import (
-    WF, RDF, CCD, CCT, CCT_, TOOL, DATA, SUPERTOOL, SIG, n3, bind_all)
+    WF, RDF, CCD, CCT, CCT_, TOOL, DATA, SUPERTOOL, n3, bind_all)
 from quangis_workflows.types import Polytype, Dimension
 from quangis_workflows.tool2url import tool2url
+from quangis_workflows.repo.signature import (RepoSignatures,
+    Signature, NoSignatureError)
+from quangis_workflows.repo.tool import Supertool
 
 from transforge.list import GraphList
 
@@ -58,243 +57,6 @@ dimensions = [
     Dimension(root, type_graph)
     for root in [CCD.CoreConceptQ, CCD.LayerA, CCD.NominalA]
 ]
-
-
-class NoSignatureError(Exception):
-    pass
-
-
-class EmptyTransformationError(Exception):
-    pass
-
-
-class Action(object):
-    pass
-
-
-class Signature(object):
-    """A tool signature is an abstract specification of a tool. It may 
-    correspond to one or more concrete tools, or even ensembles of tools. It 
-    must describe the format of its input and output (ie the core concept 
-    datatypes) and it may describe its purpose (in terms of a core concept 
-    transformation expression).
-
-    A signature may be implemented by multiple (super)tools, because, for 
-    example, a tool could be implemented in both QGIS and ArcGIS. Conversely, 
-    multiple signatures may be implemented by the same (super)tool, if it can 
-    be used in multiple contexts --- in the same way that a hammer can be used 
-    either to drive a nail into a plank of wood or to break a piggy bank."""
-
-    def __init__(self,
-            inputs: list[Polytype],
-            outputs: list[Polytype],
-            cct: str | None,
-            impl: URIRef | None = None) -> None:
-        self.inputs: list[Polytype] = inputs
-        self.outputs: list[Polytype] = outputs
-        self.cct: str | None = cct
-
-        self.uri: URIRef | None = None
-        self.description: str | None = None
-        self.implementations: set[URIRef] = set()
-        if impl:
-            self.implementations.add(impl)
-
-        self.cct_p = cctlang.parse(cct, defaults=True) if cct else None
-
-    def covers_implementation(self, candidate: Signature) -> bool:
-        return candidate.implementations.issubset(self.implementations)
-
-    def matches_cct(self, candidate: Signature) -> bool:
-        """Check that the expression of the candidate matches the expression 
-        associated with this one. Note that a non-matching expression doesn't 
-        mean that tools are actually semantically different, since there are 
-        multiple ways to express the same idea (consider `compose f g x` vs 
-        `f(g(x))`). Therefore, some manual intervention may be necessary."""
-        return (self.cct_p and candidate.cct_p
-            and self.cct_p.match(candidate.cct_p))
-
-    def subsumes_datatype(self, candidate: Signature) -> bool:
-        """If the inputs in the candidate signature are subtypes of the ones in 
-        this one (and the outputs are supertypes), then this signature *covers* 
-        the other signature. If the reverse is true, then this signature is 
-        narrower than what the candidate one requires, which suggests that it 
-        should be generalized. If the candidate signature is neither covered by 
-        this one nor generalizes it, then the two signatures are 
-        independent."""
-
-        # For now, we do not take into account permutations. We probably 
-        # should, since even in the one test that I did (wffood), we see that 
-        # SelectLayerByLocationPointObjects has two variants with just the 
-        # order of the inputs flipped.
-        il = len(self.inputs)
-        ol = len(self.outputs)
-        if il != ol:
-            return False
-
-        return (
-            all(candidate.inputs[k1].subtype(self.inputs[k2])
-                for k1, k2 in zip(range(il), range(il)))
-            and all(self.outputs[k1].subtype(candidate.outputs[k2])
-                for k1, k2 in zip(range(ol), range(ol)))
-        )
-
-
-class RepoSignatures(object):
-    """
-    A signature repository contains abstract versions of tools.
-    """
-
-    def __init__(self, *nargs, **kwargs) -> None:
-        super().__init__(*nargs, **kwargs)
-
-        # Signatures (abstract tools)
-        self.signatures: dict[URIRef, Signature] = dict()
-
-        # Ensembles of concrete tools (workflow schemas)
-        self.tools = RepoTools()
-
-    @staticmethod
-    def from_file(self) -> RepoSignatures:
-        raise NotImplementedError
-
-    def __contains__(self, sig: URIRef) -> bool:
-        return sig in self.signatures
-
-    def generate_name(self, base: str) -> URIRef:
-        """
-        Generate a name for a signature based on an existing concrete tool.
-        """
-        for i in chain([""], count(start=2)):
-            uri = SIG[f"{base}{i}"]
-            if uri not in self:
-                return uri
-        raise RuntimeError("Unreachable")
-
-    def find_signature(self, proposal: Signature) -> Signature:
-        """Find a signature that matches the proposed signature."""
-        for sig in self.signatures.values():
-            if (sig.covers_implementation(proposal)
-                    and sig.subsumes_datatype(proposal)
-                    and sig.matches_cct(proposal)):
-                return sig
-
-        sigs: set[Node] = set(s.uri for s in self.signatures.values()
-            if s.covers_implementation(proposal) if s.uri)
-        raise NoSignatureError(
-            f"The repository contains no matching "
-            f"signature for an application of {n3(proposal.implementations)}. "
-            f"The following signatures do exist for this tool: "
-            f"{n3(sigs)}")
-
-    def analyze_action(self, wf: ConcreteWorkflow,
-            action: Node) -> URIRef | None:
-        """
-        Analyze a single action (application of a tool or workflow) and figure 
-        out what spec it belongs to. As a side-effect, update the repository of 
-        tool specifications if necessary.
-        """
-
-        impl_orig = wf.value(action, WF.applicationOf, any=False)
-        assert impl_orig
-
-        candidate = wf.propose_signature(action)
-        if not candidate.cct:
-            print(f"Skipping an application of {n3(impl_orig)} because it "
-                f"has no CCT expression.""")
-            return None
-
-        impl_name, impl = wf.propose_tool(action)
-        impl_uri = self.tools.find_tool(impl)
-
-        # TODO: Finding the signature should be done differently for a workflow 
-        # than for a concrete tool, because we can work off different 
-        # assumptions. Do so later.
-
-        # Find out how other signatures relate to the candidate sig
-        supersig: Signature | None = None
-        subsigs: list[Signature] = []
-        for uri, sig in self.signatures.items():
-            # Is the URI the same?
-            if impl not in sig.implementations:
-                continue
-
-            # Is the CCT expression the same?
-            if not candidate.matches_cct(sig):
-                continue
-
-            # Is the CCD type the same?
-            if candidate.subsumes_datatype(sig):
-                assert not supersig
-                supersig = sig
-            elif sig.subsumes_datatype(candidate):
-                subsigs.append(sig)
-
-        assert not (supersig and subsigs), """If this assertion fails, the tool 
-        repository already contains too many specs."""
-
-        # If there is a signature that covers this action, we simply add the 
-        # corresponding tool/workflow as one of its implementations
-        if supersig:
-            supersig.implementations.add(impl_uri)
-            return supersig.uri
-
-        # If the signature is a more general version of existing signature(s), 
-        # then we must update the outdated specs.
-        elif subsigs:
-            assert len(subsigs) <= 1, """If there are multiple specs to 
-            replace, we must merge specs and deal with changes to the abstract 
-            workflow repository, so let's exclude that possibility for now."""
-            subsigs[0].inputs = candidate.inputs
-            subsigs[0].outputs = candidate.outputs
-            return subsigs[0].uri
-
-        # If neither of the above is true, the action merits an all-new spec
-        else:
-            candidate.uri = self.generate_name(impl_name)
-            self.signatures[candidate.uri] = candidate
-            return candidate.uri
-
-    def collect(self, wf: ConcreteWorkflow):
-        for action, impl in wf.subject_objects(WF.applicationOf):
-            self.analyze_action(wf, action)
-
-    def graph(self) -> Graph:
-        g = GraphList()
-        bind_all(g, TOOL)
-
-        for sig in self.signatures.values():
-            assert isinstance(sig.uri, URIRef)
-
-            g.add((sig.uri, RDF.type, TOOL.Signature))
-
-            for impl in sig.implementations:
-                g.add((sig.uri, TOOL.implementation, impl))
-                if impl in self.tools.supertools:
-                    g.add((impl, TOOL.signature, sig.uri))
-
-            inputs = []
-            for i in range(len(sig.inputs)):
-                artefact = BNode()
-                for uri in sig.inputs[i].uris():
-                    g.add((artefact, RDF.type, uri))
-                inputs.append(artefact)
-            g.add((sig.uri, TOOL.inputs, g.add_list(inputs)))
-
-            outputs = []
-            for i in range(len(sig.outputs)):
-                artefact = BNode()
-                for uri in sig.outputs[i].uris():
-                    g.add((artefact, RDF.type, uri))
-                outputs.append(artefact)
-            g.add((sig.uri, TOOL.outputs, g.add_list(outputs)))
-
-            g.add((sig.uri, CCT.expression, Literal(sig.cct)))
-
-        for tool, wf in self.tools.supertools.items():
-            g += wf
-
-        return g
 
 
 class ConcreteWorkflow(Graph):
@@ -444,15 +206,6 @@ class ConcreteWorkflow(Graph):
 
         return g
 
-    def propose_signature(self, action: Node) -> Signature:
-        """Create a new signature proposal from an action in a workflow."""
-        return Signature(
-            inputs=[self.type(artefact) for artefact in self.inputs(action)],
-            outputs=[self.type(artefact) for artefact in self.outputs(action)],
-            cct=self.cct(action),
-            impl=self.tool(action)
-        )
-
     def tool(self, action: Node) -> URIRef:
         """Assuming that the action represents an application of a concrete 
         tool, return the link to that tool."""
@@ -479,104 +232,11 @@ class ConcreteWorkflow(Graph):
         else:
             return name, URIRef(tool2url[name])
 
-
-class UnknownToolError(Exception):
-    pass
-
-
-class RepoTools(object):
-    # TODO input/output permutations
-
-    tools = tool2url
-
-    def __init__(self) -> None:
-        self.supertools: dict[URIRef, Supertool] = dict()
-
-    def find_tool(self, tool: URIRef | Supertool) -> URIRef:
-        """Find a (super)tool in this tool repository that matches the given 
-        tool, even if the name of the supertool is different. This is an 
-        expensive operation because, in the case of a supertool, a proposal 
-        supertool is extracted and checked for isomorphism with existing 
-        supertools."""
-        if isinstance(tool, Supertool):
-
-            if (tool.uri in self.supertools):
-                if tool.match(self.supertools[tool.uri]):
-                    return tool.uri
-                else:
-                    raise UnknownToolError(f"{n3(tool.uri)} can be found, but "
-                        f"doesn't match the given supertool of the same name.")
-
-            for candidate in self.supertools.values():
-                if tool.match(candidate):
-                    return candidate.uri
-
-            raise UnknownToolError(
-                f"{n3(tool.uri)} isn't in the tool repository.")
-        else:
-            return tool
-
-    def register_supertool(self, supertool: Supertool) -> Supertool:
-        supertool.sanity_check()
-        if (supertool.uri in self.supertools and not
-                supertool.match(self.supertools[supertool.uri])):
-            raise RuntimeError
-        self.supertools[supertool.uri] = supertool
-        return supertool
-
-
-class Supertool(GraphList):
-    """A supertool is a workflow schema."""
-
-    def __init__(self, uri: URIRef,
-            inputs: Iterable[Node], outputs: Iterable[Node],
-            actions: Iterable[tuple[URIRef, Iterable[Node], Iterable[Node]]]):
-
-        super().__init__()
-
-        code = ''.join(random.choice(string.ascii_lowercase) for i in range(4))
-
-        map: dict[Node, BNode] = defaultdict(
-            lambda counter=count(): BNode(f"{code}{next(counter)}"))
-
-        self.uri = uri
-        self.inputs = [map[x] for x in inputs]
-        self.outputs = [map[x] for x in outputs]
-        self.all_inputs: set[BNode] = set()
-        self.all_outputs: set[BNode] = set()
-        self.tools: set[URIRef] = set()
-
-        self.add((uri, RDF.type, TOOL.Supertool))
-        self.add((uri, TOOL.inputs, self.add_list(self.inputs)))
-        self.add((uri, TOOL.outputs, self.add_list(self.outputs)))
-        for tool, inputs, outputs in actions:
-            self._add_action(tool,
-                [map[x] for x in inputs],
-                [map[x] for x in outputs])
-
-    def _add_action(self, tool: URIRef,
-           inputs: Iterable[BNode], outputs: Iterable[BNode]) -> None:
-        inputs = inputs if isinstance(inputs, list) else list(inputs)
-        outputs = outputs if isinstance(outputs, list) else list(outputs)
-        self.all_inputs.update(inputs)
-        self.all_outputs.update(outputs)
-
-        action = BNode()
-        self.tools.add(tool)
-        self.add((self.uri, TOOL.action, action))
-        self.add((action, TOOL.apply, tool))
-        self.add((action, TOOL.inputs, self.add_list(inputs)))
-        self.add((action, TOOL.outputs, self.add_list(outputs)))
-
-    def match(self, other: Supertool) -> bool:
-        return other.tools == self.tools and isomorphic(self, other)
-
-    def sanity_check(self):
-        """Sanity check."""
-        in1 = self.all_inputs - self.all_outputs
-        in2 = set(self.inputs)
-        out1 = self.all_outputs - self.all_inputs
-        out2 = set(self.outputs)
-        if not (in1 == in2 and out1 == out2):
-            raise RuntimeError(f"In supertool {n3(self.uri)}, there are "
-                f"loose inputs or outputs.")
+    def propose_signature(self, action: Node) -> Signature:
+        """Create a new signature proposal from an action in a workflow."""
+        return Signature(
+            inputs=[self.type(artefact) for artefact in self.inputs(action)],
+            outputs=[self.type(artefact) for artefact in self.outputs(action)],
+            cct=self.cct(action),
+            impl=self.tool(action)
+        )
