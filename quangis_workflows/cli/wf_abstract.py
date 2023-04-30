@@ -30,19 +30,18 @@ class CLI(cli.Application):
         sigs = SignatureRepo()
         tools = ToolRepo()
         for file in FILE:
-            cwf = Workflow.from_file(file)
-            update_repositories2(sigs, tools, cwf)
+            try:
+                cwf = Workflow.from_file(file)
+                update_repositories2(sigs, tools, cwf)
+                g = sigs.convert_to_signatures(cwf, cwf.root, tools)
+                g.serialize(f"{file.stem}_abstract.ttl", format="turtle")
 
-        sigs.graph().serialize("repo.ttl", format="turtle")
-        sigs.graph().serialize("repo.xml", format="xml")
+            except Exception as e:
+                print(f"Skipping {file} because of the following error: {e}")
+            else:
+                print(f"Successfully processed {file}")
 
-        for file in FILE:
-            print(file)
-            cwf = Workflow.from_file(file)
-            g = sigs.convert_to_signatures(cwf, cwf.root, tools)
-            g.serialize(f"{file.stem}_abstract.xml", format="xml")
-            g.serialize(f"{file.stem}_abstract.ttl", format="turtle")
-
+        (sigs.graph() + tools.graph()).serialize("repo.ttl", format="turtle")
 
 def main():
     CLI.run()
