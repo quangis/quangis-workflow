@@ -4,8 +4,10 @@ import platform
 from glob import glob
 from pathlib import Path
 
-from quangis_workflows.tool_repo import (
-    ConcreteWorkflow, RepoSignatures)
+from quangis_workflows.repo.tool import ToolRepo
+from quangis_workflows.repo.signature import SignatureRepo, \
+    update_repositories2
+from quangis_workflows.repo.workflow import Workflow
 
 
 class CLI(cli.Application):
@@ -25,18 +27,19 @@ class CLI(cli.Application):
 
         # TODO as long as the tool repository cannot be read, we just construct 
         # it from the ground up. Should definitely be changed
-        repo = RepoSignatures()
+        sigs = SignatureRepo()
+        tools = ToolRepo()
         for file in FILE:
-            cwf = ConcreteWorkflow.from_file(file)
-            repo.collect(cwf)
+            cwf = Workflow.from_file(file)
+            update_repositories2(sigs, tools, cwf)
 
-        repo.graph().serialize("repo.ttl", format="turtle")
-        repo.graph().serialize("repo.xml", format="xml")
+        sigs.graph().serialize("repo.ttl", format="turtle")
+        sigs.graph().serialize("repo.xml", format="xml")
 
         for file in FILE:
             print(file)
-            cwf = ConcreteWorkflow.from_file(file)
-            g = cwf.abstraction(cwf.root, repo)
+            cwf = Workflow.from_file(file)
+            g = sigs.convert_to_signatures(cwf, cwf.root, tools)
             g.serialize(f"{file.stem}_abstract.xml", format="xml")
             g.serialize(f"{file.stem}_abstract.ttl", format="turtle")
 

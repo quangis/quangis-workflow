@@ -45,7 +45,7 @@ from quangis_workflows.repo.tool2url import tool2url
 
 cctlang = cct
 
-root_dir = Path(__file__).parent.parent
+root_dir = Path(__file__).parent.parent.parent
 type_graph = Graph()
 type_graph.parse(root_dir / "CoreConceptData.rdf", format="xml")
 

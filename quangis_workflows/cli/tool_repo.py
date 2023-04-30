@@ -3,8 +3,10 @@ from plumbum import cli  # type: ignore
 import platform
 from glob import glob
 
-from quangis_workflows.tool_repo import (
-    ConcreteWorkflow, ToolRepository)
+from quangis_workflows.repo.workflow import Workflow
+from quangis_workflows.repo.tool import ToolRepo
+from quangis_workflows.repo.signature import (SignatureRepo, 
+    update_repositories2)
 
 
 class CLI(cli.Application):
@@ -22,11 +24,14 @@ class CLI(cli.Application):
             FILE = tuple(globbed for original in FILE
                 for globbed in glob(original))
 
-        repo = ToolRepository()
+        sigs = SignatureRepo()
+        tools = ToolRepo()
         for file in FILE:
-            cwf = ConcreteWorkflow.from_file(file)
-            repo.collect(cwf)
-        print(repo.graph().serialize(format="turtle"))
+            cwf = Workflow.from_file(file)
+            update_repositories2(sigs, tools, cwf)
+        print(sigs.graph().serialize(format="turtle"))
+        print(tools.graph().serialize(format="turtle"))
+
         # repo.graph().serialize("repo.ttl", format="turtle")
         # repo.graph().serialize("repo.xml", format="xml")
 

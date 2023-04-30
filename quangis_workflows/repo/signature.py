@@ -188,82 +188,6 @@ class SignatureRepo(object):
 
         return g
 
-    def analyze_action(self, wf: Workflow,
-            action: Node, tools: ToolRepo) -> URIRef | None:
-        """Analyze a single action (application of a tool or workflow) and 
-        figure out the (super)tool it uses, as well as the signature it belongs 
-        to. Both will be created, if necessary. This must be done in tandem, 
-        because a supertool need only be created when there's a signature with 
-        which to associate it."""
-
-        impl_orig = wf.value(action, WF.applicationOf, any=False)
-        assert impl_orig
-
-        proposal_sig = Signature.propose(wf, action)
-        if not proposal_sig.cct:
-            # print(f"Skipping an application of {n3(impl_orig)} because it "
-            #     f"has no CCT expression.""")
-            return None
-
-        proposal_imp = Supertool.propose(wf, action)
-        try:
-            impl_uri = tools.find_tool(proposal_imp)
-        except ToolNotFoundError:
-            assert isinstance(proposal_imp, Supertool)
-            impl_uri = tools.register_supertool(proposal_imp).uri
-
-        # TODO: Finding the signature should be done differently for a workflow 
-        # than for a concrete tool, because we can work off different 
-        # assumptions. Do so later.
-
-        # Find out how other signatures relate to the candidate sig
-        supersig: Signature | None = None
-        subsigs: list[Signature] = []
-        for uri, sig in self.signatures.items():
-            # Is the URI the same?
-            if impl_uri not in sig.implementations:
-                continue
-
-            # Is the CCT expression the same?
-            if not proposal_sig.matches_cct(sig):
-                continue
-
-            # Is the CCD type the same?
-            if proposal_sig.subsumes_datatype(sig):
-                assert not supersig
-                supersig = sig
-            elif sig.subsumes_datatype(proposal_sig):
-                subsigs.append(sig)
-
-        assert not (supersig and subsigs), """If this assertion fails, the tool 
-        repository already contains too many specs."""
-
-        # If there is a signature that covers this action, we simply add the 
-        # corresponding tool/workflow as one of its implementations
-        if supersig:
-            supersig.implementations.add(impl_uri)
-            return supersig.uri
-
-        # If the signature is a more general version of existing signature(s), 
-        # then we must update the outdated specs.
-        elif subsigs:
-            assert len(subsigs) <= 1, """If there are multiple specs to 
-            replace, we must merge specs and deal with changes to the abstract 
-            workflow repository, so let's exclude that possibility for now."""
-            subsigs[0].inputs = proposal_sig.inputs
-            subsigs[0].outputs = proposal_sig.outputs
-            return subsigs[0].uri
-
-        # If neither of the above is true, the action merits an all-new spec
-        else:
-            proposal_sig.uri = self.generate_name(shorten(impl_orig))
-            self.signatures[proposal_sig.uri] = proposal_sig
-            return proposal_sig.uri
-
-    def collect(self, wf: Workflow, tools: ToolRepo):
-        for action, impl in wf.subject_objects(WF.applicationOf):
-            self.analyze_action(wf, action, tools)
-
     def graph(self) -> Graph:
         g = GraphList()
         bind_all(g, TOOL)
@@ -295,3 +219,80 @@ class SignatureRepo(object):
             g.add((sig.uri, TOOL.outputs, g.add_list(outputs)))
 
         return g
+
+
+def update_repositories(sigs: SignatureRepo, tools: ToolRepo,
+        wf: Workflow, action: Node) -> URIRef | None:
+    """Analyze a single action (application of a tool or workflow) and 
+    figure out the (super)tool it uses, as well as the signature it belongs 
+    to. Both will be created, if necessary. This must be done in tandem, 
+    because a supertool need only be created when there's a signature with 
+    which to associate it."""
+
+    impl_orig = wf.value(action, WF.applicationOf, any=False)
+    assert impl_orig
+
+    proposal_sig = Signature.propose(wf, action)
+    if not proposal_sig.cct:
+        # print(f"Skipping an application of {n3(impl_orig)} because it "
+        #     f"has no CCT expression.""")
+        return None
+
+    proposal_imp = Supertool.propose(wf, action)
+    try:
+        impl_uri = tools.find_tool(proposal_imp)
+    except ToolNotFoundError:
+        assert isinstance(proposal_imp, Supertool)
+        impl_uri = tools.register_supertool(proposal_imp).uri
+
+    # TODO: Finding the signature should be done differently for a workflow 
+    # than for a concrete tool, because we can work off different 
+    # assumptions. Do so later.
+
+    # Find out how other signatures relate to the candidate sig
+    supersig: Signature | None = None
+    subsigs: list[Signature] = []
+    for uri, sig in sigs.signatures.items():
+        # Is the URI the same?
+        if impl_uri not in sig.implementations:
+            continue
+
+        # Is the CCT expression the same?
+        if not proposal_sig.matches_cct(sig):
+            continue
+
+        # Is the CCD type the same?
+        if proposal_sig.subsumes_datatype(sig):
+            assert not supersig
+            supersig = sig
+        elif sig.subsumes_datatype(proposal_sig):
+            subsigs.append(sig)
+
+    assert not (supersig and subsigs), """If this assertion fails, the tool 
+    repository already contains too many specs."""
+
+    # If there is a signature that covers this action, we simply add the 
+    # corresponding tool/workflow as one of its implementations
+    if supersig:
+        supersig.implementations.add(impl_uri)
+        return supersig.uri
+
+    # If the signature is a more general version of existing signature(s), 
+    # then we must update the outdated specs.
+    elif subsigs:
+        assert len(subsigs) <= 1, """If there are multiple specs to 
+        replace, we must merge specs and deal with changes to the abstract 
+        workflow repository, so let's exclude that possibility for now."""
+        subsigs[0].inputs = proposal_sig.inputs
+        subsigs[0].outputs = proposal_sig.outputs
+        return subsigs[0].uri
+
+    # If neither of the above is true, the action merits an all-new spec
+    else:
+        proposal_sig.uri = sigs.generate_name(shorten(impl_orig))
+        sigs.signatures[proposal_sig.uri] = proposal_sig
+        return proposal_sig.uri
+
+def update_repositories2(sigs: SignatureRepo, tools: ToolRepo, wf: Workflow):
+    for action, impl in wf.subject_objects(WF.applicationOf):
+        update_repositories(sigs, tools, wf, action)

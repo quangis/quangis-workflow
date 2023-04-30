@@ -3,6 +3,7 @@ import random
 import string
 from collections import defaultdict
 from itertools import count
+from rdflib import Graph
 from rdflib.term import URIRef, Node, BNode
 from rdflib.compare import isomorphic
 from typing import Iterable
@@ -11,7 +12,7 @@ from transforge.namespace import shorten
 
 from quangis_workflows.repo.workflow import Workflow
 from quangis_workflows.repo.tool2url import tool2url
-from quangis_workflows.namespace import n3, RDF, TOOL, WF, SUPERTOOL
+from quangis_workflows.namespace import n3, RDF, TOOL, WF, SUPERTOOL, bind_all
 
 class ToolNotFoundError(Exception):
     pass
@@ -136,3 +137,10 @@ class ToolRepo(object):
             raise RuntimeError
         self.supertools[supertool.uri] = supertool
         return supertool
+
+    def graph(self) -> Graph:
+        g = Graph()
+        bind_all(g)
+        for supertool in self.supertools.values():
+            g += supertool
+        return g
