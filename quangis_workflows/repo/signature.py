@@ -7,7 +7,8 @@ from itertools import chain, count
 
 from quangis_workflows.types import Polytype
 from quangis_workflows.repo.workflow import Workflow
-from quangis_workflows.namespace import (bind_all, n3, SIG, CCT, RDF, WF, TOOL)
+from quangis_workflows.namespace import (bind_all, n3, SIG, CCT, RDF, WF, 
+    TOOLSCHEMA)
 from cct import cct
 
 cctlang = cct
@@ -139,16 +140,16 @@ class SignatureRepo(object):
 
     def graph(self) -> Graph:
         g = GraphList()
-        bind_all(g, TOOL)
+        bind_all(g, TOOLSCHEMA)
 
         for sig in self.signatures.values():
             assert isinstance(sig.uri, URIRef)
 
-            g.add((sig.uri, RDF.type, TOOL.Signature))
+            g.add((sig.uri, RDF.type, TOOLSCHEMA.Signature))
             g.add((sig.uri, CCT.expression, Literal(sig.cct)))
 
             for impl in sig.implementations:
-                g.add((sig.uri, TOOL.implementation, impl))
+                g.add((sig.uri, TOOLSCHEMA.implementation, impl))
 
             inputs = []
             for i in range(len(sig.inputs)):
@@ -156,7 +157,7 @@ class SignatureRepo(object):
                 for uri in sig.inputs[i].uris():
                     g.add((artefact, RDF.type, uri))
                 inputs.append(artefact)
-            g.add((sig.uri, TOOL.inputs, g.add_list(inputs)))
+            g.add((sig.uri, TOOLSCHEMA.inputs, g.add_list(inputs)))
 
             outputs = []
             for i in range(len(sig.outputs)):
@@ -164,6 +165,6 @@ class SignatureRepo(object):
                 for uri in sig.outputs[i].uris():
                     g.add((artefact, RDF.type, uri))
                 outputs.append(artefact)
-            g.add((sig.uri, TOOL.outputs, g.add_list(outputs)))
+            g.add((sig.uri, TOOLSCHEMA.outputs, g.add_list(outputs)))
 
         return g

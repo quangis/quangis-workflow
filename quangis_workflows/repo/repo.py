@@ -3,7 +3,8 @@ from rdflib import Graph
 from typing import Iterator
 from transforge.list import GraphList
 
-from quangis_workflows.namespace import n3, bind_all, TOOL, DATA, RDF, WF, CCT_
+from quangis_workflows.namespace import (n3, bind_all, TOOLSCHEMA, DATA, RDF, 
+    WF, CCT_)
 from quangis_workflows.repo.workflow import Workflow
 from quangis_workflows.repo.tool import ToolRepo, Supertool, ToolNotFoundError
 from quangis_workflows.repo.signature import (SignatureRepo, Signature, 
@@ -23,11 +24,8 @@ class Repo(object):
 
         for action in wf.high_level_actions(root):
             try:
-                proposal_sig = Signature.propose(wf, action)
-                if not proposal_sig.cct:
-                    raise SignatureNotFoundError(
-                        f"The signature for workflow {n3(root)} has no "
-                        f"CCT expression associated with it.")
+                proposal_sig = Signature.propose(wf, action, 
+                    cct_mandatory=True)
                 proposal_tool = Supertool.propose(wf, action)
                 tool = self.tools.find_tool(proposal_tool)
                 proposal_sig.implementations.add(tool)
@@ -46,7 +44,7 @@ class Repo(object):
 
         g = GraphList()
         g.base = DATA
-        bind_all(g, default=TOOL)
+        bind_all(g, default=TOOLSCHEMA)
 
         assert (root, RDF.type, WF.Workflow) in wf
         g.add((root, RDF.type, WF.Workflow))

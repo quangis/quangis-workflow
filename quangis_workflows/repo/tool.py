@@ -12,7 +12,8 @@ from transforge.namespace import shorten
 
 from quangis_workflows.repo.workflow import Workflow
 from quangis_workflows.repo.tool2url import tool2url
-from quangis_workflows.namespace import n3, RDF, TOOL, WF, SUPERTOOL, bind_all
+from quangis_workflows.namespace import (n3, RDF, TOOLSCHEMA, WF, SUPERTOOL, 
+    bind_all)
 
 class ToolNotFoundError(Exception):
     pass
@@ -45,9 +46,9 @@ class Supertool(GraphList):
         self.all_outputs: set[BNode] = set()
         self.constituent_tools: set[URIRef] = set()
 
-        self.add((uri, RDF.type, TOOL.Supertool))
-        self.add((uri, TOOL.inputs, self.add_list(self.inputs)))
-        self.add((uri, TOOL.outputs, self.add_list(self.outputs)))
+        self.add((uri, RDF.type, TOOLSCHEMA.Supertool))
+        self.add((uri, TOOLSCHEMA.inputs, self.add_list(self.inputs)))
+        self.add((uri, TOOLSCHEMA.outputs, self.add_list(self.outputs)))
         for tool, inputs, outputs in actions:
             self._add_action(tool,
                 [map[x] for x in inputs],
@@ -82,10 +83,10 @@ class Supertool(GraphList):
 
         action = BNode()
         self.constituent_tools.add(tool)
-        self.add((self.uri, TOOL.action, action))
-        self.add((action, TOOL.apply, tool))
-        self.add((action, TOOL.inputs, self.add_list(inputs)))
-        self.add((action, TOOL.outputs, self.add_list(outputs)))
+        self.add((self.uri, TOOLSCHEMA.action, action))
+        self.add((action, TOOLSCHEMA.apply, tool))
+        self.add((action, TOOLSCHEMA.inputs, self.add_list(inputs)))
+        self.add((action, TOOLSCHEMA.outputs, self.add_list(outputs)))
 
     def match(self, other: Supertool) -> bool:
         return (self.constituent_tools == other.constituent_tools
@@ -150,7 +151,7 @@ class ToolRepo(object):
 
     def graph(self) -> Graph:
         g = Graph()
-        bind_all(g, default=TOOL)
+        bind_all(g, default=TOOLSCHEMA)
         for supertool in self.supertools.values():
             g += supertool
         return g

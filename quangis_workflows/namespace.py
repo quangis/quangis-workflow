@@ -29,9 +29,9 @@ DATA = Namespace("https://github.com/quangis/cct/blob/master/tools/data.ttl#")
 CCT_ = Namespace("https://github.com/quangis/cct#")
 CCT = cct.namespace
 
-TOOL = Namespace("https://quangis.github.io/tool/vocab#")
-SIG = Namespace("https://quangis.github.io/tool/signature#")
-SUPERTOOL = Namespace("https://quangis.github.io/tool/super#")
+TOOLSCHEMA = Namespace("https://quangis.github.io/vocab/tool#")
+SIG = Namespace("https://quangis.github.io/repo/signature#")
+SUPERTOOL = Namespace("https://quangis.github.io/repo/supertool#")
 
 
 ARC = Namespace("https://pro.arcgis.com/en/pro-app/latest/tool-reference/")
@@ -75,4 +75,3 @@ def bind_all(g: Graph, default: Namespace | None = None):
             g.bind(prefix, namespace)
         else:
             g.bind("", namespace)
-Graph.bind_all = bind_all
