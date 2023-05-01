@@ -4,7 +4,7 @@ import platform
 from glob import glob
 from pathlib import Path
 
-from quangis_workflows.repo.signature import Repo
+from quangis_workflows.repo.repo import Repo
 from quangis_workflows.repo.workflow import Workflow
 
 
