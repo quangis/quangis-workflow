@@ -141,7 +141,10 @@ class ToolRepo(object):
         supertool.sanity_check()
         if (supertool.uri in self.supertools and not
                 supertool.match(self.supertools[supertool.uri])):
-            raise RuntimeError
+            raise RuntimeError(
+                f"The supertool {supertool.uri} already exists in the "
+                f"repository and is different from the one that you "
+                f"are attempting to register.")
         self.supertools[supertool.uri] = supertool
         return supertool
 

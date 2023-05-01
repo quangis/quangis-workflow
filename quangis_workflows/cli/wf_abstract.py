@@ -4,9 +4,7 @@ import platform
 from glob import glob
 from pathlib import Path
 
-from quangis_workflows.repo.tool import ToolRepo
-from quangis_workflows.repo.signature import SignatureRepo, \
-    update_repositories2
+from quangis_workflows.repo.signature import Repo
 from quangis_workflows.repo.workflow import Workflow
 
 
@@ -27,21 +25,21 @@ class CLI(cli.Application):
 
         # TODO as long as the tool repository cannot be read, we just construct 
         # it from the ground up. Should definitely be changed
-        sigs = SignatureRepo()
-        tools = ToolRepo()
+        repo = Repo()
         for file in FILE:
             try:
                 cwf = Workflow.from_file(file)
-                update_repositories2(sigs, tools, cwf)
-                g = sigs.convert_to_signatures(cwf, cwf.root, tools)
+                repo.update(cwf)
+                g = repo.convert_to_signatures(cwf, cwf.root)
                 g.serialize(f"{file.stem}_abstract.ttl", format="turtle")
 
             except Exception as e:
-                print(f"Skipping {file} because of the following error: {e}")
+                print(f"Skipping {file} because of the following "
+                    f"{type(e).__name__}: {e}")
             else:
                 print(f"Successfully processed {file}")
 
-        (sigs.graph() + tools.graph()).serialize("repo.ttl", format="turtle")
+        repo.graph().serialize("repo.ttl", format="turtle")
 
 def main():
     CLI.run()
