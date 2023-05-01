@@ -1,6 +1,4 @@
 from __future__ import annotations
-import random
-import string
 from collections import defaultdict
 from itertools import count
 from rdflib import Graph
@@ -31,11 +29,9 @@ class Supertool(GraphList):
 
         super().__init__()
 
-        code = ''.join(random.choice(string.ascii_lowercase) for i in range(4))
         counter = count()
-
         map: dict[Node, BNode] = defaultdict(
-            lambda: BNode(f"{code}{next(counter)}"))
+            lambda: BNode(f"d{next(counter)}_{name}"))
 
         self.name = name
         self.origin = origin
