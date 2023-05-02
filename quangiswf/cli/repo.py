@@ -3,8 +3,8 @@ from plumbum import cli  # type: ignore
 import platform
 from glob import glob
 
-from quangis_workflows.repo.workflow import Workflow
-from quangis_workflows.repo.repo import Repo
+from quangiswf.repo.workflow import Workflow
+from quangiswf.repo.repo import Repo
 
 
 class CLI(cli.Application):
@@ -13,7 +13,7 @@ class CLI(cli.Application):
     workflows.
     """
 
-    PROGNAME = "quangis-tool-repo"
+    PROGNAME = "quangiswf-repo"
 
     def main(self, *FILE):
 

@@ -37,10 +37,10 @@ from typing import Iterator
 
 from cct import cct  # type: ignore
 from transforge.namespace import shorten
-from quangis_workflows.namespace import (
+from quangiswf.namespace import (
     WF, RDF, CCD, CCT, CCT_, n3)
-from quangis_workflows.types import Polytype, Dimension
-from quangis_workflows.repo.tool2url import tool2url
+from quangiswf.types import Polytype, Dimension
+from quangiswf.repo.tool2url import tool2url
 
 
 cctlang = cct

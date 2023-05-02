@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from plumbum import cli  # type: ignore
 from pathlib import Path
-from quangis_workflows.namespace import CCD, EM, EX
-from quangis_workflows.generator import WorkflowGenerator
-from quangis_workflows.types import Polytype
+from quangiswf.namespace import CCD, EM, EX
+from quangiswf.generator import WorkflowGenerator
+from quangiswf.types import Polytype
 
 sources = [
     (CCD.FieldQ, CCD.VectorTessellationA, CCD.PlainNominalA),  # VectorCoverage
@@ -104,7 +104,7 @@ class CLI(cli.Application):
     ontology.
     """
 
-    PROGNAME = "quangis-wf-gen"
+    PROGNAME = "quangiswf-gen"
 
     def main(self, *args):
         generate_workflows()

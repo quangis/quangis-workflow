@@ -5,9 +5,9 @@ from transforge.list import GraphList
 from transforge.namespace import shorten
 from itertools import chain, count
 
-from quangis_workflows.types import Polytype
-from quangis_workflows.repo.workflow import Workflow
-from quangis_workflows.namespace import (bind_all, n3, SIG, CCT, RDF, WF, 
+from quangiswf.types import Polytype
+from quangiswf.repo.workflow import Workflow
+from quangiswf.namespace import (bind_all, n3, SIG, CCT, RDF, WF, 
     TOOLSCHEMA)
 from cct import cct
 

@@ -43,7 +43,7 @@ To run (rather limited) tests, install and run `nose2`.
 Assuming that RDF files containing manually annotated workflows are in 
 the `ttl/` directory, the tool repository is built using:
 
-    quangis-tool-repo ttl/*.ttl
+    quangiswf-repo ttl/*.ttl
 
 
 ## Workflow generation
@@ -59,7 +59,7 @@ that APE understands. APE is then instructed to generate workflows for
 different possible input/output data configurations. To perform this 
 step, run:
 
-    quangis-wf-gen
+    quangiswf-gen
 
 The second step involves abstracting away from implementation details. 
 For this, the tools are also annotated with a description of their 

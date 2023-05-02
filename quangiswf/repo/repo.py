@@ -3,11 +3,11 @@ from rdflib import Graph
 from typing import Iterator
 from transforge.list import GraphList
 
-from quangis_workflows.namespace import (n3, bind_all, TOOLSCHEMA, DATA, RDF, 
+from quangiswf.namespace import (n3, bind_all, TOOLSCHEMA, DATA, RDF, 
     WF, CCT_)
-from quangis_workflows.repo.workflow import Workflow
-from quangis_workflows.repo.tool import ToolRepo, Supertool, ToolNotFoundError
-from quangis_workflows.repo.signature import (SignatureRepo, Signature, 
+from quangiswf.repo.workflow import Workflow
+from quangiswf.repo.tool import ToolRepo, Supertool, ToolNotFoundError
+from quangiswf.repo.signature import (SignatureRepo, Signature, 
     SignatureNotFoundError)
 
 class Repo(object):

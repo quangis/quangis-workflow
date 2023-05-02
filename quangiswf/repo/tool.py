@@ -8,9 +8,9 @@ from typing import Iterable
 from transforge.list import GraphList
 from transforge.namespace import shorten
 
-from quangis_workflows.repo.workflow import Workflow
-from quangis_workflows.repo.tool2url import tool2url
-from quangis_workflows.namespace import (n3, RDF, TOOLSCHEMA, WF, SUPERTOOL, 
+from quangiswf.repo.workflow import Workflow
+from quangiswf.repo.tool2url import tool2url
+from quangiswf.namespace import (n3, RDF, TOOLSCHEMA, WF, SUPERTOOL, 
     bind_all)
 
 class ToolNotFoundError(Exception):

@@ -4,15 +4,15 @@ import platform
 from glob import glob
 from pathlib import Path
 
-from quangis_workflows.repo.repo import Repo
-from quangis_workflows.repo.workflow import Workflow
+from quangiswf.repo.repo import Repo
+from quangiswf.repo.workflow import Workflow
 
 
 class CLI(cli.Application):
     """This program turns a concrete workflow into one (or more) that refer 
     only to abstract tool signatures."""
 
-    PROGNAME = "quangis-wf-abstract"
+    PROGNAME = "quangiswf-conv"
 
     def main(self, *FILE):
 

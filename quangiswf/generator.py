@@ -11,10 +11,10 @@ from rdflib import Graph
 from rdflib.util import guess_format
 from typing import Iterable
 
-from quangis_workflows.util import shorten, download
-from quangis_workflows.ape import APE, Workflow, ToolsDict
-from quangis_workflows.types import Polytype, Dimension
-from quangis_workflows.namespace import CCD, TOOLS, OWL, RDF, RDFS, ADA, WF
+from quangiswf.util import shorten, download
+from quangiswf.ape import APE, Workflow, ToolsDict
+from quangiswf.types import Polytype, Dimension
+from quangiswf.namespace import CCD, TOOLS, OWL, RDF, RDFS, ADA, WF
 
 TOOLS2 = "https://raw.githubusercontent.com/quangis/cct/master/tools/tools.ttl"
 
