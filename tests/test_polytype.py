@@ -1,7 +1,7 @@
 import unittest
 
-from quangis_workflows.namespace import EX
-from quangis_workflows.types import Polytype, Dimension
+from quangiswf.namespace import EX
+from quangiswf.types import Polytype, Dimension
 
 
 class TestPolytype(unittest.TestCase):

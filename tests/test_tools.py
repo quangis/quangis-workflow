@@ -13,7 +13,7 @@ from pathlib import Path
 from itertools import chain
 from typing import Iterable
 from cct import cct
-from transformation_algebra import Source
+from transforge import Source
 
 TOOLS = Namespace('https://github.com/quangis/cct/blob/master/tools/tools.ttl#')
 WF = Namespace('http://geographicknowledge.de/vocab/Workflow.rdf#')

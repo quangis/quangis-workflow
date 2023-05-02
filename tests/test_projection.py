@@ -2,8 +2,8 @@ import unittest
 
 from pathlib import Path
 from rdflib import Graph
-from quangis_workflows.namespace import EM, CCD
-from quangis_workflows.types import Polytype, Dimension
+from quangiswf.namespace import EM, CCD
+from quangiswf.types import Polytype, Dimension
 
 build_dir = Path(__file__).parent.parent / "build"
 
