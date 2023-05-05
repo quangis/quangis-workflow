@@ -1,30 +1,12 @@
-#!/usr/bin/env python3
-"""
-This module is work-in-progress. It does two things:
-
--   It collects *abstract tools* from *concrete workflows*.
--   It turns the *concrete workflow* into abstract.
-
-A concrete workflow is a graph that consists solely of actions (*applications* 
-of tool implementations), along with CCT-terms that express their 
-functionality, plus artefacts (their concrete inputs and outputs), along with 
-CCD annotations.
+"""A concrete workflow is a graph that consists solely of actions 
+(*applications* of tool implementations), along with CCT-terms that express 
+their functionality, plus artefacts (their concrete inputs and outputs), along 
+with CCD annotations.
 
 Additionally, in the case that a single tool cannot be expressed meaningfully 
 with a CCT-term, the graph may include ad-hoc "supertool" applications, which 
 point to an *ensemble* of tool applications that can be given a term 
-collectively.
-
-There is an existing store for abstract tools. This acts as validation for 
-every additional tool and it should also avoid duplication. It should 
-recognize:
--   when a tool with the same signature is already in the store;
--   when a tool is already in the store with a signature of a CCD subtype;
--   when a tool is already in the store with a different order to the inputs;
-
-Furthermore, we could check consistency between CCD's semantic dimension and 
-CCT types.
-"""
+collectively."""
 
 from __future__ import annotations
 
