@@ -81,8 +81,10 @@ class Supertool(GraphList):
         self.constituent_tools.add(tool)
         self.add((self.uri, TOOLSCHEMA.action, action))
         self.add((action, TOOLSCHEMA.apply, tool))
-        self.add((action, TOOLSCHEMA.inputs, self.add_list(inputs)))
-        self.add((action, TOOLSCHEMA.outputs, self.add_list(outputs)))
+        for x in inputs:
+            self.add((action, TOOLSCHEMA.input, x))
+        for x in outputs:
+            self.add((action, TOOLSCHEMA.output, x))
 
     def match(self, other: Supertool) -> bool:
         return (self.constituent_tools == other.constituent_tools
