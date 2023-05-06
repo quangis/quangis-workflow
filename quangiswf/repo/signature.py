@@ -51,12 +51,17 @@ class Signature(object):
         cct = wf.cct(action)
         if not cct and cct_mandatory:
             raise RuntimeError("Signature has no cct expression")
-        return Signature(
-            name=name,
-            inputs=[wf.type(a) for a in wf.inputs(action, labelled=True)],
-            outputs=[wf.type(a) for a in wf.outputs(action)],
-            cct=cct
-        )
+
+        inputs = [wf.type(a) for a in wf.inputs(action, labelled=True)]
+        outputs = [wf.type(a) for a in wf.outputs(action)]
+
+        for t in chain(inputs, outputs):
+            if t.empty():
+                raise RuntimeError(
+                    f"The CCD type of an artefact associated with an "
+                    f"an action labelled '{name}' is empty or too general.")
+
+        return Signature(name=name, inputs=inputs, outputs=outputs, cct=cct)
 
     def covers_implementation(self, candidate: Signature) -> bool:
         return (bool(candidate.implementations)

@@ -125,6 +125,14 @@ class Polytype(MutableMapping[Dimension, set[URIRef]]):
                 types.add(t)
         return self.data.__setitem__(dimension, types)
 
+    def empty(self) -> bool:
+        """Return True if the type is empty, that is, if every dimension is 
+        empty or at the root node."""
+        for dim, classes in self.data.items():
+            if (not classes or all(c == dim.root for c in classes)):
+                return False
+        return True
+
     def uris(self) -> set[URIRef]:
         return set(x for xs in self.data.values() for x in xs)
 
