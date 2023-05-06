@@ -30,8 +30,9 @@ CCT_ = Namespace("https://github.com/quangis/cct#")
 CCT = cct.namespace
 
 TOOLSCHEMA = Namespace("https://quangis.github.io/vocab/tool#")
-SIG = Namespace("https://quangis.github.io/repo/signature#")
-SUPERTOOL = Namespace("https://quangis.github.io/repo/supertool#")
+SIG = Namespace("https://quangis.github.io/signature#")
+TOOL = Namespace("https://quangis.github.io/tool#")
+SUPERTOOL = Namespace("https://quangis.github.io/supertool#")
 
 
 ARC = Namespace("https://pro.arcgis.com/en/pro-app/latest/tool-reference/")
