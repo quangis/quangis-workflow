@@ -2,12 +2,11 @@ from __future__ import annotations
 from rdflib import Graph
 from rdflib.term import Node, URIRef, BNode, Literal
 from transforge.list import GraphList
-from transforge.namespace import shorten
 from itertools import chain, count
 
 from quangiswf.types import Polytype
 from quangiswf.repo.workflow import Workflow
-from quangiswf.namespace import (bind_all, n3, SIG, CCT, RDF, WF, 
+from quangiswf.namespace import (bind_all, n3, SIG, CCT, RDF,
     TOOLSCHEMA)
 from cct import cct
 
@@ -48,15 +47,14 @@ class Signature(object):
     def propose(wf: Workflow, action: Node,
             cct_mandatory: bool = False) -> Signature:
         """Create a new signature proposal from a tool application."""
-        impl = wf.value(action, WF.applicationOf, any=False)
-        assert impl
+        name, impl = wf.impl(action)
         cct = wf.cct(action)
         if not cct and cct_mandatory:
             raise RuntimeError("Signature has no cct expression")
         return Signature(
-            name=shorten(impl),
-            inputs=[wf.type(artefact) for artefact in wf.inputs(action)],
-            outputs=[wf.type(artefact) for artefact in wf.outputs(action)],
+            name=name,
+            inputs=[wf.type(a) for a in wf.inputs(action, labelled=True)],
+            outputs=[wf.type(a) for a in wf.outputs(action)],
             cct=cct
         )
 

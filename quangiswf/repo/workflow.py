@@ -20,7 +20,7 @@ from typing import Iterator
 from cct import cct  # type: ignore
 from transforge.namespace import shorten
 from quangiswf.namespace import (
-    WF, RDF, CCD, CCT, CCT_, n3)
+    WF, RDF, RDFS, CCD, CCT, CCT_, n3)
 from quangiswf.types import Polytype, Dimension
 from quangiswf.repo.tool2url import tool2url
 
@@ -87,13 +87,26 @@ class Workflow(Graph):
             return None
         raise RuntimeError("Core concept transformation must be literal")
 
-    def inputs(self, action: Node) -> Iterator[Node]:
+    def inputs(self, action: Node, labelled: bool = False) -> Iterator[Node]:
         for i in count(start=1):
             artefact = self.value(action, WF[f"input{i}"], any=False)
             if artefact:
                 yield artefact
             else:
                 break
+
+        unlabelled_inputs = list(self.objects(action, WF.inputx))
+        if labelled and len(unlabelled_inputs) > 1:
+            subwf = self.value(None, WF.edge, action)
+            impl = self.value(action, WF.applicationOf)
+            assert subwf and impl
+            subwf_label = self.label(subwf)
+            impl_label = self.label(impl)
+            raise RuntimeError(
+                f"Expected labelled inputs of an action that applies "
+                f"'{impl_label}' in workflow '{subwf_label}'")
+        else:
+            yield from unlabelled_inputs
 
     def outputs(self, action: Node) -> Iterator[Node]:
         artefact_out = self.value(action, WF.output, any=False)
@@ -139,6 +152,20 @@ class Workflow(Graph):
                 yield from self.low_level_actions(impl)
             else:
                 yield action
+
+    def label(self, node: Node) -> str:
+        label = self.value(node, RDFS.label, any=False)
+        if label:
+            return str(label)
+        elif isinstance(node, URIRef):
+            return shorten(node)
+        else:
+            raise RuntimeError("Cannot determine label of a blank node")
+
+    def impl(self, action: Node) -> tuple[str, Node]:
+        impl = self.value(action, WF.applicationOf, any=False)
+        assert impl
+        return self.label(impl), impl
 
     def tool(self, action: Node) -> URIRef:
         """Assuming that the action represents an application of a concrete 

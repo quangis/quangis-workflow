@@ -4,7 +4,7 @@ This module holds the RDF namespaces that we use frequently.
 
 import sys
 from rdflib import Namespace, Graph
-from rdflib.term import Node, URIRef
+from rdflib.term import Node, URIRef, BNode
 from rdflib.namespace import NamespaceManager
 from typing import Mapping
 from cct import cct  # type: ignore
@@ -66,8 +66,12 @@ def n3(
         return f"[{', '.join(n3(x, nm) for x in node)}]"
     elif isinstance(node, set):
         return f"{{{', '.join(n3(x, nm) for x in node)}}}"
-    assert isinstance(node, URIRef)
-    return node.n3(nm)
+    elif isinstance(node, URIRef):
+        return node.n3(nm)
+    elif isinstance(node, BNode):
+        return "<blank node>"
+    else:
+        raise RuntimeError(f"Cannot express value of type {type(node)}")
 
 def bind_all(g: Graph, default: Namespace | None = None):
     for prefix, namespace in namespaces.items():

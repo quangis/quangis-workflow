@@ -3,8 +3,7 @@ from rdflib import Graph
 from typing import Iterator
 from transforge.list import GraphList
 
-from quangiswf.namespace import (n3, bind_all, TOOLSCHEMA, DATA, RDF, 
-    WF, CCT_)
+from quangiswf.namespace import (bind_all, TOOLSCHEMA, DATA, RDF, WF, CCT_)
 from quangiswf.repo.workflow import Workflow
 from quangiswf.repo.tool import ToolRepo, Supertool, ToolNotFoundError
 from quangiswf.repo.signature import (SignatureRepo, Signature, 
@@ -59,7 +58,8 @@ class Repo(object):
             assert sig.uri
             g.add((root, WF.edge, action))
             g.add((action, WF.applicationOf, sig.uri))
-            for i, artefact in enumerate(wf.inputs(action), start=1):
+            for i, artefact in enumerate(
+                    wf.inputs(action, labelled=True), start=1):
                 g.add((action, WF[f"input{i}"], artefact))
             for pred, artefact in zip([WF.output], wf.outputs(action)):
                 g.add((action, pred, artefact))

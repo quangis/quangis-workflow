@@ -10,8 +10,8 @@ from transforge.namespace import shorten
 
 from quangiswf.repo.workflow import Workflow
 from quangiswf.repo.tool2url import tool2url
-from quangiswf.namespace import (n3, RDF, TOOLSCHEMA, WF, SUPERTOOL, 
-    bind_all)
+from quangiswf.namespace import (
+    n3, RDF, RDFS, TOOLSCHEMA, WF, SUPERTOOL, bind_all)
 
 class ToolNotFoundError(Exception):
     pass
@@ -55,10 +55,7 @@ class Supertool(GraphList):
         """Propose a tool or supertool that implements this action. This is an 
         expensive operation because, in the case of a supertool, a proposal 
         supertool is extracted."""
-        impl = wf.value(action, WF.applicationOf, any=False)
-        assert impl
-        name = shorten(impl)
-
+        name, impl = wf.impl(action)
         if (impl, RDF.type, WF.Workflow) in wf:
             supertool = Supertool(name,
                 inputs=wf.inputs(action),
