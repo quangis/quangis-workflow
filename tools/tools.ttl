@@ -22,309 +22,6 @@
 @prefix arcprosa: <https://pro.arcgis.com/en/pro-app/latest/tool-reference/spatial-analyst/>.
 @prefix arcproco: <https://pro.arcgis.com/en/pro-app/latest/tool-reference/conversion/>.
 
-:Tool a rdfs:Class.
-
-:ToolImplementation rdfs:subClassOf :Tool;
-    rdfs:comment "A concrete tool is a reference to a concrete *implementation* of a tool. This is also called a *subtool* sometimes. A tool implementation may operate on more constrained data types than the abstract tool it implements.".
-
-:ToolCombination rdfs:subClassOf :Tool;
-    rdfs:comment "A complex abstract tool, a 'supertool': a subworkflow consisting of partial tool specifications that be meaningfully interpreted as a complete tool specification only when taken together. It is composed of tool specifications and implements one or more complete tool specifications.".
-
-:ToolSpecification rdfs:subClassOf :Tool;
-    rdfs:comment "An abstract tool refers to the *functionality* of one or more tools.".
-
-:CompleteToolSpecification rdfs:subClassOf :ToolSpecification;
-    rdfs:comment "A complete tool specification is a tool specification that is semantically captured with an algebra expression. Every such specification must be implemented by a concrete tool or by a supertool.".
-
-:PartialToolSpecification rdfs:subClassOf :ToolSpecification;
-    rdfs:comment "A partial tool specification is a tool specification that has not been semantically captured with an algebra expression. Every such specification must be implemented by a concrete tool.".
-
-:implements a rdfs:Property;
-    rdfs:domain :ToolImplementation, :ToolCombination;
-    rdfs:range :ToolSpecification.
-
-###Algebra expressions: in the following algebra expressions, x1, x2, x3, etc denote input variables corresponding to wf:input1, wf:input2, wf:input3. Also, the order of inputs in wf:source for supertools corresponds to this order.
-
-### Scenario: Hospitals (hospitalsNetwork.ttl, hospitalsNear.ttl)
-### Source: https://pro.arcgis.com/en/pro-app/latest/help/analysis/networks/closest-facility-tutorial.htm
-#-------------------------------
-
-##catchment area analysis on spatial network
-tools:closestfacilityanalysis a :ToolCombination;
-    wf:edge _:wf20_1, _:wf20_2, _:wf20_3, _:wf20_4;
-    wf:source _:in_roads, _:in_goals, _:in_origins.
-_:wf20_1 wf:applicationOf tools:MakeClosestFacilityAnalysisLayerDef;
-    wf:input1 _:in_roads;
-    wf:output _:out201.
-_:wf20_2 wf:applicationOf tools:AddLocationsDef;
-    wf:input1 _:out201;
-    wf:input2 _:in_goals;
-    wf:output _:out202.
-_:wf20_3 wf:applicationOf tools:AddLocationsDef;
-    wf:input1 _:out202;
-    wf:input2 _:in_origins;
-    wf:output _:out203.
-_:wf20_4 wf:applicationOf tools:SolveDef;
-    wf:input1 _:out203;
-    wf:output _:out204.
-
-#selects the distance to the closest goal object on a line network
-tools:closestfacilityanalysis a :CompleteToolSpecification;
-    wf:input1 _:in_roads;
-    wf:input2 _:in_goals;
-    wf:input3 _:in_origins; #Events?
-    wf:output _:out204;
-    rdfs:comment
-        "Selects the distance to the closest goal object on a line network.";
-    cct:expression
-        """
-        1: Network(Ratio);
-        2: ObjectInfo(Nom);
-        3: ObjectInfo(Nom);
-        join_attr
-            (get_attrL 2)
-            (groupbyL min (nDist (get_attrL 2) (get_attrL 3) 1))
-        """.
-_:in_roads a ccd:NetworkQ, ccd:LineA, ccd:RatioA.
-_:in_goals a ccd:ObjectQ, ccd:PointA.
-_:in_origins a ccd:ObjectQ, ccd:PointA.
-_:out204 a ccd:ObjectQ, ccd:PointA, ccd:RatioA.
-
-#Builds ratio network from line objects
-tools:BuildNetwork a :CompleteToolSpecification;
-    wf:input1 [ a ccd:ObjectQ, ccd:LineA, ccd:RatioA ];
-    wf:output [ a ccd:NetworkQ, ccd:LineA, ccd:RatioA ];
-    rdfs:comment
-        "Builds ratio network from line objects.";
-    cct:expression
-        "nbuild (1: ObjectInfo(Ratio))".
-
-#Near tool, to seach for the closest objects using Euclidean distance
-tools:NearPointObjects a :CompleteToolSpecification;
-    wf:input1 [ a ccd:ObjectQ, ccd:PointA ];
-    wf:input2 [ a ccd:ObjectQ, ccd:PointA ];
-    wf:output [ a ccd:ObjectQ, ccd:PointA, ccd:RatioA ];
-    rdfs:comment
-        "Near tool, to seach for the closest objects using Euclidean distance.";
-    cct:expression
-        """
-        1: ObjectInfo(Nom);
-        2: ObjectInfo(Nom);
-        join_attr
-            (get_attrL 1)
-            (groupbyL min (oDist (get_attrL 1) (get_attrL 2)))
-        """.
-
-
-### Scenario: Malaria (malaria.ttl)
-### Source: https://learn.arcgis.com/en/projects/monitor-malaria-epidemics/
-#-------------------------------
-
-#### Object selection variant by id
-tools:FC2FCObjectTess a :CompleteToolSpecification;
-    wf:input1 [ a ccd:ObjectQ, ccd:VectorTessellationA ];
-    wf:output [ a ccd:ObjectQ, ccd:PlainVectorRegionA ];
-    rdfs:comment
-        "Object selection by id.";
-    cct:expression
-        """
-        subset (1: ObjectInfo(Nom)) (-: C(Obj))
-        """.
-
-##Merge object parts into single object
-tools:MergeObjects a :CompleteToolSpecification;
-    wf:input1 [ a ccd:ObjectQ, ccd:VectorTessellationA, ccd:NominalA ];
-    wf:output [ a ccd:ObjectQ, ccd:VectorTessellationA , ccd:NominalA ];
-    rdfs:comment
-        "Merges object parts into single objects based on object identifiers stored as names.";
-    cct:expression
-        """
-        1: ObjectInfo(Nom);
-        join_attr
-            (groupby
-                (compose merge (compose pi2 (subset (get_attrL 1))))
-                (apply1 objectify (get_attrR 1))
-            )
-            (getobjectnames (pi2 (get_attrR 1)))
-        """.
-
-##Make table from excel
-tools:JoinFromTable a :ToolCombination;
-    tools:implements tools:LoadAmountonObjects;
-    wf:edge _:wf10_1, _:wf10_2;
-    wf:source _:in10_1, _:in10_2.
-_:wf10_1  wf:applicationOf tools:ExcelToTableDef;
-    wf:input1 _:in10_1;
-    wf:output _:out10.
-_:wf10_2  wf:applicationOf tools:JoinFieldDef;
-    wf:input1 _:in10_2;
-    wf:input2 _:out10;
-    wf:output _:out10_2.
-
-tools:LoadAmountonObjects a :CompleteToolSpecification;
-    wf:input1 _:in10_1;
-    wf:input2 _:in10_2;
-    wf:output _:out10_2;
-    rdfs:comment
-        "Loads object based count amounts from excel and joins them with vector objects.";
-    cct:expression
-        """
-        1: R2(Obj, Count);
-        2: ObjectInfo(_);
-        join_attr (get_attrL 2) 1
-        """.
-_:in10_1 a ccd:ObjectQ, ccd:CountA.
-_:in10_2 a ccd:ObjectQ, ccd:VectorRegionA.
-_:out10_2 a ccd:ObjectQ, ccd:VectorRegionA, ccd:CountA.
-
-
-
-### Scenario: PredictFloods (Floods.ttl)
-### Source: https://learn.arcgis.com/en/projects/predict-floods-with-unit-hydrographs/
-#-------------------------------
-
-# 1: generate flow velocity raster from flow accumulation (sum of area upstream) and slope.
-
-# 2: con and con : constrain velocity raster to min and max velocity. Then invert velocity (to get a weight). Then estimate flow length (time) to the outflow point for each raster cell based on velocity weight and direction raster.
-
-# 3: reclassify time into intervals to get isochrone raster.  Summary table and convert area per 30 minutes to area per second. unit hydrograph: drainage area per second.
-
-#Flow direction raster
-tools:FlowDirection a :CompleteToolSpecification;
-    wf:input1 [ a ccd:FieldRaster, ccd:IntervalA ]; ## DEM
-    wf:output [ a ccd:FieldRaster, ccd:CyclicA ];
-    rdfs:comment
-        "Computes a grid graph of flow directions from a DEM.";
-    cct:expression
-        "flowdirgraph (1: Field(Itv))".
-
-#Flow direction accumulation
-tools:FlowAccumulation a :CompleteToolSpecification;
-    wf:input1 [ a ccd:FieldRaster, ccd:CyclicA ]; ##needs to be a direction
-    wf:output [ a ccd:FieldRaster, ccd:RatioA ];
-    rdfs:comment
-        "Accumulates flow directions into areas reachable downstream.";
-    cct:expression
-        "apply1 size (accumulate (1: Field(Loc)))".
-
-#Slope computation
-tools:Slope a :CompleteToolSpecification;
-    wf:input1 [ a ccd:FieldRaster, ccd:IntervalA ]; ## DEM
-    wf:output [ a ccd:FieldRaster, ccd:RatioA ];
-    rdfs:comment
-        "Computes slopes of a DEM.";
-    cct:expression
-        "slope (1: Field(Itv))".
-
-#Method for flow velocities
-tools:VelocityField a :ToolCombination;
-    tools:implements tools:VelocityFieldDEM;
-    wf:edge _:wf44_4, _:wf44_5;
-    wf:source _:slope, _:acc;
-    rdfs:comment "Computes a water flow velocity raster from slope * accumulation area".
-#### Select by attribute is always followed by copying features
-    #This computes SquareRoot("slope") * SquareRoot("flow_accumulation")
-_:wf44_4 wf:applicationOf tools:RasterCalculatorDef;
-    wf:input1 _:slope;
-    wf:input2 _:acc;
-    wf:output _:slopearea.
-    #This second step computes 0.1 * ("Stowe_slope_area_term" / [Mean slope-area term]). It needs looking up of parameter [Mean slope-area term].
-_:wf44_5 wf:applicationOf tools:RasterCalculator1Def;
-    wf:input1 _:slopearea;
-    wf:output _:velocity.
-
-tools:VelocityFieldDEM a :ToolCombination;
-    wf:input1 _:slope; ##  slope
-    wf:input2 _:acc; ##  accumulation area
-    wf:output _:velocity;
-    rdfs:comment
-        "Computes velocity field from DEM.";
-    cct:expression
-        "apply2 product (1: Field(Ratio)) (2: Field(Ratio))".
-_:slope a ccd:FieldRaster, ccd:RatioA.
-_:acc a ccd:FieldRaster, ccd:RatioA.
-_:velocity a ccd:FieldRaster, ccd:RatioA.
-
-#Con with leq/gte
-tools:con1 a :CompleteToolSpecification;
-    wf:input1 [ a ccd:FieldRaster, ccd:RatioA ]; ## raster
-    wf:output [ a ccd:FieldRaster, ccd:RatioA ];
-    rdfs:comment
-        "Cuts a field raster conditional on less than some value";
-    cct:expression
-        "select leq (1: Field(Ratio)) (-: Ratio)".
-
-### local map algebra transformation invert
-tools:LocalMapAlgebraInvert a :CompleteToolSpecification;
-    wf:input1 [ a ccd:FieldRaster, ccd:RatioA ];
-    wf:output [ a ccd:FieldRaster, ccd:RatioA ];
-    rdfs:comment
-        "Builds and executes a Local Map Algebra expression that inverts rasters with a ratio level.";
-    cct:expression
-        "apply1 (ratio (-: Ratio)) (1: Field(Ratio))".
-
-#Snap point to raster
-tools:SnapPourPoint a :CompleteToolSpecification;
-    wf:input1 [ a ccd:ObjectQ, ccd:PointA ]; #Snap pour point to river (Distance: 60m)
-    wf:input2 [ a ccd:FieldRaster, ccd:RatioA ]; # flow accumulation raster
-    wf:output [ a ccd:FieldQ, ccd:RasterA, ccd:PlainNominalA ];
-    rdfs:comment
-        "Snaps a pour point to a raster to generate a raster showing the pour point.";
-    cct:expression
-        # This is a simplification that ignores flow accumulation, but just
-        # generates a nominal patch from an object nominal
-        """
-        1: ObjectInfo(Nom);
-        join (revert (get_attrL 1)) (get_attrR 1)
-        """.
-
-tools:Watershed a :CompleteToolSpecification;
-    wf:input1 [ a ccd:FieldRaster, ccd:RatioA ]; #flow direction raster
-    wf:input2 [ a ccd:FieldQ, ccd:RasterA, ccd:PlainNominalA ]; # pour point raster
-    wf:output [ a ccd:FieldQ, ccd:RasterA, ccd:PlainNominalA ]; #watershed raster, gives a different watershed id for each pour point
-    rdfs:comment
-        "Given a flow direction raster and a pour point raster, generates a watershed raster.";
-    cct:expression
-        """
-        revert (join
-            (invert (2: Field(Nom)))
-            (invert (apply1 reify (accumulate (1: Field(Loc)))))
-        )
-        """.
-
-tools:ExtractByMask a :CompleteToolSpecification;
-    wf:input1 [ a ccd:FieldRaster, ccd:RatioA ]; #Flow directions by watershed mask
-    wf:input2 [ a ccd:FieldRaster ];
-    wf:output [ a ccd:FieldRaster, ccd:RatioA ];
-    rdfs:comment
-        "Extract raster by the extent of another (field) raster.";
-    cct:expression
-        "subset (1: Field(Loc)) (pi1 (2: Field(Nom)))".
-
-tools:FlowLength a :CompleteToolSpecification;
-    wf:input1 [ a ccd:FieldRaster, ccd:RatioA ]; #Impedance Weight raster (e.g. 1/velocity raster)
-    wf:input2 [ a ccd:FieldRaster, ccd:RatioA ]; #Flow direction raster;
-    wf:output [ a ccd:FieldRaster, ccd:RatioA ]; #Flow time raster.
-    rdfs:comment
-        "Calculate the upstream or downstream distance, or weighted distance (=time), along the flow path for each cell.";
-    cct:expression
-        """
-        1: Field(Ratio);
-        2: Field(Loc);
-        groupbyL max (relunion (pi2 (apply2
-            (lgDist (gridgraph 2 1))
-            (apply nest (pi1 2)) (accumulate 2)
-        )))
-        """.
-
-tools:RasterToIsoRaster a :CompleteToolSpecification;
-    wf:input1 [ a ccd:FieldRaster, ccd:IntervalA ];
-    wf:output [ a ccd:FieldRaster, ccd:PlainOrdinalA ];
-    rdfs:comment
-        "Converts an interval field raster into an ordinal raster.";
-    cct:expression
-        "apply1 classify (1: Field(Itv))".
-
 #Method for summarizing raster coverages
 tools:RasterCoverage a :ToolCombination;
     tools:implements tools:CreateUnitHydrograph;
@@ -341,7 +38,7 @@ _:wf55_3 wf:applicationOf tools:CalculateFieldDef;
     wf:input1 _:rastertable2;
     wf:output _:rastertable3.
 
-tools:CreateUnitHydrograph a :CompleteToolSpecification;
+sig:CreateUnitHydrograph a :Signature;
     wf:input1 _:fieldraster; ##
     wf:output _:rastertable3;
     rdfs:comment
@@ -374,7 +71,7 @@ _:wf111_2 wf:applicationOf tools:FC2FCObjectTess;
     wf:input1 _:out111;
     wf:output _:out112.
 
-tools:SelectFeaturesByObjectPlainRegionObjects a :CompleteToolSpecification;
+sig:SelectFeaturesByObjectPlainRegionObjects a :Signature;
     wf:input1 _:in111_1; ##
     wf:output _:out112_1;
     rdfs:comment
@@ -388,7 +85,7 @@ _:out112_1
     wf:proxyFor _:out112;
     a ccd:ObjectQ, ccd:PlainVectorRegionA.
 
-tools:SelectFeaturesCoverageToExistenceVector a :CompleteToolSpecification;
+sig:SelectFeaturesCoverageToExistenceVector a :Signature;
     wf:input1 _:in111_2;
     wf:output _:out112_2;
     rdfs:comment
@@ -408,8 +105,8 @@ _:out112_2
 ### Source: https://learn.arcgis.com/en/projects/estimate-solar-power-potential/
 #-------------------------------
 
-tools:Aspect a :CompleteToolSpecification;
-    wf:input1 [ a ccd:FieldRaster, ccd:IntervalA ]; ##
+sig:Aspect a :Signature;
+    :input [ :id 1; a ccd:FieldRaster, ccd:IntervalA ]; ##
     wf:output [ a ccd:FieldRaster, ccd:RatioA ];
     rdfs:comment
         "Derives the aspect of a digital elevation model";
@@ -417,27 +114,27 @@ tools:Aspect a :CompleteToolSpecification;
         "aspect (1: Field(Itv))".
 
 ### local map algebra divide
-tools:LocalMapAlgebraDivide a :CompleteToolSpecification;
-    wf:input1 [ a ccd:FieldRaster, ccd:RatioA ];
+sig:LocalMapAlgebraDivide a :Signature;
+    :input [ :id 1; a ccd:FieldRaster, ccd:RatioA ];
     wf:output [ a ccd:FieldRaster, ccd:RatioA ];
     rdfs:comment
         "Builds and executes a Local Map Algebra expression that divides rasters by a ratio number";
     cct:expression
         "apply1 ((swap ratio) (-: Ratio)) (1: Field(Ratio))".
 
-tools:con2 a :CompleteToolSpecification;
-    wf:input1 [ a ccd:FieldRaster, ccd:RatioA ]; ## conditional raster, less than some value
-    wf:input2 [ a ccd:FieldRaster, ccd:RatioA ]; ## field raster to be cut
+sig:con2 a :Signature;
+    :input [ :id 1; a ccd:FieldRaster, ccd:RatioA ]; ## conditional raster, less than some value
+    :input [ :id 2; a ccd:FieldRaster, ccd:RatioA ]; ## field raster to be cut
     wf:output [ a ccd:FieldRaster, ccd:RatioA ];
     rdfs:comment
         "Cuts a field raster conditional on (the coverage of) another field raster that is less than some value";
     cct:expression
         "subset (2: Field(Ratio)) (pi1 (select leq (1: Field(Ratio)) (-: Ratio)))".
 
-tools:con3 a :CompleteToolSpecification;
-    wf:input1 [ a ccd:FieldRaster, ccd:RatioA ]; ## conditional raster, less than some value
-    wf:input2 [ a ccd:FieldRaster, ccd:RatioA ]; ## field raster to be cut for inside
-    wf:input3 [ a ccd:FieldRaster, ccd:RatioA ]; ## field raster to be cut for outside
+sig:con3 a :Signature;
+    :input [ :id 1; a ccd:FieldRaster, ccd:RatioA ]; ## conditional raster, less than some value
+    :input [ :id 2; a ccd:FieldRaster, ccd:RatioA ]; ## field raster to be cut for inside
+    :input [ :id 3; a ccd:FieldRaster, ccd:RatioA ]; ## field raster to be cut for outside
     wf:output [ a ccd:FieldRaster, ccd:RatioA ];
     rdfs:comment
         "Cuts a field raster conditional on (the coverage of) another field raster, and adds another field raster for those locations outside of the coverage";
@@ -492,7 +189,7 @@ _:out300_1
     wf:proxyFor _:out300;
     a ccd:ObjectQ, ccd:VectorRegionA, exm:ERA.
 
-tools:CalculateProd a :CompleteToolSpecification;
+sig:CalculateProd a :Signature;
     wf:input1 _:in3001_2;
     wf:output _:out300_2;
     rdfs:comment
@@ -511,7 +208,7 @@ _:out300_2
     wf:proxyFor _:out300;
     a ccd:ObjectQ, ccd:VectorRegionA, ccd:RatioA.
 
-tools:CalculateProdPointObjects a :CompleteToolSpecification;
+sig:CalculateProdPointObjects a :Signature;
     wf:input1 _:in3001_3;
     wf:output _:out300_3;
     rdfs:comment
@@ -537,25 +234,25 @@ _:out300_3
 
 
 ##Summary statistics for amounts
-tools:ObjectSummaryStatisticsAmount a :CompleteToolSpecification;
-    wf:input1 [ a ccd:ObjectQ, ccd:VectorRegionA, ccd:CountA ]; ##
+sig:ObjectSummaryStatisticsAmount a :Signature;
+    :input [ :id 1; a ccd:ObjectQ, ccd:VectorRegionA, ccd:CountA ]; ##
     wf:output [ a ccd:AmountQ, ccd:VectorRegionA, ccd:CountA ];
     rdfs:comment
         "Sums the amount values of an object layer into a sum";
     cct:expression
         "contentsum (getamounts (1: ObjectInfo(Ratio)))".
 
-tools:SummaryStatisticsAmount a :CompleteToolSpecification;
-    wf:input1 [ a ccd:AmountQ, ccd:VectorRegionA, ccd:CountA ]; ##
+sig:SummaryStatisticsAmount a :Signature;
+    :input [ :id 1; a ccd:AmountQ, ccd:VectorRegionA, ccd:CountA ]; ##
     wf:output [ a ccd:AmountQ, ccd:VectorRegionA, ccd:CountA ];
     rdfs:comment
         "Sums the amount values of a count amount layer into a sum";
     cct:expression
         "contentsum (1: Amounts(Ratio))".
 
-tools:ClipObject2Object a :CompleteToolSpecification;
-    wf:input1 [ a ccd:ObjectQ, ccd:PlainVectorRegionA, ccd:CountA ]; ## objects to be clipped
-    wf:input2 [ a ccd:ObjectQ, ccd:PlainVectorRegionA ]; ##to the regions of these objects
+sig:ClipObject2Object a :Signature;
+    :input [ :id 1; a ccd:ObjectQ, ccd:PlainVectorRegionA, ccd:CountA ]; ## objects to be clipped
+    :input [ :id 2; a ccd:ObjectQ, ccd:PlainVectorRegionA ]; ##to the regions of these objects
     wf:output [ a ccd:ObjectQ, ccd:PlainVectorRegionA, ccd:CountA ];
     rdfs:comment
         "Clips some object polygons to the extent of an object layer. We assume here that objects exactly coincide (otherwise clip would cut objects).";
@@ -590,7 +287,7 @@ _:wf01_3 wf:applicationOf tools:CalculateFieldDef;
     wf:output _:out014.
 
 ##CalculatePartialAmounts: Calculates a set of portions from a set of object based count amounts using some boolean vector field. Only the portions that are within the true value of the boolean field are considered. This is an areal interpolation problem, which is solved by first generating area proportions and then multiplying them with the count amount.
-tools:CalculatePartialAmountsfromObjects a :CompleteToolSpecification;
+sig:CalculatePartialAmountsfromObjects a :Signature;
     wf:input1 _:in011;
     wf:input2 _:in012;
     wf:output _:out014;
@@ -617,8 +314,8 @@ _:out014 a ccd:AmountQ, ccd:VectorRegionA, ccd:CountA.
 #-------------------------------
 
 ##Select object by extent
-tools:SelectObjectbyExtent a :CompleteToolSpecification;
-    wf:input1 [ a ccd:ObjectQ, ccd:VectorA ];
+sig:SelectObjectbyExtent a :Signature;
+    :input [ :id 1; a ccd:ObjectQ, ccd:VectorA ];
     wf:output [ a ccd:ObjectQ, ccd:VectorA ];
     rdfs:comment
         "Select object vector by extent. Extent remains implicit.";
@@ -633,8 +330,8 @@ tools:SelectObjectbyExtent a :CompleteToolSpecification;
         """.
 
 ##Buffer (interpreted as vector representation of boolean field)
-tools:ObjectBuffer a :CompleteToolSpecification;
-    wf:input1 [ a ccd:ObjectQ, ccd:VectorA ];
+sig:ObjectBuffer a :Signature;
+    :input [ :id 1; a ccd:ObjectQ, ccd:VectorA ];
     wf:output [ a ccd:FieldQ, ccd:PlainVectorRegionA, ccd:BooleanA ];
     rdfs:comment
         "Buffers some object vector and returns the buffer as a boolean field R(Loc, Bool)";
@@ -642,18 +339,18 @@ tools:ObjectBuffer a :CompleteToolSpecification;
         "extrapol (get_attrL (1: ObjectInfo(Nom)))".
 
 ##Clip vector fields
-tools:ClipNomFieldVector2Extent a :CompleteToolSpecification;
-    wf:input1 [ a ccd:FieldQ, ccd:VectorRegionA ];
-    wf:input2 [ a ccd:FieldQ, ccd:VectorRegionA, ccd:BooleanA ];
+sig:ClipNomFieldVector2Extent a :Signature;
+    :input [ :id 1; a ccd:FieldQ, ccd:VectorRegionA ];
+    :input [ :id 2; a ccd:FieldQ, ccd:VectorRegionA, ccd:BooleanA ];
     wf:output [ a ccd:FieldQ, ccd:VectorRegionA ];
     rdfs:comment
         "Clips some nominal field vector to the region where a boolean field vector is true.";
     cct:expression
         "subset (1: Field(Nom)) (fcover (2: Field(Bool)) (nest true))".
 
-tools:ClipBoolFieldVector2Extent a :CompleteToolSpecification;
-    wf:input1 [ a ccd:FieldQ, ccd:VectorRegionA, ccd:BooleanA];
-    wf:input2 [ a ccd:FieldQ, ccd:VectorRegionA, ccd:BooleanA ];
+sig:ClipBoolFieldVector2Extent a :Signature;
+    :input [ :id 1; a ccd:FieldQ, ccd:VectorRegionA, ccd:BooleanA];
+    :input [ :id 2; a ccd:FieldQ, ccd:VectorRegionA, ccd:BooleanA ];
     wf:output [ a ccd:FieldQ, ccd:VectorRegionA, ccd:BooleanA ];
     rdfs:comment
         "Clips some boolean field vector to the region where a boolean field vector is true.";
@@ -683,7 +380,7 @@ _:wf11_2 wf:applicationOf tools:CalculateField2Def;
 ##The assumption is here is that fields are represented by single polygons and area measures are implicitly added. The area measure of the second layer is manually taken over into the calculation. The result is a single measure, though stored into a table with a single polygon.
 
 #Substance Coverage proportions SC/SC
-tools:CalculateVectorFieldAreaPercentage a :CompleteToolSpecification;
+sig:CalculateVectorFieldAreaPercentage a :Signature;
     wf:input1 _:in1111_1;
     wf:input2 _:in1112_1;
     wf:output _:out1112_1;
@@ -707,7 +404,7 @@ _:out1112_1
     a ccd:AmountQ, ccd:VectorRegionA, exm:IRA.
 
 #Substance Coverage SC
-tools:CalculateVectorFieldPartialArea a :CompleteToolSpecification;
+sig:CalculateVectorFieldPartialArea a :Signature;
     wf:input1 _:in1111_2; #field whose extent is interpreted as a Substance Coverage SC
     wf:input2 _:in1112_2;#Substance Coverage proportion SC/SC
     wf:output _:out1112_2;
@@ -726,7 +423,7 @@ _:out1112_2
     a ccd:AmountQ, ccd:VectorRegionA, exm:ERA.
 
 #Object Content proportion OA/OA
-tools:CalculateCountAmountRatio a :CompleteToolSpecification;
+sig:CalculateCountAmountRatio a :Signature;
     wf:input1 _:in1111_3;
     wf:input2 _:in1112_3;
     wf:output _:out1112_3;
@@ -745,7 +442,7 @@ _:out1112_3
     a ccd:AmountQ, ccd:VectorRegionA, exm:IRA.
 
 #Calculate new attribute: Object Content proportion OA/OA
-tools:CalculateObjectVectorCountAmountRatio a :CompleteToolSpecification;
+sig:CalculateObjectVectorCountAmountRatio a :Signature;
     wf:input1 _:in1111_4;
     wf:input2 _:in1112_4;
     wf:output _:out1112_4;
@@ -770,7 +467,7 @@ _:out1112_4
     a ccd:ObjectQ, ccd:VectorRegionA, exm:IRA.
 
 #<https://pro.arcgis.com/en/pro-app/tool-reference/data-management/calculate-field.htm>
-tools:CalculateObjectAttrRatio a :CompleteToolSpecification;
+sig:CalculateObjectAttrRatio a :Signature;
     wf:input1 _:in1111_5;
     wf:input2 _:in1112_5;
     wf:output _:out1112_5;
@@ -797,9 +494,9 @@ _:out1112_5
 
 
 ##Erase Vector fields
-tools:EraseFieldExtentfromFieldVector a :CompleteToolSpecification;
-    wf:input1 [ a ccd:FieldQ,  ccd:PlainVectorRegionA ];
-    wf:input2 [ a ccd:FieldQ, ccd:VectorRegionA, ccd:BooleanA ];
+sig:EraseFieldExtentfromFieldVector a :Signature;
+    :input [ :id 1; a ccd:FieldQ,  ccd:PlainVectorRegionA ];
+    :input [ :id 2; a ccd:FieldQ, ccd:VectorRegionA, ccd:BooleanA ];
     wf:output [ a ccd:FieldQ,  ccd:PlainVectorRegionA];
     rdfs:comment
         "Erases the coverage of a boolean field vector (second input) from a field vector (first input)";
@@ -851,7 +548,7 @@ _:wf1_2 wf:applicationOf tools:CopyFeaturesDef;
     wf:output _:out12.
 
 #### Object selection variant by id
-tools:SelectLayerByObjectPointObjects a :CompleteToolSpecification;
+sig:SelectLayerByObjectPointObjects a :Signature;
     wf:input1 _:in11_1;
     wf:output _:out12_1;
     cct:expression
@@ -864,7 +561,7 @@ _:out12_1
     a ccd:ObjectQ, ccd:PointA, ccd:BooleanA.
 
 #### Object selection variant by id
-tools:SelectLayerByObjectLineObjects a :CompleteToolSpecification;
+sig:SelectLayerByObjectLineObjects a :Signature;
     wf:input1 _:in11_2;
     wf:output _:out12_2;
     cct:expression
@@ -877,7 +574,7 @@ _:out12_2
     a ccd:ObjectQ, ccd:LineA, ccd:BooleanA.
 
 #### Object selection variant by id
-tools:SelectLayerByObjectPlainRegionObjects a :CompleteToolSpecification;
+sig:SelectLayerByObjectPlainRegionObjects a :Signature;
     wf:input1 _:in11_3;
     wf:output _:out12_3;
     cct:expression
@@ -890,7 +587,7 @@ _:out12_3
     a ccd:ObjectQ, ccd:PlainVectorRegionA, ccd:BooleanA.
 
 #### Object selection variant by id
-tools:SelectLayerByObjectTessObjects a :CompleteToolSpecification;
+sig:SelectLayerByObjectTessObjects a :Signature;
     wf:input1 _:in11_4;
     wf:output _:out12_4;
     cct:expression
@@ -903,7 +600,7 @@ _:out12_4
     a ccd:ObjectQ, ccd:PlainVectorRegionA, ccd:BooleanA.
 
 #### Object selection variant, needs a nominal attribute
-tools:SelectLayerByAttributePointObjects a :CompleteToolSpecification;
+sig:SelectLayerByAttributePointObjects a :Signature;
     wf:input1 _:in11_5;
     wf:output _:out12_5;
     cct:expression
@@ -916,7 +613,7 @@ _:out12_5
    a ccd:ObjectQ, ccd:PointA, ccd:NominalA.
 
 #### Object selection variant, needs a nominal attribute
-tools:SelectLayerByAttributeLineObjects a :CompleteToolSpecification;
+sig:SelectLayerByAttributeLineObjects a :Signature;
     wf:input1 _:in11_6;
     wf:output _:out12_6;
     cct:expression
@@ -929,7 +626,7 @@ _:out12_6
     a ccd:ObjectQ, ccd:LineA, ccd:NominalA.
 
 #### Object selection variant, needs a nominal attribute
-tools:SelectLayerByAttributePlainRegionObjects a :CompleteToolSpecification;
+sig:SelectLayerByAttributePlainRegionObjects a :Signature;
     wf:input1 _:in11_7;
     wf:output _:out12_7;
     cct:expression
@@ -942,7 +639,7 @@ _:out12_7
     a ccd:ObjectQ, ccd:PlainVectorRegionA, ccd:NominalA.
 
 #### Object selection variant, needs a nominal attribute
-tools:SelectLayerByAttributeTessObjects a :CompleteToolSpecification;
+sig:SelectLayerByAttributeTessObjects a :Signature;
     wf:input1 _:in11_8;
     wf:output _:out12_8;
     cct:expression
@@ -955,7 +652,7 @@ _:out12_8
     a ccd:ObjectQ, ccd:PlainVectorRegionA, ccd:NominalA.
 
 #### Object selection variant, needs a ratio attribute
-tools:SelectLayerByRatioPointObjects a :CompleteToolSpecification;
+sig:SelectLayerByRatioPointObjects a :Signature;
     wf:input1 _:in11_9;
     wf:output _:out12_9;
     cct:expression
@@ -968,7 +665,7 @@ _:out12_9
     a ccd:ObjectQ, ccd:PointA, ccd:RatioA.
 
 #### Object selection variant, needs a ratio attribute
-tools:SelectLayerByRatioLineObjects a :CompleteToolSpecification;
+sig:SelectLayerByRatioLineObjects a :Signature;
     wf:input1 _:in11_10;
     wf:output _:out12_10;
     cct:expression
@@ -981,7 +678,7 @@ _:out12_10
     a ccd:ObjectQ, ccd:LineA, ccd:RatioA.
 
 #### Object selection variant, needs a ratio attribute
-tools:SelectLayerByRatioPlainRegionObjects a :CompleteToolSpecification;
+sig:SelectLayerByRatioPlainRegionObjects a :Signature;
     wf:input1 _:in11_11;
     wf:output _:out12_11;
     cct:expression
@@ -994,7 +691,7 @@ _:out12_11
     a ccd:ObjectQ, ccd:PlainVectorRegionA, ccd:RatioA.
 
 #### Object selection variant, needs a ratio attribute
-tools:SelectLayerByRatioTessObjects a :CompleteToolSpecification;
+sig:SelectLayerByRatioTessObjects a :Signature;
     wf:input1 _:in11_12;
     wf:output _:out12_12;
     cct:expression
@@ -1007,7 +704,7 @@ _:out12_12
     a ccd:ObjectQ, ccd:PlainVectorRegionA, ccd:RatioA.
 
 #### Contour to Existence Vector (select a contour map greater than some ordinal value)
-tools:SelectLayerContourToExistenceVector a :CompleteToolSpecification;
+sig:SelectLayerContourToExistenceVector a :Signature;
     wf:input1 _:in11_13;
     wf:output _:out12_13;
     cct:expression
@@ -1022,7 +719,7 @@ _:out12_13
     a ccd:FieldQ, ccd:PlainVectorRegionA, ccd:OrdinalA.
 
 #### Object selection variant vith gteq, needs a ratio attribute
-tools:SelectLayerByRatioGEQPlainRegionObjects a :CompleteToolSpecification;
+sig:SelectLayerByRatioGEQPlainRegionObjects a :Signature;
     wf:input1 _:in11_14;
     wf:output _:out12_14;
     cct:expression
@@ -1035,7 +732,7 @@ _:out12_14
     a ccd:ObjectQ, ccd:PlainVectorRegionA, ccd:RatioA.
 
 #### Coverage to Existence Vector
-tools:SelectLayerCoverageToExistenceVector a :CompleteToolSpecification;
+sig:SelectLayerCoverageToExistenceVector a :Signature;
     wf:input1 _:in11_15;
     wf:output _:out12_15;
     cct:expression
@@ -1071,7 +768,7 @@ _:wf2_2 wf:applicationOf tools:CopyFeaturesDef;
     wf:output _:out22.
 
 #### Object selection variant
-tools:SelectLayerByLocationPointObjects a :CompleteToolSpecification;
+sig:SelectLayerByLocationPointObjects a :Signature;
     wf:input1 _:in211_1;
     wf:input2 _:in212_1;
     wf:output _:out22_1;
@@ -1098,7 +795,7 @@ _:out22_1
     a ccd:ObjectQ, ccd:PointA.
 
 #### Object selection variant
-tools:SelectLayerByLocationLineObjects a :CompleteToolSpecification;
+sig:SelectLayerByLocationLineObjects a :Signature;
     wf:input1 _:in211_2;
     wf:input2 _:in212_2;
     wf:output _:out22_2;
@@ -1125,7 +822,7 @@ _:out22_2
     a ccd:ObjectQ, ccd:LineA.
 
 #### Object selection variant
-tools:SelectLayerByLocationPlainRegionObjects a :CompleteToolSpecification;
+sig:SelectLayerByLocationPlainRegionObjects a :Signature;
     wf:input1 _:in211_3;
     wf:input2 _:in212_3;
     wf:output _:out22_3;
@@ -1152,7 +849,7 @@ _:out22_3
     a ccd:ObjectQ, ccd:PlainVectorRegionA.
 
 #### Object selection variant
-tools:SelectLayerByLocationTessObjects a :CompleteToolSpecification;
+sig:SelectLayerByLocationTessObjects a :Signature;
     wf:input1 _:in211_4;
     wf:input2 _:in212_4;
     wf:output _:out22_4;
@@ -1179,7 +876,7 @@ _:out22_4
     a ccd:ObjectQ, ccd:VectorTessellationA.
 
 #### Object selection variant with vector field patches
-tools:SelectLayerByLocationPlainRegionObjectsFieldDist a :CompleteToolSpecification;
+sig:SelectLayerByLocationPlainRegionObjectsFieldDist a :Signature;
     wf:input1 _:in211_5;
     wf:input2 _:in212_5;
     wf:output _:out22_5;
@@ -1206,7 +903,7 @@ _:out22_5
     a ccd:ObjectQ, ccd:PlainVectorRegionA.
 
 #### Object selection variant with distance
-tools:SelectLayerByLocationPlainRegionObjectsDist a :CompleteToolSpecification;
+sig:SelectLayerByLocationPlainRegionObjectsDist a :Signature;
     wf:input1 _:in211_6;
     wf:input2 _:in212_6;
     wf:output _:out22_6;
@@ -1238,9 +935,9 @@ _:out22_6
 
 ######### Spatial join with sum rule
 # with JOIN_ONE_TO_ONE parameter, with Merge_RULe sum for Ratio data.
-tools:SpatialJoinSumTessRatio a :CompleteToolSpecification;
-    wf:input1 [ a ccd:ObjectQ, ccd:VectorA, exm:ERA ];
-    wf:input2 [ a ccd:ObjectQ, ccd:VectorTessellationA ];
+sig:SpatialJoinSumTessRatio a :Signature;
+    :input [ :id 1; a ccd:ObjectQ, ccd:VectorA, exm:ERA ];
+    :input [ :id 2; a ccd:ObjectQ, ccd:VectorTessellationA ];
     wf:output [ a ccd:ObjectQ, ccd:VectorTessellationA, exm:ERA ];
     rdfs:comment
         "Sums the attributes at ratio measurement level from one feature to another based on the spatial relation";
@@ -1260,9 +957,9 @@ tools:SpatialJoinSumTessRatio a :CompleteToolSpecification;
         """.
 
 # with JOIN_ONE_TO_ONE parameter, with Merge_RULe sum for Count data.
-tools:SpatialJoinSumTessCount a :CompleteToolSpecification;
-    wf:input1 [ a ccd:ObjectQ, ccd:VectorA, ccd:CountA ];
-    wf:input2 [ a ccd:ObjectQ, ccd:VectorTessellationA ];
+sig:SpatialJoinSumTessCount a :Signature;
+    :input [ :id 1; a ccd:ObjectQ, ccd:VectorA, ccd:CountA ];
+    :input [ :id 2; a ccd:ObjectQ, ccd:VectorTessellationA ];
     wf:output [ a ccd:ObjectQ, ccd:VectorTessellationA, ccd:CountA ];
     rdfs:comment
         "Sums the attributes at Count measurement level from one feature to another based on the spatial relation";
@@ -1283,9 +980,9 @@ tools:SpatialJoinSumTessCount a :CompleteToolSpecification;
 
 ######### Spatial join with sum rule with vector amounts
 # with JOIN_ONE_TO_ONE parameter, with Merge_RULe sum for Ratio data.
-tools:SpatialJoinAmountSumTessRatio a :CompleteToolSpecification;
-    wf:input1 [ a ccd:AmountQ, ccd:VectorRegionA, exm:ERA ];
-    wf:input2 [ a ccd:ObjectQ, ccd:VectorTessellationA ];
+sig:SpatialJoinAmountSumTessRatio a :Signature;
+    :input [ :id 1; a ccd:AmountQ, ccd:VectorRegionA, exm:ERA ];
+    :input [ :id 2; a ccd:ObjectQ, ccd:VectorTessellationA ];
     wf:output [ a ccd:ObjectQ, ccd:VectorTessellationA, exm:ERA ];
     rdfs:comment
         "Sums the attributes at ratio measurement level from one feature to another based on the spatial relation";
@@ -1307,9 +1004,9 @@ tools:SpatialJoinAmountSumTessRatio a :CompleteToolSpecification;
         """.
 
 # with JOIN_ONE_TO_ONE parameter, with Merge_RULe sum for Count data.
-tools:SpatialJoinAmountSumTessCount a :CompleteToolSpecification;
-    wf:input1 [ a ccd:AmountQ, ccd:VectorRegionA, ccd:CountA ];
-    wf:input2 [ a ccd:ObjectQ, ccd:VectorTessellationA ];
+sig:SpatialJoinAmountSumTessCount a :Signature;
+    :input [ :id 1; a ccd:AmountQ, ccd:VectorRegionA, ccd:CountA ];
+    :input [ :id 2; a ccd:ObjectQ, ccd:VectorTessellationA ];
     wf:output [ a ccd:ObjectQ, ccd:VectorTessellationA, ccd:CountA ];
     rdfs:label
         "Sums the attributes at Count measurement level from one feature to another based on the spatial relation";
@@ -1334,9 +1031,9 @@ tools:SpatialJoinAmountSumTessCount a :CompleteToolSpecification;
 
 #### spatial join with mean rule
 # with JOIN_ONE_TO_ONE parameter, with Merge_RULe mean for interval data.
-tools:SpatialJoinMeanTessInterval a :CompleteToolSpecification;
-    wf:input1 [ a ccd:ObjectQ, ccd:VectorA, ccd:IntervalA ];
-    wf:input2 [ a ccd:ObjectQ, ccd:VectorTessellationA ];
+sig:SpatialJoinMeanTessInterval a :Signature;
+    :input [ :id 1; a ccd:ObjectQ, ccd:VectorA, ccd:IntervalA ];
+    :input [ :id 2; a ccd:ObjectQ, ccd:VectorTessellationA ];
     wf:output [ a ccd:ObjectQ, ccd:VectorTessellationA, ccd:IntervalA ];
     rdfs:comment
     "Averages the attributes at interval measurement level from one feature to another based on the spatial relation";
@@ -1356,9 +1053,9 @@ tools:SpatialJoinMeanTessInterval a :CompleteToolSpecification;
         """.
 
 # with JOIN_ONE_TO_ONE parameter, with Merge_RULe mean for Ratio data.
-tools:SpatialJoinMeanTessRatio a :CompleteToolSpecification;
-    wf:input1 [ a ccd:ObjectQ, ccd:VectorA, ccd:RatioA ];
-    wf:input2 [ a ccd:ObjectQ, ccd:VectorTessellationA ];
+sig:SpatialJoinMeanTessRatio a :Signature;
+    :input [ :id 1; a ccd:ObjectQ, ccd:VectorA, ccd:RatioA ];
+    :input [ :id 2; a ccd:ObjectQ, ccd:VectorTessellationA ];
     wf:output [ a ccd:ObjectQ, ccd:VectorTessellationA, ccd:RatioA ];
     rdfs:comment
         "Averages the attributes at Ratio measurement level from one feature to another based on the spatial relation";
@@ -1378,9 +1075,9 @@ tools:SpatialJoinMeanTessRatio a :CompleteToolSpecification;
         """.
 
 # with JOIN_ONE_TO_ONE parameter, with Merge_RULe mean for Count data.
-tools:SpatialJoinMeanTessCount a :CompleteToolSpecification;
-    wf:input1 [ a ccd:ObjectQ, ccd:VectorA, ccd:CountA ];
-    wf:input2 [ a ccd:ObjectQ, ccd:VectorTessellationA ];
+sig:SpatialJoinMeanTessCount a :Signature;
+    :input [ :id 1; a ccd:ObjectQ, ccd:VectorA, ccd:CountA ];
+    :input [ :id 2; a ccd:ObjectQ, ccd:VectorTessellationA ];
     wf:output [ a ccd:ObjectQ, ccd:VectorTessellationA, ccd:CountA ];
     rdfs:comment
         "Averages the attributes at Count measurement level from one feature to another based on the spatial relation";
@@ -1401,9 +1098,9 @@ tools:SpatialJoinMeanTessCount a :CompleteToolSpecification;
 
 #### spatial join with the count rule
 # with JOIN_ONE_TO_ONE parameter and with Merge_RULe count.
-tools:SpatialJoinCountTess a :CompleteToolSpecification;
-    wf:input1 [ a ccd:ObjectQ, ccd:VectorA ];
-    wf:input2 [ a ccd:ObjectQ, ccd:VectorTessellationA ];
+sig:SpatialJoinCountTess a :Signature;
+    :input [ :id 1; a ccd:ObjectQ, ccd:VectorA ];
+    :input [ :id 2; a ccd:ObjectQ, ccd:VectorTessellationA ];
     wf:output [ a ccd:ObjectQ, ccd:VectorTessellationA, ccd:CountA ];
     rdfs:comment
         "Counts the number of features from one feature to another based on the spatial relation";
@@ -1426,9 +1123,9 @@ tools:SpatialJoinCountTess a :CompleteToolSpecification;
 
 #Noise portion
 
-tools:ClipFieldRaster2ObjectExtent a :CompleteToolSpecification;
-    wf:input1 [ a ccd:FieldRaster, ccd:OrdinalA ];
-    wf:input2 [ a ccd:ObjectVector ];
+sig:ClipFieldRaster2ObjectExtent a :Signature;
+    :input [ :id 1; a ccd:FieldRaster, ccd:OrdinalA ];
+    :input [ :id 2; a ccd:ObjectVector ];
     wf:output [ a ccd:FieldRaster, ccd:OrdinalA];
     rdfs:comment
         "Clips some interval scaled field raster to the extent of an object layer.";
@@ -1442,8 +1139,8 @@ tools:ClipFieldRaster2ObjectExtent a :CompleteToolSpecification;
         ))
         """.
 
-tools:RegionFromRasterExtent a :CompleteToolSpecification;
-    wf:input1 [ a ccd:FieldRaster, ccd:NominalA ];
+sig:RegionFromRasterExtent a :Signature;
+    :input [ :id 1; a ccd:FieldRaster, ccd:NominalA ];
     wf:output [ a ccd:AmountQ, ccd:VectorRegionA, ccd:NominalA ];
     rdfs:comment
         "Make a region layer from the extent of a raster. Measures the coverage of a nominal field.";
@@ -1457,16 +1154,16 @@ tools:RegionFromRasterExtent a :CompleteToolSpecification;
 
 #<https://pro.arcgis.com/en/pro-app/tool-reference/conversion/polygon-to-raster.htm>
 ###Field Polygon to raster
-tools:CoverageToNominalFieldRaster a :CompleteToolSpecification;
-    wf:input1 [ a ccd:Coverage, ccd:PlainNominalA ];
+sig:CoverageToNominalFieldRaster a :Signature;
+    :input [ :id 1; a ccd:Coverage, ccd:PlainNominalA ];
     wf:output [ a ccd:FieldRaster, ccd:PlainNominalA ];
     rdfs:comment
         "Converts Field polygons to nominal field Rasters";
     cct:expression
         "revert (1: Coverages(Nom))".
 
-tools:ContourToFieldRaster a :CompleteToolSpecification;
-    wf:input1 [ a ccd:Contour ];
+sig:ContourToFieldRaster a :Signature;
+    :input [ :id 1; a ccd:Contour ];
     wf:output [ a ccd:FieldRaster, ccd:PlainOrdinalA ];
     rdfs:comment
         "Converts contour maps to field Rasters";
@@ -1476,8 +1173,8 @@ tools:ContourToFieldRaster a :CompleteToolSpecification;
 #<https://pro.arcgis.com/en/pro-app/tool-reference/spatial-analyst/raster-calculator.htm>
 
 ### local map algebra with only a single input layer
-tools:LocalMapAlgebraSubOrder a :CompleteToolSpecification;
-    wf:input1 [ a ccd:FieldRaster, ccd:OrdinalA ];
+sig:LocalMapAlgebraSubOrder a :Signature;
+    :input [ :id 1; a ccd:FieldRaster, ccd:OrdinalA ];
     wf:output [ a ccd:FieldRaster, ccd:OrdinalA ];
     rdfs:comment
         "Builds and executes a Local Map Algebra expression (smaller than or greater than some number) using Python syntax using rasters with an ordinal level";
@@ -1485,8 +1182,8 @@ tools:LocalMapAlgebraSubOrder a :CompleteToolSpecification;
         "select (compose2 notj leq) (1: Field(Ord)) (-: Ord)".
 
 ### local map algebra transformation with ratio field
-tools:LocalMapAlgebraSubRatio a :CompleteToolSpecification;
-    wf:input1 [ a ccd:FieldRaster, ccd:RatioA ];
+sig:LocalMapAlgebraSubRatio a :Signature;
+    :input [ :id 1; a ccd:FieldRaster, ccd:RatioA ];
     wf:output [ a ccd:FieldRaster, ccd:RatioA ];
     rdfs:comment
         "Builds and executes a Local Map Algebra expression (less than or equal to some number) using Python syntax using rasters with a ratio level";
@@ -1504,7 +1201,7 @@ _:wf3_2 wf:applicationOf tools:RegionFromRasterExtent;
     wf:input1 _:out31;
     wf:output _:out32.
 
-tools:RasterToContourInterval a :CompleteToolSpecification;
+sig:RasterToContourInterval a :Signature;
     wf:input1 _:in31;
     wf:output _:out32;
     rdfs:comment
@@ -1562,7 +1259,7 @@ _:out42_1
     a ccd:ObjectQ, ccd:VectorRegionA, exm:ERA.
 
 #Zonal Statistics
-tools:ZonalStatisticsMeanInterval a :CompleteToolSpecification;
+sig:ZonalStatisticsMeanInterval a :Signature;
     wf:input1 _:in411_2;
     wf:input2 _:in412_2;
     wf:output _:out42_2;
@@ -1586,7 +1283,7 @@ _:out42_2
     wf:proxyFor _:out42;
     a ccd:ObjectQ, ccd:VectorTessellationA, ccd:IntervalA.
 
-tools:ZonalStatisticsMeanRatio a :CompleteToolSpecification;
+sig:ZonalStatisticsMeanRatio a :Signature;
     wf:input1 _:in411_3;
     wf:input2 _:in412_3;
     wf:output _:out42_3;
@@ -1616,7 +1313,7 @@ _:out42_3
     a ccd:ObjectQ, ccd:PlainVectorRegionA, exm:IRA.
 
 #Zonal statistics: sum of count amounts
-tools:ZonalStatisticsSumCount a :CompleteToolSpecification;
+sig:ZonalStatisticsSumCount a :Signature;
     wf:input1 _:in411_4;
     wf:input2 _:in412_4;
     wf:output _:out42_4;
@@ -1645,8 +1342,8 @@ _:out42_4
 
 
 
-tools:AddObjectVectorRegionArea a :CompleteToolSpecification;
-    wf:input1 [ a ccd:ObjectQ, ccd:VectorRegionA ];
+sig:AddObjectVectorRegionArea a :Signature;
+    :input [ :id 1; a ccd:ObjectQ, ccd:VectorRegionA ];
     wf:output [ a ccd:ObjectQ, ccd:VectorRegionA, exm:ERA ];
     rdfs:comment
         "Adds an area attribute to an object vector region layer.";
@@ -1681,7 +1378,7 @@ _:wf8_3 wf:applicationOf tools:JoinFieldDef;
     wf:output _:out83.
 
 ##Coverage of vector field in object
-tools:IntersectDissolveField2Object a :CompleteToolSpecification;
+sig:IntersectDissolveField2Object a :Signature;
     wf:input1 _:in81;
     wf:input2 _:in82;
     wf:output _:out83;
@@ -1725,7 +1422,7 @@ _:wf5_4  wf:applicationOf tools:JoinFieldDef;
     wf:input2 _:temp;
     wf:output _:out53.
 
-tools:MakePointMeasuresFromTable a :CompleteToolSpecification;
+sig:MakePointMeasuresFromTable a :Signature;
     wf:input1 _:in51;
     wf:output _:out53;
     rdfs:comment
@@ -1735,16 +1432,16 @@ tools:MakePointMeasuresFromTable a :CompleteToolSpecification;
 _:in51 a ccd:PointMeasures, ccd:IntervalA.
 _:out53 a ccd:PointMeasures, ccd:IntervalA.
 
-tools:IDWInterval a :CompleteToolSpecification;
-    wf:input1 [ a ccd:PointMeasures, ccd:IntervalA ];
+sig:IDWInterval a :Signature;
+    :input [ :id 1; a ccd:PointMeasures, ccd:IntervalA ];
     wf:output [ a ccd:FieldRaster, ccd:IntervalA ];
     rdfs:comment
         "Standard point interpolation for interval measurements.";
     cct:expression
         "interpol (1: PointMeasures) (deify (-: Reg))".
 
-tools:KrigingInterval a :CompleteToolSpecification;
-    wf:input1 [ a ccd:PointMeasures, ccd:IntervalA ];
+sig:KrigingInterval a :Signature;
+    :input [ :id 1; a ccd:PointMeasures, ccd:IntervalA ];
     wf:output [ a ccd:FieldRaster, ccd:IntervalA ];
     rdfs:comment
         "Kriging point interpolation for interval measurements.";
@@ -1890,8 +1587,8 @@ arcprosa:watershed.htm a :ToolImplementation;
 
 tools:ClipDef a :PartialToolSpecification;
     # [SC][TODO] annotate inputs and output
-    wf:input1 [ a ccd:CoreConceptQ, ccd:VectorRegionA, ccd:NominalA ];
-    wf:input2 [ a ccd:CoreConceptQ, ccd:VectorRegionA, ccd:NominalA ];
+    :input [ :id 1; a ccd:CoreConceptQ, ccd:VectorRegionA, ccd:NominalA ];
+    :input [ :id 2; a ccd:CoreConceptQ, ccd:VectorRegionA, ccd:NominalA ];
     wf:output [ a ccd:CoreConceptQ, ccd:VectorRegionA, ccd:NominalA ];
     rdfs:comment
         "This is the default annotation for the Clip arcpro tool to be used when an algebra expression is not possible to produce.";
@@ -1899,8 +1596,8 @@ tools:ClipDef a :PartialToolSpecification;
     
 tools:RasterCalculatorDef a :PartialToolSpecification;
     # [SC][TODO] annotate inputs and output
-    wf:input1 [ a ccd:CoreConceptQ, ccd:RasterA, ccd:NominalA ];
-    wf:input2 [ a ccd:CoreConceptQ, ccd:RasterA, ccd:NominalA ];
+    :input [ :id 1; a ccd:CoreConceptQ, ccd:RasterA, ccd:NominalA ];
+    :input [ :id 2; a ccd:CoreConceptQ, ccd:RasterA, ccd:NominalA ];
     wf:output [ a ccd:CoreConceptQ, ccd:RasterA, ccd:NominalA ];
     rdfs:comment
         "This is the default annotation for the Raster Calculator arcpro tool to be used when an algebra expression is not possible to produce.";
@@ -1908,7 +1605,7 @@ tools:RasterCalculatorDef a :PartialToolSpecification;
     
 tools:RasterCalculator1Def a :PartialToolSpecification;
     # [SC][TODO] annotate inputs and output
-    wf:input1 [ a ccd:CoreConceptQ, ccd:RasterA, ccd:NominalA ];    
+    :input [ :id 1; a ccd:CoreConceptQ, ccd:RasterA, ccd:NominalA ];    
     wf:output [ a ccd:CoreConceptQ, ccd:RasterA, ccd:NominalA ];
     rdfs:comment
         "This is the default annotation for the Raster Calculator arcpro tool to be used when an algebra expression is not possible to produce.";
@@ -1918,7 +1615,7 @@ arcprona:make-closest-facility-analysis-layer.htm
     tools:implements tools:MakeClosestFacilityAnalysisLayerDef.
 tools:MakeClosestFacilityAnalysisLayerDef a :PartialToolSpecification;
     # [SC][TODO] annotate inputs and output    
-    wf:input1 [ a ccd:NetworkQ, ccd:LineA, ccd:RatioA ];    
+    :input [ :id 1; a ccd:NetworkQ, ccd:LineA, ccd:RatioA ];    
     wf:output [ a ccd:NetworkQ, ccd:LineA, ccd:RatioA ];
     rdfs:comment
         "This is the default annotation for the Make Closest Facility Analysis Layer arcpro tool to be used when an algebra expression is not possible to produce.";
@@ -1928,8 +1625,8 @@ arcprona:add-locations.htm
     tools:implements tools:AddLocationsDef.
 tools:AddLocationsDef a :PartialToolSpecification;
     # [SC][TODO] annotate inputs and output
-    wf:input1 [ a ccd:NetworkQ, ccd:LineA, ccd:RatioA ];
-    wf:input2 [ a ccd:CoreConceptQ, ccd:PointA, ccd:NominalA ];
+    :input [ :id 1; a ccd:NetworkQ, ccd:LineA, ccd:RatioA ];
+    :input [ :id 2; a ccd:CoreConceptQ, ccd:PointA, ccd:NominalA ];
     wf:output [ a ccd:NetworkQ, ccd:LineA, ccd:RatioA ];
     rdfs:comment
         "This is the default annotation for the Add Locations arcpro tool to be used when an algebra expression is not possible to produce.";
@@ -1939,7 +1636,7 @@ arcprona:solve.htm
     tools:implements tools:SolveDef.
 tools:SolveDef a :PartialToolSpecification;
     # [SC][TODO] annotate inputs and output
-    wf:input1 [ a ccd:NetworkQ, ccd:LineA, ccd:RatioA ];    
+    :input [ :id 1; a ccd:NetworkQ, ccd:LineA, ccd:RatioA ];    
     wf:output [ a ccd:ObjectQ, ccd:PointA, ccd:RatioA ];
     rdfs:comment
         "This is the default annotation for the Solve arcpro tool to be used when an algebra expression is not possible to produce.";
@@ -1949,7 +1646,7 @@ arcproco:excel-to-table.htm
     tools:implements tools:ExcelToTableDef.
 tools:ExcelToTableDef a :PartialToolSpecification;
     # [SC][TODO] annotate inputs and output
-    wf:input1 [ a ccd:CoreConceptQ, ccd:VectorA, ccd:NominalA ];    
+    :input [ :id 1; a ccd:CoreConceptQ, ccd:VectorA, ccd:NominalA ];    
     wf:output [ a ccd:CoreConceptQ, ccd:VectorA, ccd:NominalA ];
     rdfs:comment
         "This is the default annotation for the Excel To Table arcpro tool to be used when an algebra expression is not possible to produce.";
@@ -1959,8 +1656,8 @@ arcprodm:join-field.htm
     tools:implements tools:JoinFieldDef.
 tools:JoinFieldDef a :PartialToolSpecification;
     # [SC][TODO] annotate inputs and output
-    wf:input1 [ a ccd:CoreConceptQ, ccd:VectorA, ccd:NominalA ];
-    wf:input2 [ a ccd:CoreConceptQ, ccd:VectorA, ccd:NominalA ];
+    :input [ :id 1; a ccd:CoreConceptQ, ccd:VectorA, ccd:NominalA ];
+    :input [ :id 2; a ccd:CoreConceptQ, ccd:VectorA, ccd:NominalA ];
     wf:output [ a ccd:CoreConceptQ, ccd:VectorA, ccd:NominalA ];
     rdfs:comment
         "This is the default annotation for the Join Field arcpro tool to be used when an algebra expression is not possible to produce.";
@@ -1970,7 +1667,7 @@ arcproco:table-to-table.htm
     tools:implements tools:TableToTableDef.
 tools:TableToTableDef a :PartialToolSpecification;
     # [SC][TODO] annotate inputs and output
-    wf:input1 [ a ccd:CoreConceptQ, ccd:RasterA, ccd:NominalA ];    
+    :input [ :id 1; a ccd:CoreConceptQ, ccd:RasterA, ccd:NominalA ];    
     wf:output [ a ccd:AmountQ, ccd:VectorRegionA, ccd:RatioA ];
     rdfs:comment
         "This is the default annotation for the Table To Table arcpro tool to be used when an algebra expression is not possible to produce.";
@@ -1980,7 +1677,7 @@ arcprodm:add-field.htm
     tools:implements tools:AddFieldDef.
 tools:AddFieldDef a :PartialToolSpecification;
     # [SC][TODO] annotate inputs and output
-    wf:input1 [ a ccd:CoreConceptQ, ccd:VectorA, ccd:NominalA ];    
+    :input [ :id 1; a ccd:CoreConceptQ, ccd:VectorA, ccd:NominalA ];    
     wf:output [ a ccd:CoreConceptQ, ccd:VectorA, ccd:NominalA ];
     rdfs:comment
         "This is the default annotation for the Add Field arcpro tool to be used when an algebra expression is not possible to produce.";
@@ -1990,15 +1687,15 @@ arcprodm:calculate-field.htm
     tools:implements tools:CalculateFieldDef, tools:CalculateField2Def.
 tools:CalculateFieldDef a :PartialToolSpecification;
     # [SC][TODO] annotate inputs and output
-    wf:input1 [ a ccd:CoreConceptQ, ccd:VectorA, ccd:NominalA ];    
+    :input [ :id 1; a ccd:CoreConceptQ, ccd:VectorA, ccd:NominalA ];    
     wf:output [ a ccd:CoreConceptQ, ccd:VectorA, ccd:NominalA ];
     rdfs:comment
         "This is the default annotation for the Calculate Field arcpro tool to be used when an algebra expression is not possible to produce.";
     cct:expression "".    
 tools:CalculateField2Def a :PartialToolSpecification;
     # [SC][TODO] annotate inputs and output
-    wf:input1 [ a ccd:CoreConceptQ, ccd:VectorA, ccd:NominalA ];  
-	wf:input2 [ a ccd:CoreConceptQ, ccd:VectorA, ccd:NominalA ];     
+    :input [ :id 1; a ccd:CoreConceptQ, ccd:VectorA, ccd:NominalA ];  
+	:input [ :id 2; a ccd:CoreConceptQ, ccd:VectorA, ccd:NominalA ];     
     wf:output [ a ccd:CoreConceptQ, ccd:VectorA, ccd:NominalA ];
     rdfs:comment
         "This is the default annotation for the Calculate Field arcpro tool to be used when an algebra expression is not possible to produce.";
@@ -2009,7 +1706,7 @@ arcprodm:add-fields.htm
     tools:implements tools:AddFieldsDef.
 tools:AddFieldsDef a :PartialToolSpecification;
     # [SC][TODO] annotate inputs and output
-    wf:input1 [ a ccd:CoreConceptQ, ccd:VectorA, ccd:NominalA ];    
+    :input [ :id 1; a ccd:CoreConceptQ, ccd:VectorA, ccd:NominalA ];    
     wf:output [ a ccd:CoreConceptQ, ccd:VectorA, ccd:NominalA ];
     rdfs:comment
         "This is the default annotation for the Add Fields arcpro tool to be used when an algebra expression is not possible to produce.";
@@ -2019,7 +1716,7 @@ arcprodm:select-layer-by-attribute.htm
     tools:implements tools:SelectLayerByAttributeDef.
 tools:SelectLayerByAttributeDef a :PartialToolSpecification;
     # [SC][TODO] annotate inputs and output
-    wf:input1 [ a ccd:CoreConceptQ, ccd:VectorA, ccd:NominalA ];    
+    :input [ :id 1; a ccd:CoreConceptQ, ccd:VectorA, ccd:NominalA ];    
     wf:output [ a ccd:CoreConceptQ, ccd:VectorA, ccd:NominalA ];
     rdfs:comment
         "This is the default annotation for the Select Layer By Attribute arcpro tool to be used when an algebra expression is not possible to produce.";
@@ -2029,7 +1726,7 @@ arcprodm:copy-features.htm
     tools:implements tools:CopyFeaturesDef.
 tools:CopyFeaturesDef a :PartialToolSpecification;
     # [SC][TODO] annotate inputs and output
-    wf:input1 [ a ccd:CoreConceptQ, ccd:VectorA, ccd:NominalA ];    
+    :input [ :id 1; a ccd:CoreConceptQ, ccd:VectorA, ccd:NominalA ];    
     wf:output [ a ccd:CoreConceptQ, ccd:VectorA, ccd:NominalA ];
     rdfs:comment
         "This is the default annotation for the Copy Features arcpro tool to be used when an algebra expression is not possible to produce.";
@@ -2039,8 +1736,8 @@ arcprodm:select-layer-by-location.htm
     tools:implements tools:SelectLayerByLocationDef.
 tools:SelectLayerByLocationDef a :PartialToolSpecification;
     # [SC][TODO] annotate inputs and output
-    wf:input1 [ a ccd:CoreConceptQ, ccd:VectorA, ccd:NominalA ]; 
-	wf:input2 [ a ccd:CoreConceptQ, ccd:VectorA, ccd:NominalA ];     
+    :input [ :id 1; a ccd:CoreConceptQ, ccd:VectorA, ccd:NominalA ]; 
+	:input [ :id 2; a ccd:CoreConceptQ, ccd:VectorA, ccd:NominalA ];     
     wf:output [ a ccd:CoreConceptQ, ccd:VectorA, ccd:NominalA ];
     rdfs:comment
         "This is the default annotation for the Select Layer By Location arcpro tool to be used when an algebra expression is not possible to produce.";
@@ -2050,8 +1747,8 @@ arcprosa:zonal-statistics-as-table.htm
     tools:implements tools:ZonalStatisticsAsTableDef.
 tools:ZonalStatisticsAsTableDef a :PartialToolSpecification;
     # [SC][TODO] annotate inputs and output
-    wf:input1 [ a ccd:CoreConceptQ, ccd:RasterA, ccd:NominalA ];
-    wf:input2 [ a ccd:CoreConceptQ, ccd:VectorRegionA, ccd:NominalA ];
+    :input [ :id 1; a ccd:CoreConceptQ, ccd:RasterA, ccd:NominalA ];
+    :input [ :id 2; a ccd:CoreConceptQ, ccd:VectorRegionA, ccd:NominalA ];
     wf:output [ a ccd:CoreConceptQ, ccd:VectorRegionA, ccd:NominalA ];
     rdfs:comment
         "This is the default annotation for the Zonal Statistics As Table arcpro tool to be used when an algebra expression is not possible to produce.";
@@ -2061,8 +1758,8 @@ arcproan:intersect.htm
     tools:implements tools:IntersectDef.
 tools:IntersectDef a :PartialToolSpecification;
     # [SC][TODO] annotate inputs and output
-    wf:input1 [ a ccd:CoreConceptQ, ccd:VectorA, ccd:NominalA ];
-    wf:input2 [ a ccd:CoreConceptQ, ccd:VectorA, ccd:NominalA ];
+    :input [ :id 1; a ccd:CoreConceptQ, ccd:VectorA, ccd:NominalA ];
+    :input [ :id 2; a ccd:CoreConceptQ, ccd:VectorA, ccd:NominalA ];
     wf:output [ a ccd:CoreConceptQ, ccd:VectorA, ccd:NominalA ];
     rdfs:comment
         "This is the default annotation for the Intersect arcpro tool to be used when an algebra expression is not possible to produce.";
@@ -2072,7 +1769,7 @@ arcprodm:make-xy-event-layer.htm
     tools:implements tools:MakeXyEventLayerDef.
 tools:MakeXyEventLayerDef a :PartialToolSpecification;
     # [SC][TODO] annotate inputs and output
-    wf:input1 [ a ccd:CoreConceptQ, ccd:PointA, ccd:NominalA ];    
+    :input [ :id 1; a ccd:CoreConceptQ, ccd:PointA, ccd:NominalA ];    
     wf:output [ a ccd:CoreConceptQ, ccd:PointA, ccd:NominalA ];
     rdfs:comment
         "This is the default annotation for the Make Xy Event Layer arcpro tool to be used when an algebra expression is not possible to produce.";
@@ -2082,8 +1779,8 @@ arcprodm:project.htm
     tools:implements tools:ProjectDef.
 tools:ProjectDef a :PartialToolSpecification;
     # [SC][TODO] annotate inputs and output
-    wf:input1 [ a ccd:CoreConceptQ, ccd:LayerA, ccd:NominalA ];
-    wf:input2 [ a ccd:CoreConceptQ, ccd:LayerA, ccd:NominalA ];
+    :input [ :id 1; a ccd:CoreConceptQ, ccd:LayerA, ccd:NominalA ];
+    :input [ :id 2; a ccd:CoreConceptQ, ccd:LayerA, ccd:NominalA ];
     wf:output [ a ccd:CoreConceptQ, ccd:LayerA, ccd:NominalA ];
     rdfs:comment
         "This is the default annotation for the Project arcpro tool to be used when an algebra expression is not possible to produce.";

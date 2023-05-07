@@ -1,0 +1,250 @@
+
+
+@prefix : <https://quangis.github.com/vocab#>
+@prefix cct: <https://quangis.github.com/cct#>
+@prefix sig: <https://quangis.github.com/signature#>
+@prefix tool: <https://quangis.github.com/tool#>
+@prefix supertool: <https://quangis.github.com/supertool#>
+@prefix ccd: <http://geographicknowledge.de/vocab/CoreConceptData.rdf#>.
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>.
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
+
+
+supertool:ClosestFacilityAnalysis a :Supertool;
+    :action
+        [ :apply tool:MakeClosestFacilityAnalysisLayer;
+            :input [ :id 1; rdfs:comment "roads" ];
+            :output _:out201.
+        ], [ :apply tool:AddLocations;
+            :input _:out201, [ :id 2; rdfs:comment "goals" ];
+            :output _:out202
+        ], [ :apply tool:AddLocations;
+            :input _:out202, [ :id 3; rdfs:comment "origins" ];
+            :output _:out203
+        ], [ :apply tool:Solve;
+            :input _:out203;
+            :output _:out204
+        ].
+
+sig:ClosestFacilityAnalysis a :Signature;
+    rdfs:comment
+        "Selects the distance to the closest goal object on a line network.";
+    :input
+        [ :id 1; rdfs:comment "roads"; a ccd:NetworkQ, ccd:LineA, ccd:RatioA ],
+        [ :id 2; rdfs:comment "goals"; a ccd:ObjectQ, ccd:PointA ],
+        [ :id 3; rdfs:comment "origins"; a ccd:ObjectQ, ccd:PointA ];
+    :output
+        [ a ccd:ObjectQ, ccd:PointA, ccd:RatioA];
+    cct:expression
+        """
+        1: Network(Ratio);
+        2: ObjectInfo(Nom);
+        3: ObjectInfo(Nom);
+        join_attr
+            (get_attrL 2)
+            (groupbyL min (nDist (get_attrL 2) (get_attrL 3) 1))
+        """.
+
+sig:BuildNetwork a :Signature;
+    :input [ :id 1; a ccd:ObjectQ, ccd:LineA, ccd:RatioA ];
+    :output [ a ccd:NetworkQ, ccd:LineA, ccd:RatioA ];
+    rdfs:comment
+        "Builds ratio network from line objects.";
+    cct:expression
+        "nbuild (1: ObjectInfo(Ratio))".
+
+
+sig:NearPointObjects a :Signature;
+    :input [ :id 1; a ccd:ObjectQ, ccd:PointA ];
+    :input [ :id 2; a ccd:ObjectQ, ccd:PointA ];
+    :output [ a ccd:ObjectQ, ccd:PointA, ccd:RatioA ];
+    rdfs:comment
+        "Near tool, to seach for the closest objects using Euclidean distance.";
+    cct:expression
+        """
+        1: ObjectInfo(Nom);
+        2: ObjectInfo(Nom);
+        join_attr
+            (get_attrL 1)
+            (groupbyL min (oDist (get_attrL 1) (get_attrL 2)))
+        """.
+
+
+sig:FC2FCObjectTess a :Signature;
+    :input [ :id 1; a ccd:ObjectQ, ccd:VectorTessellationA ];
+    :output [ a ccd:ObjectQ, ccd:PlainVectorRegionA ];
+    rdfs:comment
+        "Object selection variant by id.";
+    cct:expression
+        """
+        subset (1: ObjectInfo(Nom)) (-: C(Obj))
+        """.
+
+sig:MergeObjects a :Signature;
+    :input [ :id 1; a ccd:ObjectQ, ccd:VectorTessellationA, ccd:NominalA ];
+    :output [ a ccd:ObjectQ, ccd:VectorTessellationA, ccd:NominalA ];
+    rdfs:comment
+        "Merges object parts into single objects based on object identifiers stored as names.";
+    cct:expression
+        """
+        1: ObjectInfo(Nom);
+        join_attr
+            (groupby
+                (compose merge (compose pi2 (subset (get_attrL 1))))
+                (apply1 objectify (get_attrR 1))
+            )
+            (getobjectnames (pi2 (get_attrR 1)))
+        """.
+
+supertool:JoinFromTable a :Supertool;
+    rdfs:comment "Make table from Excel";
+    :signature sig:LoadAmountonObjects;
+    :action
+        [ :apply tool:ExcelToTable;
+            :input _:in10_1;
+            :output _:out10 ],
+        [ :apply tool:JoinField;
+            :input _:in10_2, _:out10;
+            :output _:out10_2 ].
+
+sig:LoadAmountonObjects a :Signature;
+    :input [ :id 1; a ccd:ObjectQ, ccd:CountA];
+    :input [ :id 2; a ccd:ObjectQ, ccd:VectorRegionA ];
+    :output [ a ccd:ObjectQ, ccd:VectorRegionA, ccd:CountA].
+    rdfs:comment
+        "Loads object based count amounts from excel and joins them with vector objects.";
+    cct:expression
+        """
+        1: R2(Obj, Count);
+        2: ObjectInfo(_);
+        join_attr (get_attrL 2) 1
+        """.
+
+sig:FlowDirection a :Signature;
+    :input [ :id 1; a ccd:FieldRaster, ccd:IntervalA; rdfs:comment "DEM" ];
+    :output [ a ccd:FieldRaster, ccd:CyclicA ];
+    rdfs:comment
+        "Computes a grid graph of flow directions from a DEM.";
+    cct:expression
+        "flowdirgraph (1: Field(Itv))".
+
+sig:FlowAccumulation a :Signature;
+    :input [ :id 1; a ccd:FieldRaster, ccd:CyclicA; rdfs:comment "Needs to be a 
+    direction" ];
+    :output [ a ccd:FieldRaster, ccd:RatioA ];
+    rdfs:comment
+        "Accumulates flow directions into areas reachable downstream.";
+    cct:expression
+        "apply1 size (accumulate (1: Field(Loc)))".
+
+sig:Slope a :Signature;
+    :input [ :id 1; a ccd:FieldRaster, ccd:IntervalA ];
+    :output [ a ccd:FieldRaster, ccd:RatioA ];
+    rdfs:comment
+        "Computes slopes of a DEM.";
+    cct:expression
+        "slope (1: Field(Itv))".
+
+supertool:VelocityField a :Supertool;
+    :signature sig:VelocityFieldDEM;
+    rdfs:comment """Computes a water flow velocity raster from slope * accumulation area
+
+    # Select by attribute is always followed by copying features
+    # This computes SquareRoot("slope") * SquareRoot("flow_accumulation")
+    """;
+    :action [ :apply tool:RasterCalculator;
+        :input [ rdfs:label "slope" ], [ rdfs:label "acc" ];
+        :output _:slopearea.
+        rdfs:comment "This second step computes 0.1 * ("Stowe_slope_area_term" / [Mean slope-area term]). It needs looking up of parameter [Mean slope-area term]."
+    ], [ :apply tool:RasterCalculator1;
+        :input _:slopearea;
+        :output _:velocity ].
+
+sig:VelocityFieldDEM a :Signature;
+    rdfs:comment
+        "Computes velocity field from DEM.";
+    cct:expression
+        "apply2 product (1: Field(Ratio)) (2: Field(Ratio))";
+    :input [ :id 1; rdfs:comment "slope"; a ccd:FieldRaster, ccd:RatioA ];
+    :input [ :id 2; rdfs:comment "accumulation area"; a ccd:FieldRaster, ccd:RatioA ];
+    :output [ rdfs:comment "velocity"; a ccd:FieldRaster, ccd:RatioA ].
+
+sig:con1 a :Signature;
+    :input [ :id 1; a ccd:FieldRaster, ccd:RatioA; rdfs:comment "raster" ];
+    :output [ a ccd:FieldRaster, ccd:RatioA ];
+    rdfs:comment
+        "Cuts a field raster conditional on less than some value";
+    cct:expression
+        "select leq (1: Field(Ratio)) (-: Ratio)".
+
+sig:LocalMapAlgebraInvert a :Signature;
+    :input [ :id 1; a ccd:FieldRaster, ccd:RatioA ];
+    :output [ a ccd:FieldRaster, ccd:RatioA ];
+    rdfs:comment
+        "Builds and executes a Local Map Algebra expression that inverts rasters with a ratio level.";
+    cct:expression
+        "apply1 (ratio (-: Ratio)) (1: Field(Ratio))".
+
+sig:SnapPourPoint a :Signature;
+    :input [ :id 1; a ccd:ObjectQ, ccd:PointA ];
+    :input [ :id 2; a ccd:FieldRaster, ccd:RatioA; rdfs:comment "flow accumulation raster" ];
+    :output [ a ccd:FieldQ, ccd:RasterA, ccd:PlainNominalA ];
+    rdfs:comment
+        "Snaps a pour point to a raster to generate a raster showing the pour point.";
+    cct:expression
+        """
+        # This is a simplification that ignores flow accumulation, but just
+        # generates a nominal patch from an object nominal
+        1: ObjectInfo(Nom);
+        join (revert (get_attrL 1)) (get_attrR 1)
+        """.
+
+sig:Watershed a :Signature;
+    :input [ :id 1; a ccd:FieldRaster, ccd:RatioA; rdfs:comment "flow direction raster" ];
+    :input [ :id 2; a ccd:FieldQ, ccd:RasterA, ccd:PlainNominalA; rdfs:comment "pour point raster" ];
+    :output [ a ccd:FieldQ, ccd:RasterA, ccd:PlainNominalA; rdfs:comment "watershed raster, gives a different watershed id for each pour point" ];
+    rdfs:comment
+        "Given a flow direction raster and a pour point raster, generates a watershed raster.";
+    cct:expression
+        """
+        revert (join
+            (invert (2: Field(Nom)))
+            (invert (apply1 reify (accumulate (1: Field(Loc)))))
+        )
+        """.
+
+sig:ExtractByMask a :Signature;
+    :input [ :id 1; a ccd:FieldRaster, ccd:RatioA; rdfs:comment "Flow directions by watershed mask" ];
+    :input [ :id 2; a ccd:FieldRaster ];
+    :output [ a ccd:FieldRaster, ccd:RatioA ];
+    rdfs:comment
+        "Extract raster by the extent of another (field) raster.";
+    cct:expression
+        "subset (1: Field(Loc)) (pi1 (2: Field(Nom)))".
+
+sig:FlowLength a :Signature;
+    :input [ :id 1; a ccd:FieldRaster, ccd:RatioA; rdfs:comment "Impedance Weight raster (e.g. 1/velocity raster)" ];
+    :input [ :id 2; a ccd:FieldRaster, ccd:RatioA; rdfs:comment "Flow direction raster;" ];
+    :output [ a ccd:FieldRaster, ccd:RatioA; rdfs:comment "Flow time raster" ];
+    rdfs:comment
+        "Calculate the upstream or downstream distance, or weighted distance (=time), along the flow path for each cell.";
+    cct:expression
+        """
+        1: Field(Ratio);
+        2: Field(Loc);
+        groupbyL max (relunion (pi2 (apply2
+            (lgDist (gridgraph 2 1))
+            (apply nest (pi1 2)) (accumulate 2)
+        )))
+        """.
+
+sig:RasterToIsoRaster a :Signature;
+    :input [ :id 1; a ccd:FieldRaster, ccd:IntervalA ];
+    :output [ a ccd:FieldRaster, ccd:PlainOrdinalA ];
+    rdfs:comment
+        "Converts an interval field raster into an ordinal raster.";
+    cct:expression
+        "apply1 classify (1: Field(Itv))".
+
+
+
