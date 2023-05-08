@@ -6,12 +6,18 @@ from rdflib.term import URIRef, Node, BNode, Literal
 from rdflib.compare import isomorphic
 from typing import Iterable
 from transforge.list import GraphList
-from transforge.namespace import shorten
 
 from quangiswf.repo.workflow import Workflow
 from quangiswf.repo.tool2url import tool2url
 from quangiswf.namespace import (
-    n3, RDF, RDFS, TOOLSCHEMA, WF, SUPERTOOL, bind_all)
+    n3, RDF, TOOLSCHEMA, WF, SUPERTOOL, bind_all)
+
+
+class DisconnectedArtefactsError(Exception):
+    pass
+
+class ToolAlreadyExistsError(Exception):
+    pass
 
 class ToolNotFoundError(Exception):
     pass
@@ -100,7 +106,8 @@ class Supertool(GraphList):
         out1 = self.all_outputs - self.all_inputs
         out2 = set(self.outputs)
         if not (in1 == in2 and out1 == out2):
-            raise RuntimeError(f"In supertool '{self.name}', originally "
+            raise DisconnectedArtefactsError(
+                f"In supertool '{self.name}', originally "
                 f"in tool application {n3(self.origin)}, there are "
                 f"loose inputs or outputs.")
 
@@ -143,7 +150,7 @@ class ToolRepo(object):
         supertool.sanity_check()
         if (supertool.uri in self.supertools and not
                 supertool.match(self.supertools[supertool.uri])):
-            raise RuntimeError(
+            raise ToolAlreadyExistsError(
                 f"The supertool {supertool.uri} already exists in the "
                 f"repository and is different from the one that you "
                 f"are attempting to register.")

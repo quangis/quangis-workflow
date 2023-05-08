@@ -12,6 +12,11 @@ from cct import cct
 
 cctlang = cct
 
+class CCTError(Exception):
+    pass
+
+class UntypedArtefactError(Exception):
+    pass
 
 class SignatureNotFoundError(Exception):
     pass
@@ -55,14 +60,15 @@ class Signature(object):
 
         cct = wf.cct(action)
         if not cct and cct_mandatory:
-            raise RuntimeError("Signature of {lbl} has no CCT expression")
+            raise CCTError(
+                f"Signature of {lbl} has no CCT expression")
         assert cct
 
         inputs = []
         for i, x in enumerate(wf.inputs(action, labelled=True), start=1):
             t = wf.type(x)
             if t.empty():
-                raise RuntimeError(
+                raise UntypedArtefactError(
                     f"The CCD type of the {i}'th input artefact of an "
                     f"action associated with {lbl} is empty or too general.")
             inputs.append(t)
@@ -70,7 +76,7 @@ class Signature(object):
         outputs = [wf.type(a) for a in wf.outputs(action)]
         for t in outputs:
             if t.empty():
-                raise RuntimeError(
+                raise UntypedArtefactError(
                     f"The CCD type of the output artefact of an action "
                     f"associated with {lbl} is empty or too general.")
 
