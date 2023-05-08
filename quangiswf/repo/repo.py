@@ -1,7 +1,9 @@
-from rdflib.term import Node, URIRef
+from rdflib.term import Node, URIRef, BNode
 from rdflib import Graph
 from typing import Iterator
 from transforge.list import GraphList
+from itertools import count
+from collections import defaultdict
 
 from quangiswf.namespace import (bind_all, TOOLSCHEMA, DATA, RDF, WF, CCT_)
 from quangiswf.repo.workflow import Workflow
@@ -47,21 +49,27 @@ class Repo(object):
         assert (root, RDF.type, WF.Workflow) in wf
         g.add((root, RDF.type, WF.Workflow))
 
-        inputs, outputs = wf.io(root)
-        for artefact in inputs:
-            g.add((root, WF.source, artefact))
-        for artefact in outputs:
-            g.add((root, WF.target, artefact))
+        counter = count()
+        map: dict[Node, BNode] = defaultdict(
+            lambda: BNode(f"out{next(counter)}"))
 
-        for action, tool, sig in self.signed_actions(wf, root):
+        inputs, outputs = wf.io(root)
+        for i, artefact in enumerate(inputs, start=1):
+            map[artefact] = BNode(f"in{i}")
+            g.add((root, WF.source, map[artefact]))
+        for artefact in outputs:
+            g.add((root, WF.target, map[artefact]))
+
+        for orig_action, tool, sig in self.signed_actions(wf, root):
             assert sig.uri
+            action = BNode()
             g.add((root, WF.edge, action))
             g.add((action, WF.applicationOf, sig.uri))
             for i, artefact in enumerate(
-                    wf.inputs(action, labelled=True), start=1):
-                g.add((action, WF[f"input{i}"], artefact))
-            for pred, artefact in zip([WF.output], wf.outputs(action)):
-                g.add((action, pred, artefact))
+                    wf.inputs(orig_action, labelled=True), start=1):
+                g.add((action, WF[f"input{i}"], map[artefact]))
+            for pred, artefact in zip([WF.output], wf.outputs(orig_action)):
+                g.add((action, pred, map[artefact]))
 
         return g
 
