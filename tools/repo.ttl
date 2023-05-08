@@ -101,10 +101,10 @@ supertool:JoinFromTable a :Supertool;
     :signature sig:LoadAmountonObjects;
     :action
         [ :apply tool:ExcelToTable;
-            :input _:in10_1;
+            :input [];
             :output _:out10 ],
         [ :apply tool:JoinField;
-            :input _:in10_2, _:out10;
+            :input [], _:out10;
             :output _:out10_2 ].
 
 sig:LoadAmountonObjects a :Signature;
@@ -247,4 +247,222 @@ sig:RasterToIsoRaster a :Signature;
         "apply1 classify (1: Field(Itv))".
 
 
+supertool:RasterCoverage a :Supertool;
+    :signature sig:CreateUnitHydrograph;
+    rdfs:comment
+        "Computes coverage (size) from a raster table for each raster value";
+    :action [ :apply tools:TableToTable;
+        :input [ rdfs:label "fieldraster" ];
+        :output _:rastertable
+    ], [ :apply tool:AddField;
+        :input _:rastertable;
+        :output _:rastertable2
+    ], [ :apply tool:CalculateField;
+        :input _:rastertable2;
+        :output _:rastertable3 ].
 
+sig:CreateUnitHydrograph a :Signature;
+    :input [ :id 1; a ccd:FieldRaster, ccd:OrdinalA ];
+    :output [ a ccd:AmountQ, ccd:LayerA, ccd:RatioA ];
+    rdfs:comment
+        "Creates a unit hydrograph from an isochrones raster based on isochrone interval. This is a table that indicates for each time interval an areal coverage";
+    cct:expression
+        """
+        apply1 ((swap ratio) (-: Ratio)) (groupby size (1: Field(Ord)))
+        """.
+
+supertool:FullSelectFeatures a :Supertool;
+    :signature sig:SelectFeaturesByObjectPlainRegionObjects, 
+        sig:SelectFeaturesCoverageToExistenceVector;
+    rdfs:comment "Query to select items from layers using attribut values";
+    :action [ :apply tool:SelectLayerByAttribute;
+        :input [ :id 1 ];
+        :output _:out111;
+        rdfs:comment "Select by attribute is always followed by copying features"
+    ], [ :apply tool:FC2FCObjectTess;
+        :input _:out111;
+        :output _:out112 ].
+
+sig:SelectFeaturesByObjectPlainRegionObjects a :Signature;
+    :input [ :id 1; a ccd:ObjectQ, ccd:PlainVectorRegionA ];
+    :output [ a ccd:ObjectQ, ccd:PlainVectorRegionA ];
+    rdfs:comment
+        "Select region objects by id";
+    cct:expression
+        "subset (1: ObjectInfo(Nom)) (-: C(Obj))".
+
+sig:SelectFeaturesCoverageToExistenceVector a :Signature;
+    :input [ :id 1; a ccd:Coverage ];
+    :output [ a ccd:FieldQ, ccd:PlainVectorRegionA ];
+    rdfs:comment
+        "Select patches of a coverage by attribute";
+    cct:expression
+        "revert (select eq (invert (1: Field(Itv)): Coverages(Nom)) (-: Nom))".
+
+sig:Aspect a :Signature;
+    :input [ :id 1; a ccd:FieldRaster, ccd:IntervalA ];
+    :output [ a ccd:FieldRaster, ccd:RatioA ];
+    rdfs:comment
+        "Derives the aspect of a digital elevation model";
+    cct:expression
+        "aspect (1: Field(Itv))".
+
+sig:LocalMapAlgebraDivide a :Signature;
+    :input [ :id 1; a ccd:FieldRaster, ccd:RatioA ];
+    :output [ a ccd:FieldRaster, ccd:RatioA ];
+    rdfs:comment
+        "Builds and executes a Local Map Algebra expression that divides rasters by a ratio number";
+    cct:expression
+        "apply1 ((swap ratio) (-: Ratio)) (1: Field(Ratio))".
+
+sig:con2 a :Signature;
+    :input [ :id 1; a ccd:FieldRaster, ccd:RatioA; rdfs:comment "conditional raster, less than some value" ];
+    :input [ :id 2; a ccd:FieldRaster, ccd:RatioA; rdfs:comment "field raster to be cut" ];
+    :output [ a ccd:FieldRaster, ccd:RatioA ];
+    rdfs:comment
+        "Cuts a field raster conditional on (the coverage of) another field raster that is less than some value";
+    cct:expression
+        "subset (2: Field(Ratio)) (pi1 (select leq (1: Field(Ratio)) (-: Ratio)))".
+
+sig:con3 a :Signature;
+    :input [ :id 1; a ccd:FieldRaster, ccd:RatioA; rdfs:comment "conditional raster, less than some value" ];
+    :input [ :id 2; a ccd:FieldRaster, ccd:RatioA; rdfs:comment "field raster to be cut for inside" ];
+    :input [ :id 3; a ccd:FieldRaster, ccd:RatioA; rdfs:comment "field raster to be cut for outside" ];
+    :output [ a ccd:FieldRaster, ccd:RatioA ];
+    rdfs:comment
+        "Cuts a field raster conditional on (the coverage of) another field raster, and adds another field raster for those locations outside of the coverage";
+    cct:expression
+        """
+        1: Field(Ratio);
+        2: Field(Ratio);
+        3: Field(Ratio);
+        set_union
+            (subset 2 (pi1 (select leq 1 (-: Ratio))))
+            (subset 3 (pi1 (select eq (lTopo
+                (pi1 3)
+                (reify (pi1 (select leq 1 (-: Ratio))))
+            ) out)))
+        """.
+
+# TODO this was wrong; review
+supertool:AddandCalculateAttribute a :Supertool;
+    :signature sig:CalculateObjectSpatialAmount, sig:CalculateProd, 
+        sig:CalculateProdPointObjects;
+    rdfs:comment "Add an attribute and calculate value based on one other attribute";
+    :input [ :apply tool:AddField;
+        :input [ :id 1 ];
+        :output _:out3001
+    ], [ :apply tool:CalculateField;
+        :input _:out3001;
+        :output _:out300 ].
+
+sig:CalculateObjectSpatialAmount a :Signature;
+    rdfs:comment
+        "Calculates an amount from an object ratio quality (representating an intensive measure) using the object's area. For example, the amount of radiation falling on a building using the mean radiation and the building's area";
+    cct:expression
+        """
+        1: ObjectInfo(Ratio);
+        join_attr
+            (get_attrL 1)
+            (apply2 product
+                (get_attrR 1)
+                (apply1 (compose size deify) (get_attrL 1))
+            )
+        """;
+    :input [ :id 1; a ccd:ObjectQ, ccd:VectorRegionA, exm:IRA ];
+    :output [ a ccd:ObjectQ, ccd:VectorRegionA, exm:ERA ].
+
+sig:CalculateProd a :Signature;
+    rdfs:comment
+        "Calculates some product of ratio scaled object attribute with some ratio value.";
+    cct:expression
+        """
+        1: ObjectInfo(Ratio);
+        join_attr
+            (get_attrL 1)
+            (apply1 (product (-: Ratio)) (get_attrR 1))
+        """;
+    :input [ :id 1; a ccd:ObjectQ, ccd:VectorRegionA, ccd:RatioA ];
+    :output [ a ccd:ObjectQ, ccd:VectorRegionA, ccd:RatioA ].
+
+sig:CalculateProdPointObjects a :Signature;
+    rdfs:comment
+        "Calculates a product from an attribute using some constant (e.g. time from distance using speed constant)";
+    cct:expression
+        """
+        1: ObjectInfo(Ratio);
+        join_attr
+            (get_attrL 1)
+            (apply1 (product (-: Ratio)) (get_attrR 1))
+        """.
+    :input [ :id 1; a ccd:ObjectQ, ccd:PointA, exm:ERA ];
+    :output [ a ccd:ObjectQ, ccd:PointA, exm:ERA ].
+
+sig:ObjectSummaryStatisticsAmount a :Signature;
+    :input [ :id 1; a ccd:ObjectQ, ccd:VectorRegionA, ccd:CountA ];
+    :output [ a ccd:AmountQ, ccd:VectorRegionA, ccd:CountA ];
+    rdfs:comment
+        "Sums the amount values of an object layer into a sum";
+    cct:expression
+        "contentsum (getamounts (1: ObjectInfo(Ratio)))".
+
+sig:SummaryStatisticsAmount a :Signature;
+    :input [ :id 1; a ccd:AmountQ, ccd:VectorRegionA, ccd:CountA ];
+    :output [ a ccd:AmountQ, ccd:VectorRegionA, ccd:CountA ];
+    rdfs:comment
+        "Sums the amount values of a count amount layer into a sum";
+    cct:expression
+        "contentsum (1: Amounts(Ratio))".
+
+sig:ClipObject2Object a :Signature;
+    :input [ :id 1; a ccd:ObjectQ, ccd:PlainVectorRegionA, ccd:CountA; rdfs:comment "objects to be clipped" ];
+    :input [ :id 2; a ccd:ObjectQ, ccd:PlainVectorRegionA rdfs:label "to the regions of these objects" ];
+    :output [ a ccd:ObjectQ, ccd:PlainVectorRegionA, ccd:CountA ];
+    rdfs:comment
+        "Clips some object polygons to the extent of an object layer. We assume here that objects exactly coincide (otherwise clip would cut objects).";
+    cct:expression
+        """
+        1: ObjectInfo(Count);
+        2: ObjectInfo(Nom);
+        subset
+            1
+            (pi1 (select eq
+                (oTopo (get_attrL 1) (get_attrL 2))
+                in
+            ))
+        """.
+
+supertool:CalculatePartialAmounts a :Supertool;
+    :signature sig:CalculatePartialAmountsfromObjects;
+    :action [ :apply tool:Clip;
+        :input [ :id 1 ];
+        :input [ :id 2 ];
+        :output _:out011
+    ], [ :apply tool:AddFields;
+        :input _:out011;
+        :output _:out012
+    ], [ :apply tool:CalculateField;
+        :input _:out012;
+        :output _:out013
+    ], [ :apply tool:CalculateField;
+        :input _:out013;
+        :output _:out014 ];
+    rdfs:comment "CalculatePartialAmounts: Calculates a set of portions from a set of object based count amounts using some boolean vector field. Only the portions that are within the true value of the boolean field are considered. This is an areal interpolation problem, which is solved by first generating area proportions and then multiplying them with the count amount.".
+
+sig:CalculatePartialAmountsfromObjects a :Signature;
+    rdfs:comment
+        "Clips some object vector with some count amounts to the extent of a field layer (e.g. a buffer) and interpolates partial count amounts R(Reg, Ratio) based on area percentage.";
+    cct:expression
+        """
+        1: ObjectInfo(Count);
+        2: Field(Bool);
+        arealinterpol
+            (getamounts 1)
+            (pi2 (groupbyR reify (select eq (loTopo
+                (fcover 2 (nest true))
+                (get_attrL 1)
+            ) in)))
+        """;
+    :input [ :id 1; a ccd:ObjectQ, ccd:VectorRegionA, ccd:CountA ];
+    :input [ :id 2; a ccd:FieldQ, ccd:VectorRegionA, ccd:BooleanA ];
+    :output [ a ccd:AmountQ, ccd:VectorRegionA, ccd:CountA].
