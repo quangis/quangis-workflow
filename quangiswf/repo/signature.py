@@ -48,23 +48,30 @@ class Signature(object):
             cct_mandatory: bool = False) -> Signature:
         """Create a new signature proposal from a tool application."""
         name, impl = wf.impl(action)
+        if isinstance(impl, URIRef):
+            lbl = n3(impl)
+        else:
+            lbl = f"a subworkflow labelled '{name}'"
+
         cct = wf.cct(action)
         if not cct and cct_mandatory:
-            raise RuntimeError("Signature has no cct expression")
+            raise RuntimeError("Signature of {lbl} has no CCT expression")
 
-        # inputs = []
-        # for a in wf.inputs(action, labelled=True):
-        #     t = wf.type(a)
-        #     if t.empty():
-
-        inputs = [wf.type(a) for a in wf.inputs(action, labelled=True)]
-        outputs = [wf.type(a) for a in wf.outputs(action)]
-
-        for t in chain(inputs, outputs):
+        inputs = []
+        for i, x in enumerate(wf.inputs(action, labelled=True), start=1):
+            t = wf.type(x)
             if t.empty():
                 raise RuntimeError(
-                    f"The CCD type of an artefact associated with an "
-                    f"an action labelled '{name}' is empty or too general.")
+                    f"The CCD type of the {i}'th input artefact of an "
+                    f"action associated with {lbl} is empty or too general.")
+            inputs.append(t)
+
+        outputs = [wf.type(a) for a in wf.outputs(action)]
+        for t in outputs:
+            if t.empty():
+                raise RuntimeError(
+                    f"The CCD type of the output artefact of an action "
+                    f"associated with {lbl} is empty or too general.")
 
         return Signature(name=name, inputs=inputs, outputs=outputs, cct=cct)
 
