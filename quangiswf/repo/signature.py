@@ -38,13 +38,13 @@ class Signature(object):
     either to drive a nail into a plank of wood or to break a piggy bank."""
 
     def __init__(self, name: str,
-            inputs: list[Polytype],
-            outputs: list[Polytype],
+            inputs: dict[str, Polytype],
+            outputs: dict[str, Polytype],
             cct: str) -> None:
         self.name = name
         self.uri: URIRef = SIG[name]
-        self.inputs: list[Polytype] = inputs
-        self.outputs: list[Polytype] = outputs
+        self.inputs: dict[str, Polytype] = inputs
+        self.outputs: dict[str, Polytype] = outputs
         self.cct: str = cct
         self.description: str | None = None
         self.implementations: set[URIRef] = set()
@@ -64,17 +64,17 @@ class Signature(object):
             raise CCTError(
                 f"Signature of {lbl} has no CCT expression")
 
-        inputs = []
+        inputs = dict()
         for i, x in enumerate(wf.inputs(action, labelled=True), start=1):
-            t = wf.type(x)
+            t = inputs[str(i)] = wf.type(x)
             if not ALLOW_UNTYPED_ARTEFACTS and t.empty():
                 raise UntypedArtefactError(
                     f"The CCD type of the {i}'th input artefact of an "
                     f"action associated with {lbl} is empty or too general.")
-            inputs.append(t)
 
-        outputs = [wf.type(a) for a in wf.outputs(action)]
-        for t in outputs:
+        outputs = dict()
+        for i, x in enumerate(wf.outputs(action), start=1):
+            t = outputs[str(i)] = wf.type(x)
             if not ALLOW_UNTYPED_ARTEFACTS and t.empty():
                 raise UntypedArtefactError(
                     f"The CCD type of the output artefact of an action "
@@ -100,18 +100,18 @@ class Signature(object):
         # should, since even in the one test that I did (wffood), we see that 
         # SelectLayerByLocationPointObjects has two variants with just the 
         # order of the inputs flipped.
-        il1 = len(self.inputs)
-        il2 = len(candidate.inputs)
+        il1 = list(self.inputs.keys())
+        il2 = list(candidate.inputs.keys())
         return (il1 == il2 and all(
             candidate.inputs[k1].subtype(self.inputs[k2])
-            for k1, k2 in zip(range(il1), range(il2))))
+            for k1, k2 in zip(il1, il2)))
 
     def subsumes_output_datatype(self, candidate: Signature) -> bool:
-        ol1 = len(self.outputs)
-        ol2 = len(candidate.outputs)
+        ol1 = list(self.outputs.keys())
+        ol2 = list(candidate.outputs.keys())
         return (ol1 == ol2 and all(
             self.outputs[k1].subtype(candidate.outputs[k2])
-            for k1, k2 in zip(range(ol1), range(ol2))))
+            for k1, k2 in zip(ol1, ol2)))
 
     def subsumes_datatype(self, candidate: Signature) -> bool:
         """If the inputs in the candidate signature are subtypes of the ones in 
@@ -201,17 +201,18 @@ class SignatureRepo(object):
             for impl in sig.implementations:
                 g.add((sig.uri, TOOLSCHEMA.implementation, impl))
 
-            for i, x in enumerate(sig.inputs, start=1):
+            for i, x in sig.inputs.items():
                 artefact = BNode()
                 for uri in x.uris():
                     g.add((artefact, RDF.type, uri))
                 g.add((artefact, TOOLSCHEMA.id, Literal(i)))
                 g.add((sig.uri, TOOLSCHEMA.input, artefact))
 
-            for x in sig.outputs:
+            for i, x in sig.outputs.items():
                 artefact = BNode()
                 for uri in x.uris():
                     g.add((artefact, RDF.type, uri))
+                # g.add((artefact, TOOLSCHEMA.id, Literal(i)))
                 g.add((sig.uri, TOOLSCHEMA.output, artefact))
 
         return g

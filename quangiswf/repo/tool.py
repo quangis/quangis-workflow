@@ -12,7 +12,7 @@ from quangiswf.repo.tool2url import tool2url
 from quangiswf.namespace import (
     n3, RDF, TOOLSCHEMA, WF, SUPERTOOL, bind_all)
 
-ALLOW_DISCONNECTED_SUPERTOOL = True
+ALLOW_DISCONNECTED_SUPERTOOL = False
 
 class DisconnectedArtefactsError(Exception):
     pass
