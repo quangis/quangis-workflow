@@ -21,7 +21,7 @@ class Signature(object):
     """A tool signature is an abstract specification of a tool. It may 
     correspond to one or more concrete tools, or even ensembles of tools. It 
     must describe the format of its input and output (ie the core concept 
-    datatypes) and it may describe its purpose (in terms of a core concept 
+    datatypes) and it must describe its purpose (in terms of a core concept 
     transformation expression).
 
     A signature may be implemented by multiple (super)tools, because, for 
@@ -33,15 +33,15 @@ class Signature(object):
     def __init__(self, name: str,
             inputs: list[Polytype],
             outputs: list[Polytype],
-            cct: str | None) -> None:
+            cct: str) -> None:
         self.name = name
         self.uri: URIRef = SIG[name]
         self.inputs: list[Polytype] = inputs
         self.outputs: list[Polytype] = outputs
-        self.cct: str | None = cct
+        self.cct: str = cct
         self.description: str | None = None
         self.implementations: set[URIRef] = set()
-        self.cct_p = cctlang.parse(cct, defaults=True) if cct else None
+        self.cct_p = cctlang.parse(cct, defaults=True)
 
     @staticmethod
     def propose(wf: Workflow, action: Node,
@@ -56,6 +56,7 @@ class Signature(object):
         cct = wf.cct(action)
         if not cct and cct_mandatory:
             raise RuntimeError("Signature of {lbl} has no CCT expression")
+        assert cct
 
         inputs = []
         for i, x in enumerate(wf.inputs(action, labelled=True), start=1):
