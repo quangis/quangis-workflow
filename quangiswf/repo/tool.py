@@ -105,12 +105,14 @@ class Supertool(GraphList):
         in2 = set(self.inputs)
         out1 = self.all_outputs - self.all_inputs
         out2 = set(self.outputs)
-        if not (in1 == in2 and out1 == out2):
+        if not in1 == in2:
             raise DisconnectedArtefactsError(
-                f"In supertool '{self.name}', originally "
-                f"in tool application {n3(self.origin)}, there are "
-                f"loose inputs or outputs.")
-
+                f"Expected {len(in2)} input(s) for {n3(self.uri)} but "
+                f"found {len(in1)} inside.")
+        if not out1 == out2:
+            raise DisconnectedArtefactsError(
+                f"Expected {len(out2)} output(s) for {n3(self.uri)} but "
+                f"found {len(out1)} inside.")
 
 class ToolRepo(object):
     # TODO input/output permutations

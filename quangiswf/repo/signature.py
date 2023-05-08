@@ -12,6 +12,8 @@ from cct import cct
 
 cctlang = cct
 
+ALLOW_UNTYPED_ARTEFACTS = True
+
 class CCTError(Exception):
     pass
 
@@ -49,8 +51,7 @@ class Signature(object):
         self.cct_p = cctlang.parse(cct, defaults=True)
 
     @staticmethod
-    def propose(wf: Workflow, action: Node,
-            cct_mandatory: bool = False) -> Signature:
+    def propose(wf: Workflow, action: Node) -> Signature:
         """Create a new signature proposal from a tool application."""
         name, impl = wf.impl(action)
         if isinstance(impl, URIRef):
@@ -59,15 +60,14 @@ class Signature(object):
             lbl = f"a subworkflow labelled '{name}'"
 
         cct = wf.cct(action)
-        if not cct and cct_mandatory:
+        if not cct:
             raise CCTError(
                 f"Signature of {lbl} has no CCT expression")
-        assert cct
 
         inputs = []
         for i, x in enumerate(wf.inputs(action, labelled=True), start=1):
             t = wf.type(x)
-            if t.empty():
+            if not ALLOW_UNTYPED_ARTEFACTS and t.empty():
                 raise UntypedArtefactError(
                     f"The CCD type of the {i}'th input artefact of an "
                     f"action associated with {lbl} is empty or too general.")
@@ -75,7 +75,7 @@ class Signature(object):
 
         outputs = [wf.type(a) for a in wf.outputs(action)]
         for t in outputs:
-            if t.empty():
+            if not ALLOW_UNTYPED_ARTEFACTS and t.empty():
                 raise UntypedArtefactError(
                     f"The CCD type of the output artefact of an action "
                     f"associated with {lbl} is empty or too general.")
@@ -95,6 +95,24 @@ class Signature(object):
         return (self.cct_p and candidate.cct_p
             and self.cct_p.match(candidate.cct_p))
 
+    def subsumes_input_datatype(self, candidate: Signature) -> bool:
+        # For now, we do not take into account permutations. We probably 
+        # should, since even in the one test that I did (wffood), we see that 
+        # SelectLayerByLocationPointObjects has two variants with just the 
+        # order of the inputs flipped.
+        il1 = len(self.inputs)
+        il2 = len(candidate.inputs)
+        return (il1 == il2 and all(
+            candidate.inputs[k1].subtype(self.inputs[k2])
+            for k1, k2 in zip(range(il1), range(il2))))
+
+    def subsumes_output_datatype(self, candidate: Signature) -> bool:
+        ol1 = len(self.outputs)
+        ol2 = len(candidate.outputs)
+        return (ol1 == ol2 and all(
+            self.outputs[k1].subtype(candidate.outputs[k2])
+            for k1, k2 in zip(range(ol1), range(ol2))))
+
     def subsumes_datatype(self, candidate: Signature) -> bool:
         """If the inputs in the candidate signature are subtypes of the ones in 
         this one (and the outputs are supertypes), then this signature *covers* 
@@ -103,22 +121,8 @@ class Signature(object):
         should be generalized. If the candidate signature is neither covered by 
         this one nor generalizes it, then the two signatures are 
         independent."""
-
-        # For now, we do not take into account permutations. We probably 
-        # should, since even in the one test that I did (wffood), we see that 
-        # SelectLayerByLocationPointObjects has two variants with just the 
-        # order of the inputs flipped.
-        il = len(self.inputs)
-        ol = len(self.outputs)
-        if il != ol:
-            return False
-
-        return (
-            all(candidate.inputs[k1].subtype(self.inputs[k2])
-                for k1, k2 in zip(range(il), range(il)))
-            and all(self.outputs[k1].subtype(candidate.outputs[k2])
-                for k1, k2 in zip(range(ol), range(ol)))
-        )
+        return (self.subsumes_input_datatype(candidate) and 
+            self.subsumes_output_datatype(candidate))
 
 
 class SignatureRepo(object):
@@ -146,13 +150,37 @@ class SignatureRepo(object):
                     and sig.matches_cct(proposal)):
                 return sig
 
-        sigs: set[Node] = set(s.uri for s in self.signatures.values()
-            if s.covers_implementation(proposal) if s.uri)
+        # If we reach here, there was no signature found. Instead, we construct 
+        # the error message
+        sigs: set[Signature] = set(s for s in self.signatures.values()
+            if s.covers_implementation(proposal))
+
+        reasons = []
+        if sigs:
+            reasons.append("Some signatures implement this tool, but:")
+            for sig in sigs:
+                if not sig.subsumes_input_datatype(proposal):
+                    reasons.append(
+                        f"{n3(sig.uri)} input signature doesn't match."
+                    )
+                elif not sig.subsumes_output_datatype(proposal):
+                    reasons.append(
+                        f"{n3(sig.uri)} output signature doesn't match."
+                    )
+                elif not sig.matches_cct(proposal):
+                    reasons.append(
+                        f"{n3(sig.uri)} CCT expression doesn't match."
+                    )
+                else:
+                    reasons.append(
+                        f"{n3(sig.uri)} doesn't work for an unknown reason.")
+        else:
+            reasons.append("There are no signatures that implement this tool.")
+
         raise SignatureNotFoundError(
             f"The repository contains no signature for an application of "
             f"{'/'.join(n3(impl) for impl in proposal.implementations)}. "
-            f"The following signatures exist for other applications of this "
-            f"tool: {n3(sigs)}")
+            "\n\t".join(reasons))
 
     def register_signature(self, proposal: Signature) -> Signature:
         """Register the proposed signature under a unique name."""

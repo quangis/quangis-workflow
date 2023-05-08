@@ -23,8 +23,7 @@ class Repo(object):
 
         for action in wf.high_level_actions(root):
             try:
-                proposal_sig = Signature.propose(wf, action, 
-                    cct_mandatory=True)
+                proposal_sig = Signature.propose(wf, action)
                 proposal_tool = Supertool.propose(wf, action)
                 tool = self.tools.find_tool(proposal_tool)
                 proposal_sig.implementations.add(tool)
@@ -75,7 +74,7 @@ class Repo(object):
 
         # Propose the tool and signature that would be created if no other 
         # tools or supertools existed in the repository yet
-        proposal_sig = Signature.propose(wf, action, cct_mandatory=True)
+        proposal_sig = Signature.propose(wf, action)
         proposal_imp = Supertool.propose(wf, action)
         try:
             impl_uri = self.tools.find_tool(proposal_imp)
