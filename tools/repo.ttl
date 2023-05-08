@@ -842,3 +842,431 @@ sig:SelectLayerByLocationPlainRegionObjectsDist a :Signature;
     :input [ :id 1; a ccd:ObjectQ, ccd:PlainVectorRegionA ];
     :input [ :id 2; a ccd:ObjectQ, ccd:VectorA ];
     :output [ a ccd:ObjectQ, ccd:PlainVectorRegionA ].
+
+sig:SpatialJoinSumTessRatio a :Signature;
+    rdfs:comment "Spatial join with sum rule";
+    rdfs:comment "with JOIN_ONE_TO_ONE parameter, with Merge_RULe sum for Ratio data";
+    :input [ :id 1; a ccd:ObjectQ, ccd:VectorA, exm:ERA ];
+    :input [ :id 2; a ccd:ObjectQ, ccd:VectorTessellationA ];
+    :output [ a ccd:ObjectQ, ccd:VectorTessellationA, exm:ERA ];
+    rdfs:comment
+        "Sums the attributes at ratio measurement level from one feature to another based on the spatial relation";
+    cct:expression
+        """
+        1: ObjectInfo(Ratio);
+        2: ObjectInfo(Nom);
+        join_attr
+            (get_attrL 2)
+            (join (get_attrL 2) (groupbyR sum (join_key
+                (select eq (rTopo
+                    (pi2 (get_attrL 1))
+                    (pi2 (get_attrL 2))
+                ) in)
+                (getamounts 1)
+            )))
+        """.
+
+sig:SpatialJoinSumTessCount a :Signature;
+    rdfs:comment "with JOIN_ONE_TO_ONE parameter, with Merge_RULe sum for Count data";
+    :input [ :id 1; a ccd:ObjectQ, ccd:VectorA, ccd:CountA ];
+    :input [ :id 2; a ccd:ObjectQ, ccd:VectorTessellationA ];
+    :output [ a ccd:ObjectQ, ccd:VectorTessellationA, ccd:CountA ];
+    rdfs:comment
+        "Sums the attributes at Count measurement level from one feature to another based on the spatial relation";
+    cct:expression
+        """
+        1: ObjectInfo(Count);
+        2: ObjectInfo(Nom);
+        join_attr
+            (get_attrL 2)
+            (join (get_attrL 2) (groupbyR sum (join_key
+                (select eq (rTopo
+                    (pi2 (get_attrL 1))
+                    (pi2 (get_attrL 2))
+                ) in)
+                (getamounts 1)
+            )))
+        """.
+
+sig:SpatialJoinAmountSumTessRatio a :Signature;
+    rdfs:comment "Spatial join with sum rule with vector amounts";
+    rdfs:comment "with JOIN_ONE_TO_ONE parameter, with Merge_RULe sum for Ratio data";
+    :input [ :id 1; a ccd:AmountQ, ccd:VectorRegionA, exm:ERA ];
+    :input [ :id 2; a ccd:ObjectQ, ccd:VectorTessellationA ];
+    :output [ a ccd:ObjectQ, ccd:VectorTessellationA, exm:ERA ];
+    rdfs:comment
+        "Sums the attributes at ratio measurement level from one feature to another based on the spatial relation";
+    cct:expression
+        """
+        1: Amounts(Ratio);
+        2: ObjectInfo(Nom);
+        join_attr
+            (get_attrL 2) (join
+                (get_attrL 2)
+                (groupbyR sum (join_key
+                    (select
+                        eq
+                        (rTopo (pi1 1) (pi2 (get_attrL 2)))
+                        in)
+                    1
+                ))
+            )
+        """.
+
+sig:SpatialJoinAmountSumTessCount a :Signature;
+    rdfs:comment "with JOIN_ONE_TO_ONE parameter, with Merge_RULe sum for Count data.";
+    :input [ :id 1; a ccd:AmountQ, ccd:VectorRegionA, ccd:CountA ];
+    :input [ :id 2; a ccd:ObjectQ, ccd:VectorTessellationA ];
+    :output [ a ccd:ObjectQ, ccd:VectorTessellationA, ccd:CountA ];
+    rdfs:label
+        "Sums the attributes at Count measurement level from one feature to another based on the spatial relation";
+    cct:expression
+        """
+        1: Amounts(Count);
+        2: ObjectInfo(Nom);
+        join_attr
+            (get_attrL 2)
+            (join
+                (get_attrL 2)
+                (groupbyR sum (join_key
+                    (select
+                        eq
+                        (rTopo (pi1 1) (pi2 (get_attrL 2)))
+                        in
+                    )
+                    1
+                ))
+            )
+        """.
+
+sig:SpatialJoinMeanTessInterval a :Signature;
+    rdfs:comment "spatial join with mean rule";
+    rdfs:comment "with JOIN_ONE_TO_ONE parameter, with Merge_RULe mean for interval data";
+    :input [ :id 1; a ccd:ObjectQ, ccd:VectorA, ccd:IntervalA ];
+    :input [ :id 2; a ccd:ObjectQ, ccd:VectorTessellationA ];
+    :output [ a ccd:ObjectQ, ccd:VectorTessellationA, ccd:IntervalA ];
+    rdfs:comment "Averages the attributes at interval measurement level from one feature to another based on the spatial relation";
+    cct:expression
+        """
+        1: ObjectInfo(Ratio);
+        2: ObjectInfo(Nom);
+        join_attr
+            (get_attrL 2)
+            (join
+                (get_attrL 2)
+                (groupbyR avg (join_key (select eq (rTopo
+                    (pi2 (get_attrL 1))
+                    (pi2 (get_attrL 2))
+                ) in) (getamounts 1)))
+            )
+        """.
+
+sig:SpatialJoinMeanTessRatio a :Signature;
+    rdfs:comment "with JOIN_ONE_TO_ONE parameter, with Merge_RULe mean for Ratio data";
+    :input [ :id 1; a ccd:ObjectQ, ccd:VectorA, ccd:RatioA ];
+    :input [ :id 2; a ccd:ObjectQ, ccd:VectorTessellationA ];
+    :output [ a ccd:ObjectQ, ccd:VectorTessellationA, ccd:RatioA ];
+    rdfs:comment
+        "Averages the attributes at Ratio measurement level from one feature to another based on the spatial relation";
+    cct:expression
+        """
+        1: ObjectInfo(Ratio);
+        2: ObjectInfo(Nom);
+        join_attr
+            (get_attrL 2)
+            (join
+                (get_attrL 2)
+                (groupbyR avg (join_key (select eq (rTopo
+                    (pi2 (get_attrL 1))
+                    (pi2 (get_attrL 2))
+                ) in) (getamounts 1)))
+            )
+        """.
+
+sig:SpatialJoinMeanTessCount a :Signature;
+    rdfs:comment "with JOIN_ONE_TO_ONE parameter, with Merge_RULe mean for Count data";
+    :input [ :id 1; a ccd:ObjectQ, ccd:VectorA, ccd:CountA ];
+    :input [ :id 2; a ccd:ObjectQ, ccd:VectorTessellationA ];
+    :output [ a ccd:ObjectQ, ccd:VectorTessellationA, ccd:CountA ];
+    rdfs:comment
+        "Averages the attributes at Count measurement level from one feature to another based on the spatial relation";
+    cct:expression
+        """
+        1: ObjectInfo(Count);
+        2: ObjectInfo(Nom);
+        join_attr
+            (get_attrL 2)
+            (join
+                (get_attrL 2)
+                (groupbyR avg (join_key (select eq (rTopo
+                    (pi2 (get_attrL 1))
+                    (pi2 (get_attrL 2))
+                ) in) (getamounts 1)))
+            )
+        """.
+
+sig:SpatialJoinCountTess a :Signature;
+    rdfs:comment "spatial join with the count rule";
+    rdfs:comment "with JOIN_ONE_TO_ONE parameter and with Merge_RULe count";
+    :input [ :id 1; a ccd:ObjectQ, ccd:VectorA ];
+    :input [ :id 2; a ccd:ObjectQ, ccd:VectorTessellationA ];
+    :output [ a ccd:ObjectQ, ccd:VectorTessellationA, ccd:CountA ];
+    rdfs:comment
+        "Counts the number of features from one feature to another based on the spatial relation";
+    cct:expression
+        """
+        1: ObjectInfo(Nom);
+        2: ObjectInfo(Nom);
+        join_attr
+            (get_attrL 2)
+            (apply1
+                (ocont (get_attrL 1))
+                (get_attrL 2)
+            )
+        """.
+
+sig:ClipFieldRaster2ObjectExtent a :Signature;
+    :input [ :id 1; a ccd:FieldRaster, ccd:OrdinalA ];
+    :input [ :id 2; a ccd:ObjectVector ];
+    :output [ a ccd:FieldRaster, ccd:OrdinalA];
+    rdfs:comment
+        "Clips some interval scaled field raster to the extent of an object layer.";
+    cct:expression #"bowtie field x deify merge pi2 objectregions x".
+        """
+        1: Field(Ord);
+        2: ObjectInfo(Nom);
+        subset 1 (deify (ocover
+            (get_attrL 2)
+            (pi1 (get_attrL 2))
+        ))
+        """.
+
+sig:RegionFromRasterExtent a :Signature;
+    :input [ :id 1; a ccd:FieldRaster, ccd:NominalA ];
+    :output [ a ccd:AmountQ, ccd:VectorRegionA, ccd:NominalA ];
+    rdfs:comment "Make a region layer from the extent of a raster. Measures the coverage of a nominal field.";
+    cct:expression
+        """
+        1: Field(Nom);
+        nest2 (name (pi2 1)) (reify (fcover 1 (pi2 1)))
+        """.
+
+sig:CoverageToNominalFieldRaster a :Signature;
+    :input [ :id 1; a ccd:Coverage, ccd:PlainNominalA ];
+    :output [ a ccd:FieldRaster, ccd:PlainNominalA ];
+    rdfs:comment "Converts Field polygons to nominal field Rasters";
+    cct:expression "revert (1: Coverages(Nom))".
+
+sig:ContourToFieldRaster a :Signature;
+    :input [ :id 1; a ccd:Contour ];
+    :output [ a ccd:FieldRaster, ccd:PlainOrdinalA ];
+    rdfs:comment "Converts contour maps to field Rasters";
+    cct:expression "revert (1: Contour)".
+
+sig:LocalMapAlgebraSubOrder a :Signature;
+    :input [ :id 1; a ccd:FieldRaster, ccd:OrdinalA ];
+    :output [ a ccd:FieldRaster, ccd:OrdinalA ];
+    rdfs:comment "local map algebra with only a single input layer";
+    rdfs:comment
+        "Builds and executes a Local Map Algebra expression (smaller than or greater than some number) using Python syntax using rasters with an ordinal level";
+    cct:expression
+        "select (compose2 notj leq) (1: Field(Ord)) (-: Ord)".
+
+sig:LocalMapAlgebraSubRatio a :Signature;
+    :input [ :id 1; a ccd:FieldRaster, ccd:RatioA ];
+    :output [ a ccd:FieldRaster, ccd:RatioA ];
+    rdfs:comment "local map algebra transformation with ratio field";
+rdfs:comment
+        "Builds and executes a Local Map Algebra expression (less than or equal to some number) using Python syntax using rasters with a ratio level";
+    cct:expression
+        "select (compose2 notj leq) (1: Field(Ratio)) (-: Ratio)".
+
+supertool:RasterToContour a :Supertool;
+    :signature sig:RasterToContourInterval;
+    :action [ :apply tool:RasterToIsoRaster;
+        :input [ :id 1 ];
+        :output _:out31.
+    ], [ :apply tool:RegionFromRasterExtent;
+        :input _:out31;
+        :output _:out32 ].
+
+sig:RasterToContourInterval a :Signature;
+    :input [ :id 1; a ccd:FieldRaster, ccd:IntervalA ];
+    :output [ a ccd:Contour, ccd:PlainOrdinalA ];
+    rdfs:comment
+        "Converts a field raster to a Contour dataset. The raster is first reclassified to an ordinal raster, and then converted to a polygon layer.";
+    cct:expression
+        "invert (apply1 classify (1: Field(Itv)))".
+
+supertool:ZonalStatistics a :Supertool;
+    :signature sig:ZonalStatisticsSize, sig:ZonalStatisticsMeanInterval, 
+        sig:ZonalStatisticsMeanRatio, sig:ZonalStatisticsSumCount;
+    :action [ :apply tool:ZonalStatisticsAsTable;
+        :input [ :id 1 ], _:in412;
+        :output _:out41
+    ], [ :apply tool:JoinField;
+        :input _:out41, _:in412;
+        :output _:out42 ].
+    _:in412 :id 2.
+
+sig:ZonalStatisticsSize a :Signature;
+    rdfs:comment
+        "Measures the size of the coverage of a given field raster inside object regions.";
+    cct:expression
+        """
+        1: Field(Nom);
+        2: ObjectInfo(Nom);
+        join_attr
+            (get_attrL 2)
+            (groupbyR size (select eq (loTopo
+                (fcover 1 (-: C(Nom)))
+                (get_attrL 2)
+            ) in))
+        """;
+    :input [ :id 1; a ccd:FieldRaster, ccd:NominalA ];
+    :input [ :id 2; a ccd:ObjectQ, ccd:VectorRegionA ];
+    :output [ a ccd:ObjectQ, ccd:VectorRegionA, exm:ERA ].
+
+sig:ZonalStatisticsMeanInterval a :Signature;
+    rdfs:comment
+        "Calculates the average value of a field raster within the zones of a lattice.";
+    cct:expression
+        """
+        1: Field(Itv);
+        2: ObjectInfo(Nom);
+        join_attr
+            (get_attrL 2)
+            (apply1 (fcont avg 1) (get_attrL 2))
+        """;
+    :input [ :id 1; a ccd:FieldRaster, ccd:IntervalA ];
+    :input [ :id 2; a ccd:ObjectQ, ccd:VectorTessellationA ];
+    :output [ a ccd:ObjectQ, ccd:VectorTessellationA, ccd:IntervalA ].
+
+
+sig:ZonalStatisticsMeanRatio a :Signature;
+    rdfs:comment
+        "Calculates the average value of a field raster within the zones given by object regions. Outcome is intensive.";
+    cct:expression
+        """
+        1: Field(Ratio);
+        2: ObjectInfo(Nom);
+        join_attr
+            (get_attrL 2)
+            (groupbyR avg (join_key
+                (select eq (loTopo (pi1 1) (get_attrL 2)) in)
+                1
+            ))
+        """;
+    :input [ :id 1; a ccd:FieldRaster, ccd:RatioA ];
+    :input [ :id 2; a ccd:ObjectQ, ccd:PlainVectorRegionA ];
+    :output [ a ccd:ObjectQ, ccd:PlainVectorRegionA, exm:IRA ].
+
+sig:ZonalStatisticsSumCount a :Signature;
+    rdfs:comment
+        "Sums up count amounts (given as raster) into object regions.";
+    cct:expression
+        """
+        1: Amounts(Count);
+        2: ObjectInfo(Nom);
+        join_attr
+            (get_attrL 2)
+            (groupbyL
+                sum
+                (join_key (orTopo (get_attrL 2) (pi1 1)) 1)
+            )
+        """;
+    :input [ :id 1; a ccd:AmountQ, ccd:RasterA, ccd:CountA ];
+    :input [ :id 2; a ccd:ObjectQ, ccd:VectorRegionA ];
+    :output [ a ccd:ObjectQ, ccd:VectorRegionA, ccd:CountA ].
+
+sig:AddObjectVectorRegionArea a :Signature;
+    :input [ :id 1; a ccd:ObjectQ, ccd:VectorRegionA ];
+    :output [ a ccd:ObjectQ, ccd:VectorRegionA, exm:ERA ];
+    rdfs:comment
+        "Adds an area attribute to an object vector region layer.";
+    cct:expression
+        """
+        1: ObjectInfo(Nom);
+        join_attr
+            (get_attrL 1)
+            (apply1
+                (compose size deify)
+                (get_attrL 1)
+            )
+        """.
+
+supertool:IntersectDissolve a :Supertool;
+    rdfs:comment "this tool computes the coverage of a field inside object region by first intersecting and then dissolving  and joining, to obtain the area covered by the field inside the object region";
+    :signature sig:IntersectDissolveField2Object;
+    :action [ :apply tool:Intersect;
+        :input [ :id 1 ], _:in82;
+        :output _:out81
+    ], [ :apply tool:MergeObjects;
+        :input _:out81;
+        :output _:out82
+    ], [ :apply tool:JoinField;
+        :input _:out82, _:in82;
+        :output _:out83 ].
+_:in82 :id 2.
+
+sig:IntersectDissolveField2Object a :Signature;
+    rdfs:comment "Coverage of vector field in object";
+    rdfs:comment
+        "Intersects a field vector with an object vector and then dissolves the result into the object to measure the areal coverage of the field inside the object.";
+    cct:expression
+        """
+        1: Field(Nom);
+        2: ObjectInfo(_);
+        join_attr
+            (get_attrL 2)
+            (groupbyR size (select eq (loTopo
+                (fcover 1 (-: C(Nom)))
+                (get_attrL 2)
+            ) in))
+        """;
+    :input [ :id 1; a ccd:FieldQ, ccd:VectorRegionA ];
+    :input [ :id 2; a ccd:ObjectQ,  ccd:VectorRegionA ];
+    :output [ a ccd:ObjectQ,  ccd:VectorRegionA, exm:ERA ].
+
+
+supertool:MakeLayerFromTable a :Supertool;
+    :signature sig:MakePointMeasuresFromTable;
+    :action [ :apply tool:MakeXyEventLayer;
+        :input _:in51;
+        :output _:out51.
+    ], [ :apply tool:Project;
+        :input _:out51;
+        :output _:out52.
+    ], [ :apply tool:ExcelToTable;
+        :input _:in51;
+        :output _:temp.
+    ], [ :apply tool:JoinField;
+        :input1 _:out52;
+        :input2 _:temp;
+        :output _:out53.
+_:in51 :id 1.
+
+sig:MakePointMeasuresFromTable a :Signature;
+    rdfs:comment
+        "Makes a layer of pointmeasures from some XY table.";
+    cct:expression
+        "1: PointMeasures" .
+    :input [ :id 1; a ccd:PointMeasures, ccd:IntervalA ];
+    :output [ a ccd:PointMeasures, ccd:IntervalA ].
+
+sig:IDWInterval a :Signature;
+    :input [ :id 1; a ccd:PointMeasures, ccd:IntervalA ];
+    :output [ a ccd:FieldRaster, ccd:IntervalA ];
+    rdfs:comment
+        "Standard point interpolation for interval measurements.";
+    cct:expression
+        "interpol (1: PointMeasures) (deify (-: Reg))".
+
+sig:KrigingInterval a :Signature;
+    :input [ :id 1; a ccd:PointMeasures, ccd:IntervalA ];
+    :output [ a ccd:FieldRaster, ccd:IntervalA ];
+    rdfs:comment
+        "Kriging point interpolation for interval measurements.";
+    cct:expression
+        "interpol (1: PointMeasures) (deify (-: Reg))".
+
