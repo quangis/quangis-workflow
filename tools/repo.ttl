@@ -1,14 +1,23 @@
+# [SC][TODO] ambiguous references to arcpro tools in workflows for 
+# "tools:VelocityField" (lines 230 and 235) and "tools:CalculatePartialAmounts" 
+# (line 562)
+#[SC][TODO] measurement level prefix
 
-
-@prefix : <https://quangis.github.com/vocab#>
-@prefix cct: <https://quangis.github.com/cct#>
-@prefix sig: <https://quangis.github.com/signature#>
-@prefix tool: <https://quangis.github.com/tool#>
+@prefix : <https://quangis.github.io/vocab#>
+@prefix cct: <https://quangis.github.io/cct#>
+@prefix sig: <https://quangis.github.io/signature#>
+@prefix tool: <https://quangis.github.io/tool#>
 @prefix supertool: <https://quangis.github.com/supertool#>
 @prefix ccd: <http://geographicknowledge.de/vocab/CoreConceptData.rdf#>.
+@prefix exm: <http://geographicknowledge.de/vocab/ExtensiveMeasures.rdf#>.
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>.
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
-
+@prefix arcprodm: <https://pro.arcgis.com/en/pro-app/latest/tool-reference/data-management/>.
+@prefix arcpro3d: <https://pro.arcgis.com/en/pro-app/latest/tool-reference/3d-analyst/>.
+@prefix arcproan: <https://pro.arcgis.com/en/pro-app/latest/tool-reference/analysis/>.
+@prefix arcprona: <https://pro.arcgis.com/en/pro-app/latest/tool-reference/network-analyst/>.
+@prefix arcprosa: <https://pro.arcgis.com/en/pro-app/latest/tool-reference/spatial-analyst/>.
+@prefix arcproco: <https://pro.arcgis.com/en/pro-app/latest/tool-reference/conversion/>.
 
 supertool:ClosestFacilityAnalysis a :Supertool;
     :action
@@ -1270,3 +1279,167 @@ sig:KrigingInterval a :Signature;
     cct:expression
         "interpol (1: PointMeasures) (deify (-: Reg))".
 
+
+# Tools
+
+tool:AddObjectVectorRegionArea a :Tool;
+    :url arcprodm:add-geometry-attributes.htm.
+
+tool:Aspect a :Tool;
+    :url arcpro3d:aspect.htm.
+
+tool:ObjectBuffer a :Tool;
+    rdfs:comment "Buffer (interpreted as vector representation of boolean field)";
+    :url arcproan:buffer.htm.
+
+tool:BuildNetwork a :Tool;
+    rdfs:comment "Builds ratio network from line objects";
+    :url arcprona:build-network.htm.
+
+tool:Clip a :Tool;
+    :url arcprodm:clip.htm;
+    :signature sig:ClipObject2Object, sig:ClipNomFieldVector2Extent, 
+        sig:ClipBoolFieldVector2Extent, sig:ClipFieldRaster2ObjectExtent.
+
+tool:Con a :Tool;
+    :url arcprosa:con-.htm;
+    :signature sig:con1, sig:con2, sig:con3.
+
+tool:Dissolve a :Tool;
+    rdfs:comment "Merge object parts into single object";
+    :url arcprodm:dissolve.htm;
+    :signature sig:MergeObjects.
+
+tool:Erase a :Tool;
+    rdfs:comment "Erase Vector fields";
+    :url arcproan:erase.htm;
+    :signature sig:EraseFieldExtentfromFieldVector.
+
+tool:ExtractByMask a :Tool;
+    :url arcprosa:extract-by-mask.htm;
+    :signature sig:ExtractByMask.
+
+tool:FC2FC a :Tool;
+    rdfs:comment "Feature class to feature class (=Select)";
+    :url arcproco:feature-class-to-feature-class.htm;
+    :signature sig:FC2FCObjectTess.
+
+tool:FlowAccumulation a :Tool;
+    rdfs:comment "Flow direction accumulation";
+    :url arcprosa:flow-accumulation.htm;
+    :signature sig:FlowAccumulation.
+
+tool:FlowDirection a :Tool;
+    rdfs:comment "Flow direction raster";
+    :url arcprosa:flow-direction.htm;
+    :signature sig:FlowDirection.
+
+tool:FlowLength a :Tool;
+    :url arcprosa:flow-length.htm;
+    :signature sig:FlowLength.
+
+tool:NearPointObjects a :Tool;
+    rdfs:comment "Near tool, to seach for the closest objects using Euclidean distance";
+    :url arcproan:generate-near-table.htm;
+    :signature sig:NearPointObjects.
+
+tool:IDWInterval a :Tool;
+    :url arcprosa:idw.htm;
+    :signature sig:IDWInterval.
+
+tool:KrigingInterval a :Tool;
+    :url arcprosa:kriging.htm;
+    :signature sig:KrigingInterval.
+
+tool:PolygonToRaster a :Tool;
+    :url arcproco:polygon-to-raster.htm;
+    :signature sig:CoverageToNominalFieldRaster, sig:ContourToFieldRaster.
+
+tool:RasterCalculator a :Tool;
+    :url arcprosa:raster-calculator.htm;
+    :signature sig:LocalMapAlgebraInvert, sig:LocalMapAlgebraDivide, 
+        sig:LocalMapAlgebraSubOrder, sig:LocalMapAlgebraSubRatio, 
+        sig:RasterCalculatorDef, sig:RasterCalculator1Def.
+
+tool:RegionFromRasterExtent a :Tool;
+    :url arcproco:raster-to-polygon.htm;
+    :signature sig:RegionFromRasterExtent.
+
+tool:RasterToIsoRaster a :Tool;
+    :url arcprosa:reclassify.htm;
+    :signature sig:RasterToIsoRaster.
+
+tool:SelectObjectByExtent a :Tool;
+    :url arcproan:select.htm;
+    :signature sig:SelectObjectbyExtent.
+
+tool:Slope a :Tool;
+    :url arcprosa:slope.htm;
+    :signature sig:Slope.
+
+tool:SnapPourPoint a :Tool;
+    :url arcprosa:snap-pour-point.htm;
+    :signature sig:SnapPourPoint.
+
+tool:SpatialJoin a :Tool;
+    :url arcproan:spatial-join.htm;
+    :signature sig:SpatialJoinSumTessRatio, sig:SpatialJoinSumTessCount, 
+        sig:SpatialJoinAmountSumTessRatio, sig:SpatialJoinAmountSumTessCount, 
+        sig:SpatialJoinMeanTessInterval, sig:SpatialJoinMeanTessRatio, 
+        sig:SpatialJoinMeanTessCount, sig:SpatialJoinCountTess.
+
+tool:SummaryStatistics a :Tool;
+    :url arcproan:summary-statistics.htm;
+    :signature sig:ObjectSummaryStatisticsAmount, sig:SummaryStatisticsAmount.
+
+tool:Watershed a :Tool;
+    :url arcprosa:watershed.htm;
+    :signature sig:Watershed.
+
+tool:MakeClosestFacilityAnalysisLayer a :Tool;
+    :url arcprona:make-closest-facility-analysis-layer.htm.
+
+tool:AddLocations a :Tool;
+    :url arcprona:add-locations.htm.
+
+tool:Solve a :Tool;
+    :url arcprona:solve.htm.
+
+tool:ExcelToTable a :Tool;
+    :url arcproco:excel-to-table.htm.
+
+tool:JoinField a :Tool;
+    :url arcprodm:join-field.htm.
+
+tool:TableToTable a :Tool;
+    :url arcproco:table-to-table.htm.
+
+tool:AddField a :Tool;
+    :url arcprodm:add-field.htm.
+
+tool:CalculateField a :Tool;
+    :url arcprodm:calculate-field.htm.
+
+tool:AddField a :Tool;
+    :url arcprodm:add-fields.htm.
+
+tool:SelectLayerByAttribute a :Tool;
+    :url arcprodm:select-layer-by-attribute.htm.
+
+tool:CopyFeatures a :Tool;
+    :url arcprodm:copy-features.
+
+tool:SelectLayerByLocation a :Tool;
+    :url arcprodm:select-layer-by-location.htm.
+
+tool:ZonalStatisticsAsTable a :Tool;
+    :url arcprosa:zonal-statistics-as-table.htm.
+
+tool:Intersect a :Tool;
+    :url arcproan:intersect.htm.
+
+tool:MakeXyEventLayer a :Tool;
+    :url arcprodm:make-xy-event-layer.htm.
+
+tool:Project a :Tool;
+    :url arcprodm:project.htm.
