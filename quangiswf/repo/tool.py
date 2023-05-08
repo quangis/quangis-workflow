@@ -12,6 +12,7 @@ from quangiswf.repo.tool2url import tool2url
 from quangiswf.namespace import (
     n3, RDF, TOOLSCHEMA, WF, SUPERTOOL, bind_all)
 
+ALLOW_DISCONNECTED_SUPERTOOL = True
 
 class DisconnectedArtefactsError(Exception):
     pass
@@ -149,7 +150,8 @@ class ToolRepo(object):
             return tool
 
     def register_supertool(self, supertool: Supertool) -> Supertool:
-        supertool.sanity_check()
+        if not ALLOW_DISCONNECTED_SUPERTOOL:
+            supertool.sanity_check()
         if (supertool.uri in self.supertools and not
                 supertool.match(self.supertools[supertool.uri])):
             raise ToolAlreadyExistsError(
