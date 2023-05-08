@@ -9,7 +9,6 @@
 @prefix tool: <https://quangis.github.io/tool#>.
 @prefix supertool: <https://quangis.github.com/supertool#>.
 @prefix ccd: <http://geographicknowledge.de/vocab/CoreConceptData.rdf#>.
-@prefix exm: <http://geographicknowledge.de/vocab/ExtensiveMeasures.rdf#>.
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>.
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
 @prefix arcprodm: <https://pro.arcgis.com/en/pro-app/latest/tool-reference/data-management/>.
@@ -377,8 +376,8 @@ sig:CalculateObjectSpatialAmount a :Signature;
                 (apply1 (compose size deify) (get_attrL 1))
             )
         """;
-    :input [ :id 1; a ccd:ObjectQ, ccd:VectorRegionA, exm:IRA ];
-    :output [ a ccd:ObjectQ, ccd:VectorRegionA, exm:ERA ].
+    :input [ :id 1; a ccd:ObjectQ, ccd:VectorRegionA, ccd:IRA ];
+    :output [ a ccd:ObjectQ, ccd:VectorRegionA, ccd:ERA ].
 
 sig:CalculateProd a :Signature;
     rdfs:comment
@@ -403,8 +402,8 @@ sig:CalculateProdPointObjects a :Signature;
             (get_attrL 1)
             (apply1 (product (-: Ratio)) (get_attrR 1))
         """;
-    :input [ :id 1; a ccd:ObjectQ, ccd:PointA, exm:ERA ];
-    :output [ a ccd:ObjectQ, ccd:PointA, exm:ERA ].
+    :input [ :id 1; a ccd:ObjectQ, ccd:PointA, ccd:ERA ];
+    :output [ a ccd:ObjectQ, ccd:PointA, ccd:ERA ].
 
 sig:ObjectSummaryStatisticsAmount a :Signature;
     :input [ :id 1; a ccd:ObjectQ, ccd:VectorRegionA, ccd:CountA ];
@@ -545,7 +544,7 @@ sig:CalculateVectorFieldAreaPercentage a :Signature;
     :input
         [ :id 1; a ccd:FieldQ, ccd:VectorRegionA, ccd:BooleanA ],
         [ :id 2; a ccd:FieldQ, ccd:VectorRegionA, ccd:BooleanA ];
-    :output [ a ccd:AmountQ, ccd:VectorRegionA, exm:IRA ].
+    :output [ a ccd:AmountQ, ccd:VectorRegionA, ccd:IRA ].
 
 
 sig:CalculateVectorFieldPartialArea a :Signature;
@@ -555,8 +554,8 @@ sig:CalculateVectorFieldPartialArea a :Signature;
     cct:expression
         "apply1 (product (size (pi1 (1: Field(Nom))))) (2: R2(Bool, Ratio))";
     :input [ :id 1; a ccd:FieldQ, ccd:VectorRegionA; rdfs:comment "field whose extent is interpreted as a Substance Coverage SC" ];
-    :input [ :id 2; a ccd:AmountQ, ccd:VectorRegionA, exm:IRA; rdfs:comment "Substance Coverage proportion SC/SC" ];
-    :output [ a ccd:AmountQ, ccd:VectorRegionA, exm:ERA ].
+    :input [ :id 2; a ccd:AmountQ, ccd:VectorRegionA, ccd:IRA; rdfs:comment "Substance Coverage proportion SC/SC" ];
+    :output [ a ccd:AmountQ, ccd:VectorRegionA, ccd:ERA ].
 
 
 sig:CalculateCountAmountRatio a :Signature;
@@ -567,7 +566,7 @@ sig:CalculateCountAmountRatio a :Signature;
         "apply2 ratio (1: Amounts(Ratio)) (2: Amounts(Ratio))";
     :input [ :id 1; a ccd:AmountQ, ccd:VectorRegionA, ccd:CountA ];
     :input [ :id 2; a ccd:AmountQ, ccd:VectorRegionA, ccd:CountA ];
-    :output [ a ccd:AmountQ, ccd:VectorRegionA, exm:IRA ].
+    :output [ a ccd:AmountQ, ccd:VectorRegionA, ccd:IRA ].
 
 sig:CalculateObjectVectorCountAmountRatio a :Signature;
     rdfs:comment "Calculate new attribute: Object Content proportion OA/OA";
@@ -583,7 +582,7 @@ sig:CalculateObjectVectorCountAmountRatio a :Signature;
         """;
     :input [ :id 1; a ccd:ObjectQ, ccd:VectorRegionA, ccd:CountA ];
     :input [ :id 2; a ccd:ObjectQ, ccd:VectorRegionA, ccd:CountA ];
-    :output [ a ccd:ObjectQ, ccd:VectorRegionA, exm:IRA ].
+    :output [ a ccd:ObjectQ, ccd:VectorRegionA, ccd:IRA ].
 
 sig:CalculateObjectAttrRatio a :Signature;
     rdfs:comment "<https://pro.arcgis.com/en/pro-app/tool-reference/data-management/calculate-field.htm>";
@@ -597,9 +596,9 @@ sig:CalculateObjectAttrRatio a :Signature;
             (get_attrL 1)
             (apply2 ratio (get_attrR 1) (get_attrR 2))
         """;
-    :input [ :id 1; a ccd:ObjectQ, ccd:VectorRegionA, exm:ERA ];
-    :input [ :id 2; a ccd:ObjectQ, ccd:VectorRegionA, exm:ERA ];
-    :output [ a ccd:ObjectQ, ccd:VectorRegionA, exm:IRA ].
+    :input [ :id 1; a ccd:ObjectQ, ccd:VectorRegionA, ccd:ERA ];
+    :input [ :id 2; a ccd:ObjectQ, ccd:VectorRegionA, ccd:ERA ];
+    :output [ a ccd:ObjectQ, ccd:VectorRegionA, ccd:IRA ].
 
 sig:EraseFieldExtentfromFieldVector a :Signature;
     :input [ :id 1; a ccd:FieldQ, ccd:PlainVectorRegionA ];
@@ -845,9 +844,9 @@ sig:SelectLayerByLocationPlainRegionObjectsDist a :Signature;
 sig:SpatialJoinSumTessRatio a :Signature;
     rdfs:comment "Spatial join with sum rule";
     rdfs:comment "with JOIN_ONE_TO_ONE parameter, with Merge_RULe sum for Ratio data";
-    :input [ :id 1; a ccd:ObjectQ, ccd:VectorA, exm:ERA ];
+    :input [ :id 1; a ccd:ObjectQ, ccd:VectorA, ccd:ERA ];
     :input [ :id 2; a ccd:ObjectQ, ccd:VectorTessellationA ];
-    :output [ a ccd:ObjectQ, ccd:VectorTessellationA, exm:ERA ];
+    :output [ a ccd:ObjectQ, ccd:VectorTessellationA, ccd:ERA ];
     rdfs:comment
         "Sums the attributes at ratio measurement level from one feature to another based on the spatial relation";
     cct:expression
@@ -890,9 +889,9 @@ sig:SpatialJoinSumTessCount a :Signature;
 sig:SpatialJoinAmountSumTessRatio a :Signature;
     rdfs:comment "Spatial join with sum rule with vector amounts";
     rdfs:comment "with JOIN_ONE_TO_ONE parameter, with Merge_RULe sum for Ratio data";
-    :input [ :id 1; a ccd:AmountQ, ccd:VectorRegionA, exm:ERA ];
+    :input [ :id 1; a ccd:AmountQ, ccd:VectorRegionA, ccd:ERA ];
     :input [ :id 2; a ccd:ObjectQ, ccd:VectorTessellationA ];
-    :output [ a ccd:ObjectQ, ccd:VectorTessellationA, exm:ERA ];
+    :output [ a ccd:ObjectQ, ccd:VectorTessellationA, ccd:ERA ];
     rdfs:comment
         "Sums the attributes at ratio measurement level from one feature to another based on the spatial relation";
     cct:expression
@@ -1124,7 +1123,7 @@ sig:ZonalStatisticsSize a :Signature;
         """;
     :input [ :id 1; a ccd:FieldRaster, ccd:NominalA ];
     :input [ :id 2; a ccd:ObjectQ, ccd:VectorRegionA ];
-    :output [ a ccd:ObjectQ, ccd:VectorRegionA, exm:ERA ].
+    :output [ a ccd:ObjectQ, ccd:VectorRegionA, ccd:ERA ].
 
 sig:ZonalStatisticsMeanInterval a :Signature;
     rdfs:comment
@@ -1158,7 +1157,7 @@ sig:ZonalStatisticsMeanRatio a :Signature;
         """;
     :input [ :id 1; a ccd:FieldRaster, ccd:RatioA ];
     :input [ :id 2; a ccd:ObjectQ, ccd:PlainVectorRegionA ];
-    :output [ a ccd:ObjectQ, ccd:PlainVectorRegionA, exm:IRA ].
+    :output [ a ccd:ObjectQ, ccd:PlainVectorRegionA, ccd:IRA ].
 
 sig:ZonalStatisticsSumCount a :Signature;
     rdfs:comment
@@ -1180,7 +1179,7 @@ sig:ZonalStatisticsSumCount a :Signature;
 
 sig:AddObjectVectorRegionArea a :Signature;
     :input [ :id 1; a ccd:ObjectQ, ccd:VectorRegionA ];
-    :output [ a ccd:ObjectQ, ccd:VectorRegionA, exm:ERA ];
+    :output [ a ccd:ObjectQ, ccd:VectorRegionA, ccd:ERA ];
     rdfs:comment
         "Adds an area attribute to an object vector region layer.";
     cct:expression
@@ -1225,7 +1224,7 @@ sig:IntersectDissolveField2Object a :Signature;
         """;
     :input [ :id 1; a ccd:FieldQ, ccd:VectorRegionA ];
     :input [ :id 2; a ccd:ObjectQ,  ccd:VectorRegionA ];
-    :output [ a ccd:ObjectQ,  ccd:VectorRegionA, exm:ERA ].
+    :output [ a ccd:ObjectQ,  ccd:VectorRegionA, ccd:ERA ].
 
 
 supertool:MakeLayerFromTable a :Supertool;
