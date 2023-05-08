@@ -3,11 +3,11 @@
 # (line 562)
 #[SC][TODO] measurement level prefix
 
-@prefix : <https://quangis.github.io/vocab#>
-@prefix cct: <https://quangis.github.io/cct#>
-@prefix sig: <https://quangis.github.io/signature#>
-@prefix tool: <https://quangis.github.io/tool#>
-@prefix supertool: <https://quangis.github.com/supertool#>
+@prefix : <https://quangis.github.io/vocab#>.
+@prefix cct: <https://quangis.github.io/cct#>.
+@prefix sig: <https://quangis.github.io/signature#>.
+@prefix tool: <https://quangis.github.io/tool#>.
+@prefix supertool: <https://quangis.github.com/supertool#>.
 @prefix ccd: <http://geographicknowledge.de/vocab/CoreConceptData.rdf#>.
 @prefix exm: <http://geographicknowledge.de/vocab/ExtensiveMeasures.rdf#>.
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>.
@@ -23,7 +23,7 @@ supertool:ClosestFacilityAnalysis a :Supertool;
     :action
         [ :apply tool:MakeClosestFacilityAnalysisLayer;
             :input [ :id 1; rdfs:comment "roads" ];
-            :output _:out201.
+            :output _:out201
         ], [ :apply tool:AddLocations;
             :input _:out201, [ :id 2; rdfs:comment "goals" ];
             :output _:out202
@@ -119,7 +119,7 @@ supertool:JoinFromTable a :Supertool;
 sig:LoadAmountonObjects a :Signature;
     :input [ :id 1; a ccd:ObjectQ, ccd:CountA];
     :input [ :id 2; a ccd:ObjectQ, ccd:VectorRegionA ];
-    :output [ a ccd:ObjectQ, ccd:VectorRegionA, ccd:CountA].
+    :output [ a ccd:ObjectQ, ccd:VectorRegionA, ccd:CountA];
     rdfs:comment
         "Loads object based count amounts from excel and joins them with vector objects.";
     cct:expression
@@ -138,8 +138,7 @@ sig:FlowDirection a :Signature;
         "flowdirgraph (1: Field(Itv))".
 
 sig:FlowAccumulation a :Signature;
-    :input [ :id 1; a ccd:FieldRaster, ccd:CyclicA; rdfs:comment "Needs to be a 
-    direction" ];
+    :input [ :id 1; a ccd:FieldRaster, ccd:CyclicA; rdfs:comment "Needs to be a direction" ];
     :output [ a ccd:FieldRaster, ccd:RatioA ];
     rdfs:comment
         "Accumulates flow directions into areas reachable downstream.";
@@ -162,12 +161,12 @@ supertool:VelocityField a :Supertool;
     # This computes SquareRoot("slope") * SquareRoot("flow_accumulation")
     """;
     :action [ :apply tool:RasterCalculator;
-        :input [ rdfs:label "slope" ], [ rdfs:label "acc" ];
-        :output _:slopearea.
-        rdfs:comment "This second step computes 0.1 * ("Stowe_slope_area_term" / [Mean slope-area term]). It needs looking up of parameter [Mean slope-area term]."
+        :input [ :id 1 ], [ :id 2 ];
+        :output _:slopearea
     ], [ :apply tool:RasterCalculator1;
         :input _:slopearea;
-        :output _:velocity ].
+        :output _:velocity;
+        rdfs:comment "This second step computes 0.1 * (Stowe_slope_area_term / [Mean slope-area term]). It needs looking up of parameter [Mean slope-area term]." ].
 
 sig:VelocityFieldDEM a :Signature;
     rdfs:comment
@@ -260,8 +259,8 @@ supertool:RasterCoverage a :Supertool;
     :signature sig:CreateUnitHydrograph;
     rdfs:comment
         "Computes coverage (size) from a raster table for each raster value";
-    :action [ :apply tools:TableToTable;
-        :input [ rdfs:label "fieldraster" ];
+    :action [ :apply tool:TableToTable;
+        :input [ :id 1 ];
         :output _:rastertable
     ], [ :apply tool:AddField;
         :input _:rastertable;
@@ -403,7 +402,7 @@ sig:CalculateProdPointObjects a :Signature;
         join_attr
             (get_attrL 1)
             (apply1 (product (-: Ratio)) (get_attrR 1))
-        """.
+        """;
     :input [ :id 1; a ccd:ObjectQ, ccd:PointA, exm:ERA ];
     :output [ a ccd:ObjectQ, ccd:PointA, exm:ERA ].
 
@@ -425,7 +424,7 @@ sig:SummaryStatisticsAmount a :Signature;
 
 sig:ClipObject2Object a :Signature;
     :input [ :id 1; a ccd:ObjectQ, ccd:PlainVectorRegionA, ccd:CountA; rdfs:comment "objects to be clipped" ];
-    :input [ :id 2; a ccd:ObjectQ, ccd:PlainVectorRegionA rdfs:label "to the regions of these objects" ];
+    :input [ :id 2; a ccd:ObjectQ, ccd:PlainVectorRegionA; rdfs:comment "to the regions of these objects" ];
     :output [ a ccd:ObjectQ, ccd:PlainVectorRegionA, ccd:CountA ];
     rdfs:comment
         "Clips some object polygons to the extent of an object layer. We assume here that objects exactly coincide (otherwise clip would cut objects).";
@@ -456,11 +455,10 @@ supertool:CalculatePartialAmounts a :Supertool;
     ], [ :apply tool:CalculateField;
         :input _:out013;
         :output _:out014 ];
-    rdfs:comment "CalculatePartialAmounts: Calculates a set of portions from a set of object based count amounts using some boolean vector field. Only the portions that are within the true value of the boolean field are considered. This is an areal interpolation problem, which is solved by first generating area proportions and then multiplying them with the count amount.".
+    rdfs:comment "Calculates a set of portions from a set of object based count amounts using some boolean vector field. Only the portions that are within the true value of the boolean field are considered. This is an areal interpolation problem, which is solved by first generating area proportions and then multiplying them with the count amount.".
 
 sig:CalculatePartialAmountsfromObjects a :Signature;
-    rdfs:comment
-        "Clips some object vector with some count amounts to the extent of a field layer (e.g. a buffer) and interpolates partial count amounts R(Reg, Ratio) based on area percentage.";
+    rdfs:comment "Clips some object vector with some count amounts to the extent of a field layer (e.g. a buffer) and interpolates partial count amounts R(Reg, Ratio) based on area percentage.";
     cct:expression
         """
         1: ObjectInfo(Count);
@@ -474,7 +472,7 @@ sig:CalculatePartialAmountsfromObjects a :Signature;
         """;
     :input [ :id 1; a ccd:ObjectQ, ccd:VectorRegionA, ccd:CountA ];
     :input [ :id 2; a ccd:FieldQ, ccd:VectorRegionA, ccd:BooleanA ];
-    :output [ a ccd:AmountQ, ccd:VectorRegionA, ccd:CountA].
+    :output [ a ccd:AmountQ, ccd:VectorRegionA, ccd:CountA ].
 
 sig:SelectObjectbyExtent a :Signature;
     :input [ :id 1; a ccd:ObjectQ, ccd:VectorA ];
@@ -517,8 +515,6 @@ sig:ClipBoolFieldVector2Extent a :Signature;
     cct:expression
         "subset (1: Field(Bool)) (fcover (2: Field(Bool)) (nest true))".
 
-
-
 supertool:CalculateAreaMeasure a :Supertool;
     rdfs:comment "This is an abbreviated workflow for calculating area based measures with attributes";
     :signature sig:CalculateVectorFieldAreaPercentage, 
@@ -526,19 +522,16 @@ supertool:CalculateAreaMeasure a :Supertool;
         sig:CalculateObjectVectorCountAmountRatio, 
         sig:CalculateObjectAttrRatio;
     :action [ :apply tool:AddField;
-        :input [ :id 1 ] ;
+        :input [ :id 1 ];
         :output _:out1111
     ], [ :apply tool:CalculateField2;
         :input _:out1111;
         :input [ :id 2 ];
-        wf:output _:out1112 ].
+        :output _:out1112 ].
 
 
 sig:CalculateVectorFieldAreaPercentage a :Signature;
-    rdfs:comment "The assumption is here is that fields are represented by 
-single polygons and area measures are implicitly added. The area measure of the 
-second layer is manually taken over into the calculation. The result is a 
-single measure, though stored into a table with a single polygon.";
+    rdfs:comment "The assumption is here is that fields are represented by single polygons and area measures are implicitly added. The area measure of the second layer is manually taken over into the calculation. The result is a single measure, though stored into a table with a single polygon.";
     rdfs:comment "Substance Coverage proportions SC/SC";
     rdfs:comment
         "Calculates an area ratio (amount) of the size of the extent of the second boolean field with respect to the extent of the first boolean field, both represented by vector layers.";
@@ -550,19 +543,17 @@ single measure, though stored into a table with a single polygon.";
         )
         """;
     :input
-        [ :id 1; a ccd:FieldQ, ccd:VectorRegionA, ccd:BooleanA ];
+        [ :id 1; a ccd:FieldQ, ccd:VectorRegionA, ccd:BooleanA ],
         [ :id 2; a ccd:FieldQ, ccd:VectorRegionA, ccd:BooleanA ];
     :output [ a ccd:AmountQ, ccd:VectorRegionA, exm:IRA ].
 
 
-
-#
 sig:CalculateVectorFieldPartialArea a :Signature;
     rdfs:comment "Substance Coverage SC";
     rdfs:comment
         "Calculates a partial area measure by multiplying an area proportion with the size of the extent of a vector field.";
     cct:expression
-        "apply1 (product (size (pi1 (1: Field(Nom))))) (2: R2(Bool, Ratio))".
+        "apply1 (product (size (pi1 (1: Field(Nom))))) (2: R2(Bool, Ratio))";
     :input [ :id 1; a ccd:FieldQ, ccd:VectorRegionA; rdfs:comment "field whose extent is interpreted as a Substance Coverage SC" ];
     :input [ :id 2; a ccd:AmountQ, ccd:VectorRegionA, exm:IRA; rdfs:comment "Substance Coverage proportion SC/SC" ];
     :output [ a ccd:AmountQ, ccd:VectorRegionA, exm:ERA ].
@@ -573,7 +564,7 @@ sig:CalculateCountAmountRatio a :Signature;
     rdfs:comment
         "Calculates the ratio of two count vector amounts.";
     cct:expression
-        "apply2 ratio (1: Amounts(Ratio)) (2: Amounts(Ratio))".
+        "apply2 ratio (1: Amounts(Ratio)) (2: Amounts(Ratio))";
     :input [ :id 1; a ccd:AmountQ, ccd:VectorRegionA, ccd:CountA ];
     :input [ :id 2; a ccd:AmountQ, ccd:VectorRegionA, ccd:CountA ];
     :output [ a ccd:AmountQ, ccd:VectorRegionA, exm:IRA ].
@@ -589,7 +580,7 @@ sig:CalculateObjectVectorCountAmountRatio a :Signature;
         join_attr
             (get_attrL 1)
             (apply2 ratio (get_attrR 1) (get_attrR 2))
-        """.
+        """;
     :input [ :id 1; a ccd:ObjectQ, ccd:VectorRegionA, ccd:CountA ];
     :input [ :id 2; a ccd:ObjectQ, ccd:VectorRegionA, ccd:CountA ];
     :output [ a ccd:ObjectQ, ccd:VectorRegionA, exm:IRA ].
@@ -605,15 +596,15 @@ sig:CalculateObjectAttrRatio a :Signature;
         join_attr
             (get_attrL 1)
             (apply2 ratio (get_attrR 1) (get_attrR 2))
-        """.
+        """;
     :input [ :id 1; a ccd:ObjectQ, ccd:VectorRegionA, exm:ERA ];
     :input [ :id 2; a ccd:ObjectQ, ccd:VectorRegionA, exm:ERA ];
     :output [ a ccd:ObjectQ, ccd:VectorRegionA, exm:IRA ].
 
 sig:EraseFieldExtentfromFieldVector a :Signature;
-    :input [ :id 1; a ccd:FieldQ,  ccd:PlainVectorRegionA ];
+    :input [ :id 1; a ccd:FieldQ, ccd:PlainVectorRegionA ];
     :input [ :id 2; a ccd:FieldQ, ccd:VectorRegionA, ccd:BooleanA ];
-    :output [ a ccd:FieldQ,  ccd:PlainVectorRegionA ];
+    :output [ a ccd:FieldQ, ccd:PlainVectorRegionA ];
     rdfs:comment
         "Erases the coverage of a boolean field vector (second input) from a field vector (first input)";
     cct:expression
@@ -656,7 +647,7 @@ supertool:FullSelectLayerByAttribute a :Supertool;
 
 
 sig:SelectLayerByObjectPointObjects a :Signature;
-    cct:expression "subset (objectregionnominals x1) (objects)";
+    cct:expression "subset (1: ObjectInfo(Nom)) (-: C(Obj))";
     :input [ :id 1; a ccd:ObjectQ, ccd:PointA ];
     :output [ a ccd:ObjectQ, ccd:PointA, ccd:BooleanA ].
 
@@ -741,12 +732,11 @@ supertool:FullSelectLayerByLocation a :Supertool;
         sig:SelectLayerByLocationPlainRegionObjectsFieldDist, 
         sig:SelectLayerByLocationPlainRegionObjectsDist;
     :action [ :apply tool:SelectLayerByLocation;
-        wf:input [ :id 1 ];
-        wf:input [ :id 2 ];
-        wf:output _:out21
+        :input [ :id 1 ], [ :id 2 ];
+        :output _:out21
     ], [ :apply tool:CopyFeatures;
-        wf:input1 _:out21;
-        wf:output _:out22 ].
+        :input _:out21;
+        :output _:out22 ].
 
 sig:SelectLayerByLocationPointObjects a :Signature;
     cct:expression
@@ -1094,7 +1084,7 @@ supertool:RasterToContour a :Supertool;
     :signature sig:RasterToContourInterval;
     :action [ :apply tool:RasterToIsoRaster;
         :input [ :id 1 ];
-        :output _:out31.
+        :output _:out31
     ], [ :apply tool:RegionFromRasterExtent;
         :input _:out31;
         :output _:out32 ].
@@ -1242,24 +1232,23 @@ supertool:MakeLayerFromTable a :Supertool;
     :signature sig:MakePointMeasuresFromTable;
     :action [ :apply tool:MakeXyEventLayer;
         :input _:in51;
-        :output _:out51.
+        :output _:out51
     ], [ :apply tool:Project;
         :input _:out51;
-        :output _:out52.
+        :output _:out52
     ], [ :apply tool:ExcelToTable;
         :input _:in51;
-        :output _:temp.
+        :output _:temp
     ], [ :apply tool:JoinField;
-        :input1 _:out52;
-        :input2 _:temp;
-        :output _:out53.
+        :input _:out52, _:temp;
+        :output _:out53 ].
 _:in51 :id 1.
 
 sig:MakePointMeasuresFromTable a :Signature;
     rdfs:comment
         "Makes a layer of pointmeasures from some XY table.";
     cct:expression
-        "1: PointMeasures" .
+        "1: PointMeasures";
     :input [ :id 1; a ccd:PointMeasures, ccd:IntervalA ];
     :output [ a ccd:PointMeasures, ccd:IntervalA ].
 
@@ -1358,8 +1347,7 @@ tool:PolygonToRaster a :Tool;
 tool:RasterCalculator a :Tool;
     :url arcprosa:raster-calculator.htm;
     :signature sig:LocalMapAlgebraInvert, sig:LocalMapAlgebraDivide, 
-        sig:LocalMapAlgebraSubOrder, sig:LocalMapAlgebraSubRatio, 
-        sig:RasterCalculatorDef, sig:RasterCalculator1Def.
+        sig:LocalMapAlgebraSubOrder, sig:LocalMapAlgebraSubRatio.
 
 tool:RegionFromRasterExtent a :Tool;
     :url arcproco:raster-to-polygon.htm;
