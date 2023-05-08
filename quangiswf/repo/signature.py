@@ -52,6 +52,11 @@ class Signature(object):
         if not cct and cct_mandatory:
             raise RuntimeError("Signature has no cct expression")
 
+        # inputs = []
+        # for a in wf.inputs(action, labelled=True):
+        #     t = wf.type(a)
+        #     if t.empty():
+
         inputs = [wf.type(a) for a in wf.inputs(action, labelled=True)]
         outputs = [wf.type(a) for a in wf.outputs(action)]
 
@@ -154,20 +159,17 @@ class SignatureRepo(object):
             for impl in sig.implementations:
                 g.add((sig.uri, TOOLSCHEMA.implementation, impl))
 
-            inputs = []
-            for i in range(len(sig.inputs)):
+            for i, x in enumerate(sig.inputs, start=1):
                 artefact = BNode()
-                for uri in sig.inputs[i].uris():
+                for uri in x.uris():
                     g.add((artefact, RDF.type, uri))
-                inputs.append(artefact)
-            g.add((sig.uri, TOOLSCHEMA.inputs, g.add_list(inputs)))
+                g.add((artefact, TOOLSCHEMA.id, Literal(i)))
+                g.add((sig.uri, TOOLSCHEMA.input, artefact))
 
-            outputs = []
-            for i in range(len(sig.outputs)):
+            for x in sig.outputs:
                 artefact = BNode()
-                for uri in sig.outputs[i].uris():
+                for uri in x.uris():
                     g.add((artefact, RDF.type, uri))
-                outputs.append(artefact)
-            g.add((sig.uri, TOOLSCHEMA.outputs, g.add_list(outputs)))
+                g.add((sig.uri, TOOLSCHEMA.output, artefact))
 
         return g

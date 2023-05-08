@@ -2,7 +2,7 @@ from __future__ import annotations
 from collections import defaultdict
 from itertools import count
 from rdflib import Graph
-from rdflib.term import URIRef, Node, BNode
+from rdflib.term import URIRef, Node, BNode, Literal
 from rdflib.compare import isomorphic
 from typing import Iterable
 from transforge.list import GraphList
@@ -31,20 +31,23 @@ class Supertool(GraphList):
 
         counter = count()
         map: dict[Node, BNode] = defaultdict(
-            lambda: BNode(f"d{next(counter)}_{name}"))
+            lambda: BNode(f"out{next(counter)}_{name}"))
 
         self.name = name
         self.origin = origin
         self.uri = uri = SUPERTOOL[name]
-        self.inputs = [map[x] for x in inputs]
+        self.inputs = []
         self.outputs = [map[x] for x in outputs]
         self.all_inputs: set[BNode] = set()
         self.all_outputs: set[BNode] = set()
         self.constituent_tools: set[URIRef] = set()
 
+        for i, x in enumerate(inputs, start=1):
+            node = map[x] = BNode(f"in{i}_{name}")
+            self.add((node, TOOLSCHEMA.id, Literal(i)))
+            self.inputs.append(node)
+
         self.add((uri, RDF.type, TOOLSCHEMA.Supertool))
-        self.add((uri, TOOLSCHEMA.inputs, self.add_list(self.inputs)))
-        self.add((uri, TOOLSCHEMA.outputs, self.add_list(self.outputs)))
         for tool, inputs, outputs in actions:
             self._add_action(tool,
                 [map[x] for x in inputs],
@@ -57,6 +60,7 @@ class Supertool(GraphList):
         supertool is extracted."""
         name, impl = wf.impl(action)
         if (impl, RDF.type, WF.Workflow) in wf:
+            assert isinstance(impl, BNode), "subworkflows should be blank"
             supertool = Supertool(name,
                 inputs=wf.inputs(action),
                 outputs=wf.outputs(action),
