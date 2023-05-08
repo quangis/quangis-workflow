@@ -466,3 +466,379 @@ sig:CalculatePartialAmountsfromObjects a :Signature;
     :input [ :id 1; a ccd:ObjectQ, ccd:VectorRegionA, ccd:CountA ];
     :input [ :id 2; a ccd:FieldQ, ccd:VectorRegionA, ccd:BooleanA ];
     :output [ a ccd:AmountQ, ccd:VectorRegionA, ccd:CountA].
+
+sig:SelectObjectbyExtent a :Signature;
+    :input [ :id 1; a ccd:ObjectQ, ccd:VectorA ];
+    :output [ a ccd:ObjectQ, ccd:VectorA ];
+    rdfs:comment
+        "Select object vector by extent. Extent remains implicit.";
+    cct:expression
+        """
+        1: ObjectInfo(Nom);
+        subset 1 (pi3 (select
+            eq
+            (loTopo (deify (-: Reg)) (get_attrL 1))
+            in
+        ))
+        """.
+
+sig:ObjectBuffer a :Signature;
+    :input [ :id 1; a ccd:ObjectQ, ccd:VectorA ];
+    :output [ a ccd:FieldQ, ccd:PlainVectorRegionA, ccd:BooleanA ];
+    rdfs:comment
+        "Buffers some object vector and returns the buffer as a boolean field R(Loc, Bool)";
+    cct:expression
+        "extrapol (get_attrL (1: ObjectInfo(Nom)))".
+
+sig:ClipNomFieldVector2Extent a :Signature;
+    :input [ :id 1; a ccd:FieldQ, ccd:VectorRegionA ];
+    :input [ :id 2; a ccd:FieldQ, ccd:VectorRegionA, ccd:BooleanA ];
+    :output [ a ccd:FieldQ, ccd:VectorRegionA ];
+    rdfs:comment
+        "Clips some nominal field vector to the region where a boolean field vector is true.";
+    cct:expression
+        "subset (1: Field(Nom)) (fcover (2: Field(Bool)) (nest true))".
+
+sig:ClipBoolFieldVector2Extent a :Signature;
+    :input [ :id 1; a ccd:FieldQ, ccd:VectorRegionA, ccd:BooleanA];
+    :input [ :id 2; a ccd:FieldQ, ccd:VectorRegionA, ccd:BooleanA ];
+    :output [ a ccd:FieldQ, ccd:VectorRegionA, ccd:BooleanA ];
+    rdfs:comment
+        "Clips some boolean field vector to the region where a boolean field vector is true.";
+    cct:expression
+        "subset (1: Field(Bool)) (fcover (2: Field(Bool)) (nest true))".
+
+
+
+supertool:CalculateAreaMeasure a :Supertool;
+    rdfs:comment "This is an abbreviated workflow for calculating area based measures with attributes";
+    :signature sig:CalculateVectorFieldAreaPercentage, 
+        sig:CalculateVectorFieldPartialArea, sig:CalculateCountAmountRatio, 
+        sig:CalculateObjectVectorCountAmountRatio, 
+        sig:CalculateObjectAttrRatio;
+    :action [ :apply tool:AddField;
+        :input [ :id 1 ] ;
+        :output _:out1111
+    ], [ :apply tool:CalculateField2;
+        :input _:out1111;
+        :input [ :id 2 ];
+        wf:output _:out1112 ].
+
+
+sig:CalculateVectorFieldAreaPercentage a :Signature;
+    rdfs:comment "The assumption is here is that fields are represented by 
+single polygons and area measures are implicitly added. The area measure of the 
+second layer is manually taken over into the calculation. The result is a 
+single measure, though stored into a table with a single polygon.";
+    rdfs:comment "Substance Coverage proportions SC/SC";
+    rdfs:comment
+        "Calculates an area ratio (amount) of the size of the extent of the second boolean field with respect to the extent of the first boolean field, both represented by vector layers.";
+    cct:expression
+        """
+        nest2 true (ratio
+            (size (fcover (1: Field(Bool)) (nest true)))
+            (size (fcover (2: Field(Bool)) (nest true)))
+        )
+        """;
+    :input
+        [ :id 1; a ccd:FieldQ, ccd:VectorRegionA, ccd:BooleanA ];
+        [ :id 2; a ccd:FieldQ, ccd:VectorRegionA, ccd:BooleanA ];
+    :output [ a ccd:AmountQ, ccd:VectorRegionA, exm:IRA ].
+
+
+
+#
+sig:CalculateVectorFieldPartialArea a :Signature;
+    rdfs:comment "Substance Coverage SC";
+    rdfs:comment
+        "Calculates a partial area measure by multiplying an area proportion with the size of the extent of a vector field.";
+    cct:expression
+        "apply1 (product (size (pi1 (1: Field(Nom))))) (2: R2(Bool, Ratio))".
+    :input [ :id 1; a ccd:FieldQ, ccd:VectorRegionA; rdfs:comment "field whose extent is interpreted as a Substance Coverage SC" ];
+    :input [ :id 2; a ccd:AmountQ, ccd:VectorRegionA, exm:IRA; rdfs:comment "Substance Coverage proportion SC/SC" ];
+    :output [ a ccd:AmountQ, ccd:VectorRegionA, exm:ERA ].
+
+
+sig:CalculateCountAmountRatio a :Signature;
+    rdfs:comment "object Content proportion OA/OA";
+    rdfs:comment
+        "Calculates the ratio of two count vector amounts.";
+    cct:expression
+        "apply2 ratio (1: Amounts(Ratio)) (2: Amounts(Ratio))".
+    :input [ :id 1; a ccd:AmountQ, ccd:VectorRegionA, ccd:CountA ];
+    :input [ :id 2; a ccd:AmountQ, ccd:VectorRegionA, ccd:CountA ];
+    :output [ a ccd:AmountQ, ccd:VectorRegionA, exm:IRA ].
+
+sig:CalculateObjectVectorCountAmountRatio a :Signature;
+    rdfs:comment "Calculate new attribute: Object Content proportion OA/OA";
+    rdfs:comment
+        "Calculates the ratio of two count vector amounts on objects.";
+    cct:expression
+        """
+        1: ObjectInfo(Count);
+        2: ObjectInfo(Count);
+        join_attr
+            (get_attrL 1)
+            (apply2 ratio (get_attrR 1) (get_attrR 2))
+        """.
+    :input [ :id 1; a ccd:ObjectQ, ccd:VectorRegionA, ccd:CountA ];
+    :input [ :id 2; a ccd:ObjectQ, ccd:VectorRegionA, ccd:CountA ];
+    :output [ a ccd:ObjectQ, ccd:VectorRegionA, exm:IRA ].
+
+sig:CalculateObjectAttrRatio a :Signature;
+    rdfs:comment "<https://pro.arcgis.com/en/pro-app/tool-reference/data-management/calculate-field.htm>";
+    rdfs:comment
+        "Calculates ratios of two ratio scaled object attributes.";
+    cct:expression
+        """
+        1: ObjectInfo(Ratio);
+        2: ObjectInfo(Ratio);
+        join_attr
+            (get_attrL 1)
+            (apply2 ratio (get_attrR 1) (get_attrR 2))
+        """.
+    :input [ :id 1; a ccd:ObjectQ, ccd:VectorRegionA, exm:ERA ];
+    :input [ :id 2; a ccd:ObjectQ, ccd:VectorRegionA, exm:ERA ];
+    :output [ a ccd:ObjectQ, ccd:VectorRegionA, exm:IRA ].
+
+sig:EraseFieldExtentfromFieldVector a :Signature;
+    :input [ :id 1; a ccd:FieldQ,  ccd:PlainVectorRegionA ];
+    :input [ :id 2; a ccd:FieldQ, ccd:VectorRegionA, ccd:BooleanA ];
+    :output [ a ccd:FieldQ,  ccd:PlainVectorRegionA ];
+    rdfs:comment
+        "Erases the coverage of a boolean field vector (second input) from a field vector (first input)";
+    cct:expression
+        """
+        1: Field(Nom);
+        2: Field(Bool);
+        subset
+            1
+            (pi1 (select
+                eq
+                (lTopo (pi1 1) (reify (fcover 2 (nest true))))
+                out
+            ))
+        """.
+
+supertool:FullSelectLayerByAttribute a :Supertool;
+    :signature sig:SelectLayerByObjectPointObjects, 
+        sig:SelectLayerByObjectLineObjects, 
+        sig:SelectLayerByObjectPlainRegionObjects,
+        sig:SelectLayerByObjectTessObjects,
+        sig:SelectLayerByAttributePointObjects, 
+        sig:SelectLayerByAttributeLineObjects, 
+        sig:SelectLayerByAttributePlainRegionObjects,
+        sig:SelectLayerByAttributeTessObjects, 
+        sig:SelectLayerByRatioPointObjects, 
+        sig:SelectLayerByRatioLineObjects, 
+        sig:SelectLayerByRatioPlainRegionObjects,
+        sig:SelectLayerByRatioTessObjects,
+        sig:SelectLayerContourToExistenceVector,
+        sig:SelectLayerByRatioGEQPlainRegionObjects,
+        sig:SelectLayerCoverageToExistenceVector;
+    rdfs:comment "a SQL query to select features matching a selection criterion. You build a query expression to generate the subset. You can query a dataset based on a field in a layer or a table. Using this selection a new Feature dataset is created with only the selected features using the 'Copy Features tool'. This feature dataset represents all the areas that fulfill the criterion";
+    rdfs:comment "Select by attribute is always followed by copy features (treated as one tool in the annotation";
+    :action [ :apply tool:SelectLayerByAttribute;
+        :input [ :id 1 ];
+        :output _:out11
+    ], [ :apply tool:CopyFeatures;
+        :input1 _:out11;
+        :output _:out12 ].
+
+
+sig:SelectLayerByObjectPointObjects a :Signature;
+    cct:expression "subset (objectregionnominals x1) (objects)";
+    :input [ :id 1; a ccd:ObjectQ, ccd:PointA ];
+    :output [ a ccd:ObjectQ, ccd:PointA, ccd:BooleanA ].
+
+sig:SelectLayerByObjectLineObjects a :Signature;
+    cct:expression "subset (1: ObjectInfo(Nom)) (-: C(Obj))";
+    :input [ :id 1; a ccd:ObjectQ, ccd:LineA ];
+    :output [ a ccd:ObjectQ, ccd:LineA, ccd:BooleanA ].
+
+sig:SelectLayerByObjectPlainRegionObjects a :Signature;
+    cct:expression "subset (1: ObjectInfo(Nom)) (-: C(Obj))";
+    :input [ :id 1; a ccd:ObjectQ, ccd:PlainVectorRegionA ];
+    :output [ a ccd:ObjectQ, ccd:PlainVectorRegionA, ccd:BooleanA ].
+
+sig:SelectLayerByObjectTessObjects a :Signature;
+    cct:expression "subset (1: ObjectInfo(Nom)) (-: C(Obj))";
+    :input [ :id 1; a ccd:ObjectQ, ccd:VectorTessellationA ];
+    :output [ a ccd:ObjectQ, ccd:PlainVectorRegionA, ccd:BooleanA ].
+
+sig:SelectLayerByAttributePointObjects a :Signature;
+    cct:expression "subset (1: ObjectInfo(Nom)) (-: C(Nom))";
+    :input [ :id 1; a ccd:ObjectQ, ccd:PointA, ccd:NominalA ];
+    :output [ a ccd:ObjectQ, ccd:PointA, ccd:NominalA ].
+
+sig:SelectLayerByAttributeLineObjects a :Signature;
+    cct:expression "subset (1: ObjectInfo(Nom)) (-: C(Nom))";
+    :input [ :id 1; a ccd:ObjectQ, ccd:LineA, ccd:NominalA ];
+    :output [ a ccd:ObjectQ, ccd:LineA, ccd:NominalA ].
+
+sig:SelectLayerByAttributePlainRegionObjects a :Signature;
+    cct:expression "subset (1: ObjectInfo(Nom)) (-: C(Nom))";
+    :input [ :id 1; a ccd:ObjectQ, ccd:PlainVectorRegionA, ccd:NominalA ];
+    :output [ a ccd:ObjectQ, ccd:PlainVectorRegionA, ccd:NominalA ].
+
+sig:SelectLayerByAttributeTessObjects a :Signature;
+    cct:expression "subset (1: ObjectInfo(Nom)) (-: C(Nom))";
+    :input [ :id 1; a ccd:ObjectQ, ccd:VectorTessellationA, ccd:NominalA ];
+    :output [ a ccd:ObjectQ, ccd:PlainVectorRegionA, ccd:NominalA ].
+
+#### Object selection variant, needs a ratio attribute
+sig:SelectLayerByRatioPointObjects a :Signature;
+    cct:expression "subset (1: ObjectInfo(Ratio)) (-: C(Ratio))";
+    :input [ :id 1; a ccd:ObjectQ, ccd:PointA, ccd:RatioA ];
+    :output [ a ccd:ObjectQ, ccd:PointA, ccd:RatioA ].
+
+sig:SelectLayerByRatioLineObjects a :Signature;
+    cct:expression "subset (1: ObjectInfo(Ratio)) (-: C(Ratio))";
+    :input [ :id 1; a ccd:ObjectQ, ccd:LineA, ccd:RatioA ];
+    :output [ a ccd:ObjectQ, ccd:LineA, ccd:RatioA ].
+
+sig:SelectLayerByRatioPlainRegionObjects a :Signature;
+    cct:expression "subset (1: ObjectInfo(Ratio)) (-: C(Ratio))";
+    :input [ :id 1;  a ccd:ObjectQ, ccd:PlainVectorRegionA, ccd:RatioA ];
+    :output [ a ccd:ObjectQ, ccd:PlainVectorRegionA, ccd:RatioA ].
+
+sig:SelectLayerByRatioTessObjects a :Signature;
+    cct:expression "subset (1: ObjectInfo(Ratio)) (-: C(Ratio))";
+    :input [ :id 1; a ccd:ObjectQ, ccd:VectorTessellationA, ccd:RatioA ];
+    :output [ a ccd:ObjectQ, ccd:PlainVectorRegionA, ccd:RatioA ].
+
+sig:SelectLayerContourToExistenceVector a :Signature;
+    rdfs:comment "Contour to Existence Vector (select a contour map greater than some ordinal value)";
+    cct:expression "revert (select (compose2 notj leq) (1: Contour) (-: Ord))";
+    :input [ :id 1; a ccd:FieldQ, ccd:VectorTessellationA, ccd:OrdinalA; rdfs:comment "Contour is a coverage that is a subclass of coverage and ordinalA, and therefore also allows field rasters, which we don't want in this context." ];
+    :output [ a ccd:FieldQ, ccd:PlainVectorRegionA, ccd:OrdinalA ].
+
+sig:SelectLayerByRatioGEQPlainRegionObjects a :Signature;
+    rdfs:comment "Object selection variant vith gteq, needs a ratio attribute";
+    cct:expression "select (compose2 notj leq) (1: ObjectInfo(Ratio)) (-: Ratio)";
+    :input [ :id 1; a ccd:ObjectQ, ccd:PlainVectorRegionA, ccd:RatioA ];
+    :output [ a ccd:ObjectQ, ccd:PlainVectorRegionA, ccd:RatioA ].
+
+sig:SelectLayerCoverageToExistenceVector a :Signature;
+    cct:expression "revert (select eq (1: Coverages(Nom)) (-: Nom))";
+    :input [ :id 1; a ccd:FieldQ, ccd:VectorTessellationA; rdfs:comment "Coverage is defined as a subclass of FieldQ and TesselationA, and therefore also allows field rasters, which we don't want in this context." ];
+    :output [ a ccd:FieldQ, ccd:PlainVectorRegionA ].
+
+supertool:FullSelectLayerByLocation a :Supertool;
+    :signature sig:SelectLayerByLocationPointObjects, 
+        sig:SelectLayerByLocationLineObjects,
+        sig:SelectLayerByLocationPlainRegionObjects,
+        sig:SelectLayerByLocationTessObjects, 
+        sig:SelectLayerByLocationPlainRegionObjectsFieldDist, 
+        sig:SelectLayerByLocationPlainRegionObjectsDist;
+    :action [ :apply tool:SelectLayerByLocation;
+        wf:input [ :id 1 ];
+        wf:input [ :id 2 ];
+        wf:output _:out21
+    ], [ :apply tool:CopyFeatures;
+        wf:input1 _:out21;
+        wf:output _:out22 ].
+
+sig:SelectLayerByLocationPointObjects a :Signature;
+    cct:expression
+        """
+        1: ObjectInfo(Nom);
+        2: ObjectInfo(Nom);
+        subset
+            1
+            (pi1 (select
+                eq
+                (oTopo (get_attrL 1) (get_attrL 2))
+                in
+            ))
+        """;
+    :input [ :id 1; a ccd:ObjectQ, ccd:PointA ];
+    :input [ :id 2; a ccd:ObjectQ, ccd:VectorA ];
+    :output [ a ccd:ObjectQ, ccd:PointA ].
+
+sig:SelectLayerByLocationLineObjects a :Signature;
+    cct:expression
+        """
+        1: ObjectInfo(Nom);
+        2: ObjectInfo(Nom);
+        subset
+            1
+            (pi1 (select
+                eq
+                (oTopo (get_attrL 1) (get_attrL 2))
+                in
+            ))
+        """;
+    :input [ :id 1; a ccd:ObjectQ, ccd:LineA ];
+    :input [ :id 2; a ccd:ObjectQ, ccd:VectorA ];
+    :output [ a ccd:ObjectQ, ccd:LineA ].
+
+sig:SelectLayerByLocationPlainRegionObjects a :Signature;
+    cct:expression
+        """
+        1: ObjectInfo(Nom);
+        2: ObjectInfo(Nom);
+        subset
+            1
+            (pi1 (select
+                eq
+                (oTopo (get_attrL 1) (get_attrL 2))
+                in
+            ))
+        """;
+    :input [ :id 1; a ccd:ObjectQ, ccd:PlainVectorRegionA ];
+    :input [ :id 2; a ccd:ObjectQ, ccd:VectorA ];
+    :output [ a ccd:ObjectQ, ccd:PlainVectorRegionA ].
+
+sig:SelectLayerByLocationTessObjects a :Signature;
+    cct:expression
+        """
+        1: ObjectInfo(Nom);
+        2: ObjectInfo(Nom);
+        subset
+            1
+            (pi1 (select
+                eq
+                (oTopo (get_attrL 1) (get_attrL 2))
+                in
+            ))
+        """;
+    :input [ :id 1; a ccd:ObjectQ, ccd:VectorTessellationA ];
+    :input [ :id 2; a ccd:ObjectQ, ccd:VectorA ];
+    :output [ a ccd:ObjectQ, ccd:VectorTessellationA ].
+
+sig:SelectLayerByLocationPlainRegionObjectsFieldDist a :Signature;
+    rdfs:comment "Object selection variant with vector field patches";
+    cct:expression
+        """
+        1: ObjectInfo(Nom);
+        2: Field(Nom);
+        subset
+            1
+            (pi3 (select
+                eq
+                (loTopo (pi1 2) (get_attrL 1))
+                in
+            ))
+        """;
+    :input [ :id 1; a ccd:ObjectQ, ccd:PlainVectorRegionA ];
+    :input [ :id 2; a ccd:FieldQ, ccd:VectorRegionA ];
+    :output [ a ccd:ObjectQ, ccd:PlainVectorRegionA ].
+
+sig:SelectLayerByLocationPlainRegionObjectsDist a :Signature;
+    rdfs:comment "Object selection variant with distance";
+    cct:expression
+        """
+        1: ObjectInfo(Nom);
+        2: ObjectInfo(Nom);
+        subset
+            1
+            (pi1 (select
+                leq
+                (oDist (get_attrL 1) (get_attrL 2))
+                (-: Ratio)
+            ))
+        """;
+    :input [ :id 1; a ccd:ObjectQ, ccd:PlainVectorRegionA ];
+    :input [ :id 2; a ccd:ObjectQ, ccd:VectorA ];
+    :output [ a ccd:ObjectQ, ccd:PlainVectorRegionA ].
