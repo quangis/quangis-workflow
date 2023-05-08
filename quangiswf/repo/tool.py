@@ -69,7 +69,9 @@ class Supertool(GraphList):
                 origin=action)
             return supertool
         else:
-            return URIRef(tool2url[name])
+            assert isinstance(impl, URIRef), "tools should be URIRefs"
+            assert name in tool2url, "unknown tool"
+            return impl
 
     def _add_action(self, tool: URIRef,
            inputs: Iterable[BNode], outputs: Iterable[BNode]) -> None:

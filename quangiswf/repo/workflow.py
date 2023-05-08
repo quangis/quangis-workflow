@@ -176,10 +176,8 @@ class Workflow(Graph):
         if (uri, RDF.type, WF.Workflow) in self:
             raise RuntimeError(
                 f"{name} is not a concrete tool, but a subworkflow.")
-        try:
-            uri_real = tool2url[name]
-        except KeyError:
+        if name not in tool2url:
             raise RuntimeError(
                 f"{name} is a concrete tool, but it is unknown."
             )
-        return URIRef(uri_real)
+        return uri
