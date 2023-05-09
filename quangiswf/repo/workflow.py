@@ -108,6 +108,34 @@ class Workflow(Graph):
         else:
             yield from unlabelled_inputs
 
+    def inputs_labelled(self, action: Node) -> dict[str, Node]:
+        result = dict()
+        for i in count(start=1):
+            artefact = self.value(action, WF[f"input{i}"], any=False)
+            if artefact:
+                result[str(i)] = artefact
+            else:
+                break
+
+        # A single `inputx` is (temporarily?) interpreted as `input1`
+        inputx = self.value(action, WF.inputx, any=False)
+        if result:
+            if inputx:
+                raise RuntimeError(
+                    f"An action contains both {n3(WF.input1)} and "
+                    f"{n3(WF.inputx)} predicates.")
+        elif inputx:
+            result["1"] = inputx
+
+        return result
+
+    def output(self, action: Node) -> Node:
+        artefact_out = self.value(action, WF.output, any=False)
+        if artefact_out:
+            return artefact_out
+        else:
+            raise RuntimeError("no output artefact")
+
     def outputs(self, action: Node) -> Iterator[Node]:
         artefact_out = self.value(action, WF.output, any=False)
         assert artefact_out
