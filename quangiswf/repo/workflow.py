@@ -20,9 +20,8 @@ from typing import Iterator
 from cct import cct  # type: ignore
 from transforge.namespace import shorten
 from quangiswf.namespace import (
-    WF, RDF, RDFS, CCD, CCT, CCT_, n3)
+    WF, RDF, RDFS, CCD, CCT, CCT_, TOOL, SUPERTOOL, n3)
 from quangiswf.types import Polytype, Dimension
-from quangiswf.repo.tool2url import tool2url
 
 
 cctlang = cct

@@ -70,30 +70,29 @@ class Supertool(Implementation):
         super().__init__(name, SUPERTOOL[name])
 
     @staticmethod
-    def propose(wf: Workflow, action: Node) -> URIRef | Supertool:
-        """Propose a tool or supertool that implements this action. This is an 
-        expensive operation because, in the case of a supertool, a proposal 
-        supertool is extracted."""
-        name, impl = wf.impl(action)
+    def propose(wf: Workflow, action: Node) -> Supertool:
+        """Propose a supertool that implements this action. This is an 
+        expensive operation because a subworkflow is extracted."""
+        label, impl = wf.impl(action)
 
         if (impl, RDF.type, WF.Workflow) in wf:
             assert isinstance(impl, BNode), "subworkflows should be blank"
 
-            supertool = Supertool(name,
+            supertool = Supertool(label,
                 inputs=wf.inputs_labelled(action),
                 output=wf.output(action))
 
             for a in wf.low_level_actions(impl):
                 _, tool = wf.impl(a)
+                assert isinstance(tool, URIRef)
                 supertool.add_action(tool, wf.inputs(a), wf.output(a))
 
             supertool.sanity_check()
             return supertool
-
         else:
-            assert isinstance(impl, URIRef), "tools should be URIRefs"
-            assert name in tool2url, "unknown tool"
-            return impl
+            raise RuntimeError(
+                f"Cannot propose a supertool for {impl}, labelled '{label}', "
+                f"because it is not a subworkflow")
 
     def add_action(self, tool: URIRef,
            inputs: Iterable[Hashable], output: Hashable) -> None:

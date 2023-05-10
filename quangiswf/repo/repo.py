@@ -7,7 +7,8 @@ from collections import defaultdict
 
 from quangiswf.namespace import (bind_all, TOOLSCHEMA, DATA, RDF, WF, CCT_)
 from quangiswf.repo.workflow import Workflow
-from quangiswf.repo.tool import ToolRepo, Supertool, ToolNotFoundError
+from quangiswf.repo.tool import (Implementation, ToolRepo, Supertool, 
+    ToolNotFoundError)
 from quangiswf.repo.signature import (SignatureRepo, Signature, 
     SignatureNotFoundError)
 
@@ -24,14 +25,18 @@ class Repo(object):
         assert (root, RDF.type, WF.Workflow) in wf
 
         for action in wf.high_level_actions(root):
+            _, impl = wf.impl(action)
             try:
                 proposal_sig = Signature.propose(wf, action)
-                proposal_tool = Supertool.propose(wf, action)
-                tool = self.tools.find_tool(proposal_tool)
+                if isinstance(impl, BNode):
+                    proposal_tool = Supertool.propose(wf, action)
+                    tool = self.tools.find_tool(proposal_tool)
+                else:
+                    assert isinstance(impl, URIRef)
+                    tool = self.tools.tools[impl].uri
                 proposal_sig.implementations.add(tool)
                 sig = self.signatures.find_signature(proposal_sig)
             except SignatureNotFoundError:
-                impl = wf.value(action, WF.applicationOf, any=False)
                 if impl and (impl, RDF.type, WF.Workflow) in wf:
                     yield from self.signed_actions(wf, impl)
                 else:
@@ -83,7 +88,12 @@ class Repo(object):
         # Propose the tool and signature that would be created if no other 
         # tools or supertools existed in the repository yet
         proposal_sig = Signature.propose(wf, action)
-        proposal_imp = Supertool.propose(wf, action)
+        _, impl = wf.impl(action)
+        proposal_imp: Implementation
+        if isinstance(impl, URIRef):
+            proposal_imp = self.tools.tools[impl]
+        else:
+            proposal_imp = Supertool.propose(wf, action)
         try:
             impl_uri = self.tools.find_tool(proposal_imp)
         except ToolNotFoundError:
