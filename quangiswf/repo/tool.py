@@ -84,7 +84,8 @@ class Supertool(Implementation):
                 output=wf.output(action))
 
             for a in wf.low_level_actions(impl):
-                supertool.add_action(wf.tool(a), wf.inputs(a), wf.output(a))
+                _, tool = wf.impl(a)
+                supertool.add_action(tool, wf.inputs(a), wf.output(a))
 
             supertool.sanity_check()
             return supertool

@@ -193,19 +193,16 @@ class Workflow(Graph):
     def impl(self, action: Node) -> tuple[str, Node]:
         impl = self.value(action, WF.applicationOf, any=False)
         assert impl
-        return self.label(impl), impl
-
-    def tool(self, action: Node) -> URIRef:
-        """Assuming that the action represents an application of a concrete 
-        tool, return the link to that tool."""
-        uri = self.value(action, WF.applicationOf, any=False)
-        assert isinstance(uri, URIRef)
-        name = shorten(uri)
-        if (uri, RDF.type, WF.Workflow) in self:
+        label = self.label(impl)
+        is_workflow = (impl, RDF.type, WF.Workflow) in self
+        is_uri = isinstance(impl, URIRef)
+        if is_uri and is_workflow:
             raise RuntimeError(
-                f"{name} is not a concrete tool, but a subworkflow.")
-        if name not in tool2url:
+                f"An action that is implemented by an underlying "
+                f"subworkflow, labelled '{label}', should be a "
+                f"blank node, but is not")
+        if not is_workflow and not is_uri:
             raise RuntimeError(
-                f"{name} is a concrete tool, but it is unknown."
-            )
-        return uri
+                f"An action that is implemented by a tool, labelled "
+                f"'{label}', should be a URI reference.")
+        return label, impl
