@@ -4,11 +4,13 @@ from rdflib import Graph
 from rdflib.term import URIRef, Node, BNode, Literal
 from rdflib.compare import isomorphic
 from typing import Iterable, Hashable, Mapping
+from itertools import chain
+from abc import abstractmethod
 
 from quangiswf.repo.workflow import Workflow
 from quangiswf.repo.tool2url import tool2url
 from quangiswf.namespace import (
-    n3, RDF, TOOLSCHEMA, WF, SUPERTOOL, bind_all)
+    n3, RDF, TOOLSCHEMA, WF, TOOL, SUPERTOOL, bind_all)
 
 ALLOW_DISCONNECTED_SUPERTOOL = False
 
@@ -22,20 +24,41 @@ class ToolNotFoundError(Exception):
     pass
 
 
-class Supertool(object):
+class Implementation(object):
+    def __init__(self, name: str, uri: URIRef):
+        self.name = name
+        self.uri = uri
+
+    @abstractmethod
+    def graph(self) -> Graph:
+        return NotImplemented
+
+
+class Tool(Implementation):
+    """A tool is a reference to an actual concrete tool, as implemented by, for 
+    example, ArcGIS or QGIS."""
+
+    def __init__(self, name: str, url: URIRef) -> None:
+        self.url = url
+        super().__init__(name, TOOL[name])
+
+    def graph(self) -> Graph:
+        g = Graph()
+        g.add((self.uri, RDF.type, TOOLSCHEMA.Tool))
+        g.add((self.uri, TOOLSCHEMA.url, self.url))
+        return g
+
+
+class Supertool(Implementation):
     """A supertool is a workflow *schema*."""
 
     def __init__(self, name: str,
             inputs: Mapping[str, Hashable],
             output: Hashable) -> None:
 
-        super().__init__()
-
         self.map: dict[Hashable, BNode] = defaultdict(BNode)
         map = self.map
 
-        self.name = name
-        self.uri = SUPERTOOL[name]
         self.inputs: dict[str, BNode] = {i: map[x] for i, x in inputs.items()}
         self.output: BNode = map[output]
 
@@ -44,6 +67,7 @@ class Supertool(object):
         self.constituent_tools: set[URIRef] = set()
 
         self._graph = Graph()
+        super().__init__(name, SUPERTOOL[name])
 
     @staticmethod
     def propose(wf: Workflow, action: Node) -> URIRef | Supertool:
@@ -118,12 +142,21 @@ class Supertool(object):
 class ToolRepo(object):
     # TODO input/output permutations
 
-    tools = tool2url
-
     def __init__(self) -> None:
+        self.tools: dict[URIRef, Tool] = dict()
         self.supertools: dict[URIRef, Supertool] = dict()
 
-    def find_tool(self, tool: URIRef | Supertool) -> URIRef:
+        for name, url in tool2url.items():
+            tool = Tool(name, URIRef(url))
+            self.tools[tool.uri] = tool
+
+    def __contains__(self, tool: URIRef | Implementation) -> bool:
+        if isinstance(tool, URIRef):
+            return tool in self.tools or tool in self.supertools
+        else:
+            return tool.uri in self
+
+    def find_tool(self, tool: Implementation) -> URIRef:
         """Find a (super)tool in this tool repository that matches the given 
         tool, even if the name of the supertool is different. This is an 
         expensive operation because, in the case of a supertool, a proposal 
@@ -146,7 +179,10 @@ class ToolRepo(object):
             raise ToolNotFoundError(
                 f"There is no supertool like {n3(tool.uri)} in the tool "
                 f"repository.")
+        elif isinstance(tool, Tool):
+            return tool.uri
         else:
+            assert isinstance(tool, URIRef) and tool in self.tools
             return tool
 
     def register_supertool(self, supertool: Supertool) -> Supertool:
@@ -164,6 +200,6 @@ class ToolRepo(object):
     def graph(self) -> Graph:
         g = Graph()
         bind_all(g, default=TOOLSCHEMA)
-        for supertool in self.supertools.values():
-            g += supertool.graph()
+        for tool in chain(self.tools.values(), self.supertools.values()):
+            g += tool.graph()
         return g
