@@ -12,15 +12,13 @@ from quangiswf.repo.tool2url import tool2url
 from quangiswf.namespace import (
     n3, RDF, TOOLSCHEMA, WF, TOOL, SUPERTOOL, bind_all)
 
-ALLOW_DISCONNECTED_SUPERTOOL = False
-
 class DisconnectedArtefactsError(Exception):
     pass
 
 class ToolAlreadyExistsError(Exception):
     pass
 
-class ToolNotFoundError(Exception):
+class ToolNotFoundError(KeyError):
     pass
 
 
@@ -70,7 +68,7 @@ class Supertool(Implementation):
         super().__init__(name, SUPERTOOL[name])
 
     @staticmethod
-    def propose(wf: Workflow, action: Node) -> Supertool:
+    def extract(wf: Workflow, action: Node) -> Supertool:
         """Propose a supertool that implements this action. This is an 
         expensive operation because a subworkflow is extracted."""
         label, impl = wf.impl(action)
@@ -87,7 +85,7 @@ class Supertool(Implementation):
                 assert isinstance(tool, URIRef)
                 supertool.add_action(tool, wf.inputs(a), wf.output(a))
 
-            supertool.sanity_check()
+            supertool.check_artefacts()
             return supertool
         else:
             raise RuntimeError(
@@ -114,8 +112,10 @@ class Supertool(Implementation):
         return (self.constituent_tools == other.constituent_tools
             and isomorphic(self._graph, other._graph))
 
-    def sanity_check(self):
-        """Sanity check."""
+    def check_artefacts(self):
+        """Sanity check: any artefact must be both the output and input of an 
+        action; or else, only one of these, in which case it must be accounted 
+        for as the input or output of the supertool."""
         in1 = self.all_inputs - self.all_outputs
         in2 = set(self.inputs.values())
         if not in1 == in2:
@@ -128,7 +128,8 @@ class Supertool(Implementation):
         if not out1 == out2:
             raise DisconnectedArtefactsError(
                 f"Expected 1 output for {n3(self.uri)} but "
-                f"found {len(out1)} inside.")
+                f"found {len(out1)} inside. This may be due to "
+                f"a cycle in the workflow.")
 
     def graph(self) -> Graph:
         g = Graph()
@@ -140,8 +141,6 @@ class Supertool(Implementation):
 
 
 class ToolRepo(object):
-    # TODO input/output permutations
-
     def __init__(self) -> None:
         self.tools: dict[URIRef, Tool] = dict()
         self.supertools: dict[URIRef, Supertool] = dict()
@@ -150,52 +149,48 @@ class ToolRepo(object):
             tool = Tool(name, URIRef(url))
             self.tools[tool.uri] = tool
 
+    def __getitem__(self, key: URIRef) -> Implementation:
+        return self.tools.get(key) or self.supertools[key]
+
     def __contains__(self, tool: URIRef | Implementation) -> bool:
         if isinstance(tool, URIRef):
             return tool in self.tools or tool in self.supertools
         else:
             return tool.uri in self
 
-    def find_tool(self, tool: Implementation) -> URIRef:
+    def find_supertool(self, supertool: Supertool) -> Supertool:
         """Find a (super)tool in this tool repository that matches the given 
-        tool, even if the name of the supertool is different. This is an 
-        expensive operation because, in the case of a supertool, a proposal 
-        supertool is extracted and checked for isomorphism with existing 
-        supertools."""
-        if isinstance(tool, Supertool):
+        one. This is an expensive operation because we have to check for 
+        isomorphism with existing supertools."""
+        if supertool.uri in self.supertools:
+            if supertool.match(self.supertools[supertool.uri]):
+                return supertool
+            else:
+                raise ToolNotFoundError(
+                    f"{n3(supertool.uri)} can be found, but it does not match"
+                    f"the given supertool of the same name.")
 
-            if (tool.uri in self.supertools):
-                if tool.match(self.supertools[tool.uri]):
-                    return tool.uri
-                else:
-                    raise ToolNotFoundError(
-                        f"{n3(tool.uri)} can be found, but it does not match"
-                        f"the given supertool of the same name.")
+        for candidate in self.supertools.values():
+            if supertool.match(candidate):
+                return candidate
 
-            for candidate in self.supertools.values():
-                if tool.match(candidate):
-                    return candidate.uri
+        raise ToolNotFoundError(
+            f"There is no supertool like {n3(supertool.uri)} in the tool "
+            f"repository.")
 
-            raise ToolNotFoundError(
-                f"There is no supertool like {n3(tool.uri)} in the tool "
-                f"repository.")
-        elif isinstance(tool, Tool):
-            return tool.uri
-        else:
-            assert isinstance(tool, URIRef) and tool in self.tools
-            return tool
-
-    def register_supertool(self, supertool: Supertool) -> Supertool:
-        if not ALLOW_DISCONNECTED_SUPERTOOL:
-            supertool.sanity_check()
-        if (supertool.uri in self.supertools and not
-                supertool.match(self.supertools[supertool.uri])):
+    def register_supertool(self, supertool: Supertool) -> None:
+        if supertool.uri in self.supertools:
             raise ToolAlreadyExistsError(
                 f"The supertool {supertool.uri} already exists in the "
-                f"repository and is different from the one that you "
-                f"are attempting to register.")
+                f"repository.")
         self.supertools[supertool.uri] = supertool
-        return supertool
+
+    def check_composition(self):
+        for supertool in self.supertools:
+            if not all(tool in self.tools for tool in 
+                    supertool.constituent_tools):
+                raise RuntimeError(
+                    "All tools in a supertool must be concrete tools")
 
     def graph(self) -> Graph:
         g = Graph()

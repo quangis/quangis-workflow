@@ -17,14 +17,11 @@ from pathlib import Path
 from itertools import count
 from typing import Iterator
 
-from cct import cct  # type: ignore
 from transforge.namespace import shorten
 from quangiswf.namespace import (
-    WF, RDF, RDFS, CCD, CCT, CCT_, TOOL, SUPERTOOL, n3)
+    WF, RDF, RDFS, CCD, CCT, CCT_, n3)
 from quangiswf.types import Polytype, Dimension
 
-
-cctlang = cct
 
 root_dir = Path(__file__).parent.parent.parent
 type_graph = Graph()
@@ -77,7 +74,7 @@ class Workflow(Graph):
     def type(self, artefact: Node) -> Polytype:
         return Polytype.assemble(dimensions, self.objects(artefact, RDF.type))
 
-    def cct(self, action: Node) -> str | None:
+    def cct_expr(self, action: Node) -> str | None:
         a = (self.value(action, CCT_.expression, any=False) or
             self.value(action, CCT.expression, any=False))
         if isinstance(a, Literal):

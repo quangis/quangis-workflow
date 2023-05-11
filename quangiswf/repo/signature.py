@@ -10,9 +10,6 @@ from quangiswf.namespace import (bind_all, n3, SIG, CCT, RDF,
     TOOLSCHEMA)
 from cct import cct
 
-cctlang = cct
-
-ALLOW_UNTYPED_ARTEFACTS = True
 
 class CCTError(Exception):
     pass
@@ -40,15 +37,15 @@ class Signature(object):
     def __init__(self, name: str,
             inputs: dict[str, Polytype],
             outputs: dict[str, Polytype],
-            cct: str) -> None:
+            cct_expr: str) -> None:
         self.name = name
         self.uri: URIRef = SIG[name]
         self.inputs: dict[str, Polytype] = inputs
         self.outputs: dict[str, Polytype] = outputs
-        self.cct: str = cct
+        self.cct_expr: str = cct_expr
         self.description: str | None = None
         self.implementations: set[URIRef] = set()
-        self.cct_p = cctlang.parse(cct, defaults=True)
+        self.cct_p = cct.parse(cct_expr, defaults=True)
 
     @staticmethod
     def propose(wf: Workflow, action: Node) -> Signature:
@@ -59,15 +56,15 @@ class Signature(object):
         else:
             lbl = f"a subworkflow labelled '{name}'"
 
-        cct = wf.cct(action)
-        if not cct:
+        cct_expr = wf.cct_expr(action)
+        if not cct_expr:
             raise CCTError(
                 f"Signature of {lbl} has no CCT expression")
 
         inputs = dict()
         for i, x in enumerate(wf.inputs(action, labelled=True), start=1):
             t = inputs[str(i)] = wf.type(x)
-            if not ALLOW_UNTYPED_ARTEFACTS and t.empty():
+            if t.empty():
                 raise UntypedArtefactError(
                     f"The CCD type of the {i}'th input artefact of an "
                     f"action associated with {lbl} is empty or too general.")
@@ -75,12 +72,12 @@ class Signature(object):
         outputs = dict()
         for i, x in enumerate(wf.outputs(action), start=1):
             t = outputs[str(i)] = wf.type(x)
-            if not ALLOW_UNTYPED_ARTEFACTS and t.empty():
+            if t.empty():
                 raise UntypedArtefactError(
                     f"The CCD type of the output artefact of an action "
                     f"associated with {lbl} is empty or too general.")
 
-        return Signature(name=name, inputs=inputs, outputs=outputs, cct=cct)
+        return Signature(name, inputs, outputs, cct_expr)
 
     def covers_implementation(self, candidate: Signature) -> bool:
         return (bool(candidate.implementations)
@@ -196,7 +193,7 @@ class SignatureRepo(object):
             assert isinstance(sig.uri, URIRef)
 
             g.add((sig.uri, RDF.type, TOOLSCHEMA.Signature))
-            g.add((sig.uri, CCT.expression, Literal(sig.cct)))
+            g.add((sig.uri, CCT.expression, Literal(sig.cct_expr)))
 
             for impl in sig.implementations:
                 g.add((sig.uri, TOOLSCHEMA.implementation, impl))

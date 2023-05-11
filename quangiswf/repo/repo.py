@@ -8,7 +8,7 @@ from collections import defaultdict
 from quangiswf.namespace import (bind_all, TOOLSCHEMA, DATA, RDF, WF, CCT_)
 from quangiswf.repo.workflow import Workflow
 from quangiswf.repo.tool import (Implementation, ToolRepo, Supertool, 
-    ToolNotFoundError)
+    ToolNotFoundError, n3)
 from quangiswf.repo.signature import (SignatureRepo, Signature, 
     SignatureNotFoundError)
 
@@ -28,12 +28,12 @@ class Repo(object):
             _, impl = wf.impl(action)
             try:
                 proposal_sig = Signature.propose(wf, action)
-                if isinstance(impl, BNode):
-                    proposal_tool = Supertool.propose(wf, action)
-                    tool = self.tools.find_tool(proposal_tool)
-                else:
+                if impl in self.tools.tools:
                     assert isinstance(impl, URIRef)
-                    tool = self.tools.tools[impl].uri
+                    tool = impl
+                else:
+                    tool = self.tools.find_supertool(
+                        Supertool.extract(wf, action)).uri
                 proposal_sig.implementations.add(tool)
                 sig = self.signatures.find_signature(proposal_sig)
             except SignatureNotFoundError:
@@ -88,25 +88,28 @@ class Repo(object):
         # Propose the tool and signature that would be created if no other 
         # tools or supertools existed in the repository yet
         proposal_sig = Signature.propose(wf, action)
+
         _, impl = wf.impl(action)
-        proposal_imp: Implementation
-        if isinstance(impl, URIRef):
-            proposal_imp = self.tools.tools[impl]
+
+        if impl in self.tools.tools:
+            assert isinstance(impl, URIRef)
         else:
-            proposal_imp = Supertool.propose(wf, action)
-        try:
-            impl_uri = self.tools.find_tool(proposal_imp)
-        except ToolNotFoundError:
-            assert isinstance(proposal_imp, Supertool)
-            impl_uri = self.tools.register_supertool(proposal_imp).uri
-        proposal_sig.implementations.add(impl_uri)
+            assert isinstance(impl, BNode), f"{n3(impl)} is not a known " \
+                f"tool, but it is also not a supertool"
+            supertool = Supertool.extract(wf, action)
+            try:
+                supertool = self.tools.find_supertool(supertool)
+            except ToolNotFoundError:
+                self.tools.register_supertool(supertool)
+            impl = supertool.uri
+        proposal_sig.implementations.add(impl)
 
         # Find out how existing signatures relate to the proposed sig
         supersig: Signature | None = None
         subsigs: list[Signature] = []
         for uri, sig in self.signatures.signatures.items():
             # Is the URI the same?
-            if impl_uri not in sig.implementations:
+            if impl not in sig.implementations:
                 continue
 
             # Is the CCT expression the same?
@@ -126,7 +129,7 @@ class Repo(object):
         # If there is a signature that covers this action, we simply add the 
         # corresponding tool/workflow as one of its implementations
         if supersig:
-            supersig.implementations.add(impl_uri)
+            supersig.implementations.add(impl)
 
         # If the signature is a more general version of existing signature(s), 
         # then we must update the outdated specs.
