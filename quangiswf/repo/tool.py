@@ -43,7 +43,7 @@ class Tool(Implementation):
     def graph(self) -> Graph:
         g = Graph()
         g.add((self.uri, RDF.type, TOOLSCHEMA.Tool))
-        g.add((self.uri, TOOLSCHEMA.url, self.url))
+        g.add((self.uri, RDF.seeAlso, self.url))
         return g
 
 

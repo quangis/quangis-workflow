@@ -1271,162 +1271,162 @@ sig:KrigingInterval a :Signature;
 # Tools
 
 tool:AddObjectVectorRegionArea a :Tool;
-    :url arcprodm:add-geometry-attributes.htm.
+    rdf:seeAlso arcprodm:add-geometry-attributes.htm.
 
 tool:Aspect a :Tool;
-    :url arcpro3d:aspect.htm.
+    rdf:seeAlso arcpro3d:aspect.htm.
 
 tool:ObjectBuffer a :Tool;
     rdfs:comment "Buffer (interpreted as vector representation of boolean field)";
-    :url arcproan:buffer.htm.
+    rdf:seeAlso arcproan:buffer.htm.
 
 tool:BuildNetwork a :Tool;
     rdfs:comment "Builds ratio network from line objects";
-    :url arcprona:build-network.htm.
+    rdf:seeAlso arcprona:build-network.htm.
 
 tool:Clip a :Tool;
-    :url arcprodm:clip.htm;
+    rdf:seeAlso arcprodm:clip.htm;
     :signature sig:ClipObject2Object, sig:ClipNomFieldVector2Extent, 
         sig:ClipBoolFieldVector2Extent, sig:ClipFieldRaster2ObjectExtent.
 
 tool:Con a :Tool;
-    :url arcprosa:con-.htm;
+    rdf:seeAlso arcprosa:con-.htm;
     :signature sig:con1, sig:con2, sig:con3.
 
 tool:Dissolve a :Tool;
     rdfs:comment "Merge object parts into single object";
-    :url arcprodm:dissolve.htm;
+    rdf:seeAlso arcprodm:dissolve.htm;
     :signature sig:MergeObjects.
 
 tool:Erase a :Tool;
     rdfs:comment "Erase Vector fields";
-    :url arcproan:erase.htm;
+    rdf:seeAlso arcproan:erase.htm;
     :signature sig:EraseFieldExtentfromFieldVector.
 
 tool:ExtractByMask a :Tool;
-    :url arcprosa:extract-by-mask.htm;
+    rdf:seeAlso arcprosa:extract-by-mask.htm;
     :signature sig:ExtractByMask.
 
 tool:FC2FC a :Tool;
     rdfs:comment "Feature class to feature class (=Select)";
-    :url arcproco:feature-class-to-feature-class.htm;
+    rdf:seeAlso arcproco:feature-class-to-feature-class.htm;
     :signature sig:FC2FCObjectTess.
 
 tool:FlowAccumulation a :Tool;
     rdfs:comment "Flow direction accumulation";
-    :url arcprosa:flow-accumulation.htm;
+    rdf:seeAlso arcprosa:flow-accumulation.htm;
     :signature sig:FlowAccumulation.
 
 tool:FlowDirection a :Tool;
     rdfs:comment "Flow direction raster";
-    :url arcprosa:flow-direction.htm;
+    rdf:seeAlso arcprosa:flow-direction.htm;
     :signature sig:FlowDirection.
 
 tool:FlowLength a :Tool;
-    :url arcprosa:flow-length.htm;
+    rdf:seeAlso arcprosa:flow-length.htm;
     :signature sig:FlowLength.
 
 tool:NearPointObjects a :Tool;
     rdfs:comment "Near tool, to seach for the closest objects using Euclidean distance";
-    :url arcproan:generate-near-table.htm;
+    rdf:seeAlso arcproan:generate-near-table.htm;
     :signature sig:NearPointObjects.
 
 tool:IDWInterval a :Tool;
-    :url arcprosa:idw.htm;
+    rdf:seeAlso arcprosa:idw.htm;
     :signature sig:IDWInterval.
 
 tool:KrigingInterval a :Tool;
-    :url arcprosa:kriging.htm;
+    rdf:seeAlso arcprosa:kriging.htm;
     :signature sig:KrigingInterval.
 
 tool:PolygonToRaster a :Tool;
-    :url arcproco:polygon-to-raster.htm;
+    rdf:seeAlso arcproco:polygon-to-raster.htm;
     :signature sig:CoverageToNominalFieldRaster, sig:ContourToFieldRaster.
 
 tool:RasterCalculator a :Tool;
-    :url arcprosa:raster-calculator.htm;
+    rdf:seeAlso arcprosa:raster-calculator.htm;
     :signature sig:LocalMapAlgebraInvert, sig:LocalMapAlgebraDivide, 
         sig:LocalMapAlgebraSubOrder, sig:LocalMapAlgebraSubRatio.
 
 tool:RegionFromRasterExtent a :Tool;
-    :url arcproco:raster-to-polygon.htm;
+    rdf:seeAlso arcproco:raster-to-polygon.htm;
     :signature sig:RegionFromRasterExtent.
 
 tool:RasterToIsoRaster a :Tool;
-    :url arcprosa:reclassify.htm;
+    rdf:seeAlso arcprosa:reclassify.htm;
     :signature sig:RasterToIsoRaster.
 
 tool:SelectObjectByExtent a :Tool;
-    :url arcproan:select.htm;
+    rdf:seeAlso arcproan:select.htm;
     :signature sig:SelectObjectbyExtent.
 
 tool:Slope a :Tool;
-    :url arcprosa:slope.htm;
+    rdf:seeAlso arcprosa:slope.htm;
     :signature sig:Slope.
 
 tool:SnapPourPoint a :Tool;
-    :url arcprosa:snap-pour-point.htm;
+    rdf:seeAlso arcprosa:snap-pour-point.htm;
     :signature sig:SnapPourPoint.
 
 tool:SpatialJoin a :Tool;
-    :url arcproan:spatial-join.htm;
+    rdf:seeAlso arcproan:spatial-join.htm;
     :signature sig:SpatialJoinSumTessRatio, sig:SpatialJoinSumTessCount, 
         sig:SpatialJoinAmountSumTessRatio, sig:SpatialJoinAmountSumTessCount, 
         sig:SpatialJoinMeanTessInterval, sig:SpatialJoinMeanTessRatio, 
         sig:SpatialJoinMeanTessCount, sig:SpatialJoinCountTess.
 
 tool:SummaryStatistics a :Tool;
-    :url arcproan:summary-statistics.htm;
+    rdf:seeAlso arcproan:summary-statistics.htm;
     :signature sig:ObjectSummaryStatisticsAmount, sig:SummaryStatisticsAmount.
 
 tool:Watershed a :Tool;
-    :url arcprosa:watershed.htm;
+    rdf:seeAlso arcprosa:watershed.htm;
     :signature sig:Watershed.
 
 tool:MakeClosestFacilityAnalysisLayer a :Tool;
-    :url arcprona:make-closest-facility-analysis-layer.htm.
+    rdf:seeAlso arcprona:make-closest-facility-analysis-layer.htm.
 
 tool:AddLocations a :Tool;
-    :url arcprona:add-locations.htm.
+    rdf:seeAlso arcprona:add-locations.htm.
 
 tool:Solve a :Tool;
-    :url arcprona:solve.htm.
+    rdf:seeAlso arcprona:solve.htm.
 
 tool:ExcelToTable a :Tool;
-    :url arcproco:excel-to-table.htm.
+    rdf:seeAlso arcproco:excel-to-table.htm.
 
 tool:JoinField a :Tool;
-    :url arcprodm:join-field.htm.
+    rdf:seeAlso arcprodm:join-field.htm.
 
 tool:TableToTable a :Tool;
-    :url arcproco:table-to-table.htm.
+    rdf:seeAlso arcproco:table-to-table.htm.
 
 tool:AddField a :Tool;
-    :url arcprodm:add-field.htm.
+    rdf:seeAlso arcprodm:add-field.htm.
 
 tool:CalculateField a :Tool;
-    :url arcprodm:calculate-field.htm.
+    rdf:seeAlso arcprodm:calculate-field.htm.
 
 tool:AddField a :Tool;
-    :url arcprodm:add-fields.htm.
+    rdf:seeAlso arcprodm:add-fields.htm.
 
 tool:SelectLayerByAttribute a :Tool;
-    :url arcprodm:select-layer-by-attribute.htm.
+    rdf:seeAlso arcprodm:select-layer-by-attribute.htm.
 
 tool:CopyFeatures a :Tool;
-    :url arcprodm:copy-features.
+    rdf:seeAlso arcprodm:copy-features.
 
 tool:SelectLayerByLocation a :Tool;
-    :url arcprodm:select-layer-by-location.htm.
+    rdf:seeAlso arcprodm:select-layer-by-location.htm.
 
 tool:ZonalStatisticsAsTable a :Tool;
-    :url arcprosa:zonal-statistics-as-table.htm.
+    rdf:seeAlso arcprosa:zonal-statistics-as-table.htm.
 
 tool:Intersect a :Tool;
-    :url arcproan:intersect.htm.
+    rdf:seeAlso arcproan:intersect.htm.
 
 tool:MakeXyEventLayer a :Tool;
-    :url arcprodm:make-xy-event-layer.htm.
+    rdf:seeAlso arcprodm:make-xy-event-layer.htm.
 
 tool:Project a :Tool;
-    :url arcprodm:project.htm.
+    rdf:seeAlso arcprodm:project.htm.
