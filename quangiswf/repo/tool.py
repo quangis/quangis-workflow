@@ -3,10 +3,12 @@ from collections import defaultdict
 from rdflib import Graph
 from rdflib.term import URIRef, Node, BNode, Literal
 from rdflib.compare import isomorphic
-from typing import Iterable, Hashable, Mapping
+from typing import Iterator, Iterable, Hashable, Mapping
 from itertools import chain
+from pathlib import Path
 from abc import abstractmethod
 
+from transforge.namespace import shorten
 from quangiswf.repo.workflow import Workflow
 from quangiswf.repo.tool2url import tool2url
 from quangiswf.namespace import (
@@ -36,9 +38,19 @@ class Tool(Implementation):
     """A tool is a reference to an actual concrete tool, as implemented by, for 
     example, ArcGIS or QGIS."""
 
-    def __init__(self, name: str, url: URIRef) -> None:
+    def __init__(self, uri: URIRef, url: URIRef,
+            name: str | None = None) -> None:
+        name = name or shorten(uri)
+        super().__init__(name, uri)
         self.url = url
-        super().__init__(name, TOOL[name])
+
+    @staticmethod
+    def from_graph(graph: Graph) -> Iterator[Tool]:
+        for tool in graph.subjects(RDF.type, TOOLSCHEMA.Tool):
+            assert isinstance(tool, URIRef)
+            url = graph.value(tool, RDF.seeAlso, any=False)
+            assert isinstance(url, URIRef)
+            yield Tool(tool, url)
 
     def graph(self) -> Graph:
         g = Graph()
@@ -146,8 +158,18 @@ class ToolRepo(object):
         self.supertools: dict[URIRef, Supertool] = dict()
 
         for name, url in tool2url.items():
-            tool = Tool(name, URIRef(url))
+            tool = Tool(TOOL[name], URIRef(url))
             self.tools[tool.uri] = tool
+
+    @staticmethod
+    def from_file(file: Path):
+        g = Graph()
+        g.parse(file)
+        return ToolRepo.from_graph(g)
+
+    @staticmethod
+    def from_graph(repo: Graph):
+        pass
 
     def __getitem__(self, key: URIRef) -> Implementation:
         return self.tools.get(key) or self.supertools[key]
