@@ -5,14 +5,12 @@ from rdflib.term import URIRef, Node, BNode, Literal
 from rdflib.compare import isomorphic
 from typing import Iterator, Iterable, Hashable, Mapping
 from itertools import chain
-from pathlib import Path
 from abc import abstractmethod
 
 from transforge.namespace import shorten
 from quangiswf.repo.workflow import Workflow
-from quangiswf.repo.tool2url import tool2url
 from quangiswf.namespace import (
-    n3, RDF, TOOLSCHEMA, WF, TOOL, SUPERTOOL, bind_all)
+    n3, RDF, RDFS, TOOLSCHEMA, WF, SUPERTOOL, bind_all)
 
 class DisconnectedArtefactsError(Exception):
     pass
@@ -48,14 +46,14 @@ class Tool(Implementation):
     def from_graph(graph: Graph) -> Iterator[Tool]:
         for tool in graph.subjects(RDF.type, TOOLSCHEMA.Tool):
             assert isinstance(tool, URIRef)
-            url = graph.value(tool, RDF.seeAlso, any=False)
+            url = graph.value(tool, RDFS.seeAlso, any=False)
             assert isinstance(url, URIRef)
             yield Tool(tool, url)
 
     def graph(self) -> Graph:
         g = Graph()
         g.add((self.uri, RDF.type, TOOLSCHEMA.Tool))
-        g.add((self.uri, RDF.seeAlso, self.url))
+        g.add((self.uri, RDFS.seeAlso, self.url))
         return g
 
 
@@ -194,6 +192,7 @@ class ToolRepo(object):
         self.supertools[supertool.uri] = supertool
 
     def check_composition(self):
+        """Check that all tools in every supertool are concrete tools."""
         for supertool in self.supertools:
             if not all(tool in self.tools for tool in 
                     supertool.constituent_tools):

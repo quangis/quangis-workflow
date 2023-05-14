@@ -4,6 +4,7 @@ import platform
 from glob import glob
 from pathlib import Path
 from typing import Iterable, Iterator
+from rdflib.util import guess_format
 
 from quangiswf.repo.repo import Repo
 from quangiswf.repo.workflow import Workflow
@@ -42,35 +43,46 @@ class WithRepo(object):
 class Constructor(cli.Application, WithRepo):
     """Extract a tool repository from concrete workflows"""
 
+    output_file = cli.SwitchAttr(["-o", "--output"],
+        help="output file", default=None)
+
     def main(self, *FILE):
+        repo = self.repo
         for file in paths(FILE):
             cwf = Workflow.from_file(file)
-            self.repo.update(cwf)
-        print(self.repo.graph().serialize(format="turtle"))
+            repo.update(cwf)
 
-        # repo.graph().serialize("repo.ttl", format="turtle")
-        # repo.graph().serialize("repo.xml", format="xml")
+        graph = repo.graph()
+        if self.output_file:
+            graph.serialize(self.output_file,
+                format=guess_format(self.output_file))
+        else:
+            print(graph.serialize(format="turtle"))
 
 
 @CLI.subcommand("convert")
 class Converter(cli.Application, WithRepo):
     """Turn concrete workflows into abstract workflows"""
 
+    output_dir = cli.SwitchAttr(["-d", "--destdir"],
+        help="output directory",
+        default=Path("."))
+
     def main(self, *FILE):
         for file in paths(FILE):
+            cwf = Workflow.from_file(file)
             try:
-                cwf = Workflow.from_file(file)
                 # self.repo.update(cwf)
                 g = self.repo.convert_to_signatures(cwf, cwf.root)
-                g.serialize(f"{file.stem}_abstract.ttl", format="turtle")
-
             except Exception as e:
                 print(f"Skipping {file} because of the following "
                     f"{type(e).__name__}: {e}")
             else:
                 print(f"Successfully processed {file}")
-
-        self.repo.graph().serialize("repo.ttl", format="turtle")
+                assert self.output_dir.isdir()
+                output_file = self.output_dir / f"{file.stem}_abstract.ttl"
+                assert not self.output_file.exists()
+                g.serialize(output_file, format="turtle")
 
 
 def main():
