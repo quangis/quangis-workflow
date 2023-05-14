@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
-"""
-Higher-level APE wrapper that takes input and produces output in the RDF form
-we want it to.
-"""
+"""Higher-level APE wrapper that takes input and produces output in the RDF 
+form we want it to."""
 
 from __future__ import annotations
 
@@ -10,8 +8,9 @@ from pathlib import Path
 from rdflib import Graph
 from rdflib.util import guess_format
 from typing import Iterable
+from transforge.namespace import shorten
 
-from quangiswf.util import shorten, download
+from quangiswf.util import download
 from quangiswf.ape import APE, Workflow, ToolsDict
 from quangiswf.types import Polytype, Dimension
 from quangiswf.namespace import CCD, TOOLS, OWL, RDF, RDFS, ADA, WF
