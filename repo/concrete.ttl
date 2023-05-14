@@ -1,0 +1,125 @@
+# Generated from 
+# https://github.com/quangis/QuAnGIS_workflow_annotation/blob/b7ce914e7f511309d151d58e292c92aa9e85fb29/data_source/tool_label_name_pairs.csv
+
+@prefix : <https://quangis.github.io/vocab/tool#> .
+@prefix arcan: <https://pro.arcgis.com/en/pro-app/latest/tool-reference/analysis/> .
+@prefix arcco: <https://pro.arcgis.com/en/pro-app/latest/tool-reference/conversion/> .
+@prefix arcdm: <https://pro.arcgis.com/en/pro-app/latest/tool-reference/data-management/> .
+@prefix arcna: <https://pro.arcgis.com/en/pro-app/latest/tool-reference/network-analyst/> .
+@prefix arcsa: <https://pro.arcgis.com/en/pro-app/latest/tool-reference/spatial-analyst/> .
+@prefix arcss: <https://pro.arcgis.com/en/pro-app/latest/tool-reference/spatial-statistics/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix tool: <https://quangis.github.io/tool#> .
+
+tool:AddField a :Tool ;
+    rdfs:seeAlso arcdm:add-field.htm .
+
+tool:AddFields a :Tool ;
+    rdfs:seeAlso arcdm:add-fields.htm .
+
+tool:AddGeometryAttributes a :Tool ;
+    rdfs:seeAlso arcdm:add-geometry-attributes.htm .
+
+tool:AddJoin a :Tool ;
+    rdfs:seeAlso arcdm:add-join.htm .
+
+tool:AddLocations a :Tool ;
+    rdfs:seeAlso arcna:add-locations.htm .
+
+tool:AlterField a :Tool ;
+    rdfs:seeAlso arcdm:alter-field-properties.htm .
+
+tool:Buffer a :Tool ;
+    rdfs:seeAlso arcan:buffer.htm .
+
+tool:BuildNetwork a :Tool ;
+    rdfs:seeAlso arcna:build-network.htm .
+
+tool:CalculateField a :Tool ;
+    rdfs:seeAlso arcdm:calculate-field.htm .
+
+tool:CalculateGeometryAttributes a :Tool ;
+    rdfs:seeAlso arcdm:calculate-geometry-attributes.htm .
+
+tool:Clip a :Tool ;
+    rdfs:seeAlso arcan:clip.htm .
+
+tool:ClosestFacilityAnalysis a :Tool ;
+    rdfs:seeAlso arcna:make-closest-facility-analysis-layer.htm .
+
+# TODO typo
+tool:ClostestFacilityAnalysis a :Tool ;
+    rdfs:seeAlso arcna:make-closest-facility-analysis-layer.htm .
+
+tool:CollectEvents a :Tool ;
+    rdfs:seeAlso arcss:collect-events.htm .
+
+tool:CopyFeatures a :Tool ;
+    rdfs:seeAlso arcdm:copy-features.htm .
+
+tool:CreateNetworkDataset a :Tool ;
+    rdfs:seeAlso arcna:create-network-dataset.htm .
+
+tool:CreateRandomPoints a :Tool ;
+    rdfs:seeAlso arcdm:create-random-points.htm .
+
+tool:Dissolve a :Tool ;
+    rdfs:seeAlso arcdm:dissolve.htm .
+
+tool:ExportFeatures a :Tool ;
+    rdfs:seeAlso arcco:export-features.htm .
+
+tool:ExportTable a :Tool ;
+    rdfs:seeAlso arcco:export-table.htm .
+
+tool:FeatureClassToFeatureClass a :Tool ;
+    rdfs:seeAlso arcco:feature-class-to-feature-class.htm .
+
+tool:FeatureToPoint a :Tool ;
+    rdfs:seeAlso arcdm:feature-to-point.htm .
+
+tool:FeatureVerticesToPoints a :Tool ;
+    rdfs:seeAlso arcdm:feature-vertices-to-points.htm .
+
+tool:GenerateNearTable a :Tool ;
+    rdfs:seeAlso arcan:generate-near-table.htm .
+
+tool:Intersect a :Tool ;
+    rdfs:seeAlso arcan:intersect.htm .
+
+tool:JoinField a :Tool ;
+    rdfs:seeAlso arcdm:join-field.htm .
+
+tool:KernelDensity a :Tool ;
+    rdfs:seeAlso arcsa:kernel-density.htm .
+
+# TODO is the same as ClosestFacilityLayer
+tool:MakeClosestFacilityAnalysisLayer a :Tool ;
+    rdfs:seeAlso arcna:make-closest-facility-analysis-layer.htm .
+
+tool:MakeRouteAnalysisLayer a :Tool ;
+    rdfs:seeAlso arcna:make-route-analysis-layer.htm .
+
+tool:Merge a :Tool ;
+    rdfs:seeAlso arcdm:merge.htm .
+
+tool:SelectLayerByAttribute a :Tool ;
+    rdfs:seeAlso arcdm:select-layer-by-attribute.htm .
+
+tool:SelectLayerByLocation a :Tool ;
+    rdfs:seeAlso arcdm:select-layer-by-location.htm .
+
+tool:Solve a :Tool ;
+    rdfs:seeAlso arcna:solve.htm .
+
+tool:SpatialJoin a :Tool ;
+    rdfs:seeAlso arcan:spatial-join.htm .
+
+tool:SummarizeWithin a :Tool ;
+    rdfs:seeAlso arcan:summarize-within.htm .
+
+tool:SummaryStatistics a :Tool ;
+    rdfs:seeAlso arcan:summary-statistics.htm .
+
+tool:ZonalStatisticsAsTable a :Tool ;
+    rdfs:seeAlso arcsa:zonal-statistics-as-table.htm .

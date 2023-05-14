@@ -81,8 +81,8 @@ class Supertool(Implementation):
 
     @staticmethod
     def extract(wf: Workflow, action: Node) -> Supertool:
-        """Propose a supertool that implements this action. This is an 
-        expensive operation because a subworkflow is extracted."""
+        """Propose a supertool that corresponds to the subworkflow associated 
+        with the given action."""
         label, impl = wf.impl(action)
 
         if (impl, RDF.type, WF.Workflow) in wf:
@@ -156,10 +156,6 @@ class ToolRepo(object):
     def __init__(self) -> None:
         self.tools: dict[URIRef, Tool] = dict()
         self.supertools: dict[URIRef, Supertool] = dict()
-
-        # for name, url in tool2url.items():
-        #     tool = Tool(TOOL[name], URIRef(url))
-        #     self.tools[tool.uri] = tool
 
     def __getitem__(self, key: URIRef) -> Implementation:
         return self.tools.get(key) or self.supertools[key]

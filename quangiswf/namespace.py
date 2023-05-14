@@ -34,14 +34,14 @@ SIG = Namespace("https://quangis.github.io/signature#")
 TOOL = Namespace("https://quangis.github.io/tool#")
 SUPERTOOL = Namespace("https://quangis.github.io/supertool#")
 
-
-ARC = Namespace("https://pro.arcgis.com/en/pro-app/latest/tool-reference/")
+ARC = "https://pro.arcgis.com/en/pro-app/latest/tool-reference"
 ARCDM = Namespace(ARC + "/data-management/")
 ARC3D = Namespace(ARC + "/3d-analyst/")
 ARCAN = Namespace(ARC + "/analysis/")
 ARCNA = Namespace(ARC + "/network-analyst/")
 ARCSA = Namespace(ARC + "/spatial-analyst/")
 ARCCO = Namespace(ARC + "/conversion/")
+ARCSS = Namespace(ARC + "/spatial-statistics/")
 
 # Also provide a mapping for easy programmatic access
 namespaces = {
