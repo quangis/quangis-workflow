@@ -157,19 +157,9 @@ class ToolRepo(object):
         self.tools: dict[URIRef, Tool] = dict()
         self.supertools: dict[URIRef, Supertool] = dict()
 
-        for name, url in tool2url.items():
-            tool = Tool(TOOL[name], URIRef(url))
-            self.tools[tool.uri] = tool
-
-    @staticmethod
-    def from_file(file: Path):
-        g = Graph()
-        g.parse(file)
-        return ToolRepo.from_graph(g)
-
-    @staticmethod
-    def from_graph(repo: Graph):
-        pass
+        # for name, url in tool2url.items():
+        #     tool = Tool(TOOL[name], URIRef(url))
+        #     self.tools[tool.uri] = tool
 
     def __getitem__(self, key: URIRef) -> Implementation:
         return self.tools.get(key) or self.supertools[key]

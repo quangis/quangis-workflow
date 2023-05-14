@@ -1,13 +1,16 @@
+
+from __future__ import annotations
 from rdflib.term import Node, URIRef, BNode
 from rdflib import Graph
 from typing import Iterator
 from transforge.list import GraphList
 from itertools import count
+from pathlib import Path
 from collections import defaultdict
 
 from quangiswf.namespace import (bind_all, TOOLSCHEMA, DATA, RDF, WF, CCT_)
 from quangiswf.repo.workflow import Workflow
-from quangiswf.repo.tool import (Implementation, ToolRepo, Supertool, 
+from quangiswf.repo.tool import (Implementation, ToolRepo, Tool, Supertool, 
     ToolNotFoundError, n3)
 from quangiswf.repo.signature import (SignatureRepo, Signature, 
     SignatureNotFoundError)
@@ -19,6 +22,27 @@ class Repo(object):
         self.signatures = SignatureRepo()
         self.tools = ToolRepo()
         super().__init__()
+
+    @staticmethod
+    def from_file(file: Path) -> Repo:
+        repo = Repo()
+        g = Graph()
+        g.parse(file)
+        for tool in Tool.from_graph(g):
+            repo.add(tool)
+        return repo
+
+    def add(self, item: Tool | Supertool | Signature) -> None:
+        if isinstance(item, Tool):
+            assert item.uri not in self.tools.tools
+            self.tools.tools[item.uri] = item
+        elif isinstance(item, Supertool):
+            assert item.uri not in self.tools.supertools
+            self.tools.supertools[item.uri] = item
+        else:
+            assert isinstance(item, Signature)
+            assert item.uri not in self.signatures.signatures
+            self.signatures.signatures[item.uri] = item
 
     def signed_actions(self, wf: Workflow, root: Node) \
             -> Iterator[tuple[Node, URIRef | Supertool, Signature]]:
