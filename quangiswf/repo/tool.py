@@ -14,13 +14,6 @@ from quangiswf.namespace import (
 class DisconnectedArtefactsError(Exception):
     pass
 
-class ToolAlreadyExistsError(Exception):
-    pass
-
-class ToolNotFoundError(KeyError):
-    pass
-
-
 class Implementation(object):
     def __init__(self, name: str, uri: URIRef):
         self.name = name
@@ -60,8 +53,6 @@ class Supertool(Implementation):
     """A supertool is a workflow *schema*."""
 
     def __init__(self, name: str) -> None:
-        # inputs: Mapping[str, Hashable],
-        # output: Hashable) -> None:
 
         self.map: dict[Hashable, BNode] = defaultdict(BNode)
 
@@ -95,7 +86,6 @@ class Supertool(Implementation):
             supertool.add_io(inputs=wf.inputs_labelled(action),
                 output=wf.output(action))
 
-            supertool.check_artefacts()
             return supertool
         else:
             raise RuntimeError(
@@ -137,15 +127,35 @@ class Supertool(Implementation):
 
     def add_io(self, inputs: Mapping[str, Hashable],
             output: Hashable | None = None) -> None:
+        # Sanity check: any artefact must be both the output and input of an 
+        # action; or else, only one of these, in which case it must be 
+        # accounted for as the input or output of the supertool.
         found_inputs = self.all_inputs - self.all_outputs
-        assert found_inputs == set(self.map[x] for x in inputs.values())
+        real_inputs = set(self.map[x] for x in inputs.values())
+
+        if found_inputs != real_inputs:
+            raise DisconnectedArtefactsError(
+                f"Expected {len(real_inputs)} input(s) for {n3(self.uri)} but "
+                f"found {len(found_inputs)} inside.")
+
         for label, input in inputs.items():
             self.inputs[label] = self.map[input]
 
         found_outputs = list(self.all_outputs - self.all_inputs)
         assert len(found_outputs) == 1
+
+        if len(found_outputs) != 1:
+            raise DisconnectedArtefactsError(
+                f"Expected an output for {n3(self.uri)} but "
+                f"found {len(found_outputs)} inside. This may be due to "
+                f"a cycle in the workflow.")
+
         found_output = found_outputs[0]
-        assert not output or self.map[output] == found_output
+        if output and not found_output == self.map[output]:
+            raise DisconnectedArtefactsError(
+                f"The output for {n3(self.uri)} does not correspond to the "
+                f"one found.")
+
         self.output = found_output
 
     def add_action(self, tool: URIRef,
@@ -167,72 +177,3 @@ class Supertool(Implementation):
     def match(self, other: Supertool) -> bool:
         return (self.constituent_tools == other.constituent_tools
             and isomorphic(self._graph, other._graph))
-
-    def check_artefacts(self):
-        """Sanity check: any artefact must be both the output and input of an 
-        action; or else, only one of these, in which case it must be accounted 
-        for as the input or output of the supertool."""
-        in1 = self.all_inputs - self.all_outputs
-        in2 = set(self.inputs.values())
-        if not in1 == in2:
-            raise DisconnectedArtefactsError(
-                f"Expected {len(in2)} input(s) for {n3(self.uri)} but "
-                f"found {len(in1)} inside.")
-
-        out1 = self.all_outputs - self.all_inputs
-        out2 = set((self.output,))
-        if not out1 == out2:
-            raise DisconnectedArtefactsError(
-                f"Expected 1 output for {n3(self.uri)} but "
-                f"found {len(out1)} inside. This may be due to "
-                f"a cycle in the workflow.")
-
-
-class ToolRepo(object):
-    def __init__(self) -> None:
-        self.tools: dict[URIRef, Tool] = dict()
-        self.supertools: dict[URIRef, Supertool] = dict()
-
-    def __getitem__(self, key: URIRef) -> Implementation:
-        return self.tools.get(key) or self.supertools[key]
-
-    def __contains__(self, tool: URIRef | Implementation) -> bool:
-        if isinstance(tool, URIRef):
-            return tool in self.tools or tool in self.supertools
-        else:
-            return tool.uri in self
-
-    def find_supertool(self, supertool: Supertool) -> Supertool:
-        """Find a (super)tool in this tool repository that matches the given 
-        one. This is an expensive operation because we have to check for 
-        isomorphism with existing supertools."""
-        if supertool.uri in self.supertools:
-            if supertool.match(self.supertools[supertool.uri]):
-                return supertool
-            else:
-                raise ToolNotFoundError(
-                    f"{n3(supertool.uri)} can be found, but it does not match"
-                    f"the given supertool of the same name.")
-
-        for candidate in self.supertools.values():
-            if supertool.match(candidate):
-                return candidate
-
-        raise ToolNotFoundError(
-            f"There is no supertool like {n3(supertool.uri)} in the tool "
-            f"repository.")
-
-    def register_supertool(self, supertool: Supertool) -> None:
-        if supertool.uri in self.supertools:
-            raise ToolAlreadyExistsError(
-                f"The supertool {supertool.uri} already exists in the "
-                f"repository.")
-        self.supertools[supertool.uri] = supertool
-
-    def check_composition(self):
-        """Check that all tools in every supertool are concrete tools."""
-        for supertool in self.supertools:
-            if not all(tool in self.tools for tool in 
-                    supertool.constituent_tools):
-                raise RuntimeError(
-                    "All tools in a supertool must be concrete tools")

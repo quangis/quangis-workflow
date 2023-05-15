@@ -1,13 +1,12 @@
 from __future__ import annotations
 from rdflib import Graph
 from rdflib.term import Node, URIRef, BNode, Literal
-from itertools import chain, count
 from typing import Iterable, Iterator
 from transforge.namespace import shorten
 
 from quangiswf.types import Polytype
 from quangiswf.repo.workflow import Workflow, dimensions
-from quangiswf.namespace import (bind_all, n3, SIG, CCT, RDF,
+from quangiswf.namespace import (n3, SIG, CCT, RDF,
     TOOLSCHEMA)
 from cct import cct
 
@@ -17,10 +16,6 @@ class CCTError(Exception):
 
 class UntypedArtefactError(Exception):
     pass
-
-class SignatureNotFoundError(Exception):
-    pass
-
 
 class Signature(object):
     """A tool signature is an abstract specification of a tool. It may 
@@ -179,67 +174,3 @@ class Signature(object):
         independent."""
         return (self.subsumes_input_datatype(candidate) and 
             self.subsumes_output_datatype(candidate))
-
-
-class SignatureRepo(object):
-    """
-    A signature repository contains abstract versions of tools.
-    """
-
-    def __init__(self, *nargs, **kwargs) -> None:
-        self.signatures: dict[URIRef, Signature] = dict()
-        super().__init__(*nargs, **kwargs)
-
-    def unique_uri(self, base: str) -> URIRef:
-        """Generate a unique URI for a signature based on a name."""
-        for i in chain([""], count(start=2)):
-            uri = SIG[f"{base}{i}"]
-            if uri not in self.signatures:
-                return uri
-        raise RuntimeError("Unreachable")
-
-    def find_signature(self, proposal: Signature) -> Signature:
-        """Find a signature that matches the proposed signature."""
-        for sig in self.signatures.values():
-            if (sig.covers_implementation(proposal)
-                    and sig.subsumes_datatype(proposal)
-                    and sig.matches_cct(proposal)):
-                return sig
-
-        # If we reach here, there was no signature found. Instead, we construct 
-        # the error message
-        sigs: set[Signature] = set(s for s in self.signatures.values()
-            if s.covers_implementation(proposal))
-
-        reasons = []
-        if sigs:
-            reasons.append("Some signatures implement this tool, but:")
-            for sig in sigs:
-                if not sig.subsumes_input_datatype(proposal):
-                    reasons.append(
-                        f"{n3(sig.uri)} input signature doesn't match."
-                    )
-                elif not sig.subsumes_output_datatype(proposal):
-                    reasons.append(
-                        f"{n3(sig.uri)} output signature doesn't match."
-                    )
-                elif not sig.matches_cct(proposal):
-                    reasons.append(
-                        f"{n3(sig.uri)} CCT expression doesn't match."
-                    )
-                else:
-                    reasons.append(
-                        f"{n3(sig.uri)} doesn't work for an unknown reason.")
-        else:
-            reasons.append("There are no signatures that implement this tool.")
-
-        raise SignatureNotFoundError(
-            f"The repository contains no signature for an application of "
-            f"{'/'.join(n3(impl) for impl in proposal.implementations)}. "
-            "\n\t".join(reasons))
-
-    def register_signature(self, proposal: Signature) -> Signature:
-        """Register the proposed signature under a unique name."""
-        proposal.uri = self.unique_uri(proposal.name)
-        self.signatures[proposal.uri] = proposal
-        return proposal
