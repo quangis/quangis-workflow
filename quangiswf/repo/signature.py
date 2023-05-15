@@ -1,11 +1,12 @@
 from __future__ import annotations
 from rdflib import Graph
 from rdflib.term import Node, URIRef, BNode, Literal
-from transforge.list import GraphList
 from itertools import chain, count
+from typing import Iterable, Iterator
+from transforge.namespace import shorten
 
 from quangiswf.types import Polytype
-from quangiswf.repo.workflow import Workflow
+from quangiswf.repo.workflow import Workflow, dimensions
 from quangiswf.namespace import (bind_all, n3, SIG, CCT, RDF,
     TOOLSCHEMA)
 from cct import cct
@@ -36,15 +37,17 @@ class Signature(object):
 
     def __init__(self, name: str,
             inputs: dict[str, Polytype],
-            outputs: dict[str, Polytype],
-            cct_expr: str) -> None:
+            output: Polytype,
+            cct_expr: str,
+            implementations: Iterable[URIRef] = (),
+            uri: URIRef | None = None) -> None:
         self.name = name
-        self.uri: URIRef = SIG[name]
+        self.uri: URIRef = uri or SIG[name]
         self.inputs: dict[str, Polytype] = inputs
-        self.outputs: dict[str, Polytype] = outputs
+        self.output: Polytype = output
         self.cct_expr: str = cct_expr
         self.description: str | None = None
-        self.implementations: set[URIRef] = set()
+        self.implementations: set[URIRef] = set(implementations)
         self.cct_p = cct.parse(cct_expr, defaults=True)
 
     @staticmethod
@@ -69,15 +72,75 @@ class Signature(object):
                     f"The CCD type of the {i}'th input artefact of an "
                     f"action associated with {lbl} is empty or too general.")
 
-        outputs = dict()
-        for i, x in enumerate(wf.outputs(action), start=1):
-            t = outputs[str(i)] = wf.type(x)
-            if t.empty():
-                raise UntypedArtefactError(
-                    f"The CCD type of the output artefact of an action "
-                    f"associated with {lbl} is empty or too general.")
+        outputs = [wf.type(x) for x in wf.outputs(action)]
+        assert len(outputs) == 1
+        output = outputs[0]
+        if output.empty():
+            raise UntypedArtefactError(
+                f"The CCD type of the output artefact of an action "
+                f"associated with {lbl} is empty or too general.")
 
-        return Signature(name, inputs, outputs, cct_expr)
+        return Signature(name, inputs, output, cct_expr)
+
+    @staticmethod
+    def from_graph(graph: Graph) -> Iterator[Signature]:
+        for sig in graph.subjects(RDF.type, TOOLSCHEMA.Signature):
+            assert isinstance(sig, URIRef)
+
+            cct_literal = graph.value(sig, CCT.expression, any=False)
+            assert isinstance(cct_literal, Literal)
+
+            implementations: set[URIRef] = set()
+            for impl in graph.objects(sig, TOOLSCHEMA.implementation):
+                assert isinstance(impl, URIRef)
+                implementations.add(impl)
+
+            inputs: dict[str, Polytype] = dict()
+            for artefact in graph.objects(sig, TOOLSCHEMA.input):
+                t = Polytype.assemble(dimensions,
+                    graph.objects(artefact, RDF.type))
+                id_literal = graph.value(artefact, TOOLSCHEMA.id, any=False)
+                assert isinstance(id_literal, Literal)
+                i = str(id_literal)
+                assert i not in inputs
+                inputs[i] = t
+
+            output_artefact = graph.value(sig, TOOLSCHEMA.output, any=False)
+            output = Polytype.assemble(dimensions,
+                graph.objects(output_artefact, RDF.type))
+
+            yield Signature(
+                inputs=inputs,
+                output=output,
+                cct_expr=str(cct_literal),
+                implementations=implementations,
+                uri=sig,
+                name=shorten(sig)
+            )
+
+    def graph(self) -> Graph:
+        assert isinstance(self.uri, URIRef)
+        g = Graph()
+
+        g.add((self.uri, RDF.type, TOOLSCHEMA.Signature))
+        g.add((self.uri, CCT.expression, Literal(self.cct_expr)))
+
+        for impl in self.implementations:
+            g.add((self.uri, TOOLSCHEMA.implementation, impl))
+
+        for i, x in self.inputs.items():
+            artefact = BNode()
+            for uri in x.uris():
+                g.add((artefact, RDF.type, uri))
+            g.add((artefact, TOOLSCHEMA.id, Literal(i)))
+            g.add((self.uri, TOOLSCHEMA.input, artefact))
+
+        artefact = BNode()
+        for uri in self.output.uris():
+            g.add((artefact, RDF.type, uri))
+        g.add((self.uri, TOOLSCHEMA.output, artefact))
+
+        return g
 
     def covers_implementation(self, candidate: Signature) -> bool:
         return (bool(candidate.implementations)
@@ -104,11 +167,7 @@ class Signature(object):
             for k1, k2 in zip(il1, il2)))
 
     def subsumes_output_datatype(self, candidate: Signature) -> bool:
-        ol1 = list(self.outputs.keys())
-        ol2 = list(candidate.outputs.keys())
-        return (ol1 == ol2 and all(
-            self.outputs[k1].subtype(candidate.outputs[k2])
-            for k1, k2 in zip(ol1, ol2)))
+        return self.output.subtype(candidate.output)
 
     def subsumes_datatype(self, candidate: Signature) -> bool:
         """If the inputs in the candidate signature are subtypes of the ones in 
@@ -186,30 +245,8 @@ class SignatureRepo(object):
         return proposal
 
     def graph(self) -> Graph:
-        g = GraphList()
+        g = Graph()
         bind_all(g, TOOLSCHEMA)
-
         for sig in self.signatures.values():
-            assert isinstance(sig.uri, URIRef)
-
-            g.add((sig.uri, RDF.type, TOOLSCHEMA.Signature))
-            g.add((sig.uri, CCT.expression, Literal(sig.cct_expr)))
-
-            for impl in sig.implementations:
-                g.add((sig.uri, TOOLSCHEMA.implementation, impl))
-
-            for i, x in sig.inputs.items():
-                artefact = BNode()
-                for uri in x.uris():
-                    g.add((artefact, RDF.type, uri))
-                g.add((artefact, TOOLSCHEMA.id, Literal(i)))
-                g.add((sig.uri, TOOLSCHEMA.input, artefact))
-
-            for i, x in sig.outputs.items():
-                artefact = BNode()
-                for uri in x.uris():
-                    g.add((artefact, RDF.type, uri))
-                # g.add((artefact, TOOLSCHEMA.id, Literal(i)))
-                g.add((sig.uri, TOOLSCHEMA.output, artefact))
-
+            g += sig.graph()
         return g

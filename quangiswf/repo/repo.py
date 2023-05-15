@@ -4,7 +4,7 @@ from rdflib.term import Node, URIRef, BNode
 from rdflib import Graph
 from typing import Iterator
 from transforge.list import GraphList
-from itertools import count
+from itertools import count, repeat
 from pathlib import Path
 from collections import defaultdict
 
@@ -30,6 +30,8 @@ class Repo(object):
         g.parse(file)
         for tool in Tool.from_graph(g):
             repo.add(tool)
+        for sig in Signature.from_graph(g):
+            repo.add(sig)
         return repo
 
     def add(self, item: Tool | Supertool | Signature) -> None:
@@ -97,7 +99,9 @@ class Repo(object):
             for i, artefact in enumerate(
                     wf.inputs(orig_action, labelled=True), start=1):
                 g.add((action, WF[f"input{i}"], map[artefact]))
-            for pred, artefact in zip([WF.output], wf.outputs(orig_action)):
+
+            for pred, artefact in zip(repeat(WF.output),
+                    wf.outputs(orig_action)):
                 g.add((action, pred, map[artefact]))
 
         return g
@@ -162,7 +166,7 @@ class Repo(object):
             replace, we must merge specs and deal with changes to the abstract 
             workflow repository, so let's exclude that possibility for now."""
             subsigs[0].inputs = proposal_sig.inputs
-            subsigs[0].outputs = proposal_sig.outputs
+            subsigs[0].output = proposal_sig.output
 
         # If neither is the case, the action merits an all-new signature
         else:
