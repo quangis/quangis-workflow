@@ -28,7 +28,7 @@ class Implementation(object):
         self.uri = uri
 
     @abstractmethod
-    def graph(self) -> Graph:
+    def to_graph(self, g: Graph) -> Graph:
         return NotImplemented
 
 
@@ -50,8 +50,8 @@ class Tool(Implementation):
             assert isinstance(url, URIRef)
             yield Tool(tool, url)
 
-    def graph(self) -> Graph:
-        g = Graph()
+    def to_graph(self, g: Graph) -> Graph:
+        assert not (self.uri, RDF.type, TOOLSCHEMA.Tool) in g
         g.add((self.uri, RDF.type, TOOLSCHEMA.Tool))
         g.add((self.uri, RDFS.seeAlso, self.url))
         return g
@@ -141,8 +141,7 @@ class Supertool(Implementation):
                 f"found {len(out1)} inside. This may be due to "
                 f"a cycle in the workflow.")
 
-    def graph(self) -> Graph:
-        g = Graph()
+    def to_graph(self, g: Graph) -> Graph:
         g += self._graph
         g.add((self.uri, RDF.type, TOOLSCHEMA.Supertool))
         for i, x in self.inputs.items():
@@ -203,5 +202,5 @@ class ToolRepo(object):
         g = Graph()
         bind_all(g, default=TOOLSCHEMA)
         for tool in chain(self.tools.values(), self.supertools.values()):
-            g += tool.graph()
+            tool.to_graph(g)
         return g

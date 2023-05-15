@@ -118,9 +118,9 @@ class Signature(object):
                 name=shorten(sig)
             )
 
-    def graph(self) -> Graph:
+    def to_graph(self, g: Graph) -> Graph:
         assert isinstance(self.uri, URIRef)
-        g = Graph()
+        assert not (self.uri, RDF.type, TOOLSCHEMA.Signature) in g
 
         g.add((self.uri, RDF.type, TOOLSCHEMA.Signature))
         g.add((self.uri, CCT.expression, Literal(self.cct_expr)))
@@ -248,5 +248,5 @@ class SignatureRepo(object):
         g = Graph()
         bind_all(g, TOOLSCHEMA)
         for sig in self.signatures.values():
-            g += sig.graph()
+            sig.to_graph(g)
         return g
