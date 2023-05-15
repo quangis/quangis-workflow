@@ -4,13 +4,12 @@ from rdflib import Graph
 from rdflib.term import URIRef, Node, BNode, Literal
 from rdflib.compare import isomorphic
 from typing import Iterator, Iterable, Hashable, Mapping
-from itertools import chain
 from abc import abstractmethod
 
 from transforge.namespace import shorten
 from quangiswf.repo.workflow import Workflow
 from quangiswf.namespace import (
-    n3, RDF, RDFS, TOOLSCHEMA, WF, SUPERTOOL, bind_all)
+    n3, RDF, RDFS, TOOLSCHEMA, WF, SUPERTOOL)
 
 class DisconnectedArtefactsError(Exception):
     pass
@@ -60,15 +59,14 @@ class Tool(Implementation):
 class Supertool(Implementation):
     """A supertool is a workflow *schema*."""
 
-    def __init__(self, name: str,
-            inputs: Mapping[str, Hashable],
-            output: Hashable) -> None:
+    def __init__(self, name: str) -> None:
+        # inputs: Mapping[str, Hashable],
+        # output: Hashable) -> None:
 
         self.map: dict[Hashable, BNode] = defaultdict(BNode)
-        map = self.map
 
-        self.inputs: dict[str, BNode] = {i: map[x] for i, x in inputs.items()}
-        self.output: BNode = map[output]
+        self.inputs: dict[str, BNode] = dict()
+        self.output: BNode | None = None
 
         self.all_inputs: set[BNode] = set()
         self.all_outputs: set[BNode] = set()
@@ -84,16 +82,18 @@ class Supertool(Implementation):
         label, impl = wf.impl(action)
 
         if (impl, RDF.type, WF.Workflow) in wf:
-            assert isinstance(impl, BNode), "subworkflows should be blank"
+            assert isinstance(impl, BNode), \
+                "subworkflows should be blank nodes"
 
-            supertool = Supertool(label,
-                inputs=wf.inputs_labelled(action),
-                output=wf.output(action))
+            supertool = Supertool(label)
 
             for a in wf.low_level_actions(impl):
                 _, tool = wf.impl(a)
                 assert isinstance(tool, URIRef)
                 supertool.add_action(tool, wf.inputs(a), wf.output(a))
+
+            supertool.add_io(inputs=wf.inputs_labelled(action),
+                output=wf.output(action))
 
             supertool.check_artefacts()
             return supertool
@@ -101,6 +101,52 @@ class Supertool(Implementation):
             raise RuntimeError(
                 f"Cannot propose a supertool for {impl}, labelled '{label}', "
                 f"because it is not a subworkflow")
+
+    @staticmethod
+    def from_graph(g: Graph) -> Iterator[Supertool]:
+        for uri in g.subjects(RDF.type, TOOLSCHEMA.Supertool):
+            assert isinstance(uri, URIRef)
+            supertool = Supertool(uri)
+            global_inputs: dict[str, BNode] = dict()
+            for action in g.objects(uri, TOOLSCHEMA.action):
+                tool = g.value(uri, TOOLSCHEMA.apply, any=False)
+                assert isinstance(tool, URIRef)
+                output = g.value(uri, TOOLSCHEMA.output, any=False)
+                assert isinstance(output, BNode)
+
+                inputs: list[BNode] = []
+                for input in g.objects(action, TOOLSCHEMA.input):
+                    assert isinstance(input, BNode)
+                    inputs.append(input)
+                    id = g.value(input, TOOLSCHEMA.id, any=False)
+                    if id:
+                        assert isinstance(id, Literal)
+                        global_inputs[id.value] = input
+
+                supertool.add_action(tool, inputs, output)
+            supertool.add_io(global_inputs)
+
+            yield supertool
+
+    def to_graph(self, g: Graph) -> Graph:
+        g += self._graph
+        g.add((self.uri, RDF.type, TOOLSCHEMA.Supertool))
+        for i, x in self.inputs.items():
+            g.add((x, TOOLSCHEMA.id, Literal(i)))
+        return g
+
+    def add_io(self, inputs: Mapping[str, Hashable],
+            output: Hashable | None = None) -> None:
+        found_inputs = self.all_inputs - self.all_outputs
+        assert found_inputs == set(self.map[x] for x in inputs.values())
+        for label, input in inputs.items():
+            self.inputs[label] = self.map[input]
+
+        found_outputs = list(self.all_outputs - self.all_inputs)
+        assert len(found_outputs) == 1
+        found_output = found_outputs[0]
+        assert not output or self.map[output] == found_output
+        self.output = found_output
 
     def add_action(self, tool: URIRef,
            inputs: Iterable[Hashable], output: Hashable) -> None:
@@ -140,13 +186,6 @@ class Supertool(Implementation):
                 f"Expected 1 output for {n3(self.uri)} but "
                 f"found {len(out1)} inside. This may be due to "
                 f"a cycle in the workflow.")
-
-    def to_graph(self, g: Graph) -> Graph:
-        g += self._graph
-        g.add((self.uri, RDF.type, TOOLSCHEMA.Supertool))
-        for i, x in self.inputs.items():
-            g.add((x, TOOLSCHEMA.id, Literal(i)))
-        return g
 
 
 class ToolRepo(object):
@@ -197,10 +236,3 @@ class ToolRepo(object):
                     supertool.constituent_tools):
                 raise RuntimeError(
                     "All tools in a supertool must be concrete tools")
-
-    def graph(self) -> Graph:
-        g = Graph()
-        bind_all(g, default=TOOLSCHEMA)
-        for tool in chain(self.tools.values(), self.supertools.values()):
-            tool.to_graph(g)
-        return g

@@ -243,10 +243,3 @@ class SignatureRepo(object):
         proposal.uri = self.unique_uri(proposal.name)
         self.signatures[proposal.uri] = proposal
         return proposal
-
-    def graph(self) -> Graph:
-        g = Graph()
-        bind_all(g, TOOLSCHEMA)
-        for sig in self.signatures.values():
-            sig.to_graph(g)
-        return g

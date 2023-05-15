@@ -4,7 +4,7 @@ from rdflib.term import Node, URIRef, BNode
 from rdflib import Graph
 from typing import Iterator
 from transforge.list import GraphList
-from itertools import count, repeat
+from itertools import count, repeat, chain
 from pathlib import Path
 from collections import defaultdict
 
@@ -178,4 +178,11 @@ class Repo(object):
                 self.update_action(wf, action)
 
     def graph(self) -> Graph:
-        return self.tools.graph() + self.signatures.graph()
+        g = Graph()
+        bind_all(g, default=TOOLSCHEMA)
+        for tool in chain(self.tools.tools.values(), 
+                self.tools.supertools.values(),
+                self.signatures.signatures.values()):
+            assert isinstance(tool, (Signature, Tool, Supertool))
+            tool.to_graph(g)
+        return g
