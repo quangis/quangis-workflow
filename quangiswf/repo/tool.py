@@ -114,9 +114,9 @@ class SuperTool(ToolImplementation):
             supertool = SuperTool(uri)
             global_inputs: dict[str, BNode] = dict()
             for action in g.objects(uri, VOCAB.action):
-                tool = g.value(uri, VOCAB.apply, any=False)
+                tool = g.value(action, VOCAB.apply, any=False)
                 assert isinstance(tool, URIRef)
-                output = g.value(uri, VOCAB.output, any=False)
+                output = g.value(action, VOCAB.output, any=False)
                 assert isinstance(output, BNode)
 
                 inputs: list[BNode] = []
