@@ -42,6 +42,7 @@ class WithRepo(object):
     @cli.autoswitch(Path, mandatory=True,
         help="file containing (initial) tool repository")
     def _tools(self, path: Path) -> None:
+        self.tools_file = path
         self.tools = Repo.from_file(path,
             check_integrity=not self.assume_integrity)
 
@@ -117,7 +118,7 @@ class Generator(cli.Application, WithDestDir):
     def main(self, *args) -> None:
         from quangis.generator import WorkflowGenerator
 
-        gen = WorkflowGenerator(self.output_dir)
+        gen = WorkflowGenerator(self.tools_file, self.output_dir)
 
         # To start with, we generate workflows with two inputs and one output, 
         # of which one input is drawn from the following sources, and the other 

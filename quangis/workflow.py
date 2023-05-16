@@ -19,19 +19,11 @@ from typing import Iterator
 
 from transforge.namespace import shorten
 from quangis.namespace import (
-    WF, RDF, RDFS, CCD, CCT, CCT_, n3)
-from quangis.polytype import Polytype, Dimension
-
+    WF, RDF, RDFS, CCT, CCT_, n3)
+from quangis.polytype import Polytype
+from quangis.ccd import dimensions
 
 root_dir = Path(__file__).parent.parent
-type_graph = Graph()
-type_graph.parse(root_dir / "CoreConceptData.rdf", format="xml")
-
-dimensions = [
-    Dimension(root, type_graph)
-    for root in [CCD.CoreConceptQ, CCD.LayerA, CCD.NominalA]
-]
-
 
 class Workflow(Graph):
     """

@@ -10,16 +10,12 @@ from rdflib.util import guess_format
 from typing import Iterable
 from transforge.namespace import shorten
 
-from quangis.util import download
+from quangis.ccd import ccd_graph, dimensions
 from quangis.ape import APE, Workflow, ToolsDict
-from quangis.polytype import Polytype, Dimension
+from quangis.polytype import Polytype
 from quangis.namespace import CCD, TOOLS, OWL, RDF, RDFS, ADA, WF
 
-TOOLS2 = "https://raw.githubusercontent.com/quangis/cct/master/tools/tools.ttl"
-
-
-def graph(url: str, build_dir: Path) -> Graph:
-    path = download(url.rstrip("#"), dest_dir=build_dir)
+def graph(path: Path) -> Graph:
     g = Graph()
     g.parse(path, format=guess_format(str(path)))
     return g
@@ -31,12 +27,10 @@ class WorkflowGenerator(APE):
     the form we want it to.
     """
 
-    def __init__(self, build_dir: Path):
-        dimension_roots = [CCD.CoreConceptQ, CCD.LayerA, CCD.NominalA]
-        self.types = graph(CCD, build_dir)
-        self.tools = graph(TOOLS2, build_dir)
-        self.dimensions = [Dimension(d, self.types, CCD)
-            for d in dimension_roots]
+    def __init__(self, tools: Path, build_dir: Path):
+        self.types = ccd_graph
+        self.tools = graph(tools)
+        self.dimensions = dimensions
 
         super().__init__(
             taxonomy=self.ape_type_taxonomy() + self.ape_tool_taxonomy(),
