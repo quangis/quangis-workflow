@@ -5,28 +5,42 @@ A Pythonic interface to the Automated Pipeline Explorer
 
 from __future__ import annotations
 
+import sys
 import json
 from pathlib import Path
 import typing
 from typing import Iterable, Iterator
 from typing_extensions import TypedDict
+import urllib.request
 
 import jpype
 import jpype.imports
+from platformdirs import user_cache_dir
 from rdflib import Graph, BNode, URIRef, Literal
 from rdflib.term import Node
 from rdflib.namespace import Namespace, RDF, RDFS
 from transforge.namespace import EX, shorten
 
 from quangis.polytype import Polytype
-from quangis.util import download
 
-MVN = "https://repo1.maven.org/maven2"
-JAR = [
-    f"{MVN}/io/github/sanctuuary/APE/1.1.12/APE-1.1.12-executable.jar"
-    # f"{MVN}/io/github/sanctuuary/APE/2.0.3/APE-2.0.3-executable.jar"
-]
-jpype.startJVM(classpath=[str(download(j)) for j in JAR])
+def start_ape(version="1.1.12") -> None:
+    name = f"APE-{version}-executable.jar"
+
+    # Ensure that the APE JAR is available
+    repo = "https://repo1.maven.org/maven2"
+    url = f"{repo}/io/github/sanctuuary/APE/{version}/{name}"
+    cache_dir = Path(user_cache_dir("quangis", "quangis"))
+    path = cache_dir / name
+    if not path.exists():
+        print(f"{path} not found; now downloading from {url}", file=sys.stderr)
+        cache_dir.mkdir(exist_ok=True)
+        urllib.request.urlretrieve(url, filename=path)
+
+    # Start it
+    jpype.startJVM(classpath=[str(path)])
+
+
+start_ape()
 
 # Java imports
 import java.io as j_io  # noqa: E402
