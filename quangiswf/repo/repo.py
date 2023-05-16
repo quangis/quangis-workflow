@@ -1,5 +1,6 @@
 
 from __future__ import annotations
+import sys
 from rdflib.term import Node, URIRef, BNode
 from rdflib import Graph
 from rdflib.compare import isomorphic
@@ -43,14 +44,14 @@ class Repo(object):
             repo.add(supertool)
 
         if check_integrity:
-            g2 = repo.graph()
-            if not isomorphic(g, g2):
+            print(f"Checking integrity of {file}...", file=sys.stderr)
+            if not isomorphic(g, repo.graph()):
                 raise RuntimeError(
                     f"Integrity check failed for {file}. It may contain "
                     f"tuples that aren't interpreted by this program, "
                     f"which will be lost if you proceed.")
             else:
-                print("works")
+                print(f"File {file} passed check", file=sys.stderr)
         return repo
 
     def __getitem__(self, key: URIRef) -> Tool:
