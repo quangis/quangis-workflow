@@ -11,8 +11,7 @@ from collections import defaultdict
 from quangiswf.namespace import (bind_all, TOOLSCHEMA, DATA, RDF, WF, CCT_, n3, 
     SIG)
 from quangiswf.repo.workflow import (Workflow)
-from quangiswf.repo.tool import (Tool, Supertool)
-from quangiswf.repo.signature import (Signature)
+from quangiswf.repo.tool import (Tool, Supertool, Signature)
 
 
 class ToolAlreadyExistsError(Exception):
