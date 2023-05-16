@@ -7,10 +7,10 @@ from typing import Iterable, Iterator
 from rdflib import Graph, Namespace, URIRef, RDF
 from rdflib.util import guess_format
 
-from quangiswf.repo.repo import Repo
-from quangiswf.repo.workflow import Workflow
-from quangiswf.namespace import CCD, EX
-from quangiswf.types import Polytype
+from quangis.repo.repo import Repo
+from quangis.workflow import Workflow
+from quangis.namespace import CCD, EX
+from quangis.polytype import Polytype
 
 
 def paths(files: Iterable[str]) -> Iterator[Path]:
@@ -115,7 +115,7 @@ class Generator(cli.Application, WithDestDir):
             for x in g.objects(None, base.output)]
 
     def main(self, *args) -> None:
-        from quangiswf.generator import WorkflowGenerator
+        from quangis.generator import WorkflowGenerator
 
         gen = WorkflowGenerator(self.output_dir)
 

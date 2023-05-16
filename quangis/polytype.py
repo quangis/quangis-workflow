@@ -11,7 +11,7 @@ from rdflib.namespace import Namespace
 from typing import Iterable, MutableMapping, Iterator, Mapping
 from itertools import product
 
-from quangiswf.namespace import RDFS, n3
+from quangis.namespace import RDFS, n3
 
 
 class Dimension(object):

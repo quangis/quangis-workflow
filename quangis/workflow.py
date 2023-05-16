@@ -18,12 +18,12 @@ from itertools import count
 from typing import Iterator
 
 from transforge.namespace import shorten
-from quangiswf.namespace import (
+from quangis.namespace import (
     WF, RDF, RDFS, CCD, CCT, CCT_, n3)
-from quangiswf.types import Polytype, Dimension
+from quangis.polytype import Polytype, Dimension
 
 
-root_dir = Path(__file__).parent.parent.parent
+root_dir = Path(__file__).parent.parent
 type_graph = Graph()
 type_graph.parse(root_dir / "CoreConceptData.rdf", format="xml")
 

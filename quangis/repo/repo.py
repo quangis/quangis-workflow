@@ -10,9 +10,9 @@ from itertools import count, repeat, chain
 from pathlib import Path
 from collections import defaultdict
 
-from quangiswf.namespace import (bind_all, VOCAB, RDF, WF, CCT_, n3, ABSTR)
-from quangiswf.repo.workflow import (Workflow)
-from quangiswf.repo.tool import (Tool, ConcreteTool, SuperTool, AbstractTool)
+from quangis.namespace import (bind_all, VOCAB, RDF, WF, CCT_, n3, ABSTR)
+from quangis.workflow import (Workflow)
+from quangis.repo.tool import (Tool, ConcreteTool, SuperTool, AbstractTool)
 
 
 class ToolAlreadyExistsError(Exception):

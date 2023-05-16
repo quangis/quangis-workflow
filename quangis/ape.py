@@ -18,8 +18,8 @@ from rdflib.term import Node
 from rdflib.namespace import Namespace, RDF, RDFS
 from transforge.namespace import EX, shorten
 
-from quangiswf.types import Polytype
-from quangiswf.util import download
+from quangis.polytype import Polytype
+from quangis.util import download
 
 MVN = "https://repo1.maven.org/maven2"
 JAR = [

@@ -7,9 +7,9 @@ from typing import Iterator, Iterable, Hashable, Mapping
 from abc import abstractmethod
 from transforge.namespace import shorten
 
-from quangiswf.repo.workflow import Workflow, dimensions
-from quangiswf.types import Polytype
-from quangiswf.namespace import (
+from quangis.workflow import Workflow, dimensions
+from quangis.polytype import Polytype
+from quangis.namespace import (
     n3, RDF, RDFS, VOCAB, WF, SUPER, ABSTR, CCT)
 from cct import cct
 
