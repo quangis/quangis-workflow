@@ -2,10 +2,10 @@
 
 This program is part of the [QuAnGIS][quangis] project.
 
--   It can **synthesize** GIS workflows from a specification of GIS 
+-   It can **synthesize** GIS **workflows** from a specification of GIS 
     tools, using the [Automated Pipeline Explorer][ape].
--   It can also extract specifications of GIS tools from manually 
-    constructed workflows, provided they are properly 
+-   It can also extract abstract specifications GIS **tools** from 
+    manually constructed workflows, provided they are properly 
     [annotated][annot].
 -   It also contains files related to the core concept transformation 
     algebra:
@@ -43,7 +43,7 @@ To run (rather limited) tests, install and run `nose2`.
 Assuming that RDF files containing manually annotated workflows are in 
 the `ttl/` directory, the tool repository is built using:
 
-    quangiswf-repo ttl/*.ttl
+    quangis update-tools --tools tools/concrete.ttl ttl/*.ttl
 
 
 ## Workflow generation
@@ -59,7 +59,7 @@ that APE understands. APE is then instructed to generate workflows for
 different possible input/output data configurations. To perform this 
 step, run:
 
-    quangiswf-gen
+    quangis-gen
 
 The second step involves abstracting away from implementation details. 
 For this, the tools are also annotated with a description of their 

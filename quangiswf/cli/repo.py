@@ -20,8 +20,7 @@ def paths(files: Iterable[str]) -> Iterator[Path]:
 
 
 class CLI(cli.Application):
-
-    PROGNAME = "quangiswf-repo"
+    PROGNAME = "quangis"
 
     def main(self, *args):
         if args:
@@ -36,22 +35,23 @@ class WithRepo(object):
     assume_integrity = cli.Flag(["-x", "--assume-integrity"],
         help="disable integrity check for tools file")
 
-    @cli.autoswitch(Path, mandatory=True)
+    @cli.autoswitch(Path, mandatory=True,
+        help="file containing (initial) tool repository")
     def _tools(self, path: Path) -> None:
         self.tools = Repo.from_file(path,
             check_integrity=not self.assume_integrity)
 
 
-@CLI.subcommand("construct")
-class Constructor(cli.Application, WithRepo):
+@CLI.subcommand("update-tools")
+class RepoBuilder(cli.Application, WithRepo):
     """Extract a tool repository from concrete workflows"""
 
     output_file = cli.SwitchAttr(["-o", "--output"],
         help="output file", default=None)
 
-    def main(self, *FILE):
+    def main(self, *WORKFLOW):
         repo = self.tools
-        for file in paths(FILE):
+        for file in paths(WORKFLOW):
             cwf = Workflow.from_file(file)
             repo.update(cwf)
 
@@ -63,20 +63,20 @@ class Constructor(cli.Application, WithRepo):
             print(graph.serialize(format="turtle"))
 
 
-@CLI.subcommand("convert")
-class Converter(cli.Application, WithRepo):
+@CLI.subcommand("convert-abstract")
+class AbstractConverter(cli.Application, WithRepo):
     """Turn concrete workflows into abstract workflows"""
 
     output_dir = cli.SwitchAttr(["-d", "--destdir"],
         help="output directory",
         default=Path("."))
 
-    def main(self, *FILE):
-        for file in paths(FILE):
+    def main(self, *WORKFLOW):
+        for file in paths(WORKFLOW):
             cwf = Workflow.from_file(file)
             try:
                 # self.repo.update(cwf)
-                g = self.repo.convert_to_signatures(cwf, cwf.root)
+                g = self.tools.convert_to_signatures(cwf, cwf.root)
             except Exception as e:
                 print(f"Skipping {file} because of the following "
                     f"{type(e).__name__}: {e}")
