@@ -1,0 +1,62 @@
+# This file specifies which inputs and outputs APE can use to generate 
+# workflows
+
+@prefix ccd: <http://geographicknowledge.de/vocab/CoreConceptData.rdf#>.
+
+[] <input>
+    [ a ccd:FieldQ, ccd:VectorTessellationA, ccd:PlainNominalA ],  # VectorCoverage
+    [ a ccd:FieldQ, ccd:VectorTessellationA, ccd:PlainOrdinalA ],  # Contour
+    [ a ccd:FieldQ, ccd:PointA, ccd:PlainIntervalA ],  # PointMeasures
+    [ a ccd:FieldQ, ccd:PointA, ccd:PlainRatioA ],  # PointMeasures
+    [ a ccd:FieldQ, ccd:LineA, ccd:PlainIntervalA ],  # LineMeasures (isolines)
+    [ a ccd:FieldQ, ccd:LineA, ccd:PlainRatioA ],  # LineMeasures (isolines)
+    [ a ccd:FieldQ, ccd:PlainVectorRegionA, ccd:PlainNominalA ],  # Patch
+    [ a ccd:FieldQ, ccd:RasterA, ccd:PlainIntervalA ],  # Field Raster
+    [ a ccd:FieldQ, ccd:RasterA, ccd:PlainRatioA ],  # Field Raster
+
+    # Commented out because there are actually no tools which accept this
+    # input, which makes APE very very mad.
+    # [ a ccd:AmountQ, ccd:RasterA, ccd:CountA ],  # Count Raster
+    # [ a ccd:AmountQ, ccd:PlainVectorRegionA, ccd:CountA ],  # Count Vector
+    # [ a ccd:AmountQ, ccd:PointA, ccd:CountA ],  # Count Vector
+
+    [ a ccd:ObjectQ, ccd:VectorTessellationA, ccd:PlainNominalA ],  # Lattice
+    [ a ccd:ObjectQ, ccd:VectorTessellationA, ccd:PlainOrdinalA ],  # Lattice
+    [ a ccd:ObjectQ, ccd:VectorTessellationA, ccd:PlainIntervalA ],  # Lattice
+    [ a ccd:ObjectQ, ccd:VectorTessellationA, ccd:ERA ],  # Lattice
+    [ a ccd:ObjectQ, ccd:VectorTessellationA, ccd:IRA ],  # Lattice
+    [ a ccd:ObjectQ, ccd:VectorTessellationA, ccd:PlainRatioA ],  # Lattice
+    [ a ccd:ObjectQ, ccd:VectorTessellationA, ccd:CountA ],  # Lattice
+
+    [ a ccd:ObjectQ, ccd:PlainVectorRegionA, ccd:PlainNominalA ],  # ObjectRegion
+    [ a ccd:ObjectQ, ccd:PlainVectorRegionA, ccd:PlainOrdinalA ],  # ObjectRegion
+    [ a ccd:ObjectQ, ccd:PlainVectorRegionA, ccd:PlainIntervalA ],  # ObjectRegion
+    [ a ccd:ObjectQ, ccd:PlainVectorRegionA, ccd:ERA ],  # ObjectRegion
+    [ a ccd:ObjectQ, ccd:PlainVectorRegionA, ccd:IRA ],  # ObjectRegion
+    [ a ccd:ObjectQ, ccd:PlainVectorRegionA, ccd:PlainRatioA ],  # ObjectRegion
+    [ a ccd:ObjectQ, ccd:PlainVectorRegionA, ccd:CountA ],  # ObjectRegion
+
+    [ a ccd:ObjectQ, ccd:PointA, ccd:PlainNominalA ],  # ObjectPoint
+    [ a ccd:ObjectQ, ccd:PointA, ccd:PlainOrdinalA ],  # ObjectPoint
+    [ a ccd:ObjectQ, ccd:PointA, ccd:PlainIntervalA ],  # ObjectPoint
+    [ a ccd:ObjectQ, ccd:PointA, ccd:ERA ],  # ObjectPoint
+    [ a ccd:ObjectQ, ccd:PointA, ccd:IRA ],  # ObjectPoint
+    [ a ccd:ObjectQ, ccd:PointA, ccd:PlainRatioA ],  # ObjectPoint
+    [ a ccd:ObjectQ, ccd:PointA, ccd:CountA ];  # ObjectPoint
+
+<output>
+    [ a ccd:FieldQ, ccd:PlainVectorRegionA, ccd:NominalA ],
+    [ a ccd:FieldQ, ccd:VectorTessellationA, ccd:NominalA ],
+    [ a ccd:FieldQ, ccd:VectorTessellationA, ccd:OrdinalA ],
+    [ a ccd:FieldQ, ccd:RasterA, ccd:IntervalA ],
+    [ a ccd:FieldQ, ccd:RasterA, ccd:RatioA ],
+
+    [ a ccd:ObjectQ, ccd:VectorTessellationA, ccd:IntervalA ],
+    [ a ccd:ObjectQ, ccd:VectorTessellationA, ccd:ERA ],
+    [ a ccd:ObjectQ, ccd:VectorTessellationA, ccd:IRA ],
+    [ a ccd:ObjectQ, ccd:VectorTessellationA, ccd:CountA ],
+
+    [ a ccd:ObjectQ, ccd:PlainVectorRegionA, ccd:IntervalA ],
+    [ a ccd:ObjectQ, ccd:PlainVectorRegionA, ccd:ERA ],
+    [ a ccd:ObjectQ, ccd:PlainVectorRegionA, ccd:IRA ],
+    [ a ccd:ObjectQ, ccd:PlainVectorRegionA, ccd:CountA ].

@@ -4,10 +4,13 @@ import platform
 from glob import glob
 from pathlib import Path
 from typing import Iterable, Iterator
+from rdflib import Graph, Namespace, URIRef, RDF
 from rdflib.util import guess_format
 
 from quangiswf.repo.repo import Repo
 from quangiswf.repo.workflow import Workflow
+from quangiswf.namespace import CCD, EX
+from quangiswf.types import Polytype
 
 
 def paths(files: Iterable[str]) -> Iterator[Path]:
@@ -20,6 +23,7 @@ def paths(files: Iterable[str]) -> Iterator[Path]:
 
 
 class CLI(cli.Application):
+    """Utilities for the QuAnGIS project"""
     PROGNAME = "quangis"
 
     def main(self, *args):
@@ -87,6 +91,52 @@ class AbstractConverter(cli.Application, WithRepo):
                 assert not self.output_file.exists()
                 g.serialize(output_file, format="turtle")
 
+
+@CLI.subcommand("generate")
+class Generator(cli.Application):
+    """Generate workflows using APE"""
+
+    @cli.autoswitch(Path, mandatory=True,
+        help="file containing input/output specifications")
+    def _config(self, path: Path) -> None:
+        g = Graph()
+        g.parse(path)
+        base = Namespace(path.parent.absolute().as_uri() + "/")
+        self.sources: list[list[URIRef]] = [
+            list(y for y in g.objects(x, RDF.type) if isinstance(y, URIRef))
+            for x in g.objects(None, base.input)]
+        self.goals: list[list[URIRef]] = [
+            list(y for y in g.objects(x, RDF.type) if isinstance(y, URIRef))
+            for x in g.objects(None, base.output)]
+
+    def main(self, *args) -> None:
+        from quangiswf.generator import WorkflowGenerator
+
+        build_dir = Path(__file__).parent / "build"
+        gen = WorkflowGenerator(build_dir)
+
+        # To start with, we generate workflows with two inputs and one output, 
+        # of which one input is drawn from the following sources, and the other 
+        # is the same as the output without the measurement level.
+        inputs_outputs: list[tuple[str, list[Polytype], list[Polytype]]] = []
+        for goal_tuple in self.goals:
+            goal = Polytype(gen.dimensions, goal_tuple)
+            source1 = Polytype(goal)
+            source1[CCD.NominalA] = {CCD.NominalA}
+            for source_tuple in self.sources:
+                source2 = Polytype(gen.dimensions, source_tuple)
+                inputs_outputs.append((
+                    f"{source1.short()}+{source2.short()}_{goal.short()}_",
+                    [source1, source2], [goal]))
+
+        running_total = 0
+        for run, (name, inputs, outputs) in enumerate(inputs_outputs):
+            for solution in gen.run(inputs, outputs, solutions=1, 
+                    prefix=EX[name]):
+                running_total += 1
+                path = build_dir / f"solution{running_total}.ttl"
+                print(f"Writing solution: {path}")
+                solution.serialize(path, format="ttl")
 
 def main():
     CLI.run()

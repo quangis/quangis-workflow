@@ -59,7 +59,7 @@ that APE understands. APE is then instructed to generate workflows for
 different possible input/output data configurations. To perform this 
 step, run:
 
-    quangis-gen
+    quangis generate --config tools/ioconfig.ttl
 
 The second step involves abstracting away from implementation details. 
 For this, the tools are also annotated with a description of their 
