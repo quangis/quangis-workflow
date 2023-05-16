@@ -99,7 +99,7 @@ class AbstractConverter(cli.Application, WithRepo):
 
 
 @CLI.subcommand("generate")
-class Generator(cli.Application, WithDestDir):
+class Generator(cli.Application, WithRepo, WithDestDir):
     """Generate workflows using APE"""
 
     @cli.autoswitch(Path, mandatory=True,

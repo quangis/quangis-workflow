@@ -109,7 +109,7 @@ class WorkflowGenerator(APE):
 
         for s, o in self.types.subject_objects(RDFS.subClassOf):
             # Only keep nodes that intersect with exactly one dimension
-            if sum(1 for dim in self.dimensions if dim.contains(s)) == 1:
+            if sum(1 for dim in self.dimensions if s in dim) == 1:
                 taxonomy.add((s, RDFS.subClassOf, o))
                 taxonomy.add((s, RDF.type, OWL.Class))
                 taxonomy.add((o, RDF.type, OWL.Class))
