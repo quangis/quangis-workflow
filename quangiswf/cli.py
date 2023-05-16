@@ -45,9 +45,18 @@ class WithRepo(object):
         self.tools = Repo.from_file(path,
             check_integrity=not self.assume_integrity)
 
+class WithDestDir(object):
+    output_dir = Path(".")
+
+    @cli.switch(["-d", "--destdir"], Path, help="Destination directory")
+    def _destination(self, path: Path) -> None:
+        if path.is_dir():
+            self.output_dir = path
+        else:
+            raise RuntimeError(f"{path} is not a directory")
 
 @CLI.subcommand("update-tools")
-class RepoBuilder(cli.Application, WithRepo):
+class RepoBuilder(cli.Application, WithRepo, WithDestDir):
     """Extract a tool repository from concrete workflows"""
 
     output_file = cli.SwitchAttr(["-o", "--output"],
@@ -71,10 +80,6 @@ class RepoBuilder(cli.Application, WithRepo):
 class AbstractConverter(cli.Application, WithRepo):
     """Turn concrete workflows into abstract workflows"""
 
-    output_dir = cli.SwitchAttr(["-d", "--destdir"],
-        help="output directory",
-        default=Path("."))
-
     def main(self, *WORKFLOW):
         for file in paths(WORKFLOW):
             cwf = Workflow.from_file(file)
@@ -93,7 +98,7 @@ class AbstractConverter(cli.Application, WithRepo):
 
 
 @CLI.subcommand("generate")
-class Generator(cli.Application):
+class Generator(cli.Application, WithDestDir):
     """Generate workflows using APE"""
 
     @cli.autoswitch(Path, mandatory=True,
@@ -112,8 +117,7 @@ class Generator(cli.Application):
     def main(self, *args) -> None:
         from quangiswf.generator import WorkflowGenerator
 
-        build_dir = Path(__file__).parent / "build"
-        gen = WorkflowGenerator(build_dir)
+        gen = WorkflowGenerator(self.output_dir)
 
         # To start with, we generate workflows with two inputs and one output, 
         # of which one input is drawn from the following sources, and the other 
@@ -134,7 +138,7 @@ class Generator(cli.Application):
             for solution in gen.run(inputs, outputs, solutions=1, 
                     prefix=EX[name]):
                 running_total += 1
-                path = build_dir / f"solution{running_total}.ttl"
+                path = self.output_dir / f"solution{running_total}.ttl"
                 print(f"Writing solution: {path}")
                 solution.serialize(path, format="ttl")
 
