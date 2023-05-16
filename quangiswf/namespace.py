@@ -16,14 +16,13 @@ WF = Namespace("http://geographicknowledge.de/vocab/Workflow.rdf#")
 GIS = Namespace("http://geographicknowledge.de/vocab/GISConcepts.rdf#")
 TOOLS = Namespace(
     "https://github.com/quangis/cct/blob/master/tools/tools.ttl#")
-DATA = Namespace("https://github.com/quangis/cct/blob/master/tools/data.ttl#")
 CCT_ = Namespace("https://github.com/quangis/cct#")
 CCT = cct.namespace
 
-TOOLSCHEMA = Namespace("https://quangis.github.io/vocab/tool#")
-SIG = Namespace("https://quangis.github.io/signature#")
+VOCAB = Namespace("https://quangis.github.io/vocab/tool#")
 TOOL = Namespace("https://quangis.github.io/tool#")
-SUPERTOOL = Namespace("https://quangis.github.io/supertool#")
+SUPER = Namespace("https://quangis.github.io/tool/compound#")
+ABSTRACT = Namespace("https://quangis.github.io/tool/abstract#")
 
 ARC = "https://pro.arcgis.com/en/pro-app/latest/tool-reference"
 ARCDM = Namespace(ARC + "/data-management/")

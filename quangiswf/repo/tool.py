@@ -10,7 +10,7 @@ from transforge.namespace import shorten
 from quangiswf.repo.workflow import Workflow, dimensions
 from quangiswf.types import Polytype
 from quangiswf.namespace import (
-    n3, RDF, RDFS, TOOLSCHEMA, WF, SUPERTOOL, SIG, CCT)
+    n3, RDF, RDFS, VOCAB, WF, SUPER, ABSTRACT, CCT)
 from cct import cct
 
 
@@ -35,11 +35,11 @@ class Tool(object):
         return NotImplemented
 
 
-class Implementation(Tool):
+class ToolImplementation(Tool):
     pass
 
 
-class BaseConcreteTool(Implementation):
+class ConcreteTool(ToolImplementation):
     """A basic concrete tool is a reference to a single implemented tool, as 
     implemented by, for example, ArcGIS or QGIS."""
 
@@ -49,24 +49,25 @@ class BaseConcreteTool(Implementation):
         self.url = url
 
     @staticmethod
-    def from_graph(graph: Graph) -> Iterator[BaseConcreteTool]:
-        for tool in graph.subjects(RDF.type, TOOLSCHEMA.Tool):
+    def from_graph(graph: Graph) -> Iterator[ConcreteTool]:
+        for tool in graph.subjects(RDF.type, VOCAB.ConcreteTool):
             assert isinstance(tool, URIRef)
             url = graph.value(tool, RDFS.seeAlso, any=False)
             assert isinstance(url, URIRef)
-            yield BaseConcreteTool(tool, url)
+            yield ConcreteTool(tool, url)
 
     def to_graph(self, g: Graph) -> Graph:
-        assert not (self.uri, RDF.type, TOOLSCHEMA.Tool) in g
-        g.add((self.uri, RDF.type, TOOLSCHEMA.Tool))
+        assert not (self.uri, RDF.type, VOCAB.ConcreteTool) in g
+        g.add((self.uri, RDF.type, VOCAB.ConcreteTool))
         g.add((self.uri, RDFS.seeAlso, self.url))
         return g
 
 
-class Supertool(Implementation):
-    """A supertool is a workflow *schema*."""
+class SuperTool(ToolImplementation):
+    """A supertool is an *ensemble* of concrete tools; in other words: a 
+    workflow schema that acts as a compound tool."""
 
-    def __init__(self, name: str) -> None:
+    def __init__(self, uri: URIRef) -> None:
 
         self.map: dict[Hashable, BNode] = defaultdict(BNode)
 
@@ -78,10 +79,10 @@ class Supertool(Implementation):
         self.constituent_tools: set[URIRef] = set()
 
         self._graph = Graph()
-        super().__init__(SUPERTOOL[name])
+        super().__init__(uri)
 
     @staticmethod
-    def extract(wf: Workflow, action: Node) -> Supertool:
+    def extract(wf: Workflow, action: Node) -> SuperTool:
         """Propose a supertool that corresponds to the subworkflow associated 
         with the given action."""
         label, impl = wf.impl(action)
@@ -90,7 +91,7 @@ class Supertool(Implementation):
             assert isinstance(impl, BNode), \
                 "subworkflows should be blank nodes"
 
-            supertool = Supertool(label)
+            supertool = SuperTool(SUPER[label])
 
             for a in wf.low_level_actions(impl):
                 _, tool = wf.impl(a)
@@ -107,22 +108,22 @@ class Supertool(Implementation):
                 f"because it is not a subworkflow")
 
     @staticmethod
-    def from_graph(g: Graph) -> Iterator[Supertool]:
-        for uri in g.subjects(RDF.type, TOOLSCHEMA.Supertool):
+    def from_graph(g: Graph) -> Iterator[SuperTool]:
+        for uri in g.subjects(RDF.type, VOCAB.SuperTool):
             assert isinstance(uri, URIRef)
-            supertool = Supertool(uri)
+            supertool = SuperTool(uri)
             global_inputs: dict[str, BNode] = dict()
-            for action in g.objects(uri, TOOLSCHEMA.action):
-                tool = g.value(uri, TOOLSCHEMA.apply, any=False)
+            for action in g.objects(uri, VOCAB.action):
+                tool = g.value(uri, VOCAB.apply, any=False)
                 assert isinstance(tool, URIRef)
-                output = g.value(uri, TOOLSCHEMA.output, any=False)
+                output = g.value(uri, VOCAB.output, any=False)
                 assert isinstance(output, BNode)
 
                 inputs: list[BNode] = []
-                for input in g.objects(action, TOOLSCHEMA.input):
+                for input in g.objects(action, VOCAB.input):
                     assert isinstance(input, BNode)
                     inputs.append(input)
-                    id = g.value(input, TOOLSCHEMA.id, any=False)
+                    id = g.value(input, VOCAB.id, any=False)
                     if id:
                         assert isinstance(id, Literal)
                         global_inputs[id.value] = input
@@ -134,9 +135,9 @@ class Supertool(Implementation):
 
     def to_graph(self, g: Graph) -> Graph:
         g += self._graph
-        g.add((self.uri, RDF.type, TOOLSCHEMA.Supertool))
+        g.add((self.uri, RDF.type, VOCAB.SuperTool))
         for i, x in self.inputs.items():
-            g.add((x, TOOLSCHEMA.id, Literal(i)))
+            g.add((x, VOCAB.id, Literal(i)))
         return g
 
     def add_io(self, inputs: Mapping[str, Hashable],
@@ -182,25 +183,25 @@ class Supertool(Implementation):
         self.constituent_tools.add(tool)
 
         action = BNode()
-        self._graph.add((self.uri, TOOLSCHEMA.action, action))
-        self._graph.add((action, TOOLSCHEMA.apply, tool))
-        self._graph.add((action, TOOLSCHEMA.output, outputm))
+        self._graph.add((self.uri, VOCAB.action, action))
+        self._graph.add((action, VOCAB.apply, tool))
+        self._graph.add((action, VOCAB.output, outputm))
         for x in inputsm:
-            self._graph.add((action, TOOLSCHEMA.input, x))
+            self._graph.add((action, VOCAB.input, x))
 
-    def match(self, other: Supertool) -> bool:
+    def match(self, other: SuperTool) -> bool:
         return (self.constituent_tools == other.constituent_tools
             and isomorphic(self._graph, other._graph))
 
 
-class Signature(Tool):
-    """A tool signature is an abstract specification of a tool. It may 
+class AbstractTool(Tool):
+    """An abstract tool is a *signature* or *specification* of a tool. It may 
     correspond to one or more concrete tools, or even ensembles of tools. It 
     must describe the format of its input and output (ie the core concept 
     datatypes) and it must describe its purpose (in terms of a core concept 
     transformation expression).
 
-    A signature may be implemented by multiple (super)tools, because, for 
+    An abstract tool may be implemented by multiple (super)tools, because, for 
     example, a tool could be implemented in both QGIS and ArcGIS. Conversely, 
     multiple signatures may be implemented by the same (super)tool, if it can 
     be used in multiple contexts --- in the same way that a hammer can be used 
@@ -220,7 +221,7 @@ class Signature(Tool):
         self.cct_p = cct.parse(cct_expr, defaults=True)
 
     @staticmethod
-    def propose(wf: Workflow, action: Node) -> Signature:
+    def propose(wf: Workflow, action: Node) -> AbstractTool:
         """Create a new signature proposal from a tool application."""
         _, impl = wf.impl(action)
         name = wf.label(impl)
@@ -232,7 +233,7 @@ class Signature(Tool):
         cct_expr = wf.cct_expr(action)
         if not cct_expr:
             raise CCTError(
-                f"Signature of {lbl} has no CCT expression")
+                f"AbstractTool of {lbl} has no CCT expression")
 
         inputs = dict()
         for i, x in enumerate(wf.inputs(action, labelled=True), start=1):
@@ -250,36 +251,36 @@ class Signature(Tool):
                 f"The CCD type of the output artefact of an action "
                 f"associated with {lbl} is empty or too general.")
 
-        return Signature(SIG[name], inputs, output, cct_expr)
+        return AbstractTool(ABSTRACT[name], inputs, output, cct_expr)
 
     @staticmethod
-    def from_graph(graph: Graph) -> Iterator[Signature]:
-        for sig in graph.subjects(RDF.type, TOOLSCHEMA.Signature):
+    def from_graph(graph: Graph) -> Iterator[AbstractTool]:
+        for sig in graph.subjects(RDF.type, VOCAB.AbstractTool):
             assert isinstance(sig, URIRef)
 
             cct_literal = graph.value(sig, CCT.expression, any=False)
             assert isinstance(cct_literal, Literal)
 
             implementations: set[URIRef] = set()
-            for impl in graph.objects(sig, TOOLSCHEMA.implementation):
+            for impl in graph.objects(sig, VOCAB.implementation):
                 assert isinstance(impl, URIRef)
                 implementations.add(impl)
 
             inputs: dict[str, Polytype] = dict()
-            for artefact in graph.objects(sig, TOOLSCHEMA.input):
+            for artefact in graph.objects(sig, VOCAB.input):
                 t = Polytype.assemble(dimensions,
                     graph.objects(artefact, RDF.type))
-                id_literal = graph.value(artefact, TOOLSCHEMA.id, any=False)
+                id_literal = graph.value(artefact, VOCAB.id, any=False)
                 assert isinstance(id_literal, Literal)
                 i = str(id_literal)
                 assert i not in inputs
                 inputs[i] = t
 
-            output_artefact = graph.value(sig, TOOLSCHEMA.output, any=False)
+            output_artefact = graph.value(sig, VOCAB.output, any=False)
             output = Polytype.assemble(dimensions,
                 graph.objects(output_artefact, RDF.type))
 
-            yield Signature(uri=sig,
+            yield AbstractTool(uri=sig,
                 inputs=inputs,
                 output=output,
                 cct_expr=str(cct_literal),
@@ -288,33 +289,33 @@ class Signature(Tool):
 
     def to_graph(self, g: Graph) -> Graph:
         assert isinstance(self.uri, URIRef)
-        assert not (self.uri, RDF.type, TOOLSCHEMA.Signature) in g
+        assert not (self.uri, RDF.type, VOCAB.AbstractTool) in g
 
-        g.add((self.uri, RDF.type, TOOLSCHEMA.Signature))
+        g.add((self.uri, RDF.type, VOCAB.AbstractTool))
         g.add((self.uri, CCT.expression, Literal(self.cct_expr)))
 
         for impl in self.implementations:
-            g.add((self.uri, TOOLSCHEMA.implementation, impl))
+            g.add((self.uri, VOCAB.implementation, impl))
 
         for i, x in self.inputs.items():
             artefact = BNode()
             for uri in x.uris():
                 g.add((artefact, RDF.type, uri))
-            g.add((artefact, TOOLSCHEMA.id, Literal(i)))
-            g.add((self.uri, TOOLSCHEMA.input, artefact))
+            g.add((artefact, VOCAB.id, Literal(i)))
+            g.add((self.uri, VOCAB.input, artefact))
 
         artefact = BNode()
         for uri in self.output.uris():
             g.add((artefact, RDF.type, uri))
-        g.add((self.uri, TOOLSCHEMA.output, artefact))
+        g.add((self.uri, VOCAB.output, artefact))
 
         return g
 
-    def covers_implementation(self, candidate: Signature) -> bool:
+    def covers_implementation(self, candidate: AbstractTool) -> bool:
         return (bool(candidate.implementations)
             and candidate.implementations.issubset(self.implementations))
 
-    def matches_cct(self, candidate: Signature) -> bool:
+    def matches_cct(self, candidate: AbstractTool) -> bool:
         """Check that the expression of the candidate matches the expression 
         associated with this one. Note that a non-matching expression doesn't 
         mean that tools are actually semantically different, since there are 
@@ -323,7 +324,7 @@ class Signature(Tool):
         return (self.cct_p and candidate.cct_p
             and self.cct_p.match(candidate.cct_p))
 
-    def subsumes_input_datatype(self, candidate: Signature) -> bool:
+    def subsumes_input_datatype(self, candidate: AbstractTool) -> bool:
         # For now, we do not take into account permutations. We probably 
         # should, since even in the one test that I did (wffood), we see that 
         # SelectLayerByLocationPointObjects has two variants with just the 
@@ -334,10 +335,10 @@ class Signature(Tool):
             candidate.inputs[k1].subtype(self.inputs[k2])
             for k1, k2 in zip(il1, il2)))
 
-    def subsumes_output_datatype(self, candidate: Signature) -> bool:
+    def subsumes_output_datatype(self, candidate: AbstractTool) -> bool:
         return self.output.subtype(candidate.output)
 
-    def subsumes_datatype(self, candidate: Signature) -> bool:
+    def subsumes_datatype(self, candidate: AbstractTool) -> bool:
         """If the inputs in the candidate signature are subtypes of the ones in 
         this one (and the outputs are supertypes), then this signature *covers* 
         the other signature. If the reverse is true, then this signature is 
