@@ -22,7 +22,7 @@ CCT = cct.namespace
 VOCAB = Namespace("https://quangis.github.io/vocab/tool#")
 TOOL = Namespace("https://quangis.github.io/tool#")
 SUPER = Namespace("https://quangis.github.io/tool/compound#")
-ABSTRACT = Namespace("https://quangis.github.io/tool/abstract#")
+ABSTR = Namespace("https://quangis.github.io/tool/abstract#")
 
 ARC = "https://pro.arcgis.com/en/pro-app/latest/tool-reference"
 ARCDM = Namespace(ARC + "/data-management/")

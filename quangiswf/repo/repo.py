@@ -9,7 +9,7 @@ from itertools import count, repeat, chain
 from pathlib import Path
 from collections import defaultdict
 
-from quangiswf.namespace import (bind_all, VOCAB, RDF, WF, CCT_, n3, ABSTRACT)
+from quangiswf.namespace import (bind_all, VOCAB, RDF, WF, CCT_, n3, ABSTR)
 from quangiswf.repo.workflow import (Workflow)
 from quangiswf.repo.tool import (Tool, ConcreteTool, SuperTool, AbstractTool)
 
@@ -206,7 +206,7 @@ class Repo(object):
     def unique_uri(self, base: str) -> URIRef:
         """Generate a unique URI for a signature based on a name."""
         for i in chain([""], count(start=2)):
-            uri = ABSTRACT[f"{base}{i}"]
+            uri = ABSTR[f"{base}{i}"]
             if uri not in self.abstract_tools:
                 return uri
         raise RuntimeError("Unreachable")

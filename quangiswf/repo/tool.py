@@ -10,7 +10,7 @@ from transforge.namespace import shorten
 from quangiswf.repo.workflow import Workflow, dimensions
 from quangiswf.types import Polytype
 from quangiswf.namespace import (
-    n3, RDF, RDFS, VOCAB, WF, SUPER, ABSTRACT, CCT)
+    n3, RDF, RDFS, VOCAB, WF, SUPER, ABSTR, CCT)
 from cct import cct
 
 
@@ -251,7 +251,7 @@ class AbstractTool(Tool):
                 f"The CCD type of the output artefact of an action "
                 f"associated with {lbl} is empty or too general.")
 
-        return AbstractTool(ABSTRACT[name], inputs, output, cct_expr)
+        return AbstractTool(ABSTR[name], inputs, output, cct_expr)
 
     @staticmethod
     def from_graph(graph: Graph) -> Iterator[AbstractTool]:
