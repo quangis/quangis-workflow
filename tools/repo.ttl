@@ -5,9 +5,9 @@
 
 @prefix : <https://quangis.github.io/vocab#>.
 @prefix cct: <https://quangis.github.io/cct#>.
-@prefix sig: <https://quangis.github.io/signature#>.
 @prefix tool: <https://quangis.github.io/tool#>.
-@prefix supertool: <https://quangis.github.com/supertool#>.
+@prefix super: <https://quangis.github.io/tool/compound#>.
+@prefix abstr: <https://quangis.github.io/tool/abstract#>.
 @prefix ccd: <http://geographicknowledge.de/vocab/CoreConceptData.rdf#>.
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>.
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
@@ -18,7 +18,7 @@
 @prefix arcprosa: <https://pro.arcgis.com/en/pro-app/latest/tool-reference/spatial-analyst/>.
 @prefix arcproco: <https://pro.arcgis.com/en/pro-app/latest/tool-reference/conversion/>.
 
-supertool:ClosestFacilityAnalysis a :Supertool;
+super:ClosestFacilityAnalysis a :SuperTool;
     :action
         [ :apply tool:MakeClosestFacilityAnalysisLayer;
             :input [ :id "1"; rdfs:comment "roads" ];
@@ -34,7 +34,7 @@ supertool:ClosestFacilityAnalysis a :Supertool;
             :output _:out204
         ].
 
-sig:ClosestFacilityAnalysis a :Signature;
+abstr:ClosestFacilityAnalysis a :AbstractTool;
     rdfs:comment
         "Selects the distance to the closest goal object on a line network.";
     :input
@@ -53,7 +53,7 @@ sig:ClosestFacilityAnalysis a :Signature;
             (groupbyL min (nDist (get_attrL 2) (get_attrL 3) 1))
         """.
 
-sig:BuildNetwork a :Signature;
+abstr:BuildNetwork a :AbstractTool;
     :input [ :id "1"; a ccd:ObjectQ, ccd:LineA, ccd:RatioA ];
     :output [ a ccd:NetworkQ, ccd:LineA, ccd:RatioA ];
     rdfs:comment
@@ -62,7 +62,7 @@ sig:BuildNetwork a :Signature;
         "nbuild (1: ObjectInfo(Ratio))".
 
 
-sig:NearPointObjects a :Signature;
+abstr:NearPointObjects a :AbstractTool;
     :input [ :id "1"; a ccd:ObjectQ, ccd:PointA ];
     :input [ :id "2"; a ccd:ObjectQ, ccd:PointA ];
     :output [ a ccd:ObjectQ, ccd:PointA, ccd:RatioA ];
@@ -78,7 +78,7 @@ sig:NearPointObjects a :Signature;
         """.
 
 
-sig:FC2FCObjectTess a :Signature;
+abstr:FC2FCObjectTess a :AbstractTool;
     :input [ :id "1"; a ccd:ObjectQ, ccd:VectorTessellationA ];
     :output [ a ccd:ObjectQ, ccd:PlainVectorRegionA ];
     rdfs:comment
@@ -88,7 +88,7 @@ sig:FC2FCObjectTess a :Signature;
         subset (1: ObjectInfo(Nom)) (-: C(Obj))
         """.
 
-sig:MergeObjects a :Signature;
+abstr:MergeObjects a :AbstractTool;
     :input [ :id "1"; a ccd:ObjectQ, ccd:VectorTessellationA, ccd:NominalA ];
     :output [ a ccd:ObjectQ, ccd:VectorTessellationA, ccd:NominalA ];
     rdfs:comment
@@ -104,9 +104,9 @@ sig:MergeObjects a :Signature;
             (getobjectnames (pi2 (get_attrR 1)))
         """.
 
-supertool:JoinFromTable a :Supertool;
+super:JoinFromTable a :SuperTool;
     rdfs:comment "Make table from Excel";
-    :signature sig:LoadAmountonObjects;
+    :signature abstr:LoadAmountonObjects;
     :action
         [ :apply tool:ExcelToTable;
             :input [];
@@ -115,7 +115,7 @@ supertool:JoinFromTable a :Supertool;
             :input [], _:out10;
             :output _:out10_2 ].
 
-sig:LoadAmountonObjects a :Signature;
+abstr:LoadAmountonObjects a :AbstractTool;
     :input [ :id "1"; a ccd:ObjectQ, ccd:CountA];
     :input [ :id "2"; a ccd:ObjectQ, ccd:VectorRegionA ];
     :output [ a ccd:ObjectQ, ccd:VectorRegionA, ccd:CountA];
@@ -128,7 +128,7 @@ sig:LoadAmountonObjects a :Signature;
         join_attr (get_attrL 2) 1
         """.
 
-sig:FlowDirection a :Signature;
+abstr:FlowDirection a :AbstractTool;
     :input [ :id "1"; a ccd:FieldRaster, ccd:IntervalA; rdfs:comment "DEM" ];
     :output [ a ccd:FieldRaster, ccd:CyclicA ];
     rdfs:comment
@@ -136,7 +136,7 @@ sig:FlowDirection a :Signature;
     cct:expression
         "flowdirgraph (1: Field(Itv))".
 
-sig:FlowAccumulation a :Signature;
+abstr:FlowAccumulation a :AbstractTool;
     :input [ :id "1"; a ccd:FieldRaster, ccd:CyclicA; rdfs:comment "Needs to be a direction" ];
     :output [ a ccd:FieldRaster, ccd:RatioA ];
     rdfs:comment
@@ -144,7 +144,7 @@ sig:FlowAccumulation a :Signature;
     cct:expression
         "apply1 size (accumulate (1: Field(Loc)))".
 
-sig:Slope a :Signature;
+abstr:Slope a :AbstractTool;
     :input [ :id "1"; a ccd:FieldRaster, ccd:IntervalA ];
     :output [ a ccd:FieldRaster, ccd:RatioA ];
     rdfs:comment
@@ -152,8 +152,8 @@ sig:Slope a :Signature;
     cct:expression
         "slope (1: Field(Itv))".
 
-supertool:VelocityField a :Supertool;
-    :signature sig:VelocityFieldDEM;
+super:VelocityField a :SuperTool;
+    :signature abstr:VelocityFieldDEM;
     rdfs:comment """Computes a water flow velocity raster from slope * accumulation area
 
     # Select by attribute is always followed by copying features
@@ -167,7 +167,7 @@ supertool:VelocityField a :Supertool;
         :output _:velocity;
         rdfs:comment "This second step computes 0.1 * (Stowe_slope_area_term / [Mean slope-area term]). It needs looking up of parameter [Mean slope-area term]." ].
 
-sig:VelocityFieldDEM a :Signature;
+abstr:VelocityFieldDEM a :AbstractTool;
     rdfs:comment
         "Computes velocity field from DEM.";
     cct:expression
@@ -176,7 +176,7 @@ sig:VelocityFieldDEM a :Signature;
     :input [ :id "2"; rdfs:comment "accumulation area"; a ccd:FieldRaster, ccd:RatioA ];
     :output [ rdfs:comment "velocity"; a ccd:FieldRaster, ccd:RatioA ].
 
-sig:con1 a :Signature;
+abstr:con1 a :AbstractTool;
     :input [ :id "1"; a ccd:FieldRaster, ccd:RatioA; rdfs:comment "raster" ];
     :output [ a ccd:FieldRaster, ccd:RatioA ];
     rdfs:comment
@@ -184,7 +184,7 @@ sig:con1 a :Signature;
     cct:expression
         "select leq (1: Field(Ratio)) (-: Ratio)".
 
-sig:LocalMapAlgebraInvert a :Signature;
+abstr:LocalMapAlgebraInvert a :AbstractTool;
     :input [ :id "1"; a ccd:FieldRaster, ccd:RatioA ];
     :output [ a ccd:FieldRaster, ccd:RatioA ];
     rdfs:comment
@@ -192,7 +192,7 @@ sig:LocalMapAlgebraInvert a :Signature;
     cct:expression
         "apply1 (ratio (-: Ratio)) (1: Field(Ratio))".
 
-sig:SnapPourPoint a :Signature;
+abstr:SnapPourPoint a :AbstractTool;
     :input [ :id "1"; a ccd:ObjectQ, ccd:PointA ];
     :input [ :id "2"; a ccd:FieldRaster, ccd:RatioA; rdfs:comment "flow accumulation raster" ];
     :output [ a ccd:FieldQ, ccd:RasterA, ccd:PlainNominalA ];
@@ -206,7 +206,7 @@ sig:SnapPourPoint a :Signature;
         join (revert (get_attrL 1)) (get_attrR 1)
         """.
 
-sig:Watershed a :Signature;
+abstr:Watershed a :AbstractTool;
     :input [ :id "1"; a ccd:FieldRaster, ccd:RatioA; rdfs:comment "flow direction raster" ];
     :input [ :id "2"; a ccd:FieldQ, ccd:RasterA, ccd:PlainNominalA; rdfs:comment "pour point raster" ];
     :output [ a ccd:FieldQ, ccd:RasterA, ccd:PlainNominalA; rdfs:comment "watershed raster, gives a different watershed id for each pour point" ];
@@ -220,7 +220,7 @@ sig:Watershed a :Signature;
         )
         """.
 
-sig:ExtractByMask a :Signature;
+abstr:ExtractByMask a :AbstractTool;
     :input [ :id "1"; a ccd:FieldRaster, ccd:RatioA; rdfs:comment "Flow directions by watershed mask" ];
     :input [ :id "2"; a ccd:FieldRaster ];
     :output [ a ccd:FieldRaster, ccd:RatioA ];
@@ -229,7 +229,7 @@ sig:ExtractByMask a :Signature;
     cct:expression
         "subset (1: Field(Loc)) (pi1 (2: Field(Nom)))".
 
-sig:FlowLength a :Signature;
+abstr:FlowLength a :AbstractTool;
     :input [ :id "1"; a ccd:FieldRaster, ccd:RatioA; rdfs:comment "Impedance Weight raster (e.g. 1/velocity raster)" ];
     :input [ :id "2"; a ccd:FieldRaster, ccd:RatioA; rdfs:comment "Flow direction raster;" ];
     :output [ a ccd:FieldRaster, ccd:RatioA; rdfs:comment "Flow time raster" ];
@@ -245,7 +245,7 @@ sig:FlowLength a :Signature;
         )))
         """.
 
-sig:RasterToIsoRaster a :Signature;
+abstr:RasterToIsoRaster a :AbstractTool;
     :input [ :id "1"; a ccd:FieldRaster, ccd:IntervalA ];
     :output [ a ccd:FieldRaster, ccd:PlainOrdinalA ];
     rdfs:comment
@@ -254,8 +254,8 @@ sig:RasterToIsoRaster a :Signature;
         "apply1 classify (1: Field(Itv))".
 
 
-supertool:RasterCoverage a :Supertool;
-    :signature sig:CreateUnitHydrograph;
+super:RasterCoverage a :SuperTool;
+    :signature abstr:CreateUnitHydrograph;
     rdfs:comment
         "Computes coverage (size) from a raster table for each raster value";
     :action [ :apply tool:TableToTable;
@@ -268,7 +268,7 @@ supertool:RasterCoverage a :Supertool;
         :input _:rastertable2;
         :output _:rastertable3 ].
 
-sig:CreateUnitHydrograph a :Signature;
+abstr:CreateUnitHydrograph a :AbstractTool;
     :input [ :id "1"; a ccd:FieldRaster, ccd:OrdinalA ];
     :output [ a ccd:AmountQ, ccd:LayerA, ccd:RatioA ];
     rdfs:comment
@@ -278,9 +278,9 @@ sig:CreateUnitHydrograph a :Signature;
         apply1 ((swap ratio) (-: Ratio)) (groupby size (1: Field(Ord)))
         """.
 
-supertool:FullSelectFeatures a :Supertool;
-    :signature sig:SelectFeaturesByObjectPlainRegionObjects, 
-        sig:SelectFeaturesCoverageToExistenceVector;
+super:FullSelectFeatures a :SuperTool;
+    :signature abstr:SelectFeaturesByObjectPlainRegionObjects, 
+        abstr:SelectFeaturesCoverageToExistenceVector;
     rdfs:comment "Query to select items from layers using attribut values";
     :action [ :apply tool:SelectLayerByAttribute;
         :input [ :id "1" ];
@@ -290,7 +290,7 @@ supertool:FullSelectFeatures a :Supertool;
         :input _:out111;
         :output _:out112 ].
 
-sig:SelectFeaturesByObjectPlainRegionObjects a :Signature;
+abstr:SelectFeaturesByObjectPlainRegionObjects a :AbstractTool;
     :input [ :id "1"; a ccd:ObjectQ, ccd:PlainVectorRegionA ];
     :output [ a ccd:ObjectQ, ccd:PlainVectorRegionA ];
     rdfs:comment
@@ -298,7 +298,7 @@ sig:SelectFeaturesByObjectPlainRegionObjects a :Signature;
     cct:expression
         "subset (1: ObjectInfo(Nom)) (-: C(Obj))".
 
-sig:SelectFeaturesCoverageToExistenceVector a :Signature;
+abstr:SelectFeaturesCoverageToExistenceVector a :AbstractTool;
     :input [ :id "1"; a ccd:Coverage ];
     :output [ a ccd:FieldQ, ccd:PlainVectorRegionA ];
     rdfs:comment
@@ -306,7 +306,7 @@ sig:SelectFeaturesCoverageToExistenceVector a :Signature;
     cct:expression
         "revert (select eq (invert (1: Field(Itv)): Coverages(Nom)) (-: Nom))".
 
-sig:Aspect a :Signature;
+abstr:Aspect a :AbstractTool;
     :input [ :id "1"; a ccd:FieldRaster, ccd:IntervalA ];
     :output [ a ccd:FieldRaster, ccd:RatioA ];
     rdfs:comment
@@ -314,7 +314,7 @@ sig:Aspect a :Signature;
     cct:expression
         "aspect (1: Field(Itv))".
 
-sig:LocalMapAlgebraDivide a :Signature;
+abstr:LocalMapAlgebraDivide a :AbstractTool;
     :input [ :id "1"; a ccd:FieldRaster, ccd:RatioA ];
     :output [ a ccd:FieldRaster, ccd:RatioA ];
     rdfs:comment
@@ -322,7 +322,7 @@ sig:LocalMapAlgebraDivide a :Signature;
     cct:expression
         "apply1 ((swap ratio) (-: Ratio)) (1: Field(Ratio))".
 
-sig:con2 a :Signature;
+abstr:con2 a :AbstractTool;
     :input [ :id "1"; a ccd:FieldRaster, ccd:RatioA; rdfs:comment "conditional raster, less than some value" ];
     :input [ :id "2"; a ccd:FieldRaster, ccd:RatioA; rdfs:comment "field raster to be cut" ];
     :output [ a ccd:FieldRaster, ccd:RatioA ];
@@ -331,7 +331,7 @@ sig:con2 a :Signature;
     cct:expression
         "subset (2: Field(Ratio)) (pi1 (select leq (1: Field(Ratio)) (-: Ratio)))".
 
-sig:con3 a :Signature;
+abstr:con3 a :AbstractTool;
     :input [ :id "1"; a ccd:FieldRaster, ccd:RatioA; rdfs:comment "conditional raster, less than some value" ];
     :input [ :id "2"; a ccd:FieldRaster, ccd:RatioA; rdfs:comment "field raster to be cut for inside" ];
     :input [ :id "3"; a ccd:FieldRaster, ccd:RatioA; rdfs:comment "field raster to be cut for outside" ];
@@ -352,9 +352,9 @@ sig:con3 a :Signature;
         """.
 
 # TODO this was wrong; review
-supertool:AddandCalculateAttribute a :Supertool;
-    :signature sig:CalculateObjectSpatialAmount, sig:CalculateProd, 
-        sig:CalculateProdPointObjects;
+super:AddandCalculateAttribute a :SuperTool;
+    :signature abstr:CalculateObjectSpatialAmount, abstr:CalculateProd, 
+        abstr:CalculateProdPointObjects;
     rdfs:comment "Add an attribute and calculate value based on one other attribute";
     :input [ :apply tool:AddField;
         :input [ :id "1" ];
@@ -363,7 +363,7 @@ supertool:AddandCalculateAttribute a :Supertool;
         :input _:out3001;
         :output _:out300 ].
 
-sig:CalculateObjectSpatialAmount a :Signature;
+abstr:CalculateObjectSpatialAmount a :AbstractTool;
     rdfs:comment
         "Calculates an amount from an object ratio quality (representating an intensive measure) using the object's area. For example, the amount of radiation falling on a building using the mean radiation and the building's area";
     cct:expression
@@ -379,7 +379,7 @@ sig:CalculateObjectSpatialAmount a :Signature;
     :input [ :id "1"; a ccd:ObjectQ, ccd:VectorRegionA, ccd:IRA ];
     :output [ a ccd:ObjectQ, ccd:VectorRegionA, ccd:ERA ].
 
-sig:CalculateProd a :Signature;
+abstr:CalculateProd a :AbstractTool;
     rdfs:comment
         "Calculates some product of ratio scaled object attribute with some ratio value.";
     cct:expression
@@ -392,7 +392,7 @@ sig:CalculateProd a :Signature;
     :input [ :id "1"; a ccd:ObjectQ, ccd:VectorRegionA, ccd:RatioA ];
     :output [ a ccd:ObjectQ, ccd:VectorRegionA, ccd:RatioA ].
 
-sig:CalculateProdPointObjects a :Signature;
+abstr:CalculateProdPointObjects a :AbstractTool;
     rdfs:comment
         "Calculates a product from an attribute using some constant (e.g. time from distance using speed constant)";
     cct:expression
@@ -405,7 +405,7 @@ sig:CalculateProdPointObjects a :Signature;
     :input [ :id "1"; a ccd:ObjectQ, ccd:PointA, ccd:ERA ];
     :output [ a ccd:ObjectQ, ccd:PointA, ccd:ERA ].
 
-sig:ObjectSummaryStatisticsAmount a :Signature;
+abstr:ObjectSummaryStatisticsAmount a :AbstractTool;
     :input [ :id "1"; a ccd:ObjectQ, ccd:VectorRegionA, ccd:CountA ];
     :output [ a ccd:AmountQ, ccd:VectorRegionA, ccd:CountA ];
     rdfs:comment
@@ -413,7 +413,7 @@ sig:ObjectSummaryStatisticsAmount a :Signature;
     cct:expression
         "contentsum (getamounts (1: ObjectInfo(Ratio)))".
 
-sig:SummaryStatisticsAmount a :Signature;
+abstr:SummaryStatisticsAmount a :AbstractTool;
     :input [ :id "1"; a ccd:AmountQ, ccd:VectorRegionA, ccd:CountA ];
     :output [ a ccd:AmountQ, ccd:VectorRegionA, ccd:CountA ];
     rdfs:comment
@@ -421,7 +421,7 @@ sig:SummaryStatisticsAmount a :Signature;
     cct:expression
         "contentsum (1: Amounts(Ratio))".
 
-sig:ClipObject2Object a :Signature;
+abstr:ClipObject2Object a :AbstractTool;
     :input [ :id "1"; a ccd:ObjectQ, ccd:PlainVectorRegionA, ccd:CountA; rdfs:comment "objects to be clipped" ];
     :input [ :id "2"; a ccd:ObjectQ, ccd:PlainVectorRegionA; rdfs:comment "to the regions of these objects" ];
     :output [ a ccd:ObjectQ, ccd:PlainVectorRegionA, ccd:CountA ];
@@ -439,8 +439,8 @@ sig:ClipObject2Object a :Signature;
             ))
         """.
 
-supertool:CalculatePartialAmounts a :Supertool;
-    :signature sig:CalculatePartialAmountsfromObjects;
+super:CalculatePartialAmounts a :SuperTool;
+    :signature abstr:CalculatePartialAmountsfromObjects;
     :action [ :apply tool:Clip;
         :input [ :id "1" ];
         :input [ :id "2" ];
@@ -456,7 +456,7 @@ supertool:CalculatePartialAmounts a :Supertool;
         :output _:out014 ];
     rdfs:comment "Calculates a set of portions from a set of object based count amounts using some boolean vector field. Only the portions that are within the true value of the boolean field are considered. This is an areal interpolation problem, which is solved by first generating area proportions and then multiplying them with the count amount.".
 
-sig:CalculatePartialAmountsfromObjects a :Signature;
+abstr:CalculatePartialAmountsfromObjects a :AbstractTool;
     rdfs:comment "Clips some object vector with some count amounts to the extent of a field layer (e.g. a buffer) and interpolates partial count amounts R(Reg, Ratio) based on area percentage.";
     cct:expression
         """
@@ -473,7 +473,7 @@ sig:CalculatePartialAmountsfromObjects a :Signature;
     :input [ :id "2"; a ccd:FieldQ, ccd:VectorRegionA, ccd:BooleanA ];
     :output [ a ccd:AmountQ, ccd:VectorRegionA, ccd:CountA ].
 
-sig:SelectObjectbyExtent a :Signature;
+abstr:SelectObjectbyExtent a :AbstractTool;
     :input [ :id "1"; a ccd:ObjectQ, ccd:VectorA ];
     :output [ a ccd:ObjectQ, ccd:VectorA ];
     rdfs:comment
@@ -488,7 +488,7 @@ sig:SelectObjectbyExtent a :Signature;
         ))
         """.
 
-sig:ObjectBuffer a :Signature;
+abstr:ObjectBuffer a :AbstractTool;
     :input [ :id "1"; a ccd:ObjectQ, ccd:VectorA ];
     :output [ a ccd:FieldQ, ccd:PlainVectorRegionA, ccd:BooleanA ];
     rdfs:comment
@@ -496,7 +496,7 @@ sig:ObjectBuffer a :Signature;
     cct:expression
         "extrapol (get_attrL (1: ObjectInfo(Nom)))".
 
-sig:ClipNomFieldVector2Extent a :Signature;
+abstr:ClipNomFieldVector2Extent a :AbstractTool;
     :input [ :id "1"; a ccd:FieldQ, ccd:VectorRegionA ];
     :input [ :id "2"; a ccd:FieldQ, ccd:VectorRegionA, ccd:BooleanA ];
     :output [ a ccd:FieldQ, ccd:VectorRegionA ];
@@ -505,7 +505,7 @@ sig:ClipNomFieldVector2Extent a :Signature;
     cct:expression
         "subset (1: Field(Nom)) (fcover (2: Field(Bool)) (nest true))".
 
-sig:ClipBoolFieldVector2Extent a :Signature;
+abstr:ClipBoolFieldVector2Extent a :AbstractTool;
     :input [ :id "1"; a ccd:FieldQ, ccd:VectorRegionA, ccd:BooleanA];
     :input [ :id "2"; a ccd:FieldQ, ccd:VectorRegionA, ccd:BooleanA ];
     :output [ a ccd:FieldQ, ccd:VectorRegionA, ccd:BooleanA ];
@@ -514,12 +514,12 @@ sig:ClipBoolFieldVector2Extent a :Signature;
     cct:expression
         "subset (1: Field(Bool)) (fcover (2: Field(Bool)) (nest true))".
 
-supertool:CalculateAreaMeasure a :Supertool;
+super:CalculateAreaMeasure a :SuperTool;
     rdfs:comment "This is an abbreviated workflow for calculating area based measures with attributes";
-    :signature sig:CalculateVectorFieldAreaPercentage, 
-        sig:CalculateVectorFieldPartialArea, sig:CalculateCountAmountRatio, 
-        sig:CalculateObjectVectorCountAmountRatio, 
-        sig:CalculateObjectAttrRatio;
+    :signature abstr:CalculateVectorFieldAreaPercentage, 
+        abstr:CalculateVectorFieldPartialArea, abstr:CalculateCountAmountRatio, 
+        abstr:CalculateObjectVectorCountAmountRatio, 
+        abstr:CalculateObjectAttrRatio;
     :action [ :apply tool:AddField;
         :input [ :id "1" ];
         :output _:out1111
@@ -529,7 +529,7 @@ supertool:CalculateAreaMeasure a :Supertool;
         :output _:out1112 ].
 
 
-sig:CalculateVectorFieldAreaPercentage a :Signature;
+abstr:CalculateVectorFieldAreaPercentage a :AbstractTool;
     rdfs:comment "The assumption is here is that fields are represented by single polygons and area measures are implicitly added. The area measure of the second layer is manually taken over into the calculation. The result is a single measure, though stored into a table with a single polygon.";
     rdfs:comment "Substance Coverage proportions SC/SC";
     rdfs:comment
@@ -547,7 +547,7 @@ sig:CalculateVectorFieldAreaPercentage a :Signature;
     :output [ a ccd:AmountQ, ccd:VectorRegionA, ccd:IRA ].
 
 
-sig:CalculateVectorFieldPartialArea a :Signature;
+abstr:CalculateVectorFieldPartialArea a :AbstractTool;
     rdfs:comment "Substance Coverage SC";
     rdfs:comment
         "Calculates a partial area measure by multiplying an area proportion with the size of the extent of a vector field.";
@@ -558,7 +558,7 @@ sig:CalculateVectorFieldPartialArea a :Signature;
     :output [ a ccd:AmountQ, ccd:VectorRegionA, ccd:ERA ].
 
 
-sig:CalculateCountAmountRatio a :Signature;
+abstr:CalculateCountAmountRatio a :AbstractTool;
     rdfs:comment "object Content proportion OA/OA";
     rdfs:comment
         "Calculates the ratio of two count vector amounts.";
@@ -568,7 +568,7 @@ sig:CalculateCountAmountRatio a :Signature;
     :input [ :id "2"; a ccd:AmountQ, ccd:VectorRegionA, ccd:CountA ];
     :output [ a ccd:AmountQ, ccd:VectorRegionA, ccd:IRA ].
 
-sig:CalculateObjectVectorCountAmountRatio a :Signature;
+abstr:CalculateObjectVectorCountAmountRatio a :AbstractTool;
     rdfs:comment "Calculate new attribute: Object Content proportion OA/OA";
     rdfs:comment
         "Calculates the ratio of two count vector amounts on objects.";
@@ -584,7 +584,7 @@ sig:CalculateObjectVectorCountAmountRatio a :Signature;
     :input [ :id "2"; a ccd:ObjectQ, ccd:VectorRegionA, ccd:CountA ];
     :output [ a ccd:ObjectQ, ccd:VectorRegionA, ccd:IRA ].
 
-sig:CalculateObjectAttrRatio a :Signature;
+abstr:CalculateObjectAttrRatio a :AbstractTool;
     rdfs:comment "<https://pro.arcgis.com/en/pro-app/tool-reference/data-management/calculate-field.htm>";
     rdfs:comment
         "Calculates ratios of two ratio scaled object attributes.";
@@ -600,7 +600,7 @@ sig:CalculateObjectAttrRatio a :Signature;
     :input [ :id "2"; a ccd:ObjectQ, ccd:VectorRegionA, ccd:ERA ];
     :output [ a ccd:ObjectQ, ccd:VectorRegionA, ccd:IRA ].
 
-sig:EraseFieldExtentfromFieldVector a :Signature;
+abstr:EraseFieldExtentfromFieldVector a :AbstractTool;
     :input [ :id "1"; a ccd:FieldQ, ccd:PlainVectorRegionA ];
     :input [ :id "2"; a ccd:FieldQ, ccd:VectorRegionA, ccd:BooleanA ];
     :output [ a ccd:FieldQ, ccd:PlainVectorRegionA ];
@@ -619,22 +619,22 @@ sig:EraseFieldExtentfromFieldVector a :Signature;
             ))
         """.
 
-supertool:FullSelectLayerByAttribute a :Supertool;
-    :signature sig:SelectLayerByObjectPointObjects, 
-        sig:SelectLayerByObjectLineObjects, 
-        sig:SelectLayerByObjectPlainRegionObjects,
-        sig:SelectLayerByObjectTessObjects,
-        sig:SelectLayerByAttributePointObjects, 
-        sig:SelectLayerByAttributeLineObjects, 
-        sig:SelectLayerByAttributePlainRegionObjects,
-        sig:SelectLayerByAttributeTessObjects, 
-        sig:SelectLayerByRatioPointObjects, 
-        sig:SelectLayerByRatioLineObjects, 
-        sig:SelectLayerByRatioPlainRegionObjects,
-        sig:SelectLayerByRatioTessObjects,
-        sig:SelectLayerContourToExistenceVector,
-        sig:SelectLayerByRatioGEQPlainRegionObjects,
-        sig:SelectLayerCoverageToExistenceVector;
+super:FullSelectLayerByAttribute a :SuperTool;
+    :signature abstr:SelectLayerByObjectPointObjects, 
+        abstr:SelectLayerByObjectLineObjects, 
+        abstr:SelectLayerByObjectPlainRegionObjects,
+        abstr:SelectLayerByObjectTessObjects,
+        abstr:SelectLayerByAttributePointObjects, 
+        abstr:SelectLayerByAttributeLineObjects, 
+        abstr:SelectLayerByAttributePlainRegionObjects,
+        abstr:SelectLayerByAttributeTessObjects, 
+        abstr:SelectLayerByRatioPointObjects, 
+        abstr:SelectLayerByRatioLineObjects, 
+        abstr:SelectLayerByRatioPlainRegionObjects,
+        abstr:SelectLayerByRatioTessObjects,
+        abstr:SelectLayerContourToExistenceVector,
+        abstr:SelectLayerByRatioGEQPlainRegionObjects,
+        abstr:SelectLayerCoverageToExistenceVector;
     rdfs:comment "a SQL query to select features matching a selection criterion. You build a query expression to generate the subset. You can query a dataset based on a field in a layer or a table. Using this selection a new Feature dataset is created with only the selected features using the 'Copy Features tool'. This feature dataset represents all the areas that fulfill the criterion";
     rdfs:comment "Select by attribute is always followed by copy features (treated as one tool in the annotation";
     :action [ :apply tool:SelectLayerByAttribute;
@@ -645,91 +645,91 @@ supertool:FullSelectLayerByAttribute a :Supertool;
         :output _:out12 ].
 
 
-sig:SelectLayerByObjectPointObjects a :Signature;
+abstr:SelectLayerByObjectPointObjects a :AbstractTool;
     cct:expression "subset (1: ObjectInfo(Nom)) (-: C(Obj))";
     :input [ :id "1"; a ccd:ObjectQ, ccd:PointA ];
     :output [ a ccd:ObjectQ, ccd:PointA, ccd:BooleanA ].
 
-sig:SelectLayerByObjectLineObjects a :Signature;
+abstr:SelectLayerByObjectLineObjects a :AbstractTool;
     cct:expression "subset (1: ObjectInfo(Nom)) (-: C(Obj))";
     :input [ :id "1"; a ccd:ObjectQ, ccd:LineA ];
     :output [ a ccd:ObjectQ, ccd:LineA, ccd:BooleanA ].
 
-sig:SelectLayerByObjectPlainRegionObjects a :Signature;
+abstr:SelectLayerByObjectPlainRegionObjects a :AbstractTool;
     cct:expression "subset (1: ObjectInfo(Nom)) (-: C(Obj))";
     :input [ :id "1"; a ccd:ObjectQ, ccd:PlainVectorRegionA ];
     :output [ a ccd:ObjectQ, ccd:PlainVectorRegionA, ccd:BooleanA ].
 
-sig:SelectLayerByObjectTessObjects a :Signature;
+abstr:SelectLayerByObjectTessObjects a :AbstractTool;
     cct:expression "subset (1: ObjectInfo(Nom)) (-: C(Obj))";
     :input [ :id "1"; a ccd:ObjectQ, ccd:VectorTessellationA ];
     :output [ a ccd:ObjectQ, ccd:PlainVectorRegionA, ccd:BooleanA ].
 
-sig:SelectLayerByAttributePointObjects a :Signature;
+abstr:SelectLayerByAttributePointObjects a :AbstractTool;
     cct:expression "subset (1: ObjectInfo(Nom)) (-: C(Nom))";
     :input [ :id "1"; a ccd:ObjectQ, ccd:PointA, ccd:NominalA ];
     :output [ a ccd:ObjectQ, ccd:PointA, ccd:NominalA ].
 
-sig:SelectLayerByAttributeLineObjects a :Signature;
+abstr:SelectLayerByAttributeLineObjects a :AbstractTool;
     cct:expression "subset (1: ObjectInfo(Nom)) (-: C(Nom))";
     :input [ :id "1"; a ccd:ObjectQ, ccd:LineA, ccd:NominalA ];
     :output [ a ccd:ObjectQ, ccd:LineA, ccd:NominalA ].
 
-sig:SelectLayerByAttributePlainRegionObjects a :Signature;
+abstr:SelectLayerByAttributePlainRegionObjects a :AbstractTool;
     cct:expression "subset (1: ObjectInfo(Nom)) (-: C(Nom))";
     :input [ :id "1"; a ccd:ObjectQ, ccd:PlainVectorRegionA, ccd:NominalA ];
     :output [ a ccd:ObjectQ, ccd:PlainVectorRegionA, ccd:NominalA ].
 
-sig:SelectLayerByAttributeTessObjects a :Signature;
+abstr:SelectLayerByAttributeTessObjects a :AbstractTool;
     cct:expression "subset (1: ObjectInfo(Nom)) (-: C(Nom))";
     :input [ :id "1"; a ccd:ObjectQ, ccd:VectorTessellationA, ccd:NominalA ];
     :output [ a ccd:ObjectQ, ccd:PlainVectorRegionA, ccd:NominalA ].
 
 #### Object selection variant, needs a ratio attribute
-sig:SelectLayerByRatioPointObjects a :Signature;
+abstr:SelectLayerByRatioPointObjects a :AbstractTool;
     cct:expression "subset (1: ObjectInfo(Ratio)) (-: C(Ratio))";
     :input [ :id "1"; a ccd:ObjectQ, ccd:PointA, ccd:RatioA ];
     :output [ a ccd:ObjectQ, ccd:PointA, ccd:RatioA ].
 
-sig:SelectLayerByRatioLineObjects a :Signature;
+abstr:SelectLayerByRatioLineObjects a :AbstractTool;
     cct:expression "subset (1: ObjectInfo(Ratio)) (-: C(Ratio))";
     :input [ :id "1"; a ccd:ObjectQ, ccd:LineA, ccd:RatioA ];
     :output [ a ccd:ObjectQ, ccd:LineA, ccd:RatioA ].
 
-sig:SelectLayerByRatioPlainRegionObjects a :Signature;
+abstr:SelectLayerByRatioPlainRegionObjects a :AbstractTool;
     cct:expression "subset (1: ObjectInfo(Ratio)) (-: C(Ratio))";
     :input [ :id "1";  a ccd:ObjectQ, ccd:PlainVectorRegionA, ccd:RatioA ];
     :output [ a ccd:ObjectQ, ccd:PlainVectorRegionA, ccd:RatioA ].
 
-sig:SelectLayerByRatioTessObjects a :Signature;
+abstr:SelectLayerByRatioTessObjects a :AbstractTool;
     cct:expression "subset (1: ObjectInfo(Ratio)) (-: C(Ratio))";
     :input [ :id "1"; a ccd:ObjectQ, ccd:VectorTessellationA, ccd:RatioA ];
     :output [ a ccd:ObjectQ, ccd:PlainVectorRegionA, ccd:RatioA ].
 
-sig:SelectLayerContourToExistenceVector a :Signature;
+abstr:SelectLayerContourToExistenceVector a :AbstractTool;
     rdfs:comment "Contour to Existence Vector (select a contour map greater than some ordinal value)";
     cct:expression "revert (select (compose2 notj leq) (1: Contour) (-: Ord))";
     :input [ :id "1"; a ccd:FieldQ, ccd:VectorTessellationA, ccd:OrdinalA; rdfs:comment "Contour is a coverage that is a subclass of coverage and ordinalA, and therefore also allows field rasters, which we don't want in this context." ];
     :output [ a ccd:FieldQ, ccd:PlainVectorRegionA, ccd:OrdinalA ].
 
-sig:SelectLayerByRatioGEQPlainRegionObjects a :Signature;
+abstr:SelectLayerByRatioGEQPlainRegionObjects a :AbstractTool;
     rdfs:comment "Object selection variant vith gteq, needs a ratio attribute";
     cct:expression "select (compose2 notj leq) (1: ObjectInfo(Ratio)) (-: Ratio)";
     :input [ :id "1"; a ccd:ObjectQ, ccd:PlainVectorRegionA, ccd:RatioA ];
     :output [ a ccd:ObjectQ, ccd:PlainVectorRegionA, ccd:RatioA ].
 
-sig:SelectLayerCoverageToExistenceVector a :Signature;
+abstr:SelectLayerCoverageToExistenceVector a :AbstractTool;
     cct:expression "revert (select eq (1: Coverages(Nom)) (-: Nom))";
     :input [ :id "1"; a ccd:FieldQ, ccd:VectorTessellationA; rdfs:comment "Coverage is defined as a subclass of FieldQ and TesselationA, and therefore also allows field rasters, which we don't want in this context." ];
     :output [ a ccd:FieldQ, ccd:PlainVectorRegionA ].
 
-supertool:FullSelectLayerByLocation a :Supertool;
-    :signature sig:SelectLayerByLocationPointObjects, 
-        sig:SelectLayerByLocationLineObjects,
-        sig:SelectLayerByLocationPlainRegionObjects,
-        sig:SelectLayerByLocationTessObjects, 
-        sig:SelectLayerByLocationPlainRegionObjectsFieldDist, 
-        sig:SelectLayerByLocationPlainRegionObjectsDist;
+super:FullSelectLayerByLocation a :SuperTool;
+    :signature abstr:SelectLayerByLocationPointObjects, 
+        abstr:SelectLayerByLocationLineObjects,
+        abstr:SelectLayerByLocationPlainRegionObjects,
+        abstr:SelectLayerByLocationTessObjects, 
+        abstr:SelectLayerByLocationPlainRegionObjectsFieldDist, 
+        abstr:SelectLayerByLocationPlainRegionObjectsDist;
     :action [ :apply tool:SelectLayerByLocation;
         :input [ :id "1" ], [ :id "2" ];
         :output _:out21
@@ -737,7 +737,7 @@ supertool:FullSelectLayerByLocation a :Supertool;
         :input _:out21;
         :output _:out22 ].
 
-sig:SelectLayerByLocationPointObjects a :Signature;
+abstr:SelectLayerByLocationPointObjects a :AbstractTool;
     cct:expression
         """
         1: ObjectInfo(Nom);
@@ -754,7 +754,7 @@ sig:SelectLayerByLocationPointObjects a :Signature;
     :input [ :id "2"; a ccd:ObjectQ, ccd:VectorA ];
     :output [ a ccd:ObjectQ, ccd:PointA ].
 
-sig:SelectLayerByLocationLineObjects a :Signature;
+abstr:SelectLayerByLocationLineObjects a :AbstractTool;
     cct:expression
         """
         1: ObjectInfo(Nom);
@@ -771,7 +771,7 @@ sig:SelectLayerByLocationLineObjects a :Signature;
     :input [ :id "2"; a ccd:ObjectQ, ccd:VectorA ];
     :output [ a ccd:ObjectQ, ccd:LineA ].
 
-sig:SelectLayerByLocationPlainRegionObjects a :Signature;
+abstr:SelectLayerByLocationPlainRegionObjects a :AbstractTool;
     cct:expression
         """
         1: ObjectInfo(Nom);
@@ -788,7 +788,7 @@ sig:SelectLayerByLocationPlainRegionObjects a :Signature;
     :input [ :id "2"; a ccd:ObjectQ, ccd:VectorA ];
     :output [ a ccd:ObjectQ, ccd:PlainVectorRegionA ].
 
-sig:SelectLayerByLocationTessObjects a :Signature;
+abstr:SelectLayerByLocationTessObjects a :AbstractTool;
     cct:expression
         """
         1: ObjectInfo(Nom);
@@ -805,7 +805,7 @@ sig:SelectLayerByLocationTessObjects a :Signature;
     :input [ :id "2"; a ccd:ObjectQ, ccd:VectorA ];
     :output [ a ccd:ObjectQ, ccd:VectorTessellationA ].
 
-sig:SelectLayerByLocationPlainRegionObjectsFieldDist a :Signature;
+abstr:SelectLayerByLocationPlainRegionObjectsFieldDist a :AbstractTool;
     rdfs:comment "Object selection variant with vector field patches";
     cct:expression
         """
@@ -823,7 +823,7 @@ sig:SelectLayerByLocationPlainRegionObjectsFieldDist a :Signature;
     :input [ :id "2"; a ccd:FieldQ, ccd:VectorRegionA ];
     :output [ a ccd:ObjectQ, ccd:PlainVectorRegionA ].
 
-sig:SelectLayerByLocationPlainRegionObjectsDist a :Signature;
+abstr:SelectLayerByLocationPlainRegionObjectsDist a :AbstractTool;
     rdfs:comment "Object selection variant with distance";
     cct:expression
         """
@@ -841,7 +841,7 @@ sig:SelectLayerByLocationPlainRegionObjectsDist a :Signature;
     :input [ :id "2"; a ccd:ObjectQ, ccd:VectorA ];
     :output [ a ccd:ObjectQ, ccd:PlainVectorRegionA ].
 
-sig:SpatialJoinSumTessRatio a :Signature;
+abstr:SpatialJoinSumTessRatio a :AbstractTool;
     rdfs:comment "Spatial join with sum rule";
     rdfs:comment "with JOIN_ONE_TO_ONE parameter, with Merge_RULe sum for Ratio data";
     :input [ :id "1"; a ccd:ObjectQ, ccd:VectorA, ccd:ERA ];
@@ -864,7 +864,7 @@ sig:SpatialJoinSumTessRatio a :Signature;
             )))
         """.
 
-sig:SpatialJoinSumTessCount a :Signature;
+abstr:SpatialJoinSumTessCount a :AbstractTool;
     rdfs:comment "with JOIN_ONE_TO_ONE parameter, with Merge_RULe sum for Count data";
     :input [ :id "1"; a ccd:ObjectQ, ccd:VectorA, ccd:CountA ];
     :input [ :id "2"; a ccd:ObjectQ, ccd:VectorTessellationA ];
@@ -886,7 +886,7 @@ sig:SpatialJoinSumTessCount a :Signature;
             )))
         """.
 
-sig:SpatialJoinAmountSumTessRatio a :Signature;
+abstr:SpatialJoinAmountSumTessRatio a :AbstractTool;
     rdfs:comment "Spatial join with sum rule with vector amounts";
     rdfs:comment "with JOIN_ONE_TO_ONE parameter, with Merge_RULe sum for Ratio data";
     :input [ :id "1"; a ccd:AmountQ, ccd:VectorRegionA, ccd:ERA ];
@@ -911,7 +911,7 @@ sig:SpatialJoinAmountSumTessRatio a :Signature;
             )
         """.
 
-sig:SpatialJoinAmountSumTessCount a :Signature;
+abstr:SpatialJoinAmountSumTessCount a :AbstractTool;
     rdfs:comment "with JOIN_ONE_TO_ONE parameter, with Merge_RULe sum for Count data.";
     :input [ :id "1"; a ccd:AmountQ, ccd:VectorRegionA, ccd:CountA ];
     :input [ :id "2"; a ccd:ObjectQ, ccd:VectorTessellationA ];
@@ -937,7 +937,7 @@ sig:SpatialJoinAmountSumTessCount a :Signature;
             )
         """.
 
-sig:SpatialJoinMeanTessInterval a :Signature;
+abstr:SpatialJoinMeanTessInterval a :AbstractTool;
     rdfs:comment "spatial join with mean rule";
     rdfs:comment "with JOIN_ONE_TO_ONE parameter, with Merge_RULe mean for interval data";
     :input [ :id "1"; a ccd:ObjectQ, ccd:VectorA, ccd:IntervalA ];
@@ -959,7 +959,7 @@ sig:SpatialJoinMeanTessInterval a :Signature;
             )
         """.
 
-sig:SpatialJoinMeanTessRatio a :Signature;
+abstr:SpatialJoinMeanTessRatio a :AbstractTool;
     rdfs:comment "with JOIN_ONE_TO_ONE parameter, with Merge_RULe mean for Ratio data";
     :input [ :id "1"; a ccd:ObjectQ, ccd:VectorA, ccd:RatioA ];
     :input [ :id "2"; a ccd:ObjectQ, ccd:VectorTessellationA ];
@@ -981,7 +981,7 @@ sig:SpatialJoinMeanTessRatio a :Signature;
             )
         """.
 
-sig:SpatialJoinMeanTessCount a :Signature;
+abstr:SpatialJoinMeanTessCount a :AbstractTool;
     rdfs:comment "with JOIN_ONE_TO_ONE parameter, with Merge_RULe mean for Count data";
     :input [ :id "1"; a ccd:ObjectQ, ccd:VectorA, ccd:CountA ];
     :input [ :id "2"; a ccd:ObjectQ, ccd:VectorTessellationA ];
@@ -1003,7 +1003,7 @@ sig:SpatialJoinMeanTessCount a :Signature;
             )
         """.
 
-sig:SpatialJoinCountTess a :Signature;
+abstr:SpatialJoinCountTess a :AbstractTool;
     rdfs:comment "spatial join with the count rule";
     rdfs:comment "with JOIN_ONE_TO_ONE parameter and with Merge_RULe count";
     :input [ :id "1"; a ccd:ObjectQ, ccd:VectorA ];
@@ -1023,7 +1023,7 @@ sig:SpatialJoinCountTess a :Signature;
             )
         """.
 
-sig:ClipFieldRaster2ObjectExtent a :Signature;
+abstr:ClipFieldRaster2ObjectExtent a :AbstractTool;
     :input [ :id "1"; a ccd:FieldRaster, ccd:OrdinalA ];
     :input [ :id "2"; a ccd:ObjectVector ];
     :output [ a ccd:FieldRaster, ccd:OrdinalA];
@@ -1039,7 +1039,7 @@ sig:ClipFieldRaster2ObjectExtent a :Signature;
         ))
         """.
 
-sig:RegionFromRasterExtent a :Signature;
+abstr:RegionFromRasterExtent a :AbstractTool;
     :input [ :id "1"; a ccd:FieldRaster, ccd:NominalA ];
     :output [ a ccd:AmountQ, ccd:VectorRegionA, ccd:NominalA ];
     rdfs:comment "Make a region layer from the extent of a raster. Measures the coverage of a nominal field.";
@@ -1049,19 +1049,19 @@ sig:RegionFromRasterExtent a :Signature;
         nest2 (name (pi2 1)) (reify (fcover 1 (pi2 1)))
         """.
 
-sig:CoverageToNominalFieldRaster a :Signature;
+abstr:CoverageToNominalFieldRaster a :AbstractTool;
     :input [ :id "1"; a ccd:Coverage, ccd:PlainNominalA ];
     :output [ a ccd:FieldRaster, ccd:PlainNominalA ];
     rdfs:comment "Converts Field polygons to nominal field Rasters";
     cct:expression "revert (1: Coverages(Nom))".
 
-sig:ContourToFieldRaster a :Signature;
+abstr:ContourToFieldRaster a :AbstractTool;
     :input [ :id "1"; a ccd:Contour ];
     :output [ a ccd:FieldRaster, ccd:PlainOrdinalA ];
     rdfs:comment "Converts contour maps to field Rasters";
     cct:expression "revert (1: Contour)".
 
-sig:LocalMapAlgebraSubOrder a :Signature;
+abstr:LocalMapAlgebraSubOrder a :AbstractTool;
     :input [ :id "1"; a ccd:FieldRaster, ccd:OrdinalA ];
     :output [ a ccd:FieldRaster, ccd:OrdinalA ];
     rdfs:comment "local map algebra with only a single input layer";
@@ -1070,7 +1070,7 @@ sig:LocalMapAlgebraSubOrder a :Signature;
     cct:expression
         "select (compose2 notj leq) (1: Field(Ord)) (-: Ord)".
 
-sig:LocalMapAlgebraSubRatio a :Signature;
+abstr:LocalMapAlgebraSubRatio a :AbstractTool;
     :input [ :id "1"; a ccd:FieldRaster, ccd:RatioA ];
     :output [ a ccd:FieldRaster, ccd:RatioA ];
     rdfs:comment "local map algebra transformation with ratio field";
@@ -1079,8 +1079,8 @@ rdfs:comment
     cct:expression
         "select (compose2 notj leq) (1: Field(Ratio)) (-: Ratio)".
 
-supertool:RasterToContour a :Supertool;
-    :signature sig:RasterToContourInterval;
+super:RasterToContour a :SuperTool;
+    :signature abstr:RasterToContourInterval;
     :action [ :apply tool:RasterToIsoRaster;
         :input [ :id "1" ];
         :output _:out31
@@ -1088,7 +1088,7 @@ supertool:RasterToContour a :Supertool;
         :input _:out31;
         :output _:out32 ].
 
-sig:RasterToContourInterval a :Signature;
+abstr:RasterToContourInterval a :AbstractTool;
     :input [ :id "1"; a ccd:FieldRaster, ccd:IntervalA ];
     :output [ a ccd:Contour, ccd:PlainOrdinalA ];
     rdfs:comment
@@ -1096,9 +1096,9 @@ sig:RasterToContourInterval a :Signature;
     cct:expression
         "invert (apply1 classify (1: Field(Itv)))".
 
-supertool:ZonalStatistics a :Supertool;
-    :signature sig:ZonalStatisticsSize, sig:ZonalStatisticsMeanInterval, 
-        sig:ZonalStatisticsMeanRatio, sig:ZonalStatisticsSumCount;
+super:ZonalStatistics a :SuperTool;
+    :signature abstr:ZonalStatisticsSize, abstr:ZonalStatisticsMeanInterval, 
+        abstr:ZonalStatisticsMeanRatio, abstr:ZonalStatisticsSumCount;
     :action [ :apply tool:ZonalStatisticsAsTable;
         :input [ :id "1" ], _:in412;
         :output _:out41
@@ -1107,7 +1107,7 @@ supertool:ZonalStatistics a :Supertool;
         :output _:out42 ].
     _:in412 :id "2".
 
-sig:ZonalStatisticsSize a :Signature;
+abstr:ZonalStatisticsSize a :AbstractTool;
     rdfs:comment
         "Measures the size of the coverage of a given field raster inside object regions.";
     cct:expression
@@ -1125,7 +1125,7 @@ sig:ZonalStatisticsSize a :Signature;
     :input [ :id "2"; a ccd:ObjectQ, ccd:VectorRegionA ];
     :output [ a ccd:ObjectQ, ccd:VectorRegionA, ccd:ERA ].
 
-sig:ZonalStatisticsMeanInterval a :Signature;
+abstr:ZonalStatisticsMeanInterval a :AbstractTool;
     rdfs:comment
         "Calculates the average value of a field raster within the zones of a lattice.";
     cct:expression
@@ -1141,7 +1141,7 @@ sig:ZonalStatisticsMeanInterval a :Signature;
     :output [ a ccd:ObjectQ, ccd:VectorTessellationA, ccd:IntervalA ].
 
 
-sig:ZonalStatisticsMeanRatio a :Signature;
+abstr:ZonalStatisticsMeanRatio a :AbstractTool;
     rdfs:comment
         "Calculates the average value of a field raster within the zones given by object regions. Outcome is intensive.";
     cct:expression
@@ -1159,7 +1159,7 @@ sig:ZonalStatisticsMeanRatio a :Signature;
     :input [ :id "2"; a ccd:ObjectQ, ccd:PlainVectorRegionA ];
     :output [ a ccd:ObjectQ, ccd:PlainVectorRegionA, ccd:IRA ].
 
-sig:ZonalStatisticsSumCount a :Signature;
+abstr:ZonalStatisticsSumCount a :AbstractTool;
     rdfs:comment
         "Sums up count amounts (given as raster) into object regions.";
     cct:expression
@@ -1177,7 +1177,7 @@ sig:ZonalStatisticsSumCount a :Signature;
     :input [ :id "2"; a ccd:ObjectQ, ccd:VectorRegionA ];
     :output [ a ccd:ObjectQ, ccd:VectorRegionA, ccd:CountA ].
 
-sig:AddObjectVectorRegionArea a :Signature;
+abstr:AddObjectVectorRegionArea a :AbstractTool;
     :input [ :id "1"; a ccd:ObjectQ, ccd:VectorRegionA ];
     :output [ a ccd:ObjectQ, ccd:VectorRegionA, ccd:ERA ];
     rdfs:comment
@@ -1193,9 +1193,9 @@ sig:AddObjectVectorRegionArea a :Signature;
             )
         """.
 
-supertool:IntersectDissolve a :Supertool;
+super:IntersectDissolve a :SuperTool;
     rdfs:comment "this tool computes the coverage of a field inside object region by first intersecting and then dissolving  and joining, to obtain the area covered by the field inside the object region";
-    :signature sig:IntersectDissolveField2Object;
+    :signature abstr:IntersectDissolveField2Object;
     :action [ :apply tool:Intersect;
         :input [ :id "1" ], _:in82;
         :output _:out81
@@ -1207,7 +1207,7 @@ supertool:IntersectDissolve a :Supertool;
         :output _:out83 ].
 _:in82 :id "2".
 
-sig:IntersectDissolveField2Object a :Signature;
+abstr:IntersectDissolveField2Object a :AbstractTool;
     rdfs:comment "Coverage of vector field in object";
     rdfs:comment
         "Intersects a field vector with an object vector and then dissolves the result into the object to measure the areal coverage of the field inside the object.";
@@ -1227,8 +1227,8 @@ sig:IntersectDissolveField2Object a :Signature;
     :output [ a ccd:ObjectQ,  ccd:VectorRegionA, ccd:ERA ].
 
 
-supertool:MakeLayerFromTable a :Supertool;
-    :signature sig:MakePointMeasuresFromTable;
+super:MakeLayerFromTable a :SuperTool;
+    :signature abstr:MakePointMeasuresFromTable;
     :action [ :apply tool:MakeXyEventLayer;
         :input _:in51;
         :output _:out51
@@ -1243,7 +1243,7 @@ supertool:MakeLayerFromTable a :Supertool;
         :output _:out53 ].
 _:in51 :id "1".
 
-sig:MakePointMeasuresFromTable a :Signature;
+abstr:MakePointMeasuresFromTable a :AbstractTool;
     rdfs:comment
         "Makes a layer of pointmeasures from some XY table.";
     cct:expression
@@ -1251,7 +1251,7 @@ sig:MakePointMeasuresFromTable a :Signature;
     :input [ :id "1"; a ccd:PointMeasures, ccd:IntervalA ];
     :output [ a ccd:PointMeasures, ccd:IntervalA ].
 
-sig:IDWInterval a :Signature;
+abstr:IDWInterval a :AbstractTool;
     :input [ :id "1"; a ccd:PointMeasures, ccd:IntervalA ];
     :output [ a ccd:FieldRaster, ccd:IntervalA ];
     rdfs:comment
@@ -1259,7 +1259,7 @@ sig:IDWInterval a :Signature;
     cct:expression
         "interpol (1: PointMeasures) (deify (-: Reg))".
 
-sig:KrigingInterval a :Signature;
+abstr:KrigingInterval a :AbstractTool;
     :input [ :id "1"; a ccd:PointMeasures, ccd:IntervalA ];
     :output [ a ccd:FieldRaster, ccd:IntervalA ];
     rdfs:comment
@@ -1270,163 +1270,163 @@ sig:KrigingInterval a :Signature;
 
 # Tools
 
-tool:AddObjectVectorRegionArea a :Tool;
+tool:AddObjectVectorRegionArea a :ConcreteTool;
     rdf:seeAlso arcprodm:add-geometry-attributes.htm.
 
-tool:Aspect a :Tool;
+tool:Aspect a :ConcreteTool;
     rdf:seeAlso arcpro3d:aspect.htm.
 
-tool:ObjectBuffer a :Tool;
+tool:ObjectBuffer a :ConcreteTool;
     rdfs:comment "Buffer (interpreted as vector representation of boolean field)";
     rdf:seeAlso arcproan:buffer.htm.
 
-tool:BuildNetwork a :Tool;
+tool:BuildNetwork a :ConcreteTool;
     rdfs:comment "Builds ratio network from line objects";
     rdf:seeAlso arcprona:build-network.htm.
 
-tool:Clip a :Tool;
+tool:Clip a :ConcreteTool;
     rdf:seeAlso arcprodm:clip.htm;
-    :signature sig:ClipObject2Object, sig:ClipNomFieldVector2Extent, 
-        sig:ClipBoolFieldVector2Extent, sig:ClipFieldRaster2ObjectExtent.
+    :signature abstr:ClipObject2Object, abstr:ClipNomFieldVector2Extent, 
+        abstr:ClipBoolFieldVector2Extent, abstr:ClipFieldRaster2ObjectExtent.
 
-tool:Con a :Tool;
+tool:Con a :ConcreteTool;
     rdf:seeAlso arcprosa:con-.htm;
-    :signature sig:con1, sig:con2, sig:con3.
+    :signature abstr:con1, abstr:con2, abstr:con3.
 
-tool:Dissolve a :Tool;
+tool:Dissolve a :ConcreteTool;
     rdfs:comment "Merge object parts into single object";
     rdf:seeAlso arcprodm:dissolve.htm;
-    :signature sig:MergeObjects.
+    :signature abstr:MergeObjects.
 
-tool:Erase a :Tool;
+tool:Erase a :ConcreteTool;
     rdfs:comment "Erase Vector fields";
     rdf:seeAlso arcproan:erase.htm;
-    :signature sig:EraseFieldExtentfromFieldVector.
+    :signature abstr:EraseFieldExtentfromFieldVector.
 
-tool:ExtractByMask a :Tool;
+tool:ExtractByMask a :ConcreteTool;
     rdf:seeAlso arcprosa:extract-by-mask.htm;
-    :signature sig:ExtractByMask.
+    :signature abstr:ExtractByMask.
 
-tool:FC2FC a :Tool;
+tool:FC2FC a :ConcreteTool;
     rdfs:comment "Feature class to feature class (=Select)";
     rdf:seeAlso arcproco:feature-class-to-feature-class.htm;
-    :signature sig:FC2FCObjectTess.
+    :signature abstr:FC2FCObjectTess.
 
-tool:FlowAccumulation a :Tool;
+tool:FlowAccumulation a :ConcreteTool;
     rdfs:comment "Flow direction accumulation";
     rdf:seeAlso arcprosa:flow-accumulation.htm;
-    :signature sig:FlowAccumulation.
+    :signature abstr:FlowAccumulation.
 
-tool:FlowDirection a :Tool;
+tool:FlowDirection a :ConcreteTool;
     rdfs:comment "Flow direction raster";
     rdf:seeAlso arcprosa:flow-direction.htm;
-    :signature sig:FlowDirection.
+    :signature abstr:FlowDirection.
 
-tool:FlowLength a :Tool;
+tool:FlowLength a :ConcreteTool;
     rdf:seeAlso arcprosa:flow-length.htm;
-    :signature sig:FlowLength.
+    :signature abstr:FlowLength.
 
-tool:NearPointObjects a :Tool;
+tool:NearPointObjects a :ConcreteTool;
     rdfs:comment "Near tool, to seach for the closest objects using Euclidean distance";
     rdf:seeAlso arcproan:generate-near-table.htm;
-    :signature sig:NearPointObjects.
+    :signature abstr:NearPointObjects.
 
-tool:IDWInterval a :Tool;
+tool:IDWInterval a :ConcreteTool;
     rdf:seeAlso arcprosa:idw.htm;
-    :signature sig:IDWInterval.
+    :signature abstr:IDWInterval.
 
-tool:KrigingInterval a :Tool;
+tool:KrigingInterval a :ConcreteTool;
     rdf:seeAlso arcprosa:kriging.htm;
-    :signature sig:KrigingInterval.
+    :signature abstr:KrigingInterval.
 
-tool:PolygonToRaster a :Tool;
+tool:PolygonToRaster a :ConcreteTool;
     rdf:seeAlso arcproco:polygon-to-raster.htm;
-    :signature sig:CoverageToNominalFieldRaster, sig:ContourToFieldRaster.
+    :signature abstr:CoverageToNominalFieldRaster, abstr:ContourToFieldRaster.
 
-tool:RasterCalculator a :Tool;
+tool:RasterCalculator a :ConcreteTool;
     rdf:seeAlso arcprosa:raster-calculator.htm;
-    :signature sig:LocalMapAlgebraInvert, sig:LocalMapAlgebraDivide, 
-        sig:LocalMapAlgebraSubOrder, sig:LocalMapAlgebraSubRatio.
+    :signature abstr:LocalMapAlgebraInvert, abstr:LocalMapAlgebraDivide, 
+        abstr:LocalMapAlgebraSubOrder, abstr:LocalMapAlgebraSubRatio.
 
-tool:RegionFromRasterExtent a :Tool;
+tool:RegionFromRasterExtent a :ConcreteTool;
     rdf:seeAlso arcproco:raster-to-polygon.htm;
-    :signature sig:RegionFromRasterExtent.
+    :signature abstr:RegionFromRasterExtent.
 
-tool:RasterToIsoRaster a :Tool;
+tool:RasterToIsoRaster a :ConcreteTool;
     rdf:seeAlso arcprosa:reclassify.htm;
-    :signature sig:RasterToIsoRaster.
+    :signature abstr:RasterToIsoRaster.
 
-tool:SelectObjectByExtent a :Tool;
+tool:SelectObjectByExtent a :ConcreteTool;
     rdf:seeAlso arcproan:select.htm;
-    :signature sig:SelectObjectbyExtent.
+    :signature abstr:SelectObjectbyExtent.
 
-tool:Slope a :Tool;
+tool:Slope a :ConcreteTool;
     rdf:seeAlso arcprosa:slope.htm;
-    :signature sig:Slope.
+    :signature abstr:Slope.
 
-tool:SnapPourPoint a :Tool;
+tool:SnapPourPoint a :ConcreteTool;
     rdf:seeAlso arcprosa:snap-pour-point.htm;
-    :signature sig:SnapPourPoint.
+    :signature abstr:SnapPourPoint.
 
-tool:SpatialJoin a :Tool;
+tool:SpatialJoin a :ConcreteTool;
     rdf:seeAlso arcproan:spatial-join.htm;
-    :signature sig:SpatialJoinSumTessRatio, sig:SpatialJoinSumTessCount, 
-        sig:SpatialJoinAmountSumTessRatio, sig:SpatialJoinAmountSumTessCount, 
-        sig:SpatialJoinMeanTessInterval, sig:SpatialJoinMeanTessRatio, 
-        sig:SpatialJoinMeanTessCount, sig:SpatialJoinCountTess.
+    :signature abstr:SpatialJoinSumTessRatio, abstr:SpatialJoinSumTessCount, 
+        abstr:SpatialJoinAmountSumTessRatio, abstr:SpatialJoinAmountSumTessCount, 
+        abstr:SpatialJoinMeanTessInterval, abstr:SpatialJoinMeanTessRatio, 
+        abstr:SpatialJoinMeanTessCount, abstr:SpatialJoinCountTess.
 
-tool:SummaryStatistics a :Tool;
+tool:SummaryStatistics a :ConcreteTool;
     rdf:seeAlso arcproan:summary-statistics.htm;
-    :signature sig:ObjectSummaryStatisticsAmount, sig:SummaryStatisticsAmount.
+    :signature abstr:ObjectSummaryStatisticsAmount, abstr:SummaryStatisticsAmount.
 
-tool:Watershed a :Tool;
+tool:Watershed a :ConcreteTool;
     rdf:seeAlso arcprosa:watershed.htm;
-    :signature sig:Watershed.
+    :signature abstr:Watershed.
 
-tool:MakeClosestFacilityAnalysisLayer a :Tool;
+tool:MakeClosestFacilityAnalysisLayer a :ConcreteTool;
     rdf:seeAlso arcprona:make-closest-facility-analysis-layer.htm.
 
-tool:AddLocations a :Tool;
+tool:AddLocations a :ConcreteTool;
     rdf:seeAlso arcprona:add-locations.htm.
 
-tool:Solve a :Tool;
+tool:Solve a :ConcreteTool;
     rdf:seeAlso arcprona:solve.htm.
 
-tool:ExcelToTable a :Tool;
+tool:ExcelToTable a :ConcreteTool;
     rdf:seeAlso arcproco:excel-to-table.htm.
 
-tool:JoinField a :Tool;
+tool:JoinField a :ConcreteTool;
     rdf:seeAlso arcprodm:join-field.htm.
 
-tool:TableToTable a :Tool;
+tool:TableToTable a :ConcreteTool;
     rdf:seeAlso arcproco:table-to-table.htm.
 
-tool:AddField a :Tool;
+tool:AddField a :ConcreteTool;
     rdf:seeAlso arcprodm:add-field.htm.
 
-tool:CalculateField a :Tool;
+tool:CalculateField a :ConcreteTool;
     rdf:seeAlso arcprodm:calculate-field.htm.
 
-tool:AddField a :Tool;
+tool:AddField a :ConcreteTool;
     rdf:seeAlso arcprodm:add-fields.htm.
 
-tool:SelectLayerByAttribute a :Tool;
+tool:SelectLayerByAttribute a :ConcreteTool;
     rdf:seeAlso arcprodm:select-layer-by-attribute.htm.
 
-tool:CopyFeatures a :Tool;
+tool:CopyFeatures a :ConcreteTool;
     rdf:seeAlso arcprodm:copy-features.
 
-tool:SelectLayerByLocation a :Tool;
+tool:SelectLayerByLocation a :ConcreteTool;
     rdf:seeAlso arcprodm:select-layer-by-location.htm.
 
-tool:ZonalStatisticsAsTable a :Tool;
+tool:ZonalStatisticsAsTable a :ConcreteTool;
     rdf:seeAlso arcprosa:zonal-statistics-as-table.htm.
 
-tool:Intersect a :Tool;
+tool:Intersect a :ConcreteTool;
     rdf:seeAlso arcproan:intersect.htm.
 
-tool:MakeXyEventLayer a :Tool;
+tool:MakeXyEventLayer a :ConcreteTool;
     rdf:seeAlso arcprodm:make-xy-event-layer.htm.
 
-tool:Project a :Tool;
+tool:Project a :ConcreteTool;
     rdf:seeAlso arcprodm:project.htm.
