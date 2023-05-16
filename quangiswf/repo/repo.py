@@ -2,6 +2,7 @@
 from __future__ import annotations
 from rdflib.term import Node, URIRef, BNode
 from rdflib import Graph
+from rdflib.compare import isomorphic
 from typing import Iterator
 from transforge.list import GraphList
 from itertools import count, repeat, chain
@@ -29,16 +30,27 @@ class Repo(object):
         super().__init__()
 
     @staticmethod
-    def from_file(file: Path) -> Repo:
+    def from_file(file: Path, check_integrity: bool = True) -> Repo:
         g = Graph()
-        repo = Repo()
         g.parse(file)
+
+        repo = Repo()
         for tool in ConcreteTool.from_graph(g):
             repo.add(tool)
         for sig in AbstractTool.from_graph(g):
             repo.add(sig)
         for supertool in SuperTool.from_graph(g):
             repo.add(supertool)
+
+        if check_integrity:
+            g2 = repo.graph()
+            if not isomorphic(g, g2):
+                raise RuntimeError(
+                    f"Integrity check failed for {file}. It may contain "
+                    f"tuples that aren't interpreted by this program, "
+                    f"which will be lost if you proceed.")
+            else:
+                print("works")
         return repo
 
     def __getitem__(self, key: URIRef) -> Tool:

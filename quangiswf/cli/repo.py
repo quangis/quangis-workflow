@@ -33,9 +33,9 @@ class CLI(cli.Application):
 
 
 class WithRepo(object):
-    repo = cli.SwitchAttr(["--repo"],
-        help="RDF file containing tools, supertools and signatures",
-        argtype=Repo.from_file,
+    repo = cli.SwitchAttr(["--tools"],
+        help="abstract tools, concrete tools and supertools",
+        argtype=lambda x: Repo.from_file(x, check_integrity=True),
         mandatory=True)
 
 
