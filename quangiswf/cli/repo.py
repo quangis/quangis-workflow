@@ -33,10 +33,13 @@ class CLI(cli.Application):
 
 
 class WithRepo(object):
-    repo = cli.SwitchAttr(["--tools"],
-        help="abstract tools, concrete tools and supertools",
-        argtype=lambda x: Repo.from_file(x, check_integrity=True),
-        mandatory=True)
+    assume_integrity = cli.Flag(["-x", "--assume-integrity"],
+        help="disable integrity check for tools file")
+
+    @cli.autoswitch(Path, mandatory=True)
+    def _tools(self, path: Path) -> None:
+        self.tools = Repo.from_file(path,
+            check_integrity=not self.assume_integrity)
 
 
 @CLI.subcommand("construct")
@@ -47,7 +50,7 @@ class Constructor(cli.Application, WithRepo):
         help="output file", default=None)
 
     def main(self, *FILE):
-        repo = self.repo
+        repo = self.tools
         for file in paths(FILE):
             cwf = Workflow.from_file(file)
             repo.update(cwf)
