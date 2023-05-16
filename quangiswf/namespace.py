@@ -5,26 +5,17 @@ This module holds the RDF namespaces that we use frequently.
 import sys
 from rdflib import Namespace, Graph
 from rdflib.term import Node, URIRef, BNode
-from rdflib.namespace import NamespaceManager
+from rdflib.namespace import NamespaceManager, RDFS, RDF, OWL
 from typing import Mapping
 from cct import cct  # type: ignore
 
-TEST = Namespace("http://www.semanticweb.org/test#")
-FOAF = Namespace("http://xmlns.com/foaf/0.1/")
+EX = Namespace('https://example.com/#')
 CCD = Namespace("http://geographicknowledge.de/vocab/CoreConceptData.rdf#")
-OWL = Namespace("http://www.w3.org/2002/07/owl#")
-RDF = Namespace("http://www.w3.org/1999/02/22-rdf-syntax-ns#")
-XML = Namespace("http://www.w3.org/XML/1998/namespace")
-XSD = Namespace("http://www.w3.org/2001/XMLSchema#")
-RDFS = Namespace("http://www.w3.org/2000/01/rdf-schema#")
-EM = Namespace("http://geographicknowledge.de/vocab/ExtensiveMeasures.rdf#")
 ADA = Namespace("http://geographicknowledge.de/vocab/AnalysisData.rdf#")
 WF = Namespace("http://geographicknowledge.de/vocab/Workflow.rdf#")
 GIS = Namespace("http://geographicknowledge.de/vocab/GISConcepts.rdf#")
-# TOOLS = Namespace("http://geographicknowledge.de/vocab/GISTools.rdf#")
-TOOLS = Namespace("https://github.com/quangis/cct/blob/master/tools/tools.ttl#")
-REPO = Namespace("https://github.com/quangis/quangis-workflow-generator#")
-EX = Namespace('https://example.com/#')
+TOOLS = Namespace(
+    "https://github.com/quangis/cct/blob/master/tools/tools.ttl#")
 DATA = Namespace("https://github.com/quangis/cct/blob/master/tools/data.ttl#")
 CCT_ = Namespace("https://github.com/quangis/cct#")
 CCT = cct.namespace
