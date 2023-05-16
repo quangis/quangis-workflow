@@ -85,7 +85,8 @@ class SuperTool(ToolImplementation):
     def extract(wf: Workflow, action: Node) -> SuperTool:
         """Propose a supertool that corresponds to the subworkflow associated 
         with the given action."""
-        label, impl = wf.impl(action)
+        impl = wf.tool(action)
+        label = wf.label(impl)
 
         if (impl, RDF.type, WF.Workflow) in wf:
             assert isinstance(impl, BNode), \
@@ -94,7 +95,7 @@ class SuperTool(ToolImplementation):
             supertool = SuperTool(SUPER[label])
 
             for a in wf.low_level_actions(impl):
-                _, tool = wf.impl(a)
+                tool = wf.tool(a)
                 assert isinstance(tool, URIRef)
                 supertool.add_action(tool, wf.inputs(a), wf.output(a))
 
@@ -223,7 +224,7 @@ class AbstractTool(Tool):
     @staticmethod
     def propose(wf: Workflow, action: Node) -> AbstractTool:
         """Create a new signature proposal from a tool application."""
-        _, impl = wf.impl(action)
+        impl = wf.tool(action)
         name = wf.label(impl)
         if isinstance(impl, URIRef):
             lbl = n3(impl)

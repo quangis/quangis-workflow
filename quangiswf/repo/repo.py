@@ -84,7 +84,7 @@ class Repo(object):
         assert (root, RDF.type, WF.Workflow) in wf
 
         for action in wf.high_level_actions(root):
-            _, impl = wf.impl(action)
+            impl = wf.tool(action)
             try:
                 proposal_sig = AbstractTool.propose(wf, action)
                 if impl in self.concrete_tools:
@@ -149,7 +149,7 @@ class Repo(object):
         # tools or supertools existed in the repository yet
         proposal_sig = AbstractTool.propose(wf, action)
 
-        _, impl = wf.impl(action)
+        impl = wf.tool(action)
 
         if impl in self.concrete_tools:
             assert isinstance(impl, URIRef)

@@ -186,7 +186,7 @@ class Workflow(Graph):
         else:
             raise RuntimeError("Cannot determine label of a blank node")
 
-    def impl(self, action: Node) -> tuple[str, Node]:
+    def tool(self, action: Node) -> Node:
         impl = self.value(action, WF.applicationOf, any=False)
         assert impl
         label = self.label(impl)
@@ -201,4 +201,4 @@ class Workflow(Graph):
             raise RuntimeError(
                 f"An action that is implemented by a tool, labelled "
                 f"'{label}', should be a URI reference.")
-        return label, impl
+        return impl
