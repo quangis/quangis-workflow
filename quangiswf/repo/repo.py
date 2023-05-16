@@ -11,7 +11,7 @@ from collections import defaultdict
 from quangiswf.namespace import (bind_all, TOOLSCHEMA, DATA, RDF, WF, CCT_, n3, 
     SIG)
 from quangiswf.repo.workflow import (Workflow)
-from quangiswf.repo.tool import (Tool, Supertool, Signature)
+from quangiswf.repo.tool import (Tool, BaseConcreteTool, Supertool, Signature)
 
 
 class ToolAlreadyExistsError(Exception):
@@ -28,7 +28,7 @@ class Repo(object):
 
     def __init__(self) -> None:
         self.abstract_tools: dict[URIRef, Signature] = dict()
-        self.concrete_tools: dict[URIRef, Tool] = dict()
+        self.concrete_tools: dict[URIRef, BaseConcreteTool] = dict()
         self.supertools: dict[URIRef, Supertool] = dict()
         super().__init__()
 
@@ -37,7 +37,7 @@ class Repo(object):
         g = Graph()
         repo = Repo()
         g.parse(file)
-        for tool in Tool.from_graph(g):
+        for tool in BaseConcreteTool.from_graph(g):
             repo.add(tool)
         for supertool in Supertool.from_graph(g):
             repo.add(supertool)
@@ -45,13 +45,12 @@ class Repo(object):
             repo.add(sig)
         return repo
 
-    def __getitem__(self, key: URIRef) -> Tool | Supertool | Signature:
+    def __getitem__(self, key: URIRef) -> Tool:
         return (self.concrete_tools.get(key)
             or self.abstract_tools.get(key)
             or self.supertools[key])
 
-    def __contains__(self, tool: URIRef | Tool | Supertool | Signature
-            ) -> bool:
+    def __contains__(self, tool: URIRef | Tool) -> bool:
         if isinstance(tool, URIRef):
             return (tool in self.abstract_tools
                 or tool in self.concrete_tools
@@ -59,8 +58,8 @@ class Repo(object):
         else:
             return tool.uri in self
 
-    def add(self, item: Tool | Supertool | Signature) -> None:
-        if isinstance(item, Tool):
+    def add(self, item: Tool) -> None:
+        if isinstance(item, BaseConcreteTool):
             assert item.uri not in self.concrete_tools
             self.concrete_tools[item.uri] = item
         elif isinstance(item, Supertool):
@@ -298,6 +297,6 @@ class Repo(object):
                 self.abstract_tools.values(),
                 self.concrete_tools.values(),
                 self.supertools.values()):
-            assert isinstance(tool, (Signature, Tool, Supertool))
+            assert isinstance(tool, Tool)
             tool.to_graph(g)
         return g

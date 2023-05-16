@@ -24,7 +24,8 @@ class UntypedArtefactError(Exception):
 class DisconnectedArtefactsError(Exception):
     pass
 
-class Implementation(object):
+
+class Tool(object):
     def __init__(self, name: str, uri: URIRef):
         self.name = name
         self.uri = uri
@@ -34,9 +35,13 @@ class Implementation(object):
         return NotImplemented
 
 
-class Tool(Implementation):
-    """A tool is a reference to an actual concrete tool, as implemented by, for 
-    example, ArcGIS or QGIS."""
+class Implementation(Tool):
+    pass
+
+
+class BaseConcreteTool(Implementation):
+    """A basic concrete tool is a reference to a single implemented tool, as 
+    implemented by, for example, ArcGIS or QGIS."""
 
     def __init__(self, uri: URIRef, url: URIRef,
             name: str | None = None) -> None:
@@ -45,12 +50,12 @@ class Tool(Implementation):
         self.url = url
 
     @staticmethod
-    def from_graph(graph: Graph) -> Iterator[Tool]:
+    def from_graph(graph: Graph) -> Iterator[BaseConcreteTool]:
         for tool in graph.subjects(RDF.type, TOOLSCHEMA.Tool):
             assert isinstance(tool, URIRef)
             url = graph.value(tool, RDFS.seeAlso, any=False)
             assert isinstance(url, URIRef)
-            yield Tool(tool, url)
+            yield BaseConcreteTool(tool, url)
 
     def to_graph(self, g: Graph) -> Graph:
         assert not (self.uri, RDF.type, TOOLSCHEMA.Tool) in g
@@ -189,7 +194,7 @@ class Supertool(Implementation):
             and isomorphic(self._graph, other._graph))
 
 
-class Signature(object):
+class Signature(Tool):
     """A tool signature is an abstract specification of a tool. It may 
     correspond to one or more concrete tools, or even ensembles of tools. It 
     must describe the format of its input and output (ie the core concept 
@@ -208,8 +213,8 @@ class Signature(object):
             cct_expr: str,
             implementations: Iterable[URIRef] = (),
             uri: URIRef | None = None) -> None:
-        self.name = name
-        self.uri: URIRef = uri or SIG[name]
+        uri = uri or SIG[name]
+        super().__init__(name, uri)
         self.inputs: dict[str, Polytype] = inputs
         self.output: Polytype = output
         self.cct_expr: str = cct_expr
