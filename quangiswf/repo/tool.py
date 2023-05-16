@@ -26,9 +26,9 @@ class DisconnectedArtefactsError(Exception):
 
 
 class Tool(object):
-    def __init__(self, name: str, uri: URIRef):
-        self.name = name
+    def __init__(self, uri: URIRef):
         self.uri = uri
+        self.name = shorten(uri)
 
     @abstractmethod
     def to_graph(self, g: Graph) -> Graph:
@@ -43,10 +43,9 @@ class BaseConcreteTool(Implementation):
     """A basic concrete tool is a reference to a single implemented tool, as 
     implemented by, for example, ArcGIS or QGIS."""
 
-    def __init__(self, uri: URIRef, url: URIRef,
-            name: str | None = None) -> None:
-        name = name or shorten(uri)
-        super().__init__(name, uri)
+    def __init__(self, uri: URIRef, url: URIRef) -> None:
+        # name = name or shorten(uri)
+        super().__init__(uri)
         self.url = url
 
     @staticmethod
@@ -79,7 +78,7 @@ class Supertool(Implementation):
         self.constituent_tools: set[URIRef] = set()
 
         self._graph = Graph()
-        super().__init__(name, SUPERTOOL[name])
+        super().__init__(SUPERTOOL[name])
 
     @staticmethod
     def extract(wf: Workflow, action: Node) -> Supertool:
@@ -207,14 +206,12 @@ class Signature(Tool):
     be used in multiple contexts --- in the same way that a hammer can be used 
     either to drive a nail into a plank of wood or to break a piggy bank."""
 
-    def __init__(self, name: str,
+    def __init__(self, uri: URIRef,
             inputs: dict[str, Polytype],
             output: Polytype,
             cct_expr: str,
-            implementations: Iterable[URIRef] = (),
-            uri: URIRef | None = None) -> None:
-        uri = uri or SIG[name]
-        super().__init__(name, uri)
+            implementations: Iterable[URIRef] = ()) -> None:
+        super().__init__(uri)
         self.inputs: dict[str, Polytype] = inputs
         self.output: Polytype = output
         self.cct_expr: str = cct_expr
@@ -225,7 +222,8 @@ class Signature(Tool):
     @staticmethod
     def propose(wf: Workflow, action: Node) -> Signature:
         """Create a new signature proposal from a tool application."""
-        name, impl = wf.impl(action)
+        _, impl = wf.impl(action)
+        name = wf.label(impl)
         if isinstance(impl, URIRef):
             lbl = n3(impl)
         else:
@@ -252,7 +250,7 @@ class Signature(Tool):
                 f"The CCD type of the output artefact of an action "
                 f"associated with {lbl} is empty or too general.")
 
-        return Signature(name, inputs, output, cct_expr)
+        return Signature(SIG[name], inputs, output, cct_expr)
 
     @staticmethod
     def from_graph(graph: Graph) -> Iterator[Signature]:
@@ -281,13 +279,11 @@ class Signature(Tool):
             output = Polytype.assemble(dimensions,
                 graph.objects(output_artefact, RDF.type))
 
-            yield Signature(
+            yield Signature(uri=sig,
                 inputs=inputs,
                 output=output,
                 cct_expr=str(cct_literal),
-                implementations=implementations,
-                uri=sig,
-                name=shorten(sig)
+                implementations=implementations
             )
 
     def to_graph(self, g: Graph) -> Graph:
