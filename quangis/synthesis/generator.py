@@ -11,9 +11,9 @@ from typing import Iterable
 from transforge.namespace import shorten
 
 from quangis.ccd import ccd_graph, dimensions
-from quangis.ape import APE, Workflow, ToolsDict
 from quangis.polytype import Polytype
 from quangis.namespace import CCD, TOOLS, OWL, RDF, RDFS, ADA, WF
+from quangis.synthesis.ape import APE, Workflow, ToolsDict
 
 def graph(path: Path) -> Graph:
     g = Graph()

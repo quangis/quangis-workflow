@@ -12,7 +12,7 @@ from collections import defaultdict
 
 from quangis.namespace import (bind_all, VOCAB, RDF, WF, CCT_, n3, ABSTR)
 from quangis.workflow import (Workflow)
-from quangis.repo.tool import (Tool, ConcreteTool, SuperTool, AbstractTool)
+from quangis.tools.tool import (Tool, ConcreteTool, SuperTool, AbstractTool)
 
 
 class ToolAlreadyExistsError(Exception):

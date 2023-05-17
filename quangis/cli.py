@@ -7,7 +7,7 @@ from typing import Iterable, Iterator
 from rdflib import Graph, Namespace, URIRef, RDF
 from rdflib.util import guess_format
 
-from quangis.repo.repo import Repo
+from quangis.tools import Repo
 from quangis.workflow import Workflow
 from quangis.namespace import CCD, EX
 from quangis.polytype import Polytype
@@ -116,7 +116,7 @@ class Generator(cli.Application, WithRepo, WithDestDir):
             for x in g.objects(None, base.output)]
 
     def main(self, *args) -> None:
-        from quangis.generator import WorkflowGenerator
+        from quangis.synthesis import WorkflowGenerator
 
         gen = WorkflowGenerator(self.tools_file, self.output_dir)
 
