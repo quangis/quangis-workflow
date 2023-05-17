@@ -98,7 +98,7 @@ class AbstractConverter(cli.Application, WithRepo):
                 g.serialize(output_file, format="turtle")
 
 
-@CLI.subcommand("generate")
+@CLI.subcommand("synthesis")
 class Generator(cli.Application, WithRepo, WithDestDir):
     """Generate workflows using APE"""
 
