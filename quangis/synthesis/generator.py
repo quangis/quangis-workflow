@@ -12,7 +12,7 @@ from transforge.namespace import shorten
 
 from quangis.ccd import ccd_graph, dimensions
 from quangis.polytype import Polytype
-from quangis.namespace import CCD, TOOLS, OWL, RDF, RDFS, ADA, WF
+from quangis.namespace import CCD, VOCAB, TOOLS, OWL, RDF, RDFS, ADA, WF
 from quangis.synthesis.ape import APE, Workflow, ToolsDict
 
 def graph(path: Path) -> Graph:
@@ -35,7 +35,7 @@ class WorkflowGenerator(APE):
         super().__init__(
             taxonomy=self.ape_type_taxonomy() + self.ape_tool_taxonomy(),
             tools=self.ape_tools(),
-            tool_root=TOOLS.Tool,
+            tool_root=VOCAB.AbstractTool,
             namespace=CCD,
             build_dir=build_dir,
             dimensions=[d.root for d in self.dimensions]
@@ -45,9 +45,6 @@ class WorkflowGenerator(APE):
         """
         Convert tool annotation graph into a dictionary that APE understands.
         """
-
-        input_predicates = (WF.input1, WF.input2, WF.input3)
-        output_predicates = (WF.output, WF.output2, WF.output3)
 
         casts = {
             CCD.NominalA: CCD.PlainNominalA,
@@ -69,8 +66,7 @@ class WorkflowGenerator(APE):
                                 self.tools.objects(input, RDF.type)
                             ).items()
                         }
-                        for p in input_predicates
-                        if (input := self.tools.value(tool, p, any=False))
+                        for input in self.tools.objects(tool, VOCAB.output)
                     ],
                     'outputs': [
                         {
@@ -80,11 +76,10 @@ class WorkflowGenerator(APE):
                                 self.tools.objects(output, RDF.type)
                             ).downcast(casts).items()
                         }
-                        for p in output_predicates
-                        if (output := self.tools.value(tool, p, any=False))
+                        for output in self.tools.objects(tool, VOCAB.output)
                     ]
                 }
-                for tool in self.tools.objects(predicate=TOOLS.implements)
+                for tool in self.tools.subjects(RDF.type, VOCAB.AbstractTool)
             ]
         }
 
@@ -92,11 +87,9 @@ class WorkflowGenerator(APE):
         taxonomy = Graph()
         taxonomy.base = CCD
 
-        for s, o in self.tools.subject_objects(TOOLS.implements):
-            taxonomy.add((o, RDFS.subClassOf, s))
-            taxonomy.add((s, RDF.type, OWL.Class))
-            taxonomy.add((o, RDF.type, OWL.Class))
-            taxonomy.add((s, RDFS.subClassOf, TOOLS.Tool))
+        for tool in self.tools.subjects(RDF.type, VOCAB.AbstractTool):
+            taxonomy.add((tool, RDF.type, OWL.Class))
+            taxonomy.add((tool, RDFS.subClassOf, VOCAB.AbstractTool))
         return taxonomy
 
     def ape_type_taxonomy(self) -> Graph:
