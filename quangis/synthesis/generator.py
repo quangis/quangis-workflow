@@ -1,6 +1,4 @@
-#!/usr/bin/env python3
-"""Higher-level APE wrapper that takes input and produces output in the RDF 
-form we want it to."""
+"""Higher-level APE wrapper that takes input in the desired form."""
 
 from __future__ import annotations
 
@@ -10,9 +8,9 @@ from rdflib.util import guess_format
 from typing import Iterable
 from transforge.namespace import shorten
 
-from quangis.ccd import ccd_graph, dimensions
+from quangis.ccdata import ccd_graph, dimensions
 from quangis.polytype import Polytype
-from quangis.namespace import CCD, VOCAB, TOOLS, OWL, RDF, RDFS, ADA, WF
+from quangis.namespace import CCD, VOCAB, OWL, RDF, RDFS, ADA
 from quangis.synthesis.ape import APE, Workflow, ToolsDict
 
 def graph(path: Path) -> Graph:

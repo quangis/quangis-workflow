@@ -6,8 +6,8 @@ import sys
 from rdflib import Namespace, Graph
 from rdflib.term import Node, URIRef, BNode
 from rdflib.namespace import NamespaceManager, RDFS, RDF, OWL
+from quangis.cctrans import CCT
 from typing import Mapping
-from cct import cct  # type: ignore
 
 EX = Namespace('https://example.com/#')
 CCD = Namespace("http://geographicknowledge.de/vocab/CoreConceptData.rdf#")
@@ -17,7 +17,6 @@ GIS = Namespace("http://geographicknowledge.de/vocab/GISConcepts.rdf#")
 TOOLS = Namespace(
     "https://github.com/quangis/cct/blob/master/tools/tools.ttl#")
 CCT_ = Namespace("https://github.com/quangis/cct#")
-CCT = cct.namespace
 
 VOCAB = Namespace("https://quangis.github.io/vocab/tool#")
 TOOL = Namespace("https://quangis.github.io/tool#")

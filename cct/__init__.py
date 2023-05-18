@@ -1,1 +1,1 @@
-from cct.language import cct
+from quangis.cctrans import cct

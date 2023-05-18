@@ -694,3 +694,4 @@ cct = Language(
         R3(Loc, Qlt, Loc),
         R3(Obj, Obj, Obj)
     })
+CCT = cct.namespace

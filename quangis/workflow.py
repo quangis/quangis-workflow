@@ -21,7 +21,7 @@ from transforge.namespace import shorten
 from quangis.namespace import (
     WF, RDF, RDFS, CCT, CCT_, n3)
 from quangis.polytype import Polytype
-from quangis.ccd import dimensions
+from quangis.ccdata import dimensions
 
 root_dir = Path(__file__).parent.parent
 

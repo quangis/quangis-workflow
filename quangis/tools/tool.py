@@ -11,7 +11,7 @@ from quangis.workflow import Workflow, dimensions
 from quangis.polytype import Polytype
 from quangis.namespace import (
     n3, RDF, RDFS, VOCAB, WF, SUPER, ABSTR, CCT)
-from cct import cct
+from quangis.cctrans import cct
 
 
 class CCTError(Exception):
