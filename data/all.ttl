@@ -3,7 +3,7 @@
 # (line 562)
 #[SC][TODO] measurement level prefix
 
-@prefix : <https://quangis.github.io/vocab#>.
+@prefix : <https://quangis.github.io/vocab/tool#>.
 @prefix cct: <https://quangis.github.io/cct#>.
 @prefix tool: <https://quangis.github.io/tool#>.
 @prefix super: <https://quangis.github.io/tool/compound#>.
@@ -1271,162 +1271,162 @@ abstr:KrigingInterval a :AbstractTool;
 # Tools
 
 tool:AddObjectVectorRegionArea a :ConcreteTool;
-    rdf:seeAlso arcprodm:add-geometry-attributes.htm.
+    rdfs:seeAlso arcprodm:add-geometry-attributes.htm.
 
 tool:Aspect a :ConcreteTool;
-    rdf:seeAlso arcpro3d:aspect.htm.
+    rdfs:seeAlso arcpro3d:aspect.htm.
 
 tool:ObjectBuffer a :ConcreteTool;
     rdfs:comment "Buffer (interpreted as vector representation of boolean field)";
-    rdf:seeAlso arcproan:buffer.htm.
+    rdfs:seeAlso arcproan:buffer.htm.
 
 tool:BuildNetwork a :ConcreteTool;
     rdfs:comment "Builds ratio network from line objects";
-    rdf:seeAlso arcprona:build-network.htm.
+    rdfs:seeAlso arcprona:build-network.htm.
 
 tool:Clip a :ConcreteTool;
-    rdf:seeAlso arcprodm:clip.htm;
+    rdfs:seeAlso arcprodm:clip.htm;
     :signature abstr:ClipObject2Object, abstr:ClipNomFieldVector2Extent, 
         abstr:ClipBoolFieldVector2Extent, abstr:ClipFieldRaster2ObjectExtent.
 
 tool:Con a :ConcreteTool;
-    rdf:seeAlso arcprosa:con-.htm;
+    rdfs:seeAlso arcprosa:con-.htm;
     :signature abstr:con1, abstr:con2, abstr:con3.
 
 tool:Dissolve a :ConcreteTool;
     rdfs:comment "Merge object parts into single object";
-    rdf:seeAlso arcprodm:dissolve.htm;
+    rdfs:seeAlso arcprodm:dissolve.htm;
     :signature abstr:MergeObjects.
 
 tool:Erase a :ConcreteTool;
     rdfs:comment "Erase Vector fields";
-    rdf:seeAlso arcproan:erase.htm;
+    rdfs:seeAlso arcproan:erase.htm;
     :signature abstr:EraseFieldExtentfromFieldVector.
 
 tool:ExtractByMask a :ConcreteTool;
-    rdf:seeAlso arcprosa:extract-by-mask.htm;
+    rdfs:seeAlso arcprosa:extract-by-mask.htm;
     :signature abstr:ExtractByMask.
 
 tool:FC2FC a :ConcreteTool;
     rdfs:comment "Feature class to feature class (=Select)";
-    rdf:seeAlso arcproco:feature-class-to-feature-class.htm;
+    rdfs:seeAlso arcproco:feature-class-to-feature-class.htm;
     :signature abstr:FC2FCObjectTess.
 
 tool:FlowAccumulation a :ConcreteTool;
     rdfs:comment "Flow direction accumulation";
-    rdf:seeAlso arcprosa:flow-accumulation.htm;
+    rdfs:seeAlso arcprosa:flow-accumulation.htm;
     :signature abstr:FlowAccumulation.
 
 tool:FlowDirection a :ConcreteTool;
     rdfs:comment "Flow direction raster";
-    rdf:seeAlso arcprosa:flow-direction.htm;
+    rdfs:seeAlso arcprosa:flow-direction.htm;
     :signature abstr:FlowDirection.
 
 tool:FlowLength a :ConcreteTool;
-    rdf:seeAlso arcprosa:flow-length.htm;
+    rdfs:seeAlso arcprosa:flow-length.htm;
     :signature abstr:FlowLength.
 
 tool:NearPointObjects a :ConcreteTool;
     rdfs:comment "Near tool, to seach for the closest objects using Euclidean distance";
-    rdf:seeAlso arcproan:generate-near-table.htm;
+    rdfs:seeAlso arcproan:generate-near-table.htm;
     :signature abstr:NearPointObjects.
 
 tool:IDWInterval a :ConcreteTool;
-    rdf:seeAlso arcprosa:idw.htm;
+    rdfs:seeAlso arcprosa:idw.htm;
     :signature abstr:IDWInterval.
 
 tool:KrigingInterval a :ConcreteTool;
-    rdf:seeAlso arcprosa:kriging.htm;
+    rdfs:seeAlso arcprosa:kriging.htm;
     :signature abstr:KrigingInterval.
 
 tool:PolygonToRaster a :ConcreteTool;
-    rdf:seeAlso arcproco:polygon-to-raster.htm;
+    rdfs:seeAlso arcproco:polygon-to-raster.htm;
     :signature abstr:CoverageToNominalFieldRaster, abstr:ContourToFieldRaster.
 
 tool:RasterCalculator a :ConcreteTool;
-    rdf:seeAlso arcprosa:raster-calculator.htm;
+    rdfs:seeAlso arcprosa:raster-calculator.htm;
     :signature abstr:LocalMapAlgebraInvert, abstr:LocalMapAlgebraDivide, 
         abstr:LocalMapAlgebraSubOrder, abstr:LocalMapAlgebraSubRatio.
 
 tool:RegionFromRasterExtent a :ConcreteTool;
-    rdf:seeAlso arcproco:raster-to-polygon.htm;
+    rdfs:seeAlso arcproco:raster-to-polygon.htm;
     :signature abstr:RegionFromRasterExtent.
 
 tool:RasterToIsoRaster a :ConcreteTool;
-    rdf:seeAlso arcprosa:reclassify.htm;
+    rdfs:seeAlso arcprosa:reclassify.htm;
     :signature abstr:RasterToIsoRaster.
 
 tool:SelectObjectByExtent a :ConcreteTool;
-    rdf:seeAlso arcproan:select.htm;
+    rdfs:seeAlso arcproan:select.htm;
     :signature abstr:SelectObjectbyExtent.
 
 tool:Slope a :ConcreteTool;
-    rdf:seeAlso arcprosa:slope.htm;
+    rdfs:seeAlso arcprosa:slope.htm;
     :signature abstr:Slope.
 
 tool:SnapPourPoint a :ConcreteTool;
-    rdf:seeAlso arcprosa:snap-pour-point.htm;
+    rdfs:seeAlso arcprosa:snap-pour-point.htm;
     :signature abstr:SnapPourPoint.
 
 tool:SpatialJoin a :ConcreteTool;
-    rdf:seeAlso arcproan:spatial-join.htm;
+    rdfs:seeAlso arcproan:spatial-join.htm;
     :signature abstr:SpatialJoinSumTessRatio, abstr:SpatialJoinSumTessCount, 
         abstr:SpatialJoinAmountSumTessRatio, abstr:SpatialJoinAmountSumTessCount, 
         abstr:SpatialJoinMeanTessInterval, abstr:SpatialJoinMeanTessRatio, 
         abstr:SpatialJoinMeanTessCount, abstr:SpatialJoinCountTess.
 
 tool:SummaryStatistics a :ConcreteTool;
-    rdf:seeAlso arcproan:summary-statistics.htm;
+    rdfs:seeAlso arcproan:summary-statistics.htm;
     :signature abstr:ObjectSummaryStatisticsAmount, abstr:SummaryStatisticsAmount.
 
 tool:Watershed a :ConcreteTool;
-    rdf:seeAlso arcprosa:watershed.htm;
+    rdfs:seeAlso arcprosa:watershed.htm;
     :signature abstr:Watershed.
 
 tool:MakeClosestFacilityAnalysisLayer a :ConcreteTool;
-    rdf:seeAlso arcprona:make-closest-facility-analysis-layer.htm.
+    rdfs:seeAlso arcprona:make-closest-facility-analysis-layer.htm.
 
 tool:AddLocations a :ConcreteTool;
-    rdf:seeAlso arcprona:add-locations.htm.
+    rdfs:seeAlso arcprona:add-locations.htm.
 
 tool:Solve a :ConcreteTool;
-    rdf:seeAlso arcprona:solve.htm.
+    rdfs:seeAlso arcprona:solve.htm.
 
 tool:ExcelToTable a :ConcreteTool;
-    rdf:seeAlso arcproco:excel-to-table.htm.
+    rdfs:seeAlso arcproco:excel-to-table.htm.
 
 tool:JoinField a :ConcreteTool;
-    rdf:seeAlso arcprodm:join-field.htm.
+    rdfs:seeAlso arcprodm:join-field.htm.
 
 tool:TableToTable a :ConcreteTool;
-    rdf:seeAlso arcproco:table-to-table.htm.
+    rdfs:seeAlso arcproco:table-to-table.htm.
 
 tool:AddField a :ConcreteTool;
-    rdf:seeAlso arcprodm:add-field.htm.
+    rdfs:seeAlso arcprodm:add-field.htm.
 
 tool:CalculateField a :ConcreteTool;
-    rdf:seeAlso arcprodm:calculate-field.htm.
+    rdfs:seeAlso arcprodm:calculate-field.htm.
 
-tool:AddField a :ConcreteTool;
-    rdf:seeAlso arcprodm:add-fields.htm.
+tool:AddFields a :ConcreteTool;
+    rdfs:seeAlso arcprodm:add-fields.htm.
 
 tool:SelectLayerByAttribute a :ConcreteTool;
-    rdf:seeAlso arcprodm:select-layer-by-attribute.htm.
+    rdfs:seeAlso arcprodm:select-layer-by-attribute.htm.
 
 tool:CopyFeatures a :ConcreteTool;
-    rdf:seeAlso arcprodm:copy-features.
+    rdfs:seeAlso arcprodm:copy-features.
 
 tool:SelectLayerByLocation a :ConcreteTool;
-    rdf:seeAlso arcprodm:select-layer-by-location.htm.
+    rdfs:seeAlso arcprodm:select-layer-by-location.htm.
 
 tool:ZonalStatisticsAsTable a :ConcreteTool;
-    rdf:seeAlso arcprosa:zonal-statistics-as-table.htm.
+    rdfs:seeAlso arcprosa:zonal-statistics-as-table.htm.
 
 tool:Intersect a :ConcreteTool;
-    rdf:seeAlso arcproan:intersect.htm.
+    rdfs:seeAlso arcproan:intersect.htm.
 
 tool:MakeXyEventLayer a :ConcreteTool;
-    rdf:seeAlso arcprodm:make-xy-event-layer.htm.
+    rdfs:seeAlso arcprodm:make-xy-event-layer.htm.
 
 tool:Project a :ConcreteTool;
-    rdf:seeAlso arcprodm:project.htm.
+    rdfs:seeAlso arcprodm:project.htm.
