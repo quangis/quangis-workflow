@@ -158,7 +158,6 @@ class SuperTool(ToolImplementation):
             self.inputs[label] = self.map[input]
 
         found_outputs = list(self.all_outputs - self.all_inputs)
-        assert len(found_outputs) == 1
 
         if len(found_outputs) != 1:
             raise DisconnectedArtefactsError(

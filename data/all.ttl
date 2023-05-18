@@ -109,10 +109,10 @@ super:JoinFromTable a :SuperTool;
     :signature abstr:LoadAmountonObjects;
     :action
         [ :apply tool:ExcelToTable;
-            :input [];
+            :input [ :id "1" ];
             :output _:out10 ],
         [ :apply tool:JoinField;
-            :input [], _:out10;
+            :input [ :id "2" ], _:out10;
             :output _:out10_2 ].
 
 abstr:LoadAmountonObjects a :AbstractTool;
@@ -356,7 +356,7 @@ super:AddandCalculateAttribute a :SuperTool;
     :signature abstr:CalculateObjectSpatialAmount, abstr:CalculateProd, 
         abstr:CalculateProdPointObjects;
     rdfs:comment "Add an attribute and calculate value based on one other attribute";
-    :input [ :apply tool:AddField;
+    :action [ :apply tool:AddField;
         :input [ :id "1" ];
         :output _:out3001
     ], [ :apply tool:CalculateField;
@@ -641,7 +641,7 @@ super:FullSelectLayerByAttribute a :SuperTool;
         :input [ :id "1" ];
         :output _:out11
     ], [ :apply tool:CopyFeatures;
-        :input1 _:out11;
+        :input _:out11;
         :output _:out12 ].
 
 
