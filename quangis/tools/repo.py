@@ -12,7 +12,7 @@ from collections import defaultdict
 
 from quangis.namespace import (bind_all, VOCAB, RDF, WF, CCT_, n3, ABSTR)
 from quangis.workflow import (Workflow)
-from quangis.tools.tool import (Tool, ConcreteTool, SuperTool, AbstractTool)
+from quangis.tools.tool import (Tool, Unit, Composite, Abstraction)
 
 
 class ToolAlreadyExistsError(Exception):
@@ -25,9 +25,9 @@ class Repo(object):
     """A repository contains signatures and tools."""
 
     def __init__(self) -> None:
-        self.abstract_tools: dict[URIRef, AbstractTool] = dict()
-        self.concrete_tools: dict[URIRef, ConcreteTool] = dict()
-        self.supertools: dict[URIRef, SuperTool] = dict()
+        self.abstractions: dict[URIRef, Abstraction] = dict()
+        self.units: dict[URIRef, Unit] = dict()
+        self.composites: dict[URIRef, Composite] = dict()
         super().__init__()
 
     @staticmethod
@@ -36,11 +36,11 @@ class Repo(object):
         g.parse(file)
 
         repo = Repo()
-        for tool in ConcreteTool.from_graph(g):
+        for tool in Unit.from_graph(g):
             repo.add(tool)
-        for sig in AbstractTool.from_graph(g):
+        for sig in Abstraction.from_graph(g):
             repo.add(sig)
-        for supertool in SuperTool.from_graph(g):
+        for supertool in Composite.from_graph(g):
             repo.add(supertool)
 
         if check_integrity:
@@ -55,44 +55,44 @@ class Repo(object):
         return repo
 
     def __getitem__(self, key: URIRef) -> Tool:
-        return (self.concrete_tools.get(key)
-            or self.abstract_tools.get(key)
-            or self.supertools[key])
+        return (self.units.get(key)
+            or self.abstractions.get(key)
+            or self.composites[key])
 
     def __contains__(self, tool: URIRef | Tool) -> bool:
         if isinstance(tool, URIRef):
-            return (tool in self.abstract_tools
-                or tool in self.concrete_tools
-                or tool in self.supertools)
+            return (tool in self.abstractions
+                or tool in self.units
+                or tool in self.composites)
         else:
             return tool.uri in self
 
     def add(self, item: Tool) -> None:
-        if isinstance(item, ConcreteTool):
-            assert item.uri not in self.concrete_tools
-            self.concrete_tools[item.uri] = item
-        elif isinstance(item, SuperTool):
-            assert item.uri not in self.supertools
-            self.supertools[item.uri] = item
+        if isinstance(item, Unit):
+            assert item.uri not in self.units
+            self.units[item.uri] = item
+        elif isinstance(item, Composite):
+            assert item.uri not in self.composites
+            self.composites[item.uri] = item
         else:
-            assert isinstance(item, AbstractTool)
-            assert item.uri not in self.abstract_tools
-            self.abstract_tools[item.uri] = item
+            assert isinstance(item, Abstraction)
+            assert item.uri not in self.abstractions
+            self.abstractions[item.uri] = item
 
     def signed_actions(self, wf: Workflow, root: Node) \
-            -> Iterator[tuple[Node, URIRef | SuperTool, AbstractTool]]:
+            -> Iterator[tuple[Node, URIRef | Composite, Abstraction]]:
         assert (root, RDF.type, WF.Workflow) in wf
 
         for action in wf.high_level_actions(root):
             impl = wf.tool(action)
             try:
-                proposal_sig = AbstractTool.propose(wf, action)
-                if impl in self.concrete_tools:
+                proposal_sig = Abstraction.propose(wf, action)
+                if impl in self.units:
                     assert isinstance(impl, URIRef)
                     tool = impl
                 else:
                     tool = self.find_supertool(
-                        SuperTool.extract(wf, action)).uri
+                        Composite.extract(wf, action)).uri
                 proposal_sig.implementations.add(tool)
                 sig = self.find_signature(proposal_sig)
             except ToolNotFoundError:
@@ -147,16 +147,16 @@ class Repo(object):
 
         # Propose the tool and signature that would be created if no other 
         # tools or supertools existed in the repository yet
-        proposal_sig = AbstractTool.propose(wf, action)
+        proposal_sig = Abstraction.propose(wf, action)
 
         impl = wf.tool(action)
 
-        if impl in self.concrete_tools:
+        if impl in self.units:
             assert isinstance(impl, URIRef)
         else:
             assert isinstance(impl, BNode), f"{n3(impl)} is not a known " \
                 f"tool, but it is also not a supertool"
-            supertool = SuperTool.extract(wf, action)
+            supertool = Composite.extract(wf, action)
             try:
                 supertool = self.find_supertool(supertool)
             except ToolNotFoundError:
@@ -165,9 +165,9 @@ class Repo(object):
         proposal_sig.implementations.add(impl)
 
         # Find out how existing signatures relate to the proposed sig
-        supersig: AbstractTool | None = None
-        subsigs: list[AbstractTool] = []
-        for uri, sig in self.abstract_tools.items():
+        supersig: Abstraction | None = None
+        subsigs: list[Abstraction] = []
+        for uri, sig in self.abstractions.items():
             # Is the URI the same?
             if impl not in sig.implementations:
                 continue
@@ -208,13 +208,13 @@ class Repo(object):
         """Generate a unique URI for a signature based on a name."""
         for i in chain([""], count(start=2)):
             uri = ABSTR[f"{base}{i}"]
-            if uri not in self.abstract_tools:
+            if uri not in self.abstractions:
                 return uri
         raise RuntimeError("Unreachable")
 
-    def find_signature(self, proposal: AbstractTool) -> AbstractTool:
+    def find_signature(self, proposal: Abstraction) -> Abstraction:
         """Find a signature that matches the proposed signature."""
-        for sig in self.abstract_tools.values():
+        for sig in self.abstractions.values():
             if (sig.covers_implementation(proposal)
                     and sig.subsumes_datatype(proposal)
                     and sig.matches_cct(proposal)):
@@ -222,7 +222,7 @@ class Repo(object):
 
         # If we reach here, there was no signature found. Instead, we construct 
         # the error message
-        sigs: set[AbstractTool] = set(s for s in self.abstract_tools.values()
+        sigs: set[Abstraction] = set(s for s in self.abstractions.values()
             if s.covers_implementation(proposal))
 
         reasons = []
@@ -252,25 +252,25 @@ class Repo(object):
             f"{'/'.join(n3(impl) for impl in proposal.implementations)}. "
             "\n\t".join(reasons))
 
-    def register_signature(self, proposal: AbstractTool) -> AbstractTool:
+    def register_signature(self, proposal: Abstraction) -> Abstraction:
         """Register the proposed signature under a unique name."""
         proposal.uri = self.unique_uri(proposal.name)
-        self.abstract_tools[proposal.uri] = proposal
+        self.abstractions[proposal.uri] = proposal
         return proposal
 
-    def find_supertool(self, supertool: SuperTool) -> SuperTool:
+    def find_supertool(self, supertool: Composite) -> Composite:
         """Find a (super)tool in this tool repository that matches the given 
         one. This is an expensive operation because we have to check for 
         isomorphism with existing supertools."""
-        if supertool.uri in self.supertools:
-            if supertool.match(self.supertools[supertool.uri]):
+        if supertool.uri in self.composites:
+            if supertool.match(self.composites[supertool.uri]):
                 return supertool
             else:
                 raise ToolNotFoundError(
                     f"{n3(supertool.uri)} can be found, but it does not match"
                     f"the given supertool of the same name.")
 
-        for candidate in self.supertools.values():
+        for candidate in self.composites.values():
             if supertool.match(candidate):
                 return candidate
 
@@ -278,17 +278,17 @@ class Repo(object):
             f"There is no supertool like {n3(supertool.uri)} in the tool "
             f"repository.")
 
-    def register_supertool(self, supertool: SuperTool) -> None:
+    def register_supertool(self, supertool: Composite) -> None:
         if supertool.uri in self:
             raise ToolAlreadyExistsError(
                 f"The supertool {supertool.uri} already exists in the "
                 f"repository.")
-        self.supertools[supertool.uri] = supertool
+        self.composites[supertool.uri] = supertool
 
     def check_supertool_composition(self):
         """Check that all tools in every supertool are concrete tools."""
         for supertool in self.concrete_supertools:
-            if not all(tool in self.concrete_tools for tool in 
+            if not all(tool in self.units for tool in 
                     supertool.constituent_tools):
                 raise RuntimeError(
                     "All tools in a supertool must be concrete tools")
@@ -302,9 +302,9 @@ class Repo(object):
         g = Graph()
         bind_all(g, default=VOCAB)
         for tool in chain(
-                self.abstract_tools.values(),
-                self.concrete_tools.values(),
-                self.supertools.values()):
+                self.abstractions.values(),
+                self.units.values(),
+                self.composites.values()):
             assert isinstance(tool, Tool)
             tool.to_graph(g)
         return g

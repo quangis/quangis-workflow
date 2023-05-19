@@ -33,7 +33,7 @@ class WorkflowGenerator(APE):
         super().__init__(
             taxonomy=self.ape_type_taxonomy() + self.ape_tool_taxonomy(),
             tools=self.ape_tools(),
-            tool_root=VOCAB.AbstractTool,
+            tool_root=VOCAB.Abstraction,
             namespace=CCD,
             build_dir=build_dir,
             dimensions=[d.root for d in self.dimensions]
@@ -77,7 +77,7 @@ class WorkflowGenerator(APE):
                         for output in self.tools.objects(tool, VOCAB.output)
                     ]
                 }
-                for tool in self.tools.subjects(RDF.type, VOCAB.AbstractTool)
+                for tool in self.tools.subjects(RDF.type, VOCAB.Abstraction)
             ]
         }
 
@@ -85,9 +85,9 @@ class WorkflowGenerator(APE):
         taxonomy = Graph()
         taxonomy.base = CCD
 
-        for tool in self.tools.subjects(RDF.type, VOCAB.AbstractTool):
+        for tool in self.tools.subjects(RDF.type, VOCAB.Abstraction):
             taxonomy.add((tool, RDF.type, OWL.Class))
-            taxonomy.add((tool, RDFS.subClassOf, VOCAB.AbstractTool))
+            taxonomy.add((tool, RDFS.subClassOf, VOCAB.Abstraction))
         return taxonomy
 
     def ape_type_taxonomy(self) -> Graph:

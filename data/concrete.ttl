@@ -9,117 +9,117 @@
 @prefix arcsa: <https://pro.arcgis.com/en/pro-app/latest/tool-reference/spatial-analyst/> .
 @prefix arcss: <https://pro.arcgis.com/en/pro-app/latest/tool-reference/spatial-statistics/> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
-@prefix tool: <https://quangis.github.io/tool#> .
+@prefix arcgis: <https://quangis.github.io/tool#> .
 
-tool:AddField a :ConcreteTool ;
+arcgis:AddField a :Unit ;
     rdfs:seeAlso arcdm:add-field.htm .
 
-tool:AddFields a :ConcreteTool ;
+arcgis:AddFields a :Unit ;
     rdfs:seeAlso arcdm:add-fields.htm .
 
-tool:AddGeometryAttributes a :ConcreteTool ;
+arcgis:AddGeometryAttributes a :Unit ;
     rdfs:seeAlso arcdm:add-geometry-attributes.htm .
 
-tool:AddJoin a :ConcreteTool ;
+arcgis:AddJoin a :Unit ;
     rdfs:seeAlso arcdm:add-join.htm .
 
-tool:AddLocations a :ConcreteTool ;
+arcgis:AddLocations a :Unit ;
     rdfs:seeAlso arcna:add-locations.htm .
 
-tool:AlterField a :ConcreteTool ;
+arcgis:AlterField a :Unit ;
     rdfs:seeAlso arcdm:alter-field-properties.htm .
 
-tool:Buffer a :ConcreteTool ;
+arcgis:Buffer a :Unit ;
     rdfs:seeAlso arcan:buffer.htm .
 
-tool:BuildNetwork a :ConcreteTool ;
+arcgis:BuildNetwork a :Unit ;
     rdfs:seeAlso arcna:build-network.htm .
 
-tool:CalculateField a :ConcreteTool ;
+arcgis:CalculateField a :Unit ;
     rdfs:seeAlso arcdm:calculate-field.htm .
 
-tool:CalculateGeometryAttributes a :ConcreteTool ;
+arcgis:CalculateGeometryAttributes a :Unit ;
     rdfs:seeAlso arcdm:calculate-geometry-attributes.htm .
 
-tool:Clip a :ConcreteTool ;
+arcgis:Clip a :Unit ;
     rdfs:seeAlso arcan:clip.htm .
 
-tool:ClosestFacilityAnalysis a :ConcreteTool ;
+arcgis:ClosestFacilityAnalysis a :Unit ;
     rdfs:seeAlso arcna:make-closest-facility-analysis-layer.htm .
 
 # TODO typo
-tool:ClostestFacilityAnalysis a :ConcreteTool ;
+arcgis:ClostestFacilityAnalysis a :Unit ;
     rdfs:seeAlso arcna:make-closest-facility-analysis-layer.htm .
 
-tool:CollectEvents a :ConcreteTool ;
+arcgis:CollectEvents a :Unit ;
     rdfs:seeAlso arcss:collect-events.htm .
 
-tool:CopyFeatures a :ConcreteTool ;
+arcgis:CopyFeatures a :Unit ;
     rdfs:seeAlso arcdm:copy-features.htm .
 
-tool:CreateNetworkDataset a :ConcreteTool ;
+arcgis:CreateNetworkDataset a :Unit ;
     rdfs:seeAlso arcna:create-network-dataset.htm .
 
-tool:CreateRandomPoints a :ConcreteTool ;
+arcgis:CreateRandomPoints a :Unit ;
     rdfs:seeAlso arcdm:create-random-points.htm .
 
-tool:Dissolve a :ConcreteTool ;
+arcgis:Dissolve a :Unit ;
     rdfs:seeAlso arcdm:dissolve.htm .
 
-tool:ExportFeatures a :ConcreteTool ;
+arcgis:ExportFeatures a :Unit ;
     rdfs:seeAlso arcco:export-features.htm .
 
-tool:ExportTable a :ConcreteTool ;
+arcgis:ExportTable a :Unit ;
     rdfs:seeAlso arcco:export-table.htm .
 
-tool:FeatureClassToFeatureClass a :ConcreteTool ;
+arcgis:FeatureClassToFeatureClass a :Unit ;
     rdfs:seeAlso arcco:feature-class-to-feature-class.htm .
 
-tool:FeatureToPoint a :ConcreteTool ;
+arcgis:FeatureToPoint a :Unit ;
     rdfs:seeAlso arcdm:feature-to-point.htm .
 
-tool:FeatureVerticesToPoints a :ConcreteTool ;
+arcgis:FeatureVerticesToPoints a :Unit ;
     rdfs:seeAlso arcdm:feature-vertices-to-points.htm .
 
-tool:GenerateNearTable a :ConcreteTool ;
+arcgis:GenerateNearTable a :Unit ;
     rdfs:seeAlso arcan:generate-near-table.htm .
 
-tool:Intersect a :ConcreteTool ;
+arcgis:Intersect a :Unit ;
     rdfs:seeAlso arcan:intersect.htm .
 
-tool:JoinField a :ConcreteTool ;
+arcgis:JoinField a :Unit ;
     rdfs:seeAlso arcdm:join-field.htm .
 
-tool:KernelDensity a :ConcreteTool ;
+arcgis:KernelDensity a :Unit ;
     rdfs:seeAlso arcsa:kernel-density.htm .
 
 # TODO is the same as ClosestFacilityLayer
-tool:MakeClosestFacilityAnalysisLayer a :ConcreteTool ;
+arcgis:MakeClosestFacilityAnalysisLayer a :Unit ;
     rdfs:seeAlso arcna:make-closest-facility-analysis-layer.htm .
 
-tool:MakeRouteAnalysisLayer a :ConcreteTool ;
+arcgis:MakeRouteAnalysisLayer a :Unit ;
     rdfs:seeAlso arcna:make-route-analysis-layer.htm .
 
-tool:Merge a :ConcreteTool ;
+arcgis:Merge a :Unit ;
     rdfs:seeAlso arcdm:merge.htm .
 
-tool:SelectLayerByAttribute a :ConcreteTool ;
+arcgis:SelectLayerByAttribute a :Unit ;
     rdfs:seeAlso arcdm:select-layer-by-attribute.htm .
 
-tool:SelectLayerByLocation a :ConcreteTool ;
+arcgis:SelectLayerByLocation a :Unit ;
     rdfs:seeAlso arcdm:select-layer-by-location.htm .
 
-tool:Solve a :ConcreteTool ;
+arcgis:Solve a :Unit ;
     rdfs:seeAlso arcna:solve.htm .
 
-tool:SpatialJoin a :ConcreteTool ;
+arcgis:SpatialJoin a :Unit ;
     rdfs:seeAlso arcan:spatial-join.htm .
 
-tool:SummarizeWithin a :ConcreteTool ;
+arcgis:SummarizeWithin a :Unit ;
     rdfs:seeAlso arcan:summarize-within.htm .
 
-tool:SummaryStatistics a :ConcreteTool ;
+arcgis:SummaryStatistics a :Unit ;
     rdfs:seeAlso arcan:summary-statistics.htm .
 
-tool:ZonalStatisticsAsTable a :ConcreteTool ;
+arcgis:ZonalStatisticsAsTable a :Unit ;
     rdfs:seeAlso arcsa:zonal-statistics-as-table.htm .
