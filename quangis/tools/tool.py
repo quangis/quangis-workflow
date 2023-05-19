@@ -7,12 +7,13 @@ from typing import Iterator, Iterable, Hashable, Mapping
 from abc import abstractmethod
 from transforge.namespace import shorten
 
-from quangis.workflow import Workflow, dimensions
+from quangis.defaultdict import DefaultDict
+from quangis.workflow import Workflow
 from quangis.polytype import Polytype
 from quangis.namespace import (
     n3, RDF, RDFS, TOOL, WF, MULTI, ABSTR, CCT)
 from quangis.cctrans import cct
-
+from quangis.ccdata import dimensions
 
 class CCTError(Exception):
     pass
@@ -20,9 +21,53 @@ class CCTError(Exception):
 class UntypedArtefactError(Exception):
     pass
 
-
 class DisconnectedArtefactsError(Exception):
     pass
+
+
+class Artefact(object):
+    def __init__(self, type: Polytype,
+            id: str | None = None,
+            comments: Iterable[str] = ()):
+        self.type = type
+        self.id = id
+        self.comments = list(comments)
+
+    def to_graph(self, g: Graph, with_comments: bool = True) -> BNode:
+        artefact = BNode()
+        if self.id:
+            g.add((artefact, TOOL.id, Literal(self.id)))
+        for uri in self.type.uris():
+            g.add((artefact, RDF.type, uri))
+        if with_comments:
+            for comment in self.comments:
+                g.add((artefact, RDFS.comment, Literal(comment)))
+        return artefact
+
+    @staticmethod
+    def from_graph(g: Graph, artefact: Node) -> Artefact:
+        type = Polytype.assemble(dimensions, g.objects(artefact, RDF.type))
+
+        id_node = g.value(artefact, TOOL.id, any=False)
+        id = id_node.value if isinstance(id_node, Literal) else None
+
+        comments: list[str] = []
+        for comment in g.objects(artefact, RDFS.comment):
+            assert isinstance(comment, Literal)
+            comments.append(comment.value)
+
+        return Artefact(type=type, id=id, comments=comments)
+
+
+class Action(object):
+    def __init__(self, tool: URIRef,
+            inputs: Iterable[Artefact],
+            output: Artefact,
+            comments: Iterable[str] = ()):
+        self.tool = tool
+        self.inputs = set(inputs)
+        self.output = output
+        self.comments = list(comments)
 
 
 class Tool(object):
@@ -44,7 +89,6 @@ class Unit(Implementation):
     implemented by, for example, ArcGIS or QGIS."""
 
     def __init__(self, uri: URIRef, url: URIRef) -> None:
-        # name = name or shorten(uri)
         super().__init__(uri)
         self.url = url
 
@@ -64,90 +108,111 @@ class Unit(Implementation):
 
 
 class Composite(Implementation):
-    """A supertool is an *ensemble* of concrete tools; in other words: a 
-    workflow schema that acts as a compound tool."""
+    """A composite tool (also: supertool) is an *ensemble* of concrete tools; 
+    in other words: a workflow schema."""
 
-    def __init__(self, uri: URIRef) -> None:
+    def __init__(self, uri: URIRef, actions: Iterable[Action],
+            inputs: Mapping[str, Artefact],
+            output: Artefact | None = None) -> None:
 
-        self.map: dict[Hashable, BNode] = defaultdict(BNode)
-
-        self.inputs: dict[str, BNode] = dict()
-        self.output: BNode | None = None
-
-        self.all_inputs: set[BNode] = set()
-        self.all_outputs: set[BNode] = set()
-        self.constituent_tools: set[URIRef] = set()
-
-        self._graph = Graph()
         super().__init__(uri)
+
+        self.inputs: dict[str, Artefact] = dict()
+        self.output: Artefact | None = None
+        self.actions: list[Action] = []
+
+        self.all_inputs: set[Artefact] = set()
+        self.all_outputs: set[Artefact] = set()
+        self.all_tools: set[URIRef] = set()
+
+        for action in actions:
+            self._add_action(action)
+        self._add_io(inputs, output)
+
+        self.min_graph = Graph()
+        self.to_graph(self.min_graph, with_comments=False)
+
+    def to_graph(self, g: Graph, with_comments: bool = True) -> Graph:
+        assert not (self.uri, RDF.type, TOOL.Composite) in g
+        g.add((self.uri, RDF.type, TOOL.Composite))
+
+        m: Mapping[Artefact, BNode] = DefaultDict(
+            lambda x: x.to_graph(g, with_comments=with_comments))
+        for a in self.actions:
+            action = BNode()
+            g.add((self.uri, TOOL.action, action))
+            g.add((action, TOOL.apply, a.tool))
+            g.add((action, TOOL.output, m[a.output]))
+            for input in a.inputs:
+                g.add((action, TOOL.input, m[input]))
+            if with_comments:
+                for comment in a.comments:
+                    g.add((action, RDFS.comment, Literal(comment)))
+
+        return g
 
     @staticmethod
     def extract(wf: Workflow, action: Node) -> Composite:
-        """Propose a supertool that corresponds to the subworkflow associated 
-        with the given action."""
-        impl = wf.tool(action)
-        label = wf.label(impl)
+        """Propose a composite tool that corresponds to the subworkflow 
+        associated with the given action."""
 
-        if (impl, RDF.type, WF.Workflow) in wf:
-            assert isinstance(impl, BNode), \
-                "subworkflows should be blank nodes"
-
-            supertool = Composite(MULTI[label])
-
-            for a in wf.low_level_actions(impl):
-                tool = wf.tool(a)
-                assert isinstance(tool, URIRef)
-                supertool.add_action(tool, wf.inputs(a), wf.output(a))
-
-            supertool.add_io(inputs=wf.inputs_labelled(action),
-                output=wf.output(action))
-
-            return supertool
-        else:
-            raise RuntimeError(
-                f"Cannot propose a supertool for {impl}, labelled '{label}', "
-                f"because it is not a subworkflow")
+        m: Mapping[Node, Artefact] = DefaultDict(
+            lambda n: Artefact.from_graph(wf, n))
+        subwf = wf.subworkflow(action)
+        return Composite(
+            uri=MULTI[wf.label(subwf)],
+            inputs={k: m[v] for k, v in wf.inputs_labelled(action).items()},
+            output=m[wf.output(action)],
+            actions=(
+                Action(wf.tool(a),
+                    (m[x] for x in wf.inputs(a)),
+                    m[wf.output(a)])
+                for a in wf.low_level_actions(subwf)))
 
     @staticmethod
     def from_graph(g: Graph) -> Iterator[Composite]:
         for uri in g.subjects(RDF.type, TOOL.Composite):
             assert isinstance(uri, URIRef)
-            supertool = Composite(uri)
-            global_inputs: dict[str, BNode] = dict()
-            for action in g.objects(uri, TOOL.action):
-                tool = g.value(action, TOOL.apply, any=False)
+
+            m: Mapping[Node, Artefact] = DefaultDict(
+                lambda node: Artefact.from_graph(g, node))
+
+            global_inputs: dict[str, Artefact] = dict()
+            actions: list[Action] = []
+            for action_node in g.objects(uri, TOOL.action):
+                tool = g.value(action_node, TOOL.apply, any=False)
                 assert isinstance(tool, URIRef)
-                output = g.value(action, TOOL.output, any=False)
-                assert isinstance(output, BNode)
 
-                inputs: list[BNode] = []
-                for input in g.objects(action, TOOL.input):
-                    assert isinstance(input, BNode)
+                out_node = g.value(action_node, TOOL.output, any=False)
+                assert out_node is not None
+                output = m[out_node]
+
+                inputs: list[Artefact] = []
+                for in_node in g.objects(action_node, TOOL.input):
+                    input = m[in_node]
                     inputs.append(input)
-                    id = g.value(input, TOOL.id, any=False)
-                    if id:
-                        assert isinstance(id, Literal)
-                        global_inputs[id.value] = input
+                    if input.id:
+                        assert global_inputs.get(input.id, input) == input
+                        global_inputs[input.id] = input
 
-                supertool.add_action(tool, inputs, output)
-            supertool.add_io(global_inputs)
+                comments: list[str] = []
+                for s in g.objects(action_node, RDFS.comment):
+                    assert isinstance(s, Literal)
+                    comments.append(s.value)
 
-            yield supertool
+                actions.append(Action(tool, inputs, output, comments))
 
-    def to_graph(self, g: Graph) -> Graph:
-        g += self._graph
-        g.add((self.uri, RDF.type, TOOL.Composite))
-        for i, x in self.inputs.items():
-            g.add((x, TOOL.id, Literal(i)))
-        return g
+            yield Composite(uri=uri,
+                inputs=global_inputs,
+                actions=actions)
 
-    def add_io(self, inputs: Mapping[str, Hashable],
-            output: Hashable | None = None) -> None:
+    def _add_io(self, inputs: Mapping[str, Artefact],
+            output: Artefact | None = None) -> None:
         # Sanity check: any artefact must be both the output and input of an 
         # action; or else, only one of these, in which case it must be 
         # accounted for as the input or output of the supertool.
         found_inputs = self.all_inputs - self.all_outputs
-        real_inputs = set(self.map[x] for x in inputs.values())
+        real_inputs = set(inputs.values())
 
         if found_inputs != real_inputs:
             raise DisconnectedArtefactsError(
@@ -155,7 +220,7 @@ class Composite(Implementation):
                 f"found {len(found_inputs)} inside.")
 
         for label, input in inputs.items():
-            self.inputs[label] = self.map[input]
+            self.inputs[label] = input
 
         found_outputs = list(self.all_outputs - self.all_inputs)
 
@@ -166,32 +231,22 @@ class Composite(Implementation):
                 f"a cycle in the workflow.")
 
         found_output = found_outputs[0]
-        if output and not found_output == self.map[output]:
+        if output and not found_output == output:
             raise DisconnectedArtefactsError(
                 f"The output for {n3(self.uri)} does not correspond to the "
                 f"one found.")
 
         self.output = found_output
 
-    def add_action(self, tool: URIRef,
-           inputs: Iterable[Hashable], output: Hashable) -> None:
-
-        inputsm = [self.map[x] for x in inputs]
-        outputm = self.map[output]
-        self.all_inputs.update(inputsm)
-        self.all_outputs.add(outputm)
-        self.constituent_tools.add(tool)
-
-        action = BNode()
-        self._graph.add((self.uri, TOOL.action, action))
-        self._graph.add((action, TOOL.apply, tool))
-        self._graph.add((action, TOOL.output, outputm))
-        for x in inputsm:
-            self._graph.add((action, TOOL.input, x))
+    def _add_action(self, action: Action) -> None:
+        self.all_inputs.update(action.inputs)
+        self.all_outputs.add(action.output)
+        self.all_tools.add(action.tool)
+        self.actions.append(action)
 
     def match(self, other: Composite) -> bool:
-        return (self.constituent_tools == other.constituent_tools
-            and isomorphic(self._graph, other._graph))
+        return (self.all_tools == other.all_tools
+            and isomorphic(self.min_graph, other.min_graph))
 
 
 class Abstraction(Tool):

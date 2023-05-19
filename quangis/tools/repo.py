@@ -25,9 +25,9 @@ class Repo(object):
     """A repository contains signatures and tools."""
 
     def __init__(self) -> None:
-        self.abstractions: dict[URIRef, Abstraction] = dict()
         self.units: dict[URIRef, Unit] = dict()
         self.composites: dict[URIRef, Composite] = dict()
+        self.abstractions: dict[URIRef, Abstraction] = dict()
         super().__init__()
 
     @staticmethod
