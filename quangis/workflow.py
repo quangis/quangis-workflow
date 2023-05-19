@@ -11,7 +11,7 @@ collectively."""
 from __future__ import annotations
 
 from rdflib import Graph
-from rdflib.term import Node, URIRef, Literal
+from rdflib.term import Node, URIRef, Literal, BNode
 from rdflib.util import guess_format
 from pathlib import Path
 from itertools import count
@@ -178,19 +178,19 @@ class Workflow(Graph):
         else:
             raise RuntimeError("Cannot determine label of a blank node")
 
-    def tool(self, action: Node) -> Node:
+    def subworkflow(self, action: Node) -> BNode:
+        subwf = self.impl(action)
+        assert (subwf, RDF.type, WF.Workflow) in self
+        assert isinstance(subwf, BNode)
+        return subwf
+
+    def tool(self, action: Node) -> URIRef:
+        tool = self.impl(action)
+        assert not (tool, RDF.type, WF.Workflow) in self
+        assert isinstance(tool, URIRef)
+        return tool
+
+    def impl(self, action: Node) -> Node:
         impl = self.value(action, WF.applicationOf, any=False)
         assert impl
-        label = self.label(impl)
-        is_workflow = (impl, RDF.type, WF.Workflow) in self
-        is_uri = isinstance(impl, URIRef)
-        if is_uri and is_workflow:
-            raise RuntimeError(
-                f"An action that is implemented by an underlying "
-                f"subworkflow, labelled '{label}', should be a "
-                f"blank node, but is not")
-        if not is_workflow and not is_uri:
-            raise RuntimeError(
-                f"An action that is implemented by a tool, labelled "
-                f"'{label}', should be a URI reference.")
         return impl
