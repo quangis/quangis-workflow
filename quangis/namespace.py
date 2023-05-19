@@ -18,10 +18,10 @@ TOOLS = Namespace(
     "https://github.com/quangis/cct/blob/master/tools/tools.ttl#")
 CCT_ = Namespace("https://github.com/quangis/cct#")
 
-VOCAB = Namespace("https://quangis.github.io/vocab/tool#")
-TOOL = Namespace("https://quangis.github.io/tool#")
-SUPER = Namespace("https://quangis.github.io/tool/compound#")
-ABSTR = Namespace("https://quangis.github.io/tool/abstract#")
+TOOL = Namespace("https://quangis.github.io/vocab/tool#")
+ARCGIS = Namespace("https://quangis.github.io/tool#")
+MULTI = Namespace("https://quangis.github.io/tool/composite#")
+ABSTR = Namespace("https://quangis.github.io/tool/abstraction#")
 
 ARC = "https://pro.arcgis.com/en/pro-app/latest/tool-reference"
 ARCDM = Namespace(ARC + "/data-management/")

@@ -10,7 +10,7 @@ from itertools import count, repeat, chain
 from pathlib import Path
 from collections import defaultdict
 
-from quangis.namespace import (bind_all, VOCAB, RDF, WF, CCT_, n3, ABSTR)
+from quangis.namespace import (bind_all, TOOL, RDF, WF, CCT_, n3, ABSTR)
 from quangis.workflow import (Workflow)
 from quangis.tools.tool import (Tool, Unit, Composite, Abstraction)
 
@@ -107,7 +107,7 @@ class Repo(object):
         uses only signatures."""
 
         g = GraphList()
-        bind_all(g, default=VOCAB)
+        bind_all(g, default=TOOL)
 
         assert (root, RDF.type, WF.Workflow) in wf
         g.add((root, RDF.type, WF.Workflow))
@@ -300,7 +300,7 @@ class Repo(object):
 
     def graph(self) -> Graph:
         g = Graph()
-        bind_all(g, default=VOCAB)
+        bind_all(g, default=TOOL)
         for tool in chain(
                 self.abstractions.values(),
                 self.units.values(),

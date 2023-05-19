@@ -10,7 +10,7 @@ from transforge.namespace import shorten
 from quangis.workflow import Workflow, dimensions
 from quangis.polytype import Polytype
 from quangis.namespace import (
-    n3, RDF, RDFS, VOCAB, WF, SUPER, ABSTR, CCT)
+    n3, RDF, RDFS, TOOL, WF, MULTI, ABSTR, CCT)
 from quangis.cctrans import cct
 
 
@@ -50,15 +50,15 @@ class Unit(Implementation):
 
     @staticmethod
     def from_graph(graph: Graph) -> Iterator[Unit]:
-        for tool in graph.subjects(RDF.type, VOCAB.Unit):
+        for tool in graph.subjects(RDF.type, TOOL.Unit):
             assert isinstance(tool, URIRef)
             url = graph.value(tool, RDFS.seeAlso, any=False)
             assert isinstance(url, URIRef)
             yield Unit(tool, url)
 
     def to_graph(self, g: Graph) -> Graph:
-        assert not (self.uri, RDF.type, VOCAB.Unit) in g
-        g.add((self.uri, RDF.type, VOCAB.Unit))
+        assert not (self.uri, RDF.type, TOOL.Unit) in g
+        g.add((self.uri, RDF.type, TOOL.Unit))
         g.add((self.uri, RDFS.seeAlso, self.url))
         return g
 
@@ -92,7 +92,7 @@ class Composite(Implementation):
             assert isinstance(impl, BNode), \
                 "subworkflows should be blank nodes"
 
-            supertool = Composite(SUPER[label])
+            supertool = Composite(MULTI[label])
 
             for a in wf.low_level_actions(impl):
                 tool = wf.tool(a)
@@ -110,21 +110,21 @@ class Composite(Implementation):
 
     @staticmethod
     def from_graph(g: Graph) -> Iterator[Composite]:
-        for uri in g.subjects(RDF.type, VOCAB.Composite):
+        for uri in g.subjects(RDF.type, TOOL.Composite):
             assert isinstance(uri, URIRef)
             supertool = Composite(uri)
             global_inputs: dict[str, BNode] = dict()
-            for action in g.objects(uri, VOCAB.action):
-                tool = g.value(action, VOCAB.apply, any=False)
+            for action in g.objects(uri, TOOL.action):
+                tool = g.value(action, TOOL.apply, any=False)
                 assert isinstance(tool, URIRef)
-                output = g.value(action, VOCAB.output, any=False)
+                output = g.value(action, TOOL.output, any=False)
                 assert isinstance(output, BNode)
 
                 inputs: list[BNode] = []
-                for input in g.objects(action, VOCAB.input):
+                for input in g.objects(action, TOOL.input):
                     assert isinstance(input, BNode)
                     inputs.append(input)
-                    id = g.value(input, VOCAB.id, any=False)
+                    id = g.value(input, TOOL.id, any=False)
                     if id:
                         assert isinstance(id, Literal)
                         global_inputs[id.value] = input
@@ -136,9 +136,9 @@ class Composite(Implementation):
 
     def to_graph(self, g: Graph) -> Graph:
         g += self._graph
-        g.add((self.uri, RDF.type, VOCAB.Composite))
+        g.add((self.uri, RDF.type, TOOL.Composite))
         for i, x in self.inputs.items():
-            g.add((x, VOCAB.id, Literal(i)))
+            g.add((x, TOOL.id, Literal(i)))
         return g
 
     def add_io(self, inputs: Mapping[str, Hashable],
@@ -183,11 +183,11 @@ class Composite(Implementation):
         self.constituent_tools.add(tool)
 
         action = BNode()
-        self._graph.add((self.uri, VOCAB.action, action))
-        self._graph.add((action, VOCAB.apply, tool))
-        self._graph.add((action, VOCAB.output, outputm))
+        self._graph.add((self.uri, TOOL.action, action))
+        self._graph.add((action, TOOL.apply, tool))
+        self._graph.add((action, TOOL.output, outputm))
         for x in inputsm:
-            self._graph.add((action, VOCAB.input, x))
+            self._graph.add((action, TOOL.input, x))
 
     def match(self, other: Composite) -> bool:
         return (self.constituent_tools == other.constituent_tools
@@ -255,28 +255,28 @@ class Abstraction(Tool):
 
     @staticmethod
     def from_graph(graph: Graph) -> Iterator[Abstraction]:
-        for sig in graph.subjects(RDF.type, VOCAB.Abstraction):
+        for sig in graph.subjects(RDF.type, TOOL.Abstraction):
             assert isinstance(sig, URIRef)
 
             cct_literal = graph.value(sig, CCT.expression, any=False)
             assert isinstance(cct_literal, Literal)
 
             implementations: set[URIRef] = set()
-            for impl in graph.objects(sig, VOCAB.implementation):
+            for impl in graph.objects(sig, TOOL.implementation):
                 assert isinstance(impl, URIRef)
                 implementations.add(impl)
 
             inputs: dict[str, Polytype] = dict()
-            for artefact in graph.objects(sig, VOCAB.input):
+            for artefact in graph.objects(sig, TOOL.input):
                 t = Polytype.assemble(dimensions,
                     graph.objects(artefact, RDF.type))
-                id_literal = graph.value(artefact, VOCAB.id, any=False)
+                id_literal = graph.value(artefact, TOOL.id, any=False)
                 assert isinstance(id_literal, Literal)
                 i = str(id_literal)
                 assert i not in inputs
                 inputs[i] = t
 
-            output_artefact = graph.value(sig, VOCAB.output, any=False)
+            output_artefact = graph.value(sig, TOOL.output, any=False)
             output = Polytype.assemble(dimensions,
                 graph.objects(output_artefact, RDF.type))
 
@@ -289,25 +289,25 @@ class Abstraction(Tool):
 
     def to_graph(self, g: Graph) -> Graph:
         assert isinstance(self.uri, URIRef)
-        assert not (self.uri, RDF.type, VOCAB.Abstraction) in g
+        assert not (self.uri, RDF.type, TOOL.Abstraction) in g
 
-        g.add((self.uri, RDF.type, VOCAB.Abstraction))
+        g.add((self.uri, RDF.type, TOOL.Abstraction))
         g.add((self.uri, CCT.expression, Literal(self.cct_expr)))
 
         for impl in self.implementations:
-            g.add((self.uri, VOCAB.implementation, impl))
+            g.add((self.uri, TOOL.implementation, impl))
 
         for i, x in self.inputs.items():
             artefact = BNode()
             for uri in x.uris():
                 g.add((artefact, RDF.type, uri))
-            g.add((artefact, VOCAB.id, Literal(i)))
-            g.add((self.uri, VOCAB.input, artefact))
+            g.add((artefact, TOOL.id, Literal(i)))
+            g.add((self.uri, TOOL.input, artefact))
 
         artefact = BNode()
         for uri in self.output.uris():
             g.add((artefact, RDF.type, uri))
-        g.add((self.uri, VOCAB.output, artefact))
+        g.add((self.uri, TOOL.output, artefact))
 
         return g
 

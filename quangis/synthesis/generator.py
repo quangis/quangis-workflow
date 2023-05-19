@@ -10,7 +10,7 @@ from transforge.namespace import shorten
 
 from quangis.ccdata import ccd_graph, dimensions
 from quangis.polytype import Polytype
-from quangis.namespace import CCD, VOCAB, OWL, RDF, RDFS, ADA
+from quangis.namespace import CCD, TOOL, OWL, RDF, RDFS, ADA
 from quangis.synthesis.ape import APE, Workflow, ToolsDict
 
 def graph(path: Path) -> Graph:
@@ -33,7 +33,7 @@ class WorkflowGenerator(APE):
         super().__init__(
             taxonomy=self.ape_type_taxonomy() + self.ape_tool_taxonomy(),
             tools=self.ape_tools(),
-            tool_root=VOCAB.Abstraction,
+            tool_root=TOOL.Abstraction,
             namespace=CCD,
             build_dir=build_dir,
             dimensions=[d.root for d in self.dimensions]
@@ -64,7 +64,7 @@ class WorkflowGenerator(APE):
                                 self.tools.objects(input, RDF.type)
                             ).items()
                         }
-                        for input in self.tools.objects(tool, VOCAB.output)
+                        for input in self.tools.objects(tool, TOOL.output)
                     ],
                     'outputs': [
                         {
@@ -74,10 +74,10 @@ class WorkflowGenerator(APE):
                                 self.tools.objects(output, RDF.type)
                             ).downcast(casts).items()
                         }
-                        for output in self.tools.objects(tool, VOCAB.output)
+                        for output in self.tools.objects(tool, TOOL.output)
                     ]
                 }
-                for tool in self.tools.subjects(RDF.type, VOCAB.Abstraction)
+                for tool in self.tools.subjects(RDF.type, TOOL.Abstraction)
             ]
         }
 
@@ -85,9 +85,9 @@ class WorkflowGenerator(APE):
         taxonomy = Graph()
         taxonomy.base = CCD
 
-        for tool in self.tools.subjects(RDF.type, VOCAB.Abstraction):
+        for tool in self.tools.subjects(RDF.type, TOOL.Abstraction):
             taxonomy.add((tool, RDF.type, OWL.Class))
-            taxonomy.add((tool, RDFS.subClassOf, VOCAB.Abstraction))
+            taxonomy.add((tool, RDFS.subClassOf, TOOL.Abstraction))
         return taxonomy
 
     def ape_type_taxonomy(self) -> Graph:
