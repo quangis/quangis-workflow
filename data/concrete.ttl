@@ -44,13 +44,6 @@ arcgis:CalculateGeometryAttributes a :Unit ;
 arcgis:Clip a :Unit ;
     rdfs:seeAlso arcan:clip.htm .
 
-arcgis:ClosestFacilityAnalysis a :Unit ;
-    rdfs:seeAlso arcna:make-closest-facility-analysis-layer.htm .
-
-# TODO typo
-arcgis:ClostestFacilityAnalysis a :Unit ;
-    rdfs:seeAlso arcna:make-closest-facility-analysis-layer.htm .
-
 arcgis:CollectEvents a :Unit ;
     rdfs:seeAlso arcss:collect-events.htm .
 
@@ -93,7 +86,6 @@ arcgis:JoinField a :Unit ;
 arcgis:KernelDensity a :Unit ;
     rdfs:seeAlso arcsa:kernel-density.htm .
 
-# TODO is the same as ClosestFacilityLayer
 arcgis:MakeClosestFacilityAnalysisLayer a :Unit ;
     rdfs:seeAlso arcna:make-closest-facility-analysis-layer.htm .
 
