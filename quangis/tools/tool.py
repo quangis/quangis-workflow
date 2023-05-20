@@ -44,16 +44,21 @@ class Artefact(object):
         return artefact
 
     @staticmethod
-    def from_graph(g: Graph, artefact: Node) -> Artefact:
-        type = Polytype.assemble(dimensions, g.objects(artefact, RDF.type))
+    def from_graph(g: Graph, artefact: Node, with_type: bool = True,
+            with_comments: bool = True) -> Artefact:
+        if with_type:
+            type = Polytype.assemble(dimensions, g.objects(artefact, RDF.type))
+        else:
+            type = Polytype(dimensions)
 
         id_node = g.value(artefact, TOOL.id, any=False)
         id = id_node.value if isinstance(id_node, Literal) else None
 
         comments: list[str] = []
-        for comment in g.objects(artefact, RDFS.comment):
-            assert isinstance(comment, Literal)
-            comments.append(comment.value)
+        if with_comments:
+            for comment in g.objects(artefact, RDFS.comment):
+                assert isinstance(comment, Literal)
+                comments.append(comment.value)
 
         return Artefact(type=type, id=id, comments=comments)
 
@@ -156,7 +161,8 @@ class Multi(Implementation):
         associated with the given action."""
 
         m: Mapping[Node, Artefact] = DefaultDict(
-            lambda n: Artefact.from_graph(wf, n))
+            lambda n: Artefact.from_graph(wf, n, with_type=False, 
+                with_comments=False))
         subwf = wf.subworkflow(action)
         return Multi(
             uri=MULTI[wf.label(subwf)],
