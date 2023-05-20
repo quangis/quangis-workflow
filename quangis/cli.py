@@ -78,7 +78,7 @@ class RepoBuilder(cli.Application, WithRepo, WithDestDir):
 
 
 @CLI.subcommand("convert-abstract")
-class AbstractConverter(cli.Application, WithRepo):
+class AbstractConverter(cli.Application, WithRepo, WithDestDir):
     """Turn concrete workflows into abstract workflows"""
 
     def main(self, *WORKFLOW):
