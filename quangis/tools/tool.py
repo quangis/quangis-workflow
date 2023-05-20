@@ -98,23 +98,28 @@ class Unit(Implementation):
     """A basic concrete tool is a reference to a single implemented tool, as 
     implemented by, for example, ArcGIS or QGIS."""
 
-    def __init__(self, uri: URIRef, url: URIRef, comments: list[str] = []) -> None:
+    def __init__(self, uri: URIRef, url: Iterable[URIRef], comments: list[str] = []) -> None:
         super().__init__(uri, comments)
-        self.url = url
+        self.url = list(url)
 
     @staticmethod
     def from_graph(graph: Graph) -> Iterator[Unit]:
         for tool in graph.subjects(RDF.type, TOOL.Unit):
             assert isinstance(tool, URIRef)
-            url = graph.value(tool, RDFS.seeAlso, any=False)
-            assert isinstance(url, URIRef)
+
+            urls = []
+            for url in graph.objects(tool, RDFS.seeAlso):
+                assert isinstance(url, URIRef)
+                urls.append(url)
+
             comments = list(Tool.comments_from_graph(tool, graph))
-            yield Unit(tool, url, comments=comments)
+            yield Unit(tool, urls, comments=comments)
 
     def to_graph(self, g: Graph) -> Graph:
         assert not (self.uri, RDF.type, TOOL.Unit) in g
         g.add((self.uri, RDF.type, TOOL.Unit))
-        g.add((self.uri, RDFS.seeAlso, self.url))
+        for url in self.url:
+            g.add((self.uri, RDFS.seeAlso, url))
         for c in self.comments:
             g.add((self.uri, RDFS.comment, Literal(c)))
         return g
