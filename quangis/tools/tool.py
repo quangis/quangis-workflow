@@ -1,5 +1,4 @@
 from __future__ import annotations
-from collections import defaultdict
 from rdflib import Graph
 from rdflib.term import URIRef, Node, BNode, Literal
 from rdflib.compare import isomorphic
@@ -107,7 +106,7 @@ class Unit(Implementation):
         return g
 
 
-class Composite(Implementation):
+class Multi(Implementation):
     """A composite tool (also: supertool) is an *ensemble* of concrete tools; 
     in other words: a workflow schema."""
 
@@ -133,8 +132,8 @@ class Composite(Implementation):
         self.to_graph(self.min_graph, with_comments=False)
 
     def to_graph(self, g: Graph, with_comments: bool = True) -> Graph:
-        assert not (self.uri, RDF.type, TOOL.Composite) in g
-        g.add((self.uri, RDF.type, TOOL.Composite))
+        assert not (self.uri, RDF.type, TOOL.Multi) in g
+        g.add((self.uri, RDF.type, TOOL.Multi))
 
         m: Mapping[Artefact, BNode] = DefaultDict(
             lambda x: x.to_graph(g, with_comments=with_comments))
@@ -152,14 +151,14 @@ class Composite(Implementation):
         return g
 
     @staticmethod
-    def extract(wf: Workflow, action: Node) -> Composite:
+    def extract(wf: Workflow, action: Node) -> Multi:
         """Propose a composite tool that corresponds to the subworkflow 
         associated with the given action."""
 
         m: Mapping[Node, Artefact] = DefaultDict(
             lambda n: Artefact.from_graph(wf, n))
         subwf = wf.subworkflow(action)
-        return Composite(
+        return Multi(
             uri=MULTI[wf.label(subwf)],
             inputs={k: m[v] for k, v in wf.inputs_labelled(action).items()},
             output=m[wf.output(action)],
@@ -170,8 +169,8 @@ class Composite(Implementation):
                 for a in wf.low_level_actions(subwf)))
 
     @staticmethod
-    def from_graph(g: Graph) -> Iterator[Composite]:
-        for uri in g.subjects(RDF.type, TOOL.Composite):
+    def from_graph(g: Graph) -> Iterator[Multi]:
+        for uri in g.subjects(RDF.type, TOOL.Multi):
             assert isinstance(uri, URIRef)
 
             m: Mapping[Node, Artefact] = DefaultDict(
@@ -202,7 +201,7 @@ class Composite(Implementation):
 
                 actions.append(Action(tool, inputs, output, comments))
 
-            yield Composite(uri=uri,
+            yield Multi(uri=uri,
                 inputs=global_inputs,
                 actions=actions)
 
@@ -244,7 +243,7 @@ class Composite(Implementation):
         self.all_tools.add(action.tool)
         self.actions.append(action)
 
-    def match(self, other: Composite) -> bool:
+    def match(self, other: Multi) -> bool:
         return (self.all_tools == other.all_tools
             and isomorphic(self.min_graph, other.min_graph))
 

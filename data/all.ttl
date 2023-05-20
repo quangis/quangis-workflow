@@ -6,8 +6,8 @@
 @prefix : <https://quangis.github.io/vocab/tool#>.
 @prefix cct: <https://quangis.github.io/cct#>.
 @prefix arcgis: <https://quangis.github.io/tool#>.
-@prefix multi: <https://quangis.github.io/tool/composite#>.
-@prefix abstr: <https://quangis.github.io/tool/abstraction#>.
+@prefix multi: <https://quangis.github.io/tool/multi#>.
+@prefix abstr: <https://quangis.github.io/tool/abstract#>.
 @prefix ccd: <http://geographicknowledge.de/vocab/CoreConceptData.rdf#>.
 @prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>.
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
@@ -18,7 +18,7 @@
 @prefix arcprosa: <https://pro.arcgis.com/en/pro-app/latest/tool-reference/spatial-analyst/>.
 @prefix arcproco: <https://pro.arcgis.com/en/pro-app/latest/tool-reference/conversion/>.
 
-multi:ClosestFacilityAnalysis a :Composite;
+multi:ClosestFacilityAnalysis a :Multi;
     :action
         [ :apply arcgis:MakeClosestFacilityAnalysisLayer;
             :input [ :id "1"; rdfs:comment "roads" ];
@@ -104,7 +104,7 @@ abstr:MergeObjects a :Abstraction;
             (getobjectnames (pi2 (get_attrR 1)))
         """.
 
-multi:JoinFromTable a :Composite;
+multi:JoinFromTable a :Multi;
     rdfs:comment "Make table from Excel";
     :implements abstr:LoadAmountonObjects;
     :action
@@ -152,7 +152,7 @@ abstr:Slope a :Abstraction;
     cct:expression
         "slope (1: Field(Itv))".
 
-multi:VelocityField a :Composite;
+multi:VelocityField a :Multi;
     :implements abstr:VelocityFieldDEM;
     rdfs:comment """Computes a water flow velocity raster from slope * accumulation area
 
@@ -254,7 +254,7 @@ abstr:RasterToIsoRaster a :Abstraction;
         "apply1 classify (1: Field(Itv))".
 
 
-multi:RasterCoverage a :Composite;
+multi:RasterCoverage a :Multi;
     :implements abstr:CreateUnitHydrograph;
     rdfs:comment
         "Computes coverage (size) from a raster table for each raster value";
@@ -278,7 +278,7 @@ abstr:CreateUnitHydrograph a :Abstraction;
         apply1 ((swap ratio) (-: Ratio)) (groupby size (1: Field(Ord)))
         """.
 
-multi:FullSelectFeatures a :Composite;
+multi:FullSelectFeatures a :Multi;
     :implements abstr:SelectFeaturesByObjectPlainRegionObjects, 
         abstr:SelectFeaturesCoverageToExistenceVector;
     rdfs:comment "Query to select items from layers using attribut values";
@@ -352,7 +352,7 @@ abstr:con3 a :Abstraction;
         """.
 
 # TODO this was wrong; review
-multi:AddandCalculateAttribute a :Composite;
+multi:AddandCalculateAttribute a :Multi;
     :implements abstr:CalculateObjectSpatialAmount, abstr:CalculateProd, 
         abstr:CalculateProdPointObjects;
     rdfs:comment "Add an attribute and calculate value based on one other attribute";
@@ -439,7 +439,7 @@ abstr:ClipObject2Object a :Abstraction;
             ))
         """.
 
-multi:CalculatePartialAmounts a :Composite;
+multi:CalculatePartialAmounts a :Multi;
     :implements abstr:CalculatePartialAmountsfromObjects;
     :action [ :apply arcgis:Clip;
         :input [ :id "1" ];
@@ -514,7 +514,7 @@ abstr:ClipBoolFieldVector2Extent a :Abstraction;
     cct:expression
         "subset (1: Field(Bool)) (fcover (2: Field(Bool)) (nest true))".
 
-multi:CalculateAreaMeasure a :Composite;
+multi:CalculateAreaMeasure a :Multi;
     rdfs:comment "This is an abbreviated workflow for calculating area based measures with attributes";
     :implements abstr:CalculateVectorFieldAreaPercentage, 
         abstr:CalculateVectorFieldPartialArea, abstr:CalculateCountAmountRatio, 
@@ -619,7 +619,7 @@ abstr:EraseFieldExtentfromFieldVector a :Abstraction;
             ))
         """.
 
-multi:FullSelectLayerByAttribute a :Composite;
+multi:FullSelectLayerByAttribute a :Multi;
     :implements abstr:SelectLayerByObjectPointObjects, 
         abstr:SelectLayerByObjectLineObjects, 
         abstr:SelectLayerByObjectPlainRegionObjects,
@@ -723,7 +723,7 @@ abstr:SelectLayerCoverageToExistenceVector a :Abstraction;
     :input [ :id "1"; a ccd:FieldQ, ccd:VectorTessellationA; rdfs:comment "Coverage is defined as a subclass of FieldQ and TesselationA, and therefore also allows field rasters, which we don't want in this context." ];
     :output [ a ccd:FieldQ, ccd:PlainVectorRegionA ].
 
-multi:FullSelectLayerByLocation a :Composite;
+multi:FullSelectLayerByLocation a :Multi;
     :implements abstr:SelectLayerByLocationPointObjects, 
         abstr:SelectLayerByLocationLineObjects,
         abstr:SelectLayerByLocationPlainRegionObjects,
@@ -1079,7 +1079,7 @@ rdfs:comment
     cct:expression
         "select (compose2 notj leq) (1: Field(Ratio)) (-: Ratio)".
 
-multi:RasterToContour a :Composite;
+multi:RasterToContour a :Multi;
     :implements abstr:RasterToContourInterval;
     :action [ :apply arcgis:RasterToIsoRaster;
         :input [ :id "1" ];
@@ -1096,7 +1096,7 @@ abstr:RasterToContourInterval a :Abstraction;
     cct:expression
         "invert (apply1 classify (1: Field(Itv)))".
 
-multi:ZonalStatistics a :Composite;
+multi:ZonalStatistics a :Multi;
     :implements abstr:ZonalStatisticsSize, abstr:ZonalStatisticsMeanInterval, 
         abstr:ZonalStatisticsMeanRatio, abstr:ZonalStatisticsSumCount;
     :action [ :apply arcgis:ZonalStatisticsAsTable;
@@ -1193,7 +1193,7 @@ abstr:AddObjectVectorRegionArea a :Abstraction;
             )
         """.
 
-multi:IntersectDissolve a :Composite;
+multi:IntersectDissolve a :Multi;
     rdfs:comment "this tool computes the coverage of a field inside object region by first intersecting and then dissolving  and joining, to obtain the area covered by the field inside the object region";
     :implements abstr:IntersectDissolveField2Object;
     :action [ :apply arcgis:Intersect;
@@ -1227,7 +1227,7 @@ abstr:IntersectDissolveField2Object a :Abstraction;
     :output [ a ccd:ObjectQ,  ccd:VectorRegionA, ccd:ERA ].
 
 
-multi:MakeLayerFromTable a :Composite;
+multi:MakeLayerFromTable a :Multi;
     :implements abstr:MakePointMeasuresFromTable;
     :action [ :apply arcgis:MakeXyEventLayer;
         :input _:in51;

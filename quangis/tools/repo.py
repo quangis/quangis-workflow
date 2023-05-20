@@ -12,7 +12,7 @@ from collections import defaultdict
 
 from quangis.namespace import (bind_all, TOOL, RDF, WF, CCT_, n3, ABSTR)
 from quangis.workflow import (Workflow)
-from quangis.tools.tool import (Tool, Unit, Composite, Abstraction)
+from quangis.tools.tool import (Tool, Unit, Multi, Abstraction)
 
 
 class ToolAlreadyExistsError(Exception):
@@ -26,7 +26,7 @@ class Repo(object):
 
     def __init__(self) -> None:
         self.units: dict[URIRef, Unit] = dict()
-        self.composites: dict[URIRef, Composite] = dict()
+        self.composites: dict[URIRef, Multi] = dict()
         self.abstractions: dict[URIRef, Abstraction] = dict()
         super().__init__()
 
@@ -40,7 +40,7 @@ class Repo(object):
             repo.add(tool)
         for sig in Abstraction.from_graph(g):
             repo.add(sig)
-        for supertool in Composite.from_graph(g):
+        for supertool in Multi.from_graph(g):
             repo.add(supertool)
 
         if check_integrity:
@@ -71,7 +71,7 @@ class Repo(object):
         if isinstance(item, Unit):
             assert item.uri not in self.units
             self.units[item.uri] = item
-        elif isinstance(item, Composite):
+        elif isinstance(item, Multi):
             assert item.uri not in self.composites
             self.composites[item.uri] = item
         else:
@@ -80,7 +80,7 @@ class Repo(object):
             self.abstractions[item.uri] = item
 
     def signed_actions(self, wf: Workflow, root: Node) \
-            -> Iterator[tuple[Node, URIRef | Composite, Abstraction]]:
+            -> Iterator[tuple[Node, URIRef | Multi, Abstraction]]:
         assert (root, RDF.type, WF.Workflow) in wf
 
         for action in wf.high_level_actions(root):
@@ -92,7 +92,7 @@ class Repo(object):
                     tool = impl
                 else:
                     tool = self.find_supertool(
-                        Composite.extract(wf, action)).uri
+                        Multi.extract(wf, action)).uri
                 proposal_sig.implementations.add(tool)
                 sig = self.find_signature(proposal_sig)
             except ToolNotFoundError:
@@ -156,7 +156,7 @@ class Repo(object):
         else:
             assert isinstance(impl, BNode), f"{n3(impl)} is not a known " \
                 f"tool, but it is also not a supertool"
-            supertool = Composite.extract(wf, action)
+            supertool = Multi.extract(wf, action)
             try:
                 supertool = self.find_supertool(supertool)
             except ToolNotFoundError:
@@ -258,7 +258,7 @@ class Repo(object):
         self.abstractions[proposal.uri] = proposal
         return proposal
 
-    def find_supertool(self, supertool: Composite) -> Composite:
+    def find_supertool(self, supertool: Multi) -> Multi:
         """Find a (super)tool in this tool repository that matches the given 
         one. This is an expensive operation because we have to check for 
         isomorphism with existing supertools."""
@@ -278,7 +278,7 @@ class Repo(object):
             f"There is no supertool like {n3(supertool.uri)} in the tool "
             f"repository.")
 
-    def register_supertool(self, supertool: Composite) -> None:
+    def register_supertool(self, supertool: Multi) -> None:
         if supertool.uri in self:
             raise ToolAlreadyExistsError(
                 f"The supertool {supertool.uri} already exists in the "
