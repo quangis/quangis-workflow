@@ -263,13 +263,13 @@ class Abstraction(Tool):
     either to drive a nail into a plank of wood or to break a piggy bank."""
 
     def __init__(self, uri: URIRef,
-            inputs: dict[str, Polytype],
-            output: Polytype,
+            inputs: dict[str, Artefact],
+            output: Artefact,
             cct_expr: str,
             implementations: Iterable[URIRef] = ()) -> None:
         super().__init__(uri)
-        self.inputs: dict[str, Polytype] = inputs
-        self.output: Polytype = output
+        self.inputs: dict[str, Artefact] = inputs
+        self.output: Artefact = output
         self.cct_expr: str = cct_expr
         self.description: str | None = None
         self.implementations: set[URIRef] = set(implementations)
@@ -278,7 +278,7 @@ class Abstraction(Tool):
     @staticmethod
     def propose(wf: Workflow, action: Node) -> Abstraction:
         """Create a new signature proposal from a tool application."""
-        impl = wf.tool(action)
+        impl = wf.impl(action)
         name = wf.label(impl)
         if isinstance(impl, URIRef):
             lbl = n3(impl)
@@ -292,16 +292,16 @@ class Abstraction(Tool):
 
         inputs = dict()
         for i, x in enumerate(wf.inputs(action, labelled=True), start=1):
-            t = inputs[str(i)] = wf.type(x)
-            if t.empty():
+            t = inputs[str(i)] = Artefact.from_graph(wf, x)
+            if t.type.empty():
                 raise UntypedArtefactError(
                     f"The CCD type of the {i}'th input artefact of an "
                     f"action associated with {lbl} is empty or too general.")
 
-        outputs = [wf.type(x) for x in wf.outputs(action)]
+        outputs = [Artefact.from_graph(wf, x) for x in wf.outputs(action)]
         assert len(outputs) == 1
         output = outputs[0]
-        if output.empty():
+        if output.type.empty():
             raise UntypedArtefactError(
                 f"The CCD type of the output artefact of an action "
                 f"associated with {lbl} is empty or too general.")
@@ -321,19 +321,15 @@ class Abstraction(Tool):
                 assert isinstance(impl, URIRef)
                 implementations.add(impl)
 
-            inputs: dict[str, Polytype] = dict()
-            for artefact in graph.objects(sig, TOOL.input):
-                t = Polytype.assemble(dimensions,
-                    graph.objects(artefact, RDF.type))
-                id_literal = graph.value(artefact, TOOL.id, any=False)
-                assert isinstance(id_literal, Literal)
-                i = str(id_literal)
-                assert i not in inputs
-                inputs[i] = t
+            inputs: dict[str, Artefact] = dict()
+            for x in graph.objects(sig, TOOL.input):
+                input = Artefact.from_graph(graph, x)
+                assert input.id
+                inputs[input.id] = input
 
-            output_artefact = graph.value(sig, TOOL.output, any=False)
-            output = Polytype.assemble(dimensions,
-                graph.objects(output_artefact, RDF.type))
+            output_node = graph.value(sig, TOOL.output, any=False)
+            assert output_node
+            output = Artefact.from_graph(graph, output_node)
 
             yield Abstraction(uri=sig,
                 inputs=inputs,
@@ -352,17 +348,10 @@ class Abstraction(Tool):
         for impl in self.implementations:
             g.add((self.uri, TOOL.implementation, impl))
 
-        for i, x in self.inputs.items():
-            artefact = BNode()
-            for uri in x.uris():
-                g.add((artefact, RDF.type, uri))
-            g.add((artefact, TOOL.id, Literal(i)))
-            g.add((self.uri, TOOL.input, artefact))
+        for _, x in self.inputs.items():
+            g.add((self.uri, TOOL.input, x.to_graph(g)))
 
-        artefact = BNode()
-        for uri in self.output.uris():
-            g.add((artefact, RDF.type, uri))
-        g.add((self.uri, TOOL.output, artefact))
+        g.add((self.uri, TOOL.output, self.output.to_graph(g)))
 
         return g
 
@@ -387,11 +376,11 @@ class Abstraction(Tool):
         il1 = list(self.inputs.keys())
         il2 = list(candidate.inputs.keys())
         return (il1 == il2 and all(
-            candidate.inputs[k1].subtype(self.inputs[k2])
+            candidate.inputs[k1].type.subtype(self.inputs[k2].type)
             for k1, k2 in zip(il1, il2)))
 
     def subsumes_output_datatype(self, candidate: Abstraction) -> bool:
-        return self.output.subtype(candidate.output)
+        return self.output.type.subtype(candidate.output.type)
 
     def subsumes_datatype(self, candidate: Abstraction) -> bool:
         """If the inputs in the candidate signature are subtypes of the ones in 

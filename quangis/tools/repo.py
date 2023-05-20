@@ -149,7 +149,7 @@ class Repo(object):
         # tools or supertools existed in the repository yet
         proposal_sig = Abstraction.propose(wf, action)
 
-        impl = wf.tool(action)
+        impl = wf.impl(action)
 
         if impl in self.units:
             assert isinstance(impl, URIRef)
