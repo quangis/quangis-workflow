@@ -916,7 +916,7 @@ abstr:SpatialJoinAmountSumTessCount a :Abstraction;
     :input [ :id "1"; a ccd:AmountQ, ccd:VectorRegionA, ccd:CountA ];
     :input [ :id "2"; a ccd:ObjectQ, ccd:VectorTessellationA ];
     :output [ a ccd:ObjectQ, ccd:VectorTessellationA, ccd:CountA ];
-    rdfs:label
+    rdfs:comment
         "Sums the attributes at Count measurement level from one feature to another based on the spatial relation";
     cct:expression
         """

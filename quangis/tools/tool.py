@@ -75,14 +75,20 @@ class Action(object):
 
 
 class Tool(object):
-    def __init__(self, uri: URIRef):
+    def __init__(self, uri: URIRef, comments: list[str] = []):
         self.uri = uri
         self.name = shorten(uri)
+        self.comments: list[str] = comments
 
     @abstractmethod
     def to_graph(self, g: Graph) -> Graph:
         return NotImplemented
 
+    @staticmethod
+    def comments_from_graph(uri: URIRef, g: Graph) -> Iterator[str]:
+        for comment in g.objects(uri, RDFS.comment):
+            assert isinstance(comment, Literal)
+            yield comment.value
 
 class Implementation(Tool):
     pass
@@ -92,8 +98,8 @@ class Unit(Implementation):
     """A basic concrete tool is a reference to a single implemented tool, as 
     implemented by, for example, ArcGIS or QGIS."""
 
-    def __init__(self, uri: URIRef, url: URIRef) -> None:
-        super().__init__(uri)
+    def __init__(self, uri: URIRef, url: URIRef, comments: list[str] = []) -> None:
+        super().__init__(uri, comments)
         self.url = url
 
     @staticmethod
@@ -102,12 +108,15 @@ class Unit(Implementation):
             assert isinstance(tool, URIRef)
             url = graph.value(tool, RDFS.seeAlso, any=False)
             assert isinstance(url, URIRef)
-            yield Unit(tool, url)
+            comments = list(Tool.comments_from_graph(tool, graph))
+            yield Unit(tool, url, comments=comments)
 
     def to_graph(self, g: Graph) -> Graph:
         assert not (self.uri, RDF.type, TOOL.Unit) in g
         g.add((self.uri, RDF.type, TOOL.Unit))
         g.add((self.uri, RDFS.seeAlso, self.url))
+        for c in self.comments:
+            g.add((self.uri, RDFS.comment, Literal(c)))
         return g
 
 
@@ -117,13 +126,15 @@ class Multi(Implementation):
 
     def __init__(self, uri: URIRef, actions: Iterable[Action],
             inputs: Mapping[str, Artefact],
-            output: Artefact | None = None) -> None:
+            output: Artefact | None = None,
+            comments: Iterable[str] = ()) -> None:
 
         super().__init__(uri)
 
         self.inputs: dict[str, Artefact] = dict()
         self.output: Artefact | None = None
         self.actions: list[Action] = []
+        self.comments: list[str] = list(comments)
 
         self.all_inputs: set[Artefact] = set()
         self.all_outputs: set[Artefact] = set()
@@ -153,6 +164,9 @@ class Multi(Implementation):
                 for comment in a.comments:
                     g.add((action, RDFS.comment, Literal(comment)))
 
+        if with_comments:
+            for c in self.comments:
+                g.add((self.uri, RDFS.comment, Literal(c)))
         return g
 
     @staticmethod
@@ -207,9 +221,15 @@ class Multi(Implementation):
 
                 actions.append(Action(tool, inputs, output, comments))
 
+            comments = []
+            for comment in g.objects(uri, RDFS.comment):
+                assert isinstance(comment, Literal)
+                comments.append(comment.value)
+
             yield Multi(uri=uri,
                 inputs=global_inputs,
-                actions=actions)
+                actions=actions,
+                comments=comments)
 
     def _add_io(self, inputs: Mapping[str, Artefact],
             output: Artefact | None = None) -> None:
@@ -271,12 +291,13 @@ class Abstraction(Tool):
             inputs: dict[str, Artefact],
             output: Artefact,
             cct_expr: str,
-            implementations: Iterable[URIRef] = ()) -> None:
+            implementations: Iterable[URIRef] = (),
+            comments: Iterable[str] = ()) -> None:
         super().__init__(uri)
         self.inputs: dict[str, Artefact] = inputs
         self.output: Artefact = output
         self.cct_expr: str = cct_expr
-        self.description: str | None = None
+        self.comments: list[str] = list(comments)
         self.implementations: set[URIRef] = set(implementations)
         self.cct_p = cct.parse(cct_expr, defaults=True)
 
@@ -322,7 +343,7 @@ class Abstraction(Tool):
             assert isinstance(cct_literal, Literal)
 
             implementations: set[URIRef] = set()
-            for impl in graph.objects(sig, TOOL.implementation):
+            for impl in graph.subjects(TOOL.implements, sig):
                 assert isinstance(impl, URIRef)
                 implementations.add(impl)
 
@@ -336,11 +357,17 @@ class Abstraction(Tool):
             assert output_node
             output = Artefact.from_graph(graph, output_node)
 
+            comments = []
+            for comment in graph.objects(sig, RDFS.comment):
+                assert isinstance(comment, Literal)
+                comments.append(comment.value)
+
             yield Abstraction(uri=sig,
                 inputs=inputs,
                 output=output,
                 cct_expr=str(cct_literal),
-                implementations=implementations
+                implementations=implementations,
+                comments=comments
             )
 
     def to_graph(self, g: Graph) -> Graph:
@@ -351,10 +378,13 @@ class Abstraction(Tool):
         g.add((self.uri, CCT.expression, Literal(self.cct_expr)))
 
         for impl in self.implementations:
-            g.add((self.uri, TOOL.implementation, impl))
+            g.add((impl, TOOL.implements, self.uri))
 
         for _, x in self.inputs.items():
             g.add((self.uri, TOOL.input, x.to_graph(g)))
+
+        for comment in self.comments:
+            g.add((self.uri, RDFS.comment, Literal(comment)))
 
         g.add((self.uri, TOOL.output, self.output.to_graph(g)))
 
