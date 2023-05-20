@@ -343,7 +343,7 @@ class Abstraction(Tool):
             assert isinstance(cct_literal, Literal)
 
             implementations: set[URIRef] = set()
-            for impl in graph.subjects(TOOL.implements, sig):
+            for impl in graph.objects(sig, TOOL.implementation):
                 assert isinstance(impl, URIRef)
                 implementations.add(impl)
 
@@ -378,7 +378,7 @@ class Abstraction(Tool):
         g.add((self.uri, CCT.expression, Literal(self.cct_expr)))
 
         for impl in self.implementations:
-            g.add((impl, TOOL.implements, self.uri))
+            g.add((self.uri, TOOL.implementation, impl))
 
         for _, x in self.inputs.items():
             g.add((self.uri, TOOL.input, x.to_graph(g)))

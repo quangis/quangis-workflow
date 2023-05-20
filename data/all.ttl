@@ -22,98 +22,9 @@ arcgis:BuildNetwork a :Unit ;
     rdfs:comment "Builds ratio network from line objects" ;
     rdfs:seeAlso arcna:build-network.htm .
 
-arcgis:Con a :Unit ;
-    rdfs:seeAlso arcsa:con-.htm ;
-    :implements abstr:con1,
-        abstr:con2,
-        abstr:con3 .
-
-arcgis:Dissolve a :Unit ;
-    rdfs:comment "Merge object parts into single object" ;
-    rdfs:seeAlso arcdm:dissolve.htm ;
-    :implements abstr:MergeObjects .
-
-arcgis:Erase a :Unit ;
-    rdfs:comment "Erase Vector fields" ;
-    rdfs:seeAlso arcan:erase.htm ;
-    :implements abstr:EraseFieldExtentfromFieldVector .
-
-arcgis:ExtractByMask a :Unit ;
-    rdfs:seeAlso arcsa:extract-by-mask.htm ;
-    :implements abstr:ExtractByMask .
-
-arcgis:FC2FC a :Unit ;
-    rdfs:comment "Feature class to feature class (=Select)" ;
-    rdfs:seeAlso arcco:feature-class-to-feature-class.htm ;
-    :implements abstr:FC2FCObjectTess .
-
-arcgis:FlowAccumulation a :Unit ;
-    rdfs:comment "Flow direction accumulation" ;
-    rdfs:seeAlso arcsa:flow-accumulation.htm ;
-    :implements abstr:FlowAccumulation .
-
-arcgis:FlowDirection a :Unit ;
-    rdfs:comment "Flow direction raster" ;
-    rdfs:seeAlso arcsa:flow-direction.htm ;
-    :implements abstr:FlowDirection .
-
-arcgis:FlowLength a :Unit ;
-    rdfs:seeAlso arcsa:flow-length.htm ;
-    :implements abstr:FlowLength .
-
-arcgis:IDWInterval a :Unit ;
-    rdfs:seeAlso arcsa:idw.htm ;
-    :implements abstr:IDWInterval .
-
-arcgis:KrigingInterval a :Unit ;
-    rdfs:seeAlso arcsa:kriging.htm ;
-    :implements abstr:KrigingInterval .
-
-arcgis:NearPointObjects a :Unit ;
-    rdfs:comment "Near tool, to seach for the closest objects using Euclidean distance" ;
-    rdfs:seeAlso arcan:generate-near-table.htm ;
-    :implements abstr:NearPointObjects .
-
 arcgis:ObjectBuffer a :Unit ;
     rdfs:comment "Buffer (interpreted as vector representation of boolean field)" ;
     rdfs:seeAlso arcan:buffer.htm .
-
-arcgis:PolygonToRaster a :Unit ;
-    rdfs:seeAlso arcco:polygon-to-raster.htm ;
-    :implements abstr:ContourToFieldRaster,
-        abstr:CoverageToNominalFieldRaster .
-
-arcgis:SelectObjectByExtent a :Unit ;
-    rdfs:seeAlso arcan:select.htm ;
-    :implements abstr:SelectObjectbyExtent .
-
-arcgis:Slope a :Unit ;
-    rdfs:seeAlso arcsa:slope.htm ;
-    :implements abstr:Slope .
-
-arcgis:SnapPourPoint a :Unit ;
-    rdfs:seeAlso arcsa:snap-pour-point.htm ;
-    :implements abstr:SnapPourPoint .
-
-arcgis:SpatialJoin a :Unit ;
-    rdfs:seeAlso arcan:spatial-join.htm ;
-    :implements abstr:SpatialJoinAmountSumTessCount,
-        abstr:SpatialJoinAmountSumTessRatio,
-        abstr:SpatialJoinCountTess,
-        abstr:SpatialJoinMeanTessCount,
-        abstr:SpatialJoinMeanTessInterval,
-        abstr:SpatialJoinMeanTessRatio,
-        abstr:SpatialJoinSumTessCount,
-        abstr:SpatialJoinSumTessRatio .
-
-arcgis:SummaryStatistics a :Unit ;
-    rdfs:seeAlso arcan:summary-statistics.htm ;
-    :implements abstr:ObjectSummaryStatisticsAmount,
-        abstr:SummaryStatisticsAmount .
-
-arcgis:Watershed a :Unit ;
-    rdfs:seeAlso arcsa:watershed.htm ;
-    :implements abstr:Watershed .
 
 abstr:AddObjectVectorRegionArea a :Abstraction ;
     rdfs:comment "Adds an area attribute to an object vector region layer." ;
@@ -153,6 +64,264 @@ abstr:BuildNetwork a :Abstraction ;
                 ccd:NetworkQ,
                 ccd:RatioA ] .
 
+abstr:CalculateCountAmountRatio a :Abstraction ;
+    rdfs:comment "Calculates the ratio of two count vector amounts.",
+        "object Content proportion OA/OA" ;
+    cct:expression "apply2 ratio (1: Amounts(Ratio)) (2: Amounts(Ratio))" ;
+    :implementation multi:CalculateAreaMeasure ;
+    :input [ a ccd:AmountQ,
+                ccd:CountA,
+                ccd:VectorRegionA ;
+            :id "1" ],
+        [ a ccd:AmountQ,
+                ccd:CountA,
+                ccd:VectorRegionA ;
+            :id "2" ] ;
+    :output [ a ccd:AmountQ,
+                ccd:IRA,
+                ccd:VectorRegionA ] .
+
+abstr:CalculateObjectAttrRatio a :Abstraction ;
+    rdfs:comment "<https://pro.arcgis.com/en/pro-app/tool-reference/data-management/calculate-field.htm>",
+        "Calculates ratios of two ratio scaled object attributes." ;
+    cct:expression """
+        1: ObjectInfo(Ratio);
+        2: ObjectInfo(Ratio);
+        join_attr
+            (get_attrL 1)
+            (apply2 ratio (get_attrR 1) (get_attrR 2))
+        """ ;
+    :implementation multi:CalculateAreaMeasure ;
+    :input [ a ccd:ERA,
+                ccd:ObjectQ,
+                ccd:VectorRegionA ;
+            :id "2" ],
+        [ a ccd:ERA,
+                ccd:ObjectQ,
+                ccd:VectorRegionA ;
+            :id "1" ] ;
+    :output [ a ccd:IRA,
+                ccd:ObjectQ,
+                ccd:VectorRegionA ] .
+
+abstr:CalculateObjectSpatialAmount a :Abstraction ;
+    rdfs:comment "Calculates an amount from an object ratio quality (representating an intensive measure) using the object's area. For example, the amount of radiation falling on a building using the mean radiation and the building's area" ;
+    cct:expression """
+        1: ObjectInfo(Ratio);
+        join_attr
+            (get_attrL 1)
+            (apply2 product
+                (get_attrR 1)
+                (apply1 (compose size deify) (get_attrL 1))
+            )
+        """ ;
+    :implementation multi:AddandCalculateAttribute ;
+    :input [ a ccd:IRA,
+                ccd:ObjectQ,
+                ccd:VectorRegionA ;
+            :id "1" ] ;
+    :output [ a ccd:ERA,
+                ccd:ObjectQ,
+                ccd:VectorRegionA ] .
+
+abstr:CalculateObjectVectorCountAmountRatio a :Abstraction ;
+    rdfs:comment "Calculate new attribute: Object Content proportion OA/OA",
+        "Calculates the ratio of two count vector amounts on objects." ;
+    cct:expression """
+        1: ObjectInfo(Count);
+        2: ObjectInfo(Count);
+        join_attr
+            (get_attrL 1)
+            (apply2 ratio (get_attrR 1) (get_attrR 2))
+        """ ;
+    :implementation multi:CalculateAreaMeasure ;
+    :input [ a ccd:CountA,
+                ccd:ObjectQ,
+                ccd:VectorRegionA ;
+            :id "2" ],
+        [ a ccd:CountA,
+                ccd:ObjectQ,
+                ccd:VectorRegionA ;
+            :id "1" ] ;
+    :output [ a ccd:IRA,
+                ccd:ObjectQ,
+                ccd:VectorRegionA ] .
+
+abstr:CalculatePartialAmountsfromObjects a :Abstraction ;
+    rdfs:comment "Clips some object vector with some count amounts to the extent of a field layer (e.g. a buffer) and interpolates partial count amounts R(Reg, Ratio) based on area percentage." ;
+    cct:expression """
+        1: ObjectInfo(Count);
+        2: Field(Bool);
+        arealinterpol
+            (getamounts 1)
+            (pi2 (groupbyR reify (select eq (loTopo
+                (fcover 2 (nest true))
+                (get_attrL 1)
+            ) in)))
+        """ ;
+    :implementation multi:CalculatePartialAmounts ;
+    :input [ a ccd:BooleanA,
+                ccd:FieldQ,
+                ccd:VectorRegionA ;
+            :id "2" ],
+        [ a ccd:CountA,
+                ccd:ObjectQ,
+                ccd:VectorRegionA ;
+            :id "1" ] ;
+    :output [ a ccd:AmountQ,
+                ccd:CountA,
+                ccd:VectorRegionA ] .
+
+abstr:CalculateProd a :Abstraction ;
+    rdfs:comment "Calculates some product of ratio scaled object attribute with some ratio value." ;
+    cct:expression """
+        1: ObjectInfo(Ratio);
+        join_attr
+            (get_attrL 1)
+            (apply1 (product (-: Ratio)) (get_attrR 1))
+        """ ;
+    :implementation multi:AddandCalculateAttribute ;
+    :input [ a ccd:ObjectQ,
+                ccd:RatioA,
+                ccd:VectorRegionA ;
+            :id "1" ] ;
+    :output [ a ccd:ObjectQ,
+                ccd:RatioA,
+                ccd:VectorRegionA ] .
+
+abstr:CalculateProdPointObjects a :Abstraction ;
+    rdfs:comment "Calculates a product from an attribute using some constant (e.g. time from distance using speed constant)" ;
+    cct:expression """
+        1: ObjectInfo(Ratio);
+        join_attr
+            (get_attrL 1)
+            (apply1 (product (-: Ratio)) (get_attrR 1))
+        """ ;
+    :implementation multi:AddandCalculateAttribute ;
+    :input [ a ccd:ERA,
+                ccd:ObjectQ,
+                ccd:PointA ;
+            :id "1" ] ;
+    :output [ a ccd:ERA,
+                ccd:ObjectQ,
+                ccd:PointA ] .
+
+abstr:CalculateVectorFieldAreaPercentage a :Abstraction ;
+    rdfs:comment "Calculates an area ratio (amount) of the size of the extent of the second boolean field with respect to the extent of the first boolean field, both represented by vector layers.",
+        "Substance Coverage proportions SC/SC",
+        "The assumption is here is that fields are represented by single polygons and area measures are implicitly added. The area measure of the second layer is manually taken over into the calculation. The result is a single measure, though stored into a table with a single polygon." ;
+    cct:expression """
+        nest2 true (ratio
+            (size (fcover (1: Field(Bool)) (nest true)))
+            (size (fcover (2: Field(Bool)) (nest true)))
+        )
+        """ ;
+    :implementation multi:CalculateAreaMeasure ;
+    :input [ a ccd:BooleanA,
+                ccd:FieldQ,
+                ccd:VectorRegionA ;
+            :id "2" ],
+        [ a ccd:BooleanA,
+                ccd:FieldQ,
+                ccd:VectorRegionA ;
+            :id "1" ] ;
+    :output [ a ccd:AmountQ,
+                ccd:IRA,
+                ccd:VectorRegionA ] .
+
+abstr:CalculateVectorFieldPartialArea a :Abstraction ;
+    rdfs:comment "Calculates a partial area measure by multiplying an area proportion with the size of the extent of a vector field.",
+        "Substance Coverage SC" ;
+    cct:expression "apply1 (product (size (pi1 (1: Field(Nom))))) (2: R2(Bool, Ratio))" ;
+    :implementation multi:CalculateAreaMeasure ;
+    :input [ a ccd:AmountQ,
+                ccd:IRA,
+                ccd:VectorRegionA ;
+            rdfs:comment "Substance Coverage proportion SC/SC" ;
+            :id "2" ],
+        [ a ccd:FieldQ,
+                ccd:VectorRegionA ;
+            rdfs:comment "field whose extent is interpreted as a Substance Coverage SC" ;
+            :id "1" ] ;
+    :output [ a ccd:AmountQ,
+                ccd:ERA,
+                ccd:VectorRegionA ] .
+
+abstr:ClipBoolFieldVector2Extent a :Abstraction ;
+    rdfs:comment "Clips some boolean field vector to the region where a boolean field vector is true." ;
+    cct:expression "subset (1: Field(Bool)) (fcover (2: Field(Bool)) (nest true))" ;
+    :implementation arcgis:Clip ;
+    :input [ a ccd:BooleanA,
+                ccd:FieldQ,
+                ccd:VectorRegionA ;
+            :id "2" ],
+        [ a ccd:BooleanA,
+                ccd:FieldQ,
+                ccd:VectorRegionA ;
+            :id "1" ] ;
+    :output [ a ccd:BooleanA,
+                ccd:FieldQ,
+                ccd:VectorRegionA ] .
+
+abstr:ClipFieldRaster2ObjectExtent a :Abstraction ;
+    rdfs:comment "Clips some interval scaled field raster to the extent of an object layer." ;
+    cct:expression """
+        1: Field(Ord);
+        2: ObjectInfo(Nom);
+        subset 1 (deify (ocover
+            (get_attrL 2)
+            (pi1 (get_attrL 2))
+        ))
+        """ ;
+    :implementation arcgis:Clip ;
+    :input [ a ccd:ObjectVector ;
+            :id "2" ],
+        [ a ccd:FieldRaster,
+                ccd:OrdinalA ;
+            :id "1" ] ;
+    :output [ a ccd:FieldRaster,
+                ccd:OrdinalA ] .
+
+abstr:ClipNomFieldVector2Extent a :Abstraction ;
+    rdfs:comment "Clips some nominal field vector to the region where a boolean field vector is true." ;
+    cct:expression "subset (1: Field(Nom)) (fcover (2: Field(Bool)) (nest true))" ;
+    :implementation arcgis:Clip ;
+    :input [ a ccd:FieldQ,
+                ccd:VectorRegionA ;
+            :id "1" ],
+        [ a ccd:BooleanA,
+                ccd:FieldQ,
+                ccd:VectorRegionA ;
+            :id "2" ] ;
+    :output [ a ccd:FieldQ,
+                ccd:VectorRegionA ] .
+
+abstr:ClipObject2Object a :Abstraction ;
+    rdfs:comment "Clips some object polygons to the extent of an object layer. We assume here that objects exactly coincide (otherwise clip would cut objects)." ;
+    cct:expression """
+        1: ObjectInfo(Count);
+        2: ObjectInfo(Nom);
+        subset
+            1
+            (pi1 (select eq
+                (oTopo (get_attrL 1) (get_attrL 2))
+                in
+            ))
+        """ ;
+    :implementation arcgis:Clip ;
+    :input [ a ccd:CountA,
+                ccd:ObjectQ,
+                ccd:PlainVectorRegionA ;
+            rdfs:comment "objects to be clipped" ;
+            :id "1" ],
+        [ a ccd:ObjectQ,
+                ccd:PlainVectorRegionA ;
+            rdfs:comment "to the regions of these objects" ;
+            :id "2" ] ;
+    :output [ a ccd:CountA,
+                ccd:ObjectQ,
+                ccd:PlainVectorRegionA ] .
+
 abstr:ClosestFacilityAnalysis a :Abstraction ;
     rdfs:comment "Selects the distance to the closest goal object on a line network." ;
     cct:expression """
@@ -180,522 +349,10 @@ abstr:ClosestFacilityAnalysis a :Abstraction ;
                 ccd:PointA,
                 ccd:RatioA ] .
 
-abstr:ObjectBuffer a :Abstraction ;
-    rdfs:comment "Buffers some object vector and returns the buffer as a boolean field R(Loc, Bool)" ;
-    cct:expression "extrapol (get_attrL (1: ObjectInfo(Nom)))" ;
-    :input [ a ccd:ObjectQ,
-                ccd:VectorA ;
-            :id "1" ] ;
-    :output [ a ccd:BooleanA,
-                ccd:FieldQ,
-                ccd:PlainVectorRegionA ] .
-
-multi:AddandCalculateAttribute a :Multi ;
-    rdfs:comment "Add an attribute and calculate value based on one other attribute" ;
-    :action [ :apply arcgis:AddField ;
-            :input [ :id "1" ] ;
-            :output _:N5c40b063c4a245a3b8ee10efff3d212b ],
-        [ :apply arcgis:CalculateField ;
-            :input _:N5c40b063c4a245a3b8ee10efff3d212b ;
-            :output [ ] ] ;
-    :implements abstr:CalculateObjectSpatialAmount,
-        abstr:CalculateProd,
-        abstr:CalculateProdPointObjects .
-
-multi:CalculateAreaMeasure a :Multi ;
-    rdfs:comment "This is an abbreviated workflow for calculating area based measures with attributes" ;
-    :action [ :apply arcgis:AddField ;
-            :input [ :id "1" ] ;
-            :output _:N1756cf6541f24408bad1963d5863b2c2 ],
-        [ :apply arcgis:CalculateField2 ;
-            :input _:N1756cf6541f24408bad1963d5863b2c2,
-                [ :id "2" ] ;
-            :output [ ] ] ;
-    :implements abstr:CalculateCountAmountRatio,
-        abstr:CalculateObjectAttrRatio,
-        abstr:CalculateObjectVectorCountAmountRatio,
-        abstr:CalculateVectorFieldAreaPercentage,
-        abstr:CalculateVectorFieldPartialArea .
-
-multi:CalculatePartialAmounts a :Multi ;
-    rdfs:comment "Calculates a set of portions from a set of object based count amounts using some boolean vector field. Only the portions that are within the true value of the boolean field are considered. This is an areal interpolation problem, which is solved by first generating area proportions and then multiplying them with the count amount." ;
-    :action [ :apply arcgis:AddFields ;
-            :input _:N1eb0d511ece84ee28dc843df1e107392 ;
-            :output _:N7038a8d1b2e248ea81694840f4042b4d ],
-        [ :apply arcgis:CalculateField ;
-            :input _:N7038a8d1b2e248ea81694840f4042b4d ;
-            :output _:Nbfea536d166b43278fd385d7158e9158 ],
-        [ :apply arcgis:CalculateField ;
-            :input _:Nbfea536d166b43278fd385d7158e9158 ;
-            :output [ ] ],
-        [ :apply arcgis:Clip ;
-            :input [ :id "2" ],
-                [ :id "1" ] ;
-            :output _:N1eb0d511ece84ee28dc843df1e107392 ] ;
-    :implements abstr:CalculatePartialAmountsfromObjects .
-
-multi:ClosestFacilityAnalysis a :Multi ;
-    :action [ :apply arcgis:Solve ;
-            :input _:Nc4a62309316c4979b6e69fbd06c24bfd ;
-            :output [ ] ],
-        [ :apply arcgis:AddLocations ;
-            :input _:N43029158f1e24c1c976097bf87eb8914,
-                [ rdfs:comment "goals" ;
-                    :id "2" ] ;
-            :output _:N871fa9e922804385ae2a635b5142b7f0 ],
-        [ :apply arcgis:MakeClosestFacilityAnalysisLayer ;
-            :input [ rdfs:comment "roads" ;
-                    :id "1" ] ;
-            :output _:N43029158f1e24c1c976097bf87eb8914 ],
-        [ :apply arcgis:AddLocations ;
-            :input _:N871fa9e922804385ae2a635b5142b7f0,
-                [ rdfs:comment "origins" ;
-                    :id "3" ] ;
-            :output _:Nc4a62309316c4979b6e69fbd06c24bfd ] .
-
-multi:FullSelectFeatures a :Multi ;
-    rdfs:comment "Query to select items from layers using attribut values" ;
-    :action [ rdfs:comment "Select by attribute is always followed by copying features" ;
-            :apply arcgis:SelectLayerByAttribute ;
-            :input [ :id "1" ] ;
-            :output _:Nb40149195b9e4193bc1c55e1821c1050 ],
-        [ :apply arcgis:FC2FCObjectTess ;
-            :input _:Nb40149195b9e4193bc1c55e1821c1050 ;
-            :output [ ] ] ;
-    :implements abstr:SelectFeaturesByObjectPlainRegionObjects,
-        abstr:SelectFeaturesCoverageToExistenceVector .
-
-multi:FullSelectLayerByAttribute a :Multi ;
-    rdfs:comment "Select by attribute is always followed by copy features (treated as one tool in the annotation",
-        "a SQL query to select features matching a selection criterion. You build a query expression to generate the subset. You can query a dataset based on a field in a layer or a table. Using this selection a new Feature dataset is created with only the selected features using the 'Copy Features tool'. This feature dataset represents all the areas that fulfill the criterion" ;
-    :action [ :apply arcgis:SelectLayerByAttribute ;
-            :input [ :id "1" ] ;
-            :output _:Naa79b984210e436e8b79c692d2803d06 ],
-        [ :apply arcgis:CopyFeatures ;
-            :input _:Naa79b984210e436e8b79c692d2803d06 ;
-            :output [ ] ] ;
-    :implements abstr:SelectLayerByAttributeLineObjects,
-        abstr:SelectLayerByAttributePlainRegionObjects,
-        abstr:SelectLayerByAttributePointObjects,
-        abstr:SelectLayerByAttributeTessObjects,
-        abstr:SelectLayerByObjectLineObjects,
-        abstr:SelectLayerByObjectPlainRegionObjects,
-        abstr:SelectLayerByObjectPointObjects,
-        abstr:SelectLayerByObjectTessObjects,
-        abstr:SelectLayerByRatioGEQPlainRegionObjects,
-        abstr:SelectLayerByRatioLineObjects,
-        abstr:SelectLayerByRatioPlainRegionObjects,
-        abstr:SelectLayerByRatioPointObjects,
-        abstr:SelectLayerByRatioTessObjects,
-        abstr:SelectLayerContourToExistenceVector,
-        abstr:SelectLayerCoverageToExistenceVector .
-
-multi:FullSelectLayerByLocation a :Multi ;
-    :action [ :apply arcgis:CopyFeatures ;
-            :input _:N92c1be6b06c846c6b59ae1f680abecb6 ;
-            :output [ ] ],
-        [ :apply arcgis:SelectLayerByLocation ;
-            :input [ :id "1" ],
-                [ :id "2" ] ;
-            :output _:N92c1be6b06c846c6b59ae1f680abecb6 ] ;
-    :implements abstr:SelectLayerByLocationLineObjects,
-        abstr:SelectLayerByLocationPlainRegionObjects,
-        abstr:SelectLayerByLocationPlainRegionObjectsDist,
-        abstr:SelectLayerByLocationPlainRegionObjectsFieldDist,
-        abstr:SelectLayerByLocationPointObjects,
-        abstr:SelectLayerByLocationTessObjects .
-
-multi:IntersectDissolve a :Multi ;
-    rdfs:comment "this tool computes the coverage of a field inside object region by first intersecting and then dissolving  and joining, to obtain the area covered by the field inside the object region" ;
-    :action [ :apply arcgis:MergeObjects ;
-            :input _:N3063ed644ca940ffa20ece517138a315 ;
-            :output _:Ne27d1c08424946a08638c50a989c5c25 ],
-        [ :apply arcgis:Intersect ;
-            :input [ :id "1" ],
-                _:Naff676df5ab348a79979041b907f4c10 ;
-            :output _:N3063ed644ca940ffa20ece517138a315 ],
-        [ :apply arcgis:JoinField ;
-            :input _:Naff676df5ab348a79979041b907f4c10,
-                _:Ne27d1c08424946a08638c50a989c5c25 ;
-            :output [ ] ] ;
-    :implements abstr:IntersectDissolveField2Object .
-
-multi:JoinFromTable a :Multi ;
-    rdfs:comment "Make table from Excel" ;
-    :action [ :apply arcgis:ExcelToTable ;
-            :input [ :id "1" ] ;
-            :output _:N81e8176368274fa4b81ce13841330b0c ],
-        [ :apply arcgis:JoinField ;
-            :input _:N81e8176368274fa4b81ce13841330b0c,
-                [ :id "2" ] ;
-            :output [ ] ] ;
-    :implements abstr:LoadAmountonObjects .
-
-multi:MakeLayerFromTable a :Multi ;
-    :action [ :apply arcgis:MakeXyEventLayer ;
-            :input _:N65b1751423974e3f83ef8aaeedac66bb ;
-            :output _:N144846cea1484b0892c43cc9cbc3ef05 ],
-        [ :apply arcgis:Project ;
-            :input _:N144846cea1484b0892c43cc9cbc3ef05 ;
-            :output _:Nfa2b985de3dd4d3ab2b035ea167c4c74 ],
-        [ :apply arcgis:ExcelToTable ;
-            :input _:N65b1751423974e3f83ef8aaeedac66bb ;
-            :output _:N3681840d0a8449b383b43ae78cafc484 ],
-        [ :apply arcgis:JoinField ;
-            :input _:N3681840d0a8449b383b43ae78cafc484,
-                _:Nfa2b985de3dd4d3ab2b035ea167c4c74 ;
-            :output [ ] ] ;
-    :implements abstr:MakePointMeasuresFromTable .
-
-multi:RasterCoverage a :Multi ;
-    rdfs:comment "Computes coverage (size) from a raster table for each raster value" ;
-    :action [ :apply arcgis:AddField ;
-            :input _:N01f9074f797c44dbb36425cb91d1b039 ;
-            :output _:N5d80c4871955418abd5eeedb37408012 ],
-        [ :apply arcgis:TableToTable ;
-            :input [ :id "1" ] ;
-            :output _:N01f9074f797c44dbb36425cb91d1b039 ],
-        [ :apply arcgis:CalculateField ;
-            :input _:N5d80c4871955418abd5eeedb37408012 ;
-            :output [ ] ] ;
-    :implements abstr:CreateUnitHydrograph .
-
-multi:RasterToContour a :Multi ;
-    :action [ :apply arcgis:RasterToIsoRaster ;
-            :input [ :id "1" ] ;
-            :output _:N9125e30b7e8c43a88e431fc7135db292 ],
-        [ :apply arcgis:RegionFromRasterExtent ;
-            :input _:N9125e30b7e8c43a88e431fc7135db292 ;
-            :output [ ] ] ;
-    :implements abstr:RasterToContourInterval .
-
-multi:VelocityField a :Multi ;
-    rdfs:comment """Computes a water flow velocity raster from slope * accumulation area
-
-    # Select by attribute is always followed by copying features
-    # This computes SquareRoot("slope") * SquareRoot("flow_accumulation")
-    """ ;
-    :action [ :apply arcgis:RasterCalculator ;
-            :input [ :id "1" ],
-                [ :id "2" ] ;
-            :output _:Ned485de2c6314ce19466546855a5826c ],
-        [ rdfs:comment "This second step computes 0.1 * (Stowe_slope_area_term / [Mean slope-area term]). It needs looking up of parameter [Mean slope-area term]." ;
-            :apply arcgis:RasterCalculator1 ;
-            :input _:Ned485de2c6314ce19466546855a5826c ;
-            :output [ ] ] ;
-    :implements abstr:VelocityFieldDEM .
-
-multi:ZonalStatistics a :Multi ;
-    :action [ :apply arcgis:ZonalStatisticsAsTable ;
-            :input _:N011e1d7e368341d294e3ae99fdd47ac1,
-                [ :id "1" ] ;
-            :output _:N2b2ff05e539c480fa826d12d71ec992e ],
-        [ :apply arcgis:JoinField ;
-            :input _:N011e1d7e368341d294e3ae99fdd47ac1,
-                _:N2b2ff05e539c480fa826d12d71ec992e ;
-            :output [ ] ] ;
-    :implements abstr:ZonalStatisticsMeanInterval,
-        abstr:ZonalStatisticsMeanRatio,
-        abstr:ZonalStatisticsSize,
-        abstr:ZonalStatisticsSumCount .
-
-arcgis:AddFields a :Unit ;
-    rdfs:seeAlso arcdm:add-fields.htm .
-
-arcgis:Clip a :Unit ;
-    rdfs:seeAlso arcdm:clip.htm ;
-    :implements abstr:ClipBoolFieldVector2Extent,
-        abstr:ClipFieldRaster2ObjectExtent,
-        abstr:ClipNomFieldVector2Extent,
-        abstr:ClipObject2Object .
-
-arcgis:Intersect a :Unit ;
-    rdfs:seeAlso arcan:intersect.htm .
-
-arcgis:MakeClosestFacilityAnalysisLayer a :Unit ;
-    rdfs:seeAlso arcna:make-closest-facility-analysis-layer.htm .
-
-arcgis:MakeXyEventLayer a :Unit ;
-    rdfs:seeAlso arcdm:make-xy-event-layer.htm .
-
-arcgis:Project a :Unit ;
-    rdfs:seeAlso arcdm:project.htm .
-
-arcgis:RasterCalculator a :Unit ;
-    rdfs:seeAlso arcsa:raster-calculator.htm ;
-    :implements abstr:LocalMapAlgebraDivide,
-        abstr:LocalMapAlgebraInvert,
-        abstr:LocalMapAlgebraSubOrder,
-        abstr:LocalMapAlgebraSubRatio .
-
-arcgis:RasterToIsoRaster a :Unit ;
-    rdfs:seeAlso arcsa:reclassify.htm ;
-    :implements abstr:RasterToIsoRaster .
-
-arcgis:RegionFromRasterExtent a :Unit ;
-    rdfs:seeAlso arcco:raster-to-polygon.htm ;
-    :implements abstr:RegionFromRasterExtent .
-
-arcgis:SelectLayerByLocation a :Unit ;
-    rdfs:seeAlso arcdm:select-layer-by-location.htm .
-
-arcgis:Solve a :Unit ;
-    rdfs:seeAlso arcna:solve.htm .
-
-arcgis:TableToTable a :Unit ;
-    rdfs:seeAlso arcco:table-to-table.htm .
-
-arcgis:ZonalStatisticsAsTable a :Unit ;
-    rdfs:seeAlso arcsa:zonal-statistics-as-table.htm .
-
-abstr:CalculateCountAmountRatio a :Abstraction ;
-    rdfs:comment "Calculates the ratio of two count vector amounts.",
-        "object Content proportion OA/OA" ;
-    cct:expression "apply2 ratio (1: Amounts(Ratio)) (2: Amounts(Ratio))" ;
-    :input [ a ccd:AmountQ,
-                ccd:CountA,
-                ccd:VectorRegionA ;
-            :id "1" ],
-        [ a ccd:AmountQ,
-                ccd:CountA,
-                ccd:VectorRegionA ;
-            :id "2" ] ;
-    :output [ a ccd:AmountQ,
-                ccd:IRA,
-                ccd:VectorRegionA ] .
-
-abstr:CalculateObjectAttrRatio a :Abstraction ;
-    rdfs:comment "<https://pro.arcgis.com/en/pro-app/tool-reference/data-management/calculate-field.htm>",
-        "Calculates ratios of two ratio scaled object attributes." ;
-    cct:expression """
-        1: ObjectInfo(Ratio);
-        2: ObjectInfo(Ratio);
-        join_attr
-            (get_attrL 1)
-            (apply2 ratio (get_attrR 1) (get_attrR 2))
-        """ ;
-    :input [ a ccd:ERA,
-                ccd:ObjectQ,
-                ccd:VectorRegionA ;
-            :id "2" ],
-        [ a ccd:ERA,
-                ccd:ObjectQ,
-                ccd:VectorRegionA ;
-            :id "1" ] ;
-    :output [ a ccd:IRA,
-                ccd:ObjectQ,
-                ccd:VectorRegionA ] .
-
-abstr:CalculateObjectSpatialAmount a :Abstraction ;
-    rdfs:comment "Calculates an amount from an object ratio quality (representating an intensive measure) using the object's area. For example, the amount of radiation falling on a building using the mean radiation and the building's area" ;
-    cct:expression """
-        1: ObjectInfo(Ratio);
-        join_attr
-            (get_attrL 1)
-            (apply2 product
-                (get_attrR 1)
-                (apply1 (compose size deify) (get_attrL 1))
-            )
-        """ ;
-    :input [ a ccd:IRA,
-                ccd:ObjectQ,
-                ccd:VectorRegionA ;
-            :id "1" ] ;
-    :output [ a ccd:ERA,
-                ccd:ObjectQ,
-                ccd:VectorRegionA ] .
-
-abstr:CalculateObjectVectorCountAmountRatio a :Abstraction ;
-    rdfs:comment "Calculate new attribute: Object Content proportion OA/OA",
-        "Calculates the ratio of two count vector amounts on objects." ;
-    cct:expression """
-        1: ObjectInfo(Count);
-        2: ObjectInfo(Count);
-        join_attr
-            (get_attrL 1)
-            (apply2 ratio (get_attrR 1) (get_attrR 2))
-        """ ;
-    :input [ a ccd:CountA,
-                ccd:ObjectQ,
-                ccd:VectorRegionA ;
-            :id "2" ],
-        [ a ccd:CountA,
-                ccd:ObjectQ,
-                ccd:VectorRegionA ;
-            :id "1" ] ;
-    :output [ a ccd:IRA,
-                ccd:ObjectQ,
-                ccd:VectorRegionA ] .
-
-abstr:CalculatePartialAmountsfromObjects a :Abstraction ;
-    rdfs:comment "Clips some object vector with some count amounts to the extent of a field layer (e.g. a buffer) and interpolates partial count amounts R(Reg, Ratio) based on area percentage." ;
-    cct:expression """
-        1: ObjectInfo(Count);
-        2: Field(Bool);
-        arealinterpol
-            (getamounts 1)
-            (pi2 (groupbyR reify (select eq (loTopo
-                (fcover 2 (nest true))
-                (get_attrL 1)
-            ) in)))
-        """ ;
-    :input [ a ccd:CountA,
-                ccd:ObjectQ,
-                ccd:VectorRegionA ;
-            :id "1" ],
-        [ a ccd:BooleanA,
-                ccd:FieldQ,
-                ccd:VectorRegionA ;
-            :id "2" ] ;
-    :output [ a ccd:AmountQ,
-                ccd:CountA,
-                ccd:VectorRegionA ] .
-
-abstr:CalculateProd a :Abstraction ;
-    rdfs:comment "Calculates some product of ratio scaled object attribute with some ratio value." ;
-    cct:expression """
-        1: ObjectInfo(Ratio);
-        join_attr
-            (get_attrL 1)
-            (apply1 (product (-: Ratio)) (get_attrR 1))
-        """ ;
-    :input [ a ccd:ObjectQ,
-                ccd:RatioA,
-                ccd:VectorRegionA ;
-            :id "1" ] ;
-    :output [ a ccd:ObjectQ,
-                ccd:RatioA,
-                ccd:VectorRegionA ] .
-
-abstr:CalculateProdPointObjects a :Abstraction ;
-    rdfs:comment "Calculates a product from an attribute using some constant (e.g. time from distance using speed constant)" ;
-    cct:expression """
-        1: ObjectInfo(Ratio);
-        join_attr
-            (get_attrL 1)
-            (apply1 (product (-: Ratio)) (get_attrR 1))
-        """ ;
-    :input [ a ccd:ERA,
-                ccd:ObjectQ,
-                ccd:PointA ;
-            :id "1" ] ;
-    :output [ a ccd:ERA,
-                ccd:ObjectQ,
-                ccd:PointA ] .
-
-abstr:CalculateVectorFieldAreaPercentage a :Abstraction ;
-    rdfs:comment "Calculates an area ratio (amount) of the size of the extent of the second boolean field with respect to the extent of the first boolean field, both represented by vector layers.",
-        "Substance Coverage proportions SC/SC",
-        "The assumption is here is that fields are represented by single polygons and area measures are implicitly added. The area measure of the second layer is manually taken over into the calculation. The result is a single measure, though stored into a table with a single polygon." ;
-    cct:expression """
-        nest2 true (ratio
-            (size (fcover (1: Field(Bool)) (nest true)))
-            (size (fcover (2: Field(Bool)) (nest true)))
-        )
-        """ ;
-    :input [ a ccd:BooleanA,
-                ccd:FieldQ,
-                ccd:VectorRegionA ;
-            :id "2" ],
-        [ a ccd:BooleanA,
-                ccd:FieldQ,
-                ccd:VectorRegionA ;
-            :id "1" ] ;
-    :output [ a ccd:AmountQ,
-                ccd:IRA,
-                ccd:VectorRegionA ] .
-
-abstr:CalculateVectorFieldPartialArea a :Abstraction ;
-    rdfs:comment "Calculates a partial area measure by multiplying an area proportion with the size of the extent of a vector field.",
-        "Substance Coverage SC" ;
-    cct:expression "apply1 (product (size (pi1 (1: Field(Nom))))) (2: R2(Bool, Ratio))" ;
-    :input [ a ccd:AmountQ,
-                ccd:IRA,
-                ccd:VectorRegionA ;
-            rdfs:comment "Substance Coverage proportion SC/SC" ;
-            :id "2" ],
-        [ a ccd:FieldQ,
-                ccd:VectorRegionA ;
-            rdfs:comment "field whose extent is interpreted as a Substance Coverage SC" ;
-            :id "1" ] ;
-    :output [ a ccd:AmountQ,
-                ccd:ERA,
-                ccd:VectorRegionA ] .
-
-abstr:ClipBoolFieldVector2Extent a :Abstraction ;
-    rdfs:comment "Clips some boolean field vector to the region where a boolean field vector is true." ;
-    cct:expression "subset (1: Field(Bool)) (fcover (2: Field(Bool)) (nest true))" ;
-    :input [ a ccd:BooleanA,
-                ccd:FieldQ,
-                ccd:VectorRegionA ;
-            :id "1" ],
-        [ a ccd:BooleanA,
-                ccd:FieldQ,
-                ccd:VectorRegionA ;
-            :id "2" ] ;
-    :output [ a ccd:BooleanA,
-                ccd:FieldQ,
-                ccd:VectorRegionA ] .
-
-abstr:ClipFieldRaster2ObjectExtent a :Abstraction ;
-    rdfs:comment "Clips some interval scaled field raster to the extent of an object layer." ;
-    cct:expression """
-        1: Field(Ord);
-        2: ObjectInfo(Nom);
-        subset 1 (deify (ocover
-            (get_attrL 2)
-            (pi1 (get_attrL 2))
-        ))
-        """ ;
-    :input [ a ccd:FieldRaster,
-                ccd:OrdinalA ;
-            :id "1" ],
-        [ a ccd:ObjectVector ;
-            :id "2" ] ;
-    :output [ a ccd:FieldRaster,
-                ccd:OrdinalA ] .
-
-abstr:ClipNomFieldVector2Extent a :Abstraction ;
-    rdfs:comment "Clips some nominal field vector to the region where a boolean field vector is true." ;
-    cct:expression "subset (1: Field(Nom)) (fcover (2: Field(Bool)) (nest true))" ;
-    :input [ a ccd:BooleanA,
-                ccd:FieldQ,
-                ccd:VectorRegionA ;
-            :id "2" ],
-        [ a ccd:FieldQ,
-                ccd:VectorRegionA ;
-            :id "1" ] ;
-    :output [ a ccd:FieldQ,
-                ccd:VectorRegionA ] .
-
-abstr:ClipObject2Object a :Abstraction ;
-    rdfs:comment "Clips some object polygons to the extent of an object layer. We assume here that objects exactly coincide (otherwise clip would cut objects)." ;
-    cct:expression """
-        1: ObjectInfo(Count);
-        2: ObjectInfo(Nom);
-        subset
-            1
-            (pi1 (select eq
-                (oTopo (get_attrL 1) (get_attrL 2))
-                in
-            ))
-        """ ;
-    :input [ a ccd:ObjectQ,
-                ccd:PlainVectorRegionA ;
-            rdfs:comment "to the regions of these objects" ;
-            :id "2" ],
-        [ a ccd:CountA,
-                ccd:ObjectQ,
-                ccd:PlainVectorRegionA ;
-            rdfs:comment "objects to be clipped" ;
-            :id "1" ] ;
-    :output [ a ccd:CountA,
-                ccd:ObjectQ,
-                ccd:PlainVectorRegionA ] .
-
 abstr:ContourToFieldRaster a :Abstraction ;
     rdfs:comment "Converts contour maps to field Rasters" ;
     cct:expression "revert (1: Contour)" ;
+    :implementation arcgis:PolygonToRaster ;
     :input [ a ccd:Contour ;
             :id "1" ] ;
     :output [ a ccd:FieldRaster,
@@ -704,6 +361,7 @@ abstr:ContourToFieldRaster a :Abstraction ;
 abstr:CoverageToNominalFieldRaster a :Abstraction ;
     rdfs:comment "Converts Field polygons to nominal field Rasters" ;
     cct:expression "revert (1: Coverages(Nom))" ;
+    :implementation arcgis:PolygonToRaster ;
     :input [ a ccd:Coverage,
                 ccd:PlainNominalA ;
             :id "1" ] ;
@@ -715,6 +373,7 @@ abstr:CreateUnitHydrograph a :Abstraction ;
     cct:expression """
         apply1 ((swap ratio) (-: Ratio)) (groupby size (1: Field(Ord)))
         """ ;
+    :implementation multi:RasterCoverage ;
     :input [ a ccd:FieldRaster,
                 ccd:OrdinalA ;
             :id "1" ] ;
@@ -735,25 +394,27 @@ abstr:EraseFieldExtentfromFieldVector a :Abstraction ;
                 out
             ))
         """ ;
-    :input [ a ccd:FieldQ,
-                ccd:PlainVectorRegionA ;
-            :id "1" ],
-        [ a ccd:BooleanA,
+    :implementation arcgis:Erase ;
+    :input [ a ccd:BooleanA,
                 ccd:FieldQ,
                 ccd:VectorRegionA ;
-            :id "2" ] ;
+            :id "2" ],
+        [ a ccd:FieldQ,
+                ccd:PlainVectorRegionA ;
+            :id "1" ] ;
     :output [ a ccd:FieldQ,
                 ccd:PlainVectorRegionA ] .
 
 abstr:ExtractByMask a :Abstraction ;
     rdfs:comment "Extract raster by the extent of another (field) raster." ;
     cct:expression "subset (1: Field(Loc)) (pi1 (2: Field(Nom)))" ;
-    :input [ a ccd:FieldRaster,
+    :implementation arcgis:ExtractByMask ;
+    :input [ a ccd:FieldRaster ;
+            :id "2" ],
+        [ a ccd:FieldRaster,
                 ccd:RatioA ;
             rdfs:comment "Flow directions by watershed mask" ;
-            :id "1" ],
-        [ a ccd:FieldRaster ;
-            :id "2" ] ;
+            :id "1" ] ;
     :output [ a ccd:FieldRaster,
                 ccd:RatioA ] .
 
@@ -762,6 +423,7 @@ abstr:FC2FCObjectTess a :Abstraction ;
     cct:expression """
         subset (1: ObjectInfo(Nom)) (-: C(Obj))
         """ ;
+    :implementation arcgis:FC2FC ;
     :input [ a ccd:ObjectQ,
                 ccd:VectorTessellationA ;
             :id "1" ] ;
@@ -771,6 +433,7 @@ abstr:FC2FCObjectTess a :Abstraction ;
 abstr:FlowAccumulation a :Abstraction ;
     rdfs:comment "Accumulates flow directions into areas reachable downstream." ;
     cct:expression "apply1 size (accumulate (1: Field(Loc)))" ;
+    :implementation arcgis:FlowAccumulation ;
     :input [ a ccd:CyclicA,
                 ccd:FieldRaster ;
             rdfs:comment "Needs to be a direction" ;
@@ -781,6 +444,7 @@ abstr:FlowAccumulation a :Abstraction ;
 abstr:FlowDirection a :Abstraction ;
     rdfs:comment "Computes a grid graph of flow directions from a DEM." ;
     cct:expression "flowdirgraph (1: Field(Itv))" ;
+    :implementation arcgis:FlowDirection ;
     :input [ a ccd:FieldRaster,
                 ccd:IntervalA ;
             rdfs:comment "DEM" ;
@@ -798,6 +462,7 @@ abstr:FlowLength a :Abstraction ;
             (apply nest (pi1 2)) (accumulate 2)
         )))
         """ ;
+    :implementation arcgis:FlowLength ;
     :input [ a ccd:FieldRaster,
                 ccd:RatioA ;
             rdfs:comment "Impedance Weight raster (e.g. 1/velocity raster)" ;
@@ -813,6 +478,7 @@ abstr:FlowLength a :Abstraction ;
 abstr:IDWInterval a :Abstraction ;
     rdfs:comment "Standard point interpolation for interval measurements." ;
     cct:expression "interpol (1: PointMeasures) (deify (-: Reg))" ;
+    :implementation arcgis:IDWInterval ;
     :input [ a ccd:IntervalA,
                 ccd:PointMeasures ;
             :id "1" ] ;
@@ -832,12 +498,13 @@ abstr:IntersectDissolveField2Object a :Abstraction ;
                 (get_attrL 2)
             ) in))
         """ ;
-    :input [ a ccd:ObjectQ,
+    :implementation multi:IntersectDissolve ;
+    :input [ a ccd:FieldQ,
                 ccd:VectorRegionA ;
-            :id "2" ],
-        [ a ccd:FieldQ,
+            :id "1" ],
+        [ a ccd:ObjectQ,
                 ccd:VectorRegionA ;
-            :id "1" ] ;
+            :id "2" ] ;
     :output [ a ccd:ERA,
                 ccd:ObjectQ,
                 ccd:VectorRegionA ] .
@@ -845,6 +512,7 @@ abstr:IntersectDissolveField2Object a :Abstraction ;
 abstr:KrigingInterval a :Abstraction ;
     rdfs:comment "Kriging point interpolation for interval measurements." ;
     cct:expression "interpol (1: PointMeasures) (deify (-: Reg))" ;
+    :implementation arcgis:KrigingInterval ;
     :input [ a ccd:IntervalA,
                 ccd:PointMeasures ;
             :id "1" ] ;
@@ -858,12 +526,13 @@ abstr:LoadAmountonObjects a :Abstraction ;
         2: ObjectInfo(_);
         join_attr (get_attrL 2) 1
         """ ;
-    :input [ a ccd:CountA,
-                ccd:ObjectQ ;
-            :id "1" ],
-        [ a ccd:ObjectQ,
+    :implementation multi:JoinFromTable ;
+    :input [ a ccd:ObjectQ,
                 ccd:VectorRegionA ;
-            :id "2" ] ;
+            :id "2" ],
+        [ a ccd:CountA,
+                ccd:ObjectQ ;
+            :id "1" ] ;
     :output [ a ccd:CountA,
                 ccd:ObjectQ,
                 ccd:VectorRegionA ] .
@@ -871,6 +540,7 @@ abstr:LoadAmountonObjects a :Abstraction ;
 abstr:LocalMapAlgebraDivide a :Abstraction ;
     rdfs:comment "Builds and executes a Local Map Algebra expression that divides rasters by a ratio number" ;
     cct:expression "apply1 ((swap ratio) (-: Ratio)) (1: Field(Ratio))" ;
+    :implementation arcgis:RasterCalculator ;
     :input [ a ccd:FieldRaster,
                 ccd:RatioA ;
             :id "1" ] ;
@@ -880,6 +550,7 @@ abstr:LocalMapAlgebraDivide a :Abstraction ;
 abstr:LocalMapAlgebraInvert a :Abstraction ;
     rdfs:comment "Builds and executes a Local Map Algebra expression that inverts rasters with a ratio level." ;
     cct:expression "apply1 (ratio (-: Ratio)) (1: Field(Ratio))" ;
+    :implementation arcgis:RasterCalculator ;
     :input [ a ccd:FieldRaster,
                 ccd:RatioA ;
             :id "1" ] ;
@@ -890,6 +561,7 @@ abstr:LocalMapAlgebraSubOrder a :Abstraction ;
     rdfs:comment "Builds and executes a Local Map Algebra expression (smaller than or greater than some number) using Python syntax using rasters with an ordinal level",
         "local map algebra with only a single input layer" ;
     cct:expression "select (compose2 notj leq) (1: Field(Ord)) (-: Ord)" ;
+    :implementation arcgis:RasterCalculator ;
     :input [ a ccd:FieldRaster,
                 ccd:OrdinalA ;
             :id "1" ] ;
@@ -900,6 +572,7 @@ abstr:LocalMapAlgebraSubRatio a :Abstraction ;
     rdfs:comment "Builds and executes a Local Map Algebra expression (less than or equal to some number) using Python syntax using rasters with a ratio level",
         "local map algebra transformation with ratio field" ;
     cct:expression "select (compose2 notj leq) (1: Field(Ratio)) (-: Ratio)" ;
+    :implementation arcgis:RasterCalculator ;
     :input [ a ccd:FieldRaster,
                 ccd:RatioA ;
             :id "1" ] ;
@@ -909,6 +582,7 @@ abstr:LocalMapAlgebraSubRatio a :Abstraction ;
 abstr:MakePointMeasuresFromTable a :Abstraction ;
     rdfs:comment "Makes a layer of pointmeasures from some XY table." ;
     cct:expression "1: PointMeasures" ;
+    :implementation multi:MakeLayerFromTable ;
     :input [ a ccd:IntervalA,
                 ccd:PointMeasures ;
             :id "1" ] ;
@@ -926,6 +600,7 @@ abstr:MergeObjects a :Abstraction ;
             )
             (getobjectnames (pi2 (get_attrR 1)))
         """ ;
+    :implementation arcgis:Dissolve ;
     :input [ a ccd:NominalA,
                 ccd:ObjectQ,
                 ccd:VectorTessellationA ;
@@ -943,6 +618,7 @@ abstr:NearPointObjects a :Abstraction ;
             (get_attrL 1)
             (groupbyL min (oDist (get_attrL 1) (get_attrL 2)))
         """ ;
+    :implementation arcgis:NearPointObjects ;
     :input [ a ccd:ObjectQ,
                 ccd:PointA ;
             :id "1" ],
@@ -953,9 +629,20 @@ abstr:NearPointObjects a :Abstraction ;
                 ccd:PointA,
                 ccd:RatioA ] .
 
+abstr:ObjectBuffer a :Abstraction ;
+    rdfs:comment "Buffers some object vector and returns the buffer as a boolean field R(Loc, Bool)" ;
+    cct:expression "extrapol (get_attrL (1: ObjectInfo(Nom)))" ;
+    :input [ a ccd:ObjectQ,
+                ccd:VectorA ;
+            :id "1" ] ;
+    :output [ a ccd:BooleanA,
+                ccd:FieldQ,
+                ccd:PlainVectorRegionA ] .
+
 abstr:ObjectSummaryStatisticsAmount a :Abstraction ;
     rdfs:comment "Sums the amount values of an object layer into a sum" ;
     cct:expression "contentsum (getamounts (1: ObjectInfo(Ratio)))" ;
+    :implementation arcgis:SummaryStatistics ;
     :input [ a ccd:CountA,
                 ccd:ObjectQ,
                 ccd:VectorRegionA ;
@@ -967,6 +654,7 @@ abstr:ObjectSummaryStatisticsAmount a :Abstraction ;
 abstr:RasterToContourInterval a :Abstraction ;
     rdfs:comment "Converts a field raster to a Contour dataset. The raster is first reclassified to an ordinal raster, and then converted to a polygon layer." ;
     cct:expression "invert (apply1 classify (1: Field(Itv)))" ;
+    :implementation multi:RasterToContour ;
     :input [ a ccd:FieldRaster,
                 ccd:IntervalA ;
             :id "1" ] ;
@@ -976,6 +664,7 @@ abstr:RasterToContourInterval a :Abstraction ;
 abstr:RasterToIsoRaster a :Abstraction ;
     rdfs:comment "Converts an interval field raster into an ordinal raster." ;
     cct:expression "apply1 classify (1: Field(Itv))" ;
+    :implementation arcgis:RasterToIsoRaster ;
     :input [ a ccd:FieldRaster,
                 ccd:IntervalA ;
             :id "1" ] ;
@@ -988,6 +677,7 @@ abstr:RegionFromRasterExtent a :Abstraction ;
         1: Field(Nom);
         nest2 (name (pi2 1)) (reify (fcover 1 (pi2 1)))
         """ ;
+    :implementation arcgis:RegionFromRasterExtent ;
     :input [ a ccd:FieldRaster,
                 ccd:NominalA ;
             :id "1" ] ;
@@ -998,6 +688,7 @@ abstr:RegionFromRasterExtent a :Abstraction ;
 abstr:SelectFeaturesByObjectPlainRegionObjects a :Abstraction ;
     rdfs:comment "Select region objects by id" ;
     cct:expression "subset (1: ObjectInfo(Nom)) (-: C(Obj))" ;
+    :implementation multi:FullSelectFeatures ;
     :input [ a ccd:ObjectQ,
                 ccd:PlainVectorRegionA ;
             :id "1" ] ;
@@ -1007,6 +698,7 @@ abstr:SelectFeaturesByObjectPlainRegionObjects a :Abstraction ;
 abstr:SelectFeaturesCoverageToExistenceVector a :Abstraction ;
     rdfs:comment "Select patches of a coverage by attribute" ;
     cct:expression "revert (select eq (invert (1: Field(Itv)): Coverages(Nom)) (-: Nom))" ;
+    :implementation multi:FullSelectFeatures ;
     :input [ a ccd:Coverage ;
             :id "1" ] ;
     :output [ a ccd:FieldQ,
@@ -1014,6 +706,7 @@ abstr:SelectFeaturesCoverageToExistenceVector a :Abstraction ;
 
 abstr:SelectLayerByAttributeLineObjects a :Abstraction ;
     cct:expression "subset (1: ObjectInfo(Nom)) (-: C(Nom))" ;
+    :implementation multi:FullSelectLayerByAttribute ;
     :input [ a ccd:LineA,
                 ccd:NominalA,
                 ccd:ObjectQ ;
@@ -1024,6 +717,7 @@ abstr:SelectLayerByAttributeLineObjects a :Abstraction ;
 
 abstr:SelectLayerByAttributePlainRegionObjects a :Abstraction ;
     cct:expression "subset (1: ObjectInfo(Nom)) (-: C(Nom))" ;
+    :implementation multi:FullSelectLayerByAttribute ;
     :input [ a ccd:NominalA,
                 ccd:ObjectQ,
                 ccd:PlainVectorRegionA ;
@@ -1034,6 +728,7 @@ abstr:SelectLayerByAttributePlainRegionObjects a :Abstraction ;
 
 abstr:SelectLayerByAttributePointObjects a :Abstraction ;
     cct:expression "subset (1: ObjectInfo(Nom)) (-: C(Nom))" ;
+    :implementation multi:FullSelectLayerByAttribute ;
     :input [ a ccd:NominalA,
                 ccd:ObjectQ,
                 ccd:PointA ;
@@ -1044,6 +739,7 @@ abstr:SelectLayerByAttributePointObjects a :Abstraction ;
 
 abstr:SelectLayerByAttributeTessObjects a :Abstraction ;
     cct:expression "subset (1: ObjectInfo(Nom)) (-: C(Nom))" ;
+    :implementation multi:FullSelectLayerByAttribute ;
     :input [ a ccd:NominalA,
                 ccd:ObjectQ,
                 ccd:VectorTessellationA ;
@@ -1064,12 +760,13 @@ abstr:SelectLayerByLocationLineObjects a :Abstraction ;
                 in
             ))
         """ ;
-    :input [ a ccd:LineA,
-                ccd:ObjectQ ;
-            :id "1" ],
-        [ a ccd:ObjectQ,
+    :implementation multi:FullSelectLayerByLocation ;
+    :input [ a ccd:ObjectQ,
                 ccd:VectorA ;
-            :id "2" ] ;
+            :id "2" ],
+        [ a ccd:LineA,
+                ccd:ObjectQ ;
+            :id "1" ] ;
     :output [ a ccd:LineA,
                 ccd:ObjectQ ] .
 
@@ -1085,6 +782,7 @@ abstr:SelectLayerByLocationPlainRegionObjects a :Abstraction ;
                 in
             ))
         """ ;
+    :implementation multi:FullSelectLayerByLocation ;
     :input [ a ccd:ObjectQ,
                 ccd:VectorA ;
             :id "2" ],
@@ -1107,6 +805,7 @@ abstr:SelectLayerByLocationPlainRegionObjectsDist a :Abstraction ;
                 (-: Ratio)
             ))
         """ ;
+    :implementation multi:FullSelectLayerByLocation ;
     :input [ a ccd:ObjectQ,
                 ccd:VectorA ;
             :id "2" ],
@@ -1129,12 +828,13 @@ abstr:SelectLayerByLocationPlainRegionObjectsFieldDist a :Abstraction ;
                 in
             ))
         """ ;
-    :input [ a ccd:FieldQ,
-                ccd:VectorRegionA ;
-            :id "2" ],
-        [ a ccd:ObjectQ,
+    :implementation multi:FullSelectLayerByLocation ;
+    :input [ a ccd:ObjectQ,
                 ccd:PlainVectorRegionA ;
-            :id "1" ] ;
+            :id "1" ],
+        [ a ccd:FieldQ,
+                ccd:VectorRegionA ;
+            :id "2" ] ;
     :output [ a ccd:ObjectQ,
                 ccd:PlainVectorRegionA ] .
 
@@ -1150,6 +850,7 @@ abstr:SelectLayerByLocationPointObjects a :Abstraction ;
                 in
             ))
         """ ;
+    :implementation multi:FullSelectLayerByLocation ;
     :input [ a ccd:ObjectQ,
                 ccd:PointA ;
             :id "1" ],
@@ -1171,6 +872,7 @@ abstr:SelectLayerByLocationTessObjects a :Abstraction ;
                 in
             ))
         """ ;
+    :implementation multi:FullSelectLayerByLocation ;
     :input [ a ccd:ObjectQ,
                 ccd:VectorTessellationA ;
             :id "1" ],
@@ -1182,6 +884,7 @@ abstr:SelectLayerByLocationTessObjects a :Abstraction ;
 
 abstr:SelectLayerByObjectLineObjects a :Abstraction ;
     cct:expression "subset (1: ObjectInfo(Nom)) (-: C(Obj))" ;
+    :implementation multi:FullSelectLayerByAttribute ;
     :input [ a ccd:LineA,
                 ccd:ObjectQ ;
             :id "1" ] ;
@@ -1191,6 +894,7 @@ abstr:SelectLayerByObjectLineObjects a :Abstraction ;
 
 abstr:SelectLayerByObjectPlainRegionObjects a :Abstraction ;
     cct:expression "subset (1: ObjectInfo(Nom)) (-: C(Obj))" ;
+    :implementation multi:FullSelectLayerByAttribute ;
     :input [ a ccd:ObjectQ,
                 ccd:PlainVectorRegionA ;
             :id "1" ] ;
@@ -1200,6 +904,7 @@ abstr:SelectLayerByObjectPlainRegionObjects a :Abstraction ;
 
 abstr:SelectLayerByObjectPointObjects a :Abstraction ;
     cct:expression "subset (1: ObjectInfo(Nom)) (-: C(Obj))" ;
+    :implementation multi:FullSelectLayerByAttribute ;
     :input [ a ccd:ObjectQ,
                 ccd:PointA ;
             :id "1" ] ;
@@ -1209,6 +914,7 @@ abstr:SelectLayerByObjectPointObjects a :Abstraction ;
 
 abstr:SelectLayerByObjectTessObjects a :Abstraction ;
     cct:expression "subset (1: ObjectInfo(Nom)) (-: C(Obj))" ;
+    :implementation multi:FullSelectLayerByAttribute ;
     :input [ a ccd:ObjectQ,
                 ccd:VectorTessellationA ;
             :id "1" ] ;
@@ -1219,6 +925,7 @@ abstr:SelectLayerByObjectTessObjects a :Abstraction ;
 abstr:SelectLayerByRatioGEQPlainRegionObjects a :Abstraction ;
     rdfs:comment "Object selection variant vith gteq, needs a ratio attribute" ;
     cct:expression "select (compose2 notj leq) (1: ObjectInfo(Ratio)) (-: Ratio)" ;
+    :implementation multi:FullSelectLayerByAttribute ;
     :input [ a ccd:ObjectQ,
                 ccd:PlainVectorRegionA,
                 ccd:RatioA ;
@@ -1229,6 +936,7 @@ abstr:SelectLayerByRatioGEQPlainRegionObjects a :Abstraction ;
 
 abstr:SelectLayerByRatioLineObjects a :Abstraction ;
     cct:expression "subset (1: ObjectInfo(Ratio)) (-: C(Ratio))" ;
+    :implementation multi:FullSelectLayerByAttribute ;
     :input [ a ccd:LineA,
                 ccd:ObjectQ,
                 ccd:RatioA ;
@@ -1239,6 +947,7 @@ abstr:SelectLayerByRatioLineObjects a :Abstraction ;
 
 abstr:SelectLayerByRatioPlainRegionObjects a :Abstraction ;
     cct:expression "subset (1: ObjectInfo(Ratio)) (-: C(Ratio))" ;
+    :implementation multi:FullSelectLayerByAttribute ;
     :input [ a ccd:ObjectQ,
                 ccd:PlainVectorRegionA,
                 ccd:RatioA ;
@@ -1249,6 +958,7 @@ abstr:SelectLayerByRatioPlainRegionObjects a :Abstraction ;
 
 abstr:SelectLayerByRatioPointObjects a :Abstraction ;
     cct:expression "subset (1: ObjectInfo(Ratio)) (-: C(Ratio))" ;
+    :implementation multi:FullSelectLayerByAttribute ;
     :input [ a ccd:ObjectQ,
                 ccd:PointA,
                 ccd:RatioA ;
@@ -1259,6 +969,7 @@ abstr:SelectLayerByRatioPointObjects a :Abstraction ;
 
 abstr:SelectLayerByRatioTessObjects a :Abstraction ;
     cct:expression "subset (1: ObjectInfo(Ratio)) (-: C(Ratio))" ;
+    :implementation multi:FullSelectLayerByAttribute ;
     :input [ a ccd:ObjectQ,
                 ccd:RatioA,
                 ccd:VectorTessellationA ;
@@ -1270,6 +981,7 @@ abstr:SelectLayerByRatioTessObjects a :Abstraction ;
 abstr:SelectLayerContourToExistenceVector a :Abstraction ;
     rdfs:comment "Contour to Existence Vector (select a contour map greater than some ordinal value)" ;
     cct:expression "revert (select (compose2 notj leq) (1: Contour) (-: Ord))" ;
+    :implementation multi:FullSelectLayerByAttribute ;
     :input [ a ccd:FieldQ,
                 ccd:OrdinalA,
                 ccd:VectorTessellationA ;
@@ -1281,6 +993,7 @@ abstr:SelectLayerContourToExistenceVector a :Abstraction ;
 
 abstr:SelectLayerCoverageToExistenceVector a :Abstraction ;
     cct:expression "revert (select eq (1: Coverages(Nom)) (-: Nom))" ;
+    :implementation multi:FullSelectLayerByAttribute ;
     :input [ a ccd:FieldQ,
                 ccd:VectorTessellationA ;
             rdfs:comment "Coverage is defined as a subclass of FieldQ and TesselationA, and therefore also allows field rasters, which we don't want in this context." ;
@@ -1298,6 +1011,7 @@ abstr:SelectObjectbyExtent a :Abstraction ;
             in
         ))
         """ ;
+    :implementation arcgis:SelectObjectByExtent ;
     :input [ a ccd:ObjectQ,
                 ccd:VectorA ;
             :id "1" ] ;
@@ -1307,6 +1021,7 @@ abstr:SelectObjectbyExtent a :Abstraction ;
 abstr:Slope a :Abstraction ;
     rdfs:comment "Computes slopes of a DEM." ;
     cct:expression "slope (1: Field(Itv))" ;
+    :implementation arcgis:Slope ;
     :input [ a ccd:FieldRaster,
                 ccd:IntervalA ;
             :id "1" ] ;
@@ -1321,13 +1036,14 @@ abstr:SnapPourPoint a :Abstraction ;
         1: ObjectInfo(Nom);
         join (revert (get_attrL 1)) (get_attrR 1)
         """ ;
-    :input [ a ccd:ObjectQ,
-                ccd:PointA ;
-            :id "1" ],
-        [ a ccd:FieldRaster,
+    :implementation arcgis:SnapPourPoint ;
+    :input [ a ccd:FieldRaster,
                 ccd:RatioA ;
             rdfs:comment "flow accumulation raster" ;
-            :id "2" ] ;
+            :id "2" ],
+        [ a ccd:ObjectQ,
+                ccd:PointA ;
+            :id "1" ] ;
     :output [ a ccd:FieldQ,
                 ccd:PlainNominalA,
                 ccd:RasterA ] .
@@ -1352,6 +1068,7 @@ abstr:SpatialJoinAmountSumTessCount a :Abstraction ;
                 ))
             )
         """ ;
+    :implementation arcgis:SpatialJoin ;
     :input [ a ccd:ObjectQ,
                 ccd:VectorTessellationA ;
             :id "2" ],
@@ -1382,13 +1099,14 @@ abstr:SpatialJoinAmountSumTessRatio a :Abstraction ;
                 ))
             )
         """ ;
-    :input [ a ccd:ObjectQ,
-                ccd:VectorTessellationA ;
-            :id "2" ],
-        [ a ccd:AmountQ,
+    :implementation arcgis:SpatialJoin ;
+    :input [ a ccd:AmountQ,
                 ccd:ERA,
                 ccd:VectorRegionA ;
-            :id "1" ] ;
+            :id "1" ],
+        [ a ccd:ObjectQ,
+                ccd:VectorTessellationA ;
+            :id "2" ] ;
     :output [ a ccd:ERA,
                 ccd:ObjectQ,
                 ccd:VectorTessellationA ] .
@@ -1407,6 +1125,7 @@ abstr:SpatialJoinCountTess a :Abstraction ;
                 (get_attrL 2)
             )
         """ ;
+    :implementation arcgis:SpatialJoin ;
     :input [ a ccd:ObjectQ,
                 ccd:VectorA ;
             :id "1" ],
@@ -1433,6 +1152,7 @@ abstr:SpatialJoinMeanTessCount a :Abstraction ;
                 ) in) (getamounts 1)))
             )
         """ ;
+    :implementation arcgis:SpatialJoin ;
     :input [ a ccd:CountA,
                 ccd:ObjectQ,
                 ccd:VectorA ;
@@ -1461,13 +1181,14 @@ abstr:SpatialJoinMeanTessInterval a :Abstraction ;
                 ) in) (getamounts 1)))
             )
         """ ;
-    :input [ a ccd:IntervalA,
+    :implementation arcgis:SpatialJoin ;
+    :input [ a ccd:ObjectQ,
+                ccd:VectorTessellationA ;
+            :id "2" ],
+        [ a ccd:IntervalA,
                 ccd:ObjectQ,
                 ccd:VectorA ;
-            :id "1" ],
-        [ a ccd:ObjectQ,
-                ccd:VectorTessellationA ;
-            :id "2" ] ;
+            :id "1" ] ;
     :output [ a ccd:IntervalA,
                 ccd:ObjectQ,
                 ccd:VectorTessellationA ] .
@@ -1488,13 +1209,14 @@ abstr:SpatialJoinMeanTessRatio a :Abstraction ;
                 ) in) (getamounts 1)))
             )
         """ ;
+    :implementation arcgis:SpatialJoin ;
     :input [ a ccd:ObjectQ,
+                ccd:VectorTessellationA ;
+            :id "2" ],
+        [ a ccd:ObjectQ,
                 ccd:RatioA,
                 ccd:VectorA ;
-            :id "1" ],
-        [ a ccd:ObjectQ,
-                ccd:VectorTessellationA ;
-            :id "2" ] ;
+            :id "1" ] ;
     :output [ a ccd:ObjectQ,
                 ccd:RatioA,
                 ccd:VectorTessellationA ] .
@@ -1515,6 +1237,7 @@ abstr:SpatialJoinSumTessCount a :Abstraction ;
                 (getamounts 1)
             )))
         """ ;
+    :implementation arcgis:SpatialJoin ;
     :input [ a ccd:CountA,
                 ccd:ObjectQ,
                 ccd:VectorA ;
@@ -1543,13 +1266,14 @@ abstr:SpatialJoinSumTessRatio a :Abstraction ;
                 (getamounts 1)
             )))
         """ ;
-    :input [ a ccd:ObjectQ,
-                ccd:VectorTessellationA ;
-            :id "2" ],
-        [ a ccd:ERA,
+    :implementation arcgis:SpatialJoin ;
+    :input [ a ccd:ERA,
                 ccd:ObjectQ,
                 ccd:VectorA ;
-            :id "1" ] ;
+            :id "1" ],
+        [ a ccd:ObjectQ,
+                ccd:VectorTessellationA ;
+            :id "2" ] ;
     :output [ a ccd:ERA,
                 ccd:ObjectQ,
                 ccd:VectorTessellationA ] .
@@ -1557,6 +1281,7 @@ abstr:SpatialJoinSumTessRatio a :Abstraction ;
 abstr:SummaryStatisticsAmount a :Abstraction ;
     rdfs:comment "Sums the amount values of a count amount layer into a sum" ;
     cct:expression "contentsum (1: Amounts(Ratio))" ;
+    :implementation arcgis:SummaryStatistics ;
     :input [ a ccd:AmountQ,
                 ccd:CountA,
                 ccd:VectorRegionA ;
@@ -1568,6 +1293,7 @@ abstr:SummaryStatisticsAmount a :Abstraction ;
 abstr:VelocityFieldDEM a :Abstraction ;
     rdfs:comment "Computes velocity field from DEM." ;
     cct:expression "apply2 product (1: Field(Ratio)) (2: Field(Ratio))" ;
+    :implementation multi:VelocityField ;
     :input [ a ccd:FieldRaster,
                 ccd:RatioA ;
             rdfs:comment "slope" ;
@@ -1588,6 +1314,7 @@ abstr:Watershed a :Abstraction ;
             (invert (apply1 reify (accumulate (1: Field(Loc)))))
         )
         """ ;
+    :implementation arcgis:Watershed ;
     :input [ a ccd:FieldQ,
                 ccd:PlainNominalA,
                 ccd:RasterA ;
@@ -1611,6 +1338,7 @@ abstr:ZonalStatisticsMeanInterval a :Abstraction ;
             (get_attrL 2)
             (apply1 (fcont avg 1) (get_attrL 2))
         """ ;
+    :implementation multi:ZonalStatistics ;
     :input [ a ccd:ObjectQ,
                 ccd:VectorTessellationA ;
             :id "2" ],
@@ -1633,12 +1361,13 @@ abstr:ZonalStatisticsMeanRatio a :Abstraction ;
                 1
             ))
         """ ;
-    :input [ a ccd:FieldRaster,
-                ccd:RatioA ;
-            :id "1" ],
-        [ a ccd:ObjectQ,
+    :implementation multi:ZonalStatistics ;
+    :input [ a ccd:ObjectQ,
                 ccd:PlainVectorRegionA ;
-            :id "2" ] ;
+            :id "2" ],
+        [ a ccd:FieldRaster,
+                ccd:RatioA ;
+            :id "1" ] ;
     :output [ a ccd:IRA,
                 ccd:ObjectQ,
                 ccd:PlainVectorRegionA ] .
@@ -1655,6 +1384,7 @@ abstr:ZonalStatisticsSize a :Abstraction ;
                 (get_attrL 2)
             ) in))
         """ ;
+    :implementation multi:ZonalStatistics ;
     :input [ a ccd:ObjectQ,
                 ccd:VectorRegionA ;
             :id "2" ],
@@ -1677,13 +1407,14 @@ abstr:ZonalStatisticsSumCount a :Abstraction ;
                 (join_key (orTopo (get_attrL 2) (pi1 1)) 1)
             )
         """ ;
-    :input [ a ccd:AmountQ,
+    :implementation multi:ZonalStatistics ;
+    :input [ a ccd:ObjectQ,
+                ccd:VectorRegionA ;
+            :id "2" ],
+        [ a ccd:AmountQ,
                 ccd:CountA,
                 ccd:RasterA ;
-            :id "1" ],
-        [ a ccd:ObjectQ,
-                ccd:VectorRegionA ;
-            :id "2" ] ;
+            :id "1" ] ;
     :output [ a ccd:CountA,
                 ccd:ObjectQ,
                 ccd:VectorRegionA ] .
@@ -1691,6 +1422,7 @@ abstr:ZonalStatisticsSumCount a :Abstraction ;
 abstr:con1 a :Abstraction ;
     rdfs:comment "Cuts a field raster conditional on less than some value" ;
     cct:expression "select leq (1: Field(Ratio)) (-: Ratio)" ;
+    :implementation arcgis:Con ;
     :input [ a ccd:FieldRaster,
                 ccd:RatioA ;
             rdfs:comment "raster" ;
@@ -1701,14 +1433,15 @@ abstr:con1 a :Abstraction ;
 abstr:con2 a :Abstraction ;
     rdfs:comment "Cuts a field raster conditional on (the coverage of) another field raster that is less than some value" ;
     cct:expression "subset (2: Field(Ratio)) (pi1 (select leq (1: Field(Ratio)) (-: Ratio)))" ;
+    :implementation arcgis:Con ;
     :input [ a ccd:FieldRaster,
                 ccd:RatioA ;
-            rdfs:comment "conditional raster, less than some value" ;
-            :id "1" ],
+            rdfs:comment "field raster to be cut" ;
+            :id "2" ],
         [ a ccd:FieldRaster,
                 ccd:RatioA ;
-            rdfs:comment "field raster to be cut" ;
-            :id "2" ] ;
+            rdfs:comment "conditional raster, less than some value" ;
+            :id "1" ] ;
     :output [ a ccd:FieldRaster,
                 ccd:RatioA ] .
 
@@ -1725,6 +1458,7 @@ abstr:con3 a :Abstraction ;
                 (reify (pi1 (select leq 1 (-: Ratio))))
             ) out)))
         """ ;
+    :implementation arcgis:Con ;
     :input [ a ccd:FieldRaster,
                 ccd:RatioA ;
             rdfs:comment "field raster to be cut for outside" ;
@@ -1740,6 +1474,190 @@ abstr:con3 a :Abstraction ;
     :output [ a ccd:FieldRaster,
                 ccd:RatioA ] .
 
+multi:ClosestFacilityAnalysis a :Multi ;
+    :action [ :apply arcgis:Solve ;
+            :input _:Neaf28a9e32c047fc82fa62670647c3b5 ;
+            :output [ ] ],
+        [ :apply arcgis:AddLocations ;
+            :input _:N6b31c9c0189e46b19ad4d0050c9c0590,
+                [ rdfs:comment "goals" ;
+                    :id "2" ] ;
+            :output _:Ne2829bc818c24adaa24096250cfc585e ],
+        [ :apply arcgis:MakeClosestFacilityAnalysisLayer ;
+            :input [ rdfs:comment "roads" ;
+                    :id "1" ] ;
+            :output _:N6b31c9c0189e46b19ad4d0050c9c0590 ],
+        [ :apply arcgis:AddLocations ;
+            :input [ rdfs:comment "origins" ;
+                    :id "3" ],
+                _:Ne2829bc818c24adaa24096250cfc585e ;
+            :output _:Neaf28a9e32c047fc82fa62670647c3b5 ] .
+
+arcgis:AddFields a :Unit ;
+    rdfs:seeAlso arcdm:add-fields.htm .
+
+arcgis:Dissolve a :Unit ;
+    rdfs:comment "Merge object parts into single object" ;
+    rdfs:seeAlso arcdm:dissolve.htm .
+
+arcgis:Erase a :Unit ;
+    rdfs:comment "Erase Vector fields" ;
+    rdfs:seeAlso arcan:erase.htm .
+
+arcgis:ExtractByMask a :Unit ;
+    rdfs:seeAlso arcsa:extract-by-mask.htm .
+
+arcgis:FC2FC a :Unit ;
+    rdfs:comment "Feature class to feature class (=Select)" ;
+    rdfs:seeAlso arcco:feature-class-to-feature-class.htm .
+
+arcgis:FlowAccumulation a :Unit ;
+    rdfs:comment "Flow direction accumulation" ;
+    rdfs:seeAlso arcsa:flow-accumulation.htm .
+
+arcgis:FlowDirection a :Unit ;
+    rdfs:comment "Flow direction raster" ;
+    rdfs:seeAlso arcsa:flow-direction.htm .
+
+arcgis:FlowLength a :Unit ;
+    rdfs:seeAlso arcsa:flow-length.htm .
+
+arcgis:IDWInterval a :Unit ;
+    rdfs:seeAlso arcsa:idw.htm .
+
+arcgis:Intersect a :Unit ;
+    rdfs:seeAlso arcan:intersect.htm .
+
+arcgis:KrigingInterval a :Unit ;
+    rdfs:seeAlso arcsa:kriging.htm .
+
+arcgis:MakeClosestFacilityAnalysisLayer a :Unit ;
+    rdfs:seeAlso arcna:make-closest-facility-analysis-layer.htm .
+
+arcgis:MakeXyEventLayer a :Unit ;
+    rdfs:seeAlso arcdm:make-xy-event-layer.htm .
+
+arcgis:NearPointObjects a :Unit ;
+    rdfs:comment "Near tool, to seach for the closest objects using Euclidean distance" ;
+    rdfs:seeAlso arcan:generate-near-table.htm .
+
+arcgis:Project a :Unit ;
+    rdfs:seeAlso arcdm:project.htm .
+
+arcgis:SelectLayerByLocation a :Unit ;
+    rdfs:seeAlso arcdm:select-layer-by-location.htm .
+
+arcgis:SelectObjectByExtent a :Unit ;
+    rdfs:seeAlso arcan:select.htm .
+
+arcgis:Slope a :Unit ;
+    rdfs:seeAlso arcsa:slope.htm .
+
+arcgis:SnapPourPoint a :Unit ;
+    rdfs:seeAlso arcsa:snap-pour-point.htm .
+
+arcgis:Solve a :Unit ;
+    rdfs:seeAlso arcna:solve.htm .
+
+arcgis:TableToTable a :Unit ;
+    rdfs:seeAlso arcco:table-to-table.htm .
+
+arcgis:Watershed a :Unit ;
+    rdfs:seeAlso arcsa:watershed.htm .
+
+arcgis:ZonalStatisticsAsTable a :Unit ;
+    rdfs:seeAlso arcsa:zonal-statistics-as-table.htm .
+
+multi:CalculatePartialAmounts a :Multi ;
+    rdfs:comment "Calculates a set of portions from a set of object based count amounts using some boolean vector field. Only the portions that are within the true value of the boolean field are considered. This is an areal interpolation problem, which is solved by first generating area proportions and then multiplying them with the count amount." ;
+    :action [ :apply arcgis:CalculateField ;
+            :input _:N8b20be5a9c874c459608633d6b86aa66 ;
+            :output [ ] ],
+        [ :apply arcgis:Clip ;
+            :input [ :id "2" ],
+                [ :id "1" ] ;
+            :output _:Nf335d46a66ba4d8583a4ab4aec9f1ccd ],
+        [ :apply arcgis:AddFields ;
+            :input _:Nf335d46a66ba4d8583a4ab4aec9f1ccd ;
+            :output _:Ne1b214812f544ba0b07847cb145a8970 ],
+        [ :apply arcgis:CalculateField ;
+            :input _:Ne1b214812f544ba0b07847cb145a8970 ;
+            :output _:N8b20be5a9c874c459608633d6b86aa66 ] .
+
+multi:IntersectDissolve a :Multi ;
+    rdfs:comment "this tool computes the coverage of a field inside object region by first intersecting and then dissolving  and joining, to obtain the area covered by the field inside the object region" ;
+    :action [ :apply arcgis:JoinField ;
+            :input _:N84af893bfabf4ba5ada0226aea543be6,
+                _:N93e05f84397c436792941632af764dbb ;
+            :output [ ] ],
+        [ :apply arcgis:MergeObjects ;
+            :input _:N0672e6552532458f9e9b60368d6a1a90 ;
+            :output _:N84af893bfabf4ba5ada0226aea543be6 ],
+        [ :apply arcgis:Intersect ;
+            :input _:N93e05f84397c436792941632af764dbb,
+                [ :id "1" ] ;
+            :output _:N0672e6552532458f9e9b60368d6a1a90 ] .
+
+multi:JoinFromTable a :Multi ;
+    rdfs:comment "Make table from Excel" ;
+    :action [ :apply arcgis:ExcelToTable ;
+            :input [ :id "1" ] ;
+            :output _:N3caa5a7a6dd94143ad6d9ea4b1b9e88b ],
+        [ :apply arcgis:JoinField ;
+            :input _:N3caa5a7a6dd94143ad6d9ea4b1b9e88b,
+                [ :id "2" ] ;
+            :output [ ] ] .
+
+multi:MakeLayerFromTable a :Multi ;
+    :action [ :apply arcgis:MakeXyEventLayer ;
+            :input _:Nd6be5441a8e74fbab1c0bbbf8d047060 ;
+            :output _:N0075882bb0fb4a678d331095786b10f2 ],
+        [ :apply arcgis:JoinField ;
+            :input _:N7a1fe53cfa164e428a7e2622cb5e474b,
+                _:N8c36fea416c34642b0aa2f2817ef00e1 ;
+            :output [ ] ],
+        [ :apply arcgis:ExcelToTable ;
+            :input _:Nd6be5441a8e74fbab1c0bbbf8d047060 ;
+            :output _:N8c36fea416c34642b0aa2f2817ef00e1 ],
+        [ :apply arcgis:Project ;
+            :input _:N0075882bb0fb4a678d331095786b10f2 ;
+            :output _:N7a1fe53cfa164e428a7e2622cb5e474b ] .
+
+multi:RasterCoverage a :Multi ;
+    rdfs:comment "Computes coverage (size) from a raster table for each raster value" ;
+    :action [ :apply arcgis:CalculateField ;
+            :input _:N0af9d34be8234508884cc799e1886989 ;
+            :output [ ] ],
+        [ :apply arcgis:TableToTable ;
+            :input [ :id "1" ] ;
+            :output _:Ne886b49b07e5436db18d3f73a47c73ad ],
+        [ :apply arcgis:AddField ;
+            :input _:Ne886b49b07e5436db18d3f73a47c73ad ;
+            :output _:N0af9d34be8234508884cc799e1886989 ] .
+
+multi:RasterToContour a :Multi ;
+    :action [ :apply arcgis:RasterToIsoRaster ;
+            :input [ :id "1" ] ;
+            :output _:N68badb2bff26441b932770777de4bd25 ],
+        [ :apply arcgis:RegionFromRasterExtent ;
+            :input _:N68badb2bff26441b932770777de4bd25 ;
+            :output [ ] ] .
+
+multi:VelocityField a :Multi ;
+    rdfs:comment """Computes a water flow velocity raster from slope * accumulation area
+
+    # Select by attribute is always followed by copying features
+    # This computes SquareRoot("slope") * SquareRoot("flow_accumulation")
+    """ ;
+    :action [ :apply arcgis:RasterCalculator ;
+            :input [ :id "1" ],
+                [ :id "2" ] ;
+            :output _:N310ca51a67da4000a76abc457fd7d293 ],
+        [ rdfs:comment "This second step computes 0.1 * (Stowe_slope_area_term / [Mean slope-area term]). It needs looking up of parameter [Mean slope-area term]." ;
+            :apply arcgis:RasterCalculator1 ;
+            :input _:N310ca51a67da4000a76abc457fd7d293 ;
+            :output [ ] ] .
+
 arcgis:AddLocations a :Unit ;
     rdfs:seeAlso arcna:add-locations.htm .
 
@@ -1749,11 +1667,45 @@ arcgis:CopyFeatures a :Unit ;
 arcgis:ExcelToTable a :Unit ;
     rdfs:seeAlso arcco:excel-to-table.htm .
 
+arcgis:PolygonToRaster a :Unit ;
+    rdfs:seeAlso arcco:polygon-to-raster.htm .
+
+arcgis:RasterToIsoRaster a :Unit ;
+    rdfs:seeAlso arcsa:reclassify.htm .
+
+arcgis:RegionFromRasterExtent a :Unit ;
+    rdfs:seeAlso arcco:raster-to-polygon.htm .
+
 arcgis:SelectLayerByAttribute a :Unit ;
     rdfs:seeAlso arcdm:select-layer-by-attribute.htm .
 
+arcgis:SummaryStatistics a :Unit ;
+    rdfs:seeAlso arcan:summary-statistics.htm .
+
+multi:FullSelectFeatures a :Multi ;
+    rdfs:comment "Query to select items from layers using attribut values" ;
+    :action [ rdfs:comment "Select by attribute is always followed by copying features" ;
+            :apply arcgis:SelectLayerByAttribute ;
+            :input [ :id "1" ] ;
+            :output _:N7793980820f94ebb90eacc5b4886f411 ],
+        [ :apply arcgis:FC2FCObjectTess ;
+            :input _:N7793980820f94ebb90eacc5b4886f411 ;
+            :output [ ] ] .
+
 arcgis:AddField a :Unit ;
     rdfs:seeAlso arcdm:add-field.htm .
+
+arcgis:Con a :Unit ;
+    rdfs:seeAlso arcsa:con-.htm .
+
+multi:AddandCalculateAttribute a :Multi ;
+    rdfs:comment "Add an attribute and calculate value based on one other attribute" ;
+    :action [ :apply arcgis:CalculateField ;
+            :input _:Nfa89ce54981b420e94645fe3c0873bf2 ;
+            :output [ ] ],
+        [ :apply arcgis:AddField ;
+            :input [ :id "1" ] ;
+            :output _:Nfa89ce54981b420e94645fe3c0873bf2 ] .
 
 arcgis:CalculateField a :Unit ;
     rdfs:seeAlso arcdm:calculate-field.htm .
@@ -1761,9 +1713,57 @@ arcgis:CalculateField a :Unit ;
 arcgis:JoinField a :Unit ;
     rdfs:seeAlso arcdm:join-field.htm .
 
-_:N011e1d7e368341d294e3ae99fdd47ac1 :id "2" .
+multi:ZonalStatistics a :Multi ;
+    :action [ :apply arcgis:JoinField ;
+            :input _:N2c8fc79175d2456faa20a070652b05ad,
+                _:N3ccd67711e4349dd80d051bb10a4b115 ;
+            :output [ ] ],
+        [ :apply arcgis:ZonalStatisticsAsTable ;
+            :input _:N2c8fc79175d2456faa20a070652b05ad,
+                [ :id "1" ] ;
+            :output _:N3ccd67711e4349dd80d051bb10a4b115 ] .
 
-_:N65b1751423974e3f83ef8aaeedac66bb :id "1" .
+arcgis:Clip a :Unit ;
+    rdfs:seeAlso arcdm:clip.htm .
 
-_:Naff676df5ab348a79979041b907f4c10 :id "2" .
+arcgis:RasterCalculator a :Unit ;
+    rdfs:seeAlso arcsa:raster-calculator.htm .
+
+multi:CalculateAreaMeasure a :Multi ;
+    rdfs:comment "This is an abbreviated workflow for calculating area based measures with attributes" ;
+    :action [ :apply arcgis:CalculateField2 ;
+            :input _:N5fb11d610f504c00b7cd811add5ed0dc,
+                [ :id "2" ] ;
+            :output [ ] ],
+        [ :apply arcgis:AddField ;
+            :input [ :id "1" ] ;
+            :output _:N5fb11d610f504c00b7cd811add5ed0dc ] .
+
+multi:FullSelectLayerByLocation a :Multi ;
+    :action [ :apply arcgis:CopyFeatures ;
+            :input _:N4585696d5ec447229d3c67b571f51795 ;
+            :output [ ] ],
+        [ :apply arcgis:SelectLayerByLocation ;
+            :input [ :id "2" ],
+                [ :id "1" ] ;
+            :output _:N4585696d5ec447229d3c67b571f51795 ] .
+
+arcgis:SpatialJoin a :Unit ;
+    rdfs:seeAlso arcan:spatial-join.htm .
+
+multi:FullSelectLayerByAttribute a :Multi ;
+    rdfs:comment "Select by attribute is always followed by copy features (treated as one tool in the annotation",
+        "a SQL query to select features matching a selection criterion. You build a query expression to generate the subset. You can query a dataset based on a field in a layer or a table. Using this selection a new Feature dataset is created with only the selected features using the 'Copy Features tool'. This feature dataset represents all the areas that fulfill the criterion" ;
+    :action [ :apply arcgis:SelectLayerByAttribute ;
+            :input [ :id "1" ] ;
+            :output _:N96f893ccd14e41319796f35dfeeb2bea ],
+        [ :apply arcgis:CopyFeatures ;
+            :input _:N96f893ccd14e41319796f35dfeeb2bea ;
+            :output [ ] ] .
+
+_:N2c8fc79175d2456faa20a070652b05ad :id "2" .
+
+_:N93e05f84397c436792941632af764dbb :id "2" .
+
+_:Nd6be5441a8e74fbab1c0bbbf8d047060 :id "1" .
 
