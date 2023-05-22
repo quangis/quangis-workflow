@@ -84,7 +84,7 @@ class Repo(object):
         assert (root, RDF.type, WF.Workflow) in wf
 
         for action in wf.high_level_actions(root):
-            impl = wf.tool(action)
+            impl = wf.impl(action)
             try:
                 proposal_sig = Abstraction.propose(wf, action)
                 if impl in self.units:

@@ -85,16 +85,14 @@ class AbstractConverter(cli.Application, WithRepo, WithDestDir):
         for file in paths(WORKFLOW):
             cwf = Workflow.from_file(file)
             try:
-                # self.repo.update(cwf)
                 g = self.tools.convert_to_signatures(cwf, cwf.root)
             except Exception as e:
                 print(f"Skipping {file} because of the following "
                     f"{type(e).__name__}: {e}")
             else:
                 print(f"Successfully processed {file}")
-                assert self.output_dir.isdir()
                 output_file = self.output_dir / f"{file.stem}_abstract.ttl"
-                assert not self.output_file.exists()
+                assert not output_file.exists()
                 g.serialize(output_file, format="turtle")
 
 
