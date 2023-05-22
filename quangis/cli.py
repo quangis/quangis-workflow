@@ -88,10 +88,13 @@ class AbstractConverter(cli.Application, WithRepo, WithDestDir):
             try:
                 g = self.tools.convert_to_abstractions(cwf, cwf.root)
             except Exception as e:
-                print(f"Skipping {file} because of the following "
-                    f"{type(e).__name__}:", file=stderr)
-                for message in e.args:
-                    print(f"\t{message}", file=stderr)
+                if e.args:
+                    print(f"Skipping {file} because of the following "
+                        f"{type(e).__name__}: {','.join(e.args)}.", 
+                        file=stderr)
+                else:
+                    print(f"Skipping {file} because of a "
+                        f"{type(e).__name__}.")
             else:
                 print(f"Successfully processed {file}")
                 output_file = self.output_dir / f"{file.stem}_abstract.ttl"
