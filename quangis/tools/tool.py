@@ -335,16 +335,15 @@ class Abstraction(Tool):
                 f"Abstraction of {lbl} has no CCT expression")
 
         inputs = dict()
-        for i, x in enumerate(wf.inputs(action, labelled=True), start=1):
-            t = inputs[str(i)] = Artefact.from_graph(wf, x)
+        for i, x in wf.inputs_labelled(action).items():
+            t = inputs[i] = Artefact(id=i, type=gettype(wf, x))
             if t.type.empty():
                 raise UntypedArtefactError(
                     f"The CCD type of the {i}'th input artefact of an "
                     f"action associated with {lbl} is empty or too general.")
 
-        outputs = [Artefact.from_graph(wf, x) for x in wf.outputs(action)]
-        assert len(outputs) == 1
-        output = outputs[0]
+        output_node = wf.output(action)
+        output = Artefact(type=gettype(wf, output_node))
         if output.type.empty():
             raise UntypedArtefactError(
                 f"The CCD type of the output artefact of an action "
@@ -367,7 +366,7 @@ class Abstraction(Tool):
             inputs: dict[str, Artefact] = dict()
             for x in graph.objects(sig, TOOL.input):
                 input = Artefact.from_graph(graph, x)
-                assert input.id
+                assert input.id, f"{n3(sig)} has no input id"
                 inputs[input.id] = input
 
             output_node = graph.value(sig, TOOL.output, any=False)
@@ -395,10 +394,10 @@ class Abstraction(Tool):
         for _, x in self.inputs.items():
             g.add((self.uri, TOOL.input, x.to_graph(g)))
 
+        g.add((self.uri, TOOL.output, self.output.to_graph(g)))
+
         for comment in self.comments:
             g.add((self.uri, RDFS.comment, Literal(comment)))
-
-        g.add((self.uri, TOOL.output, self.output.to_graph(g)))
 
         return g
 
