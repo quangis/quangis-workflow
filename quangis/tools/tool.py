@@ -419,8 +419,8 @@ class Abstraction(Tool):
         # should, since even in the one test that I did (wffood), we see that 
         # SelectLayerByLocationPointObjects has two variants with just the 
         # order of the inputs flipped.
-        il1 = list(self.inputs.keys())
-        il2 = list(candidate.inputs.keys())
+        il1 = sorted(self.inputs.keys())
+        il2 = sorted(candidate.inputs.keys())
         return (il1 == il2 and all(
             candidate.inputs[k1].type.subtype(self.inputs[k2].type)
             for k1, k2 in zip(il1, il2)))
