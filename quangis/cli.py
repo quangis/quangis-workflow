@@ -1,6 +1,7 @@
 from __future__ import annotations
 from plumbum import cli  # type: ignore
 import platform
+from sys import stderr
 from glob import glob
 from pathlib import Path
 from typing import Iterable, Iterator
@@ -85,15 +86,18 @@ class AbstractConverter(cli.Application, WithRepo, WithDestDir):
         for file in paths(WORKFLOW):
             cwf = Workflow.from_file(file)
             try:
-                g = self.tools.convert_to_signatures(cwf, cwf.root)
+                g = self.tools.convert_to_abstractions(cwf, cwf.root)
             except Exception as e:
                 print(f"Skipping {file} because of the following "
-                    f"{type(e).__name__}: {e}")
+                    f"{type(e).__name__}:", file=stderr)
+                for message in e.args:
+                    print(f"\t{message}", file=stderr)
             else:
                 print(f"Successfully processed {file}")
                 output_file = self.output_dir / f"{file.stem}_abstract.ttl"
                 assert not output_file.exists()
                 g.serialize(output_file, format="turtle")
+            print()
 
 
 @CLI.subcommand("synthesis")
