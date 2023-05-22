@@ -1,3 +1,5 @@
 Jpype1
 rdflib
+typing_extensions
+platformdirs
 git+https://github.com/quangis/transforge.git@develop#egg=transforge
