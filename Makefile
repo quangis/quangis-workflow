@@ -7,9 +7,9 @@ ${VIRTUAL_ENV}: requirements.txt
 	${VENV} pip install -Ur requirements.txt
 	${VENV} pip install -e .
 
-solutions: ${VIRTUAL_ENV} ${PY}
+solutions: ${VIRTUAL_ENV} ${PY} build/repo.ttl
 	-mkdir -p build/
-	${VENV} quangis synthesis -d build/ -x --tools data/all.ttl --config data/ioconfig.ttl
+	${VENV} quangis synthesis -d build/ -x --tools build/repo.ttl --config data/ioconfig.ttl
 
 abstract-workflows: ${VIRTUAL_ENV} ${PY} build/repo.ttl
 	-mkdir -p build/
