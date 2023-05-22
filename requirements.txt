@@ -1,5 +1,6 @@
 Jpype1
 rdflib
+plumbum
 typing_extensions
 platformdirs
 git+https://github.com/quangis/transforge.git@develop#egg=transforge
