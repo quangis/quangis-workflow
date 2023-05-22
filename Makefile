@@ -7,16 +7,16 @@ ${VIRTUAL_ENV}: requirements.txt
 	${VENV} pip install -Ur requirements.txt
 	${VENV} pip install -e .
 
-solutions: ${VIRTUAL_ENV} ${PY} build/repo.ttl
+solutions: ${VIRTUAL_ENV}/bin/activate ${PY} build/repo.ttl
 	-mkdir -p build/
 	${VENV} quangis synthesis -d build/ -x --tools build/repo.ttl --config data/ioconfig.ttl
 
-abstract-workflows: ${VIRTUAL_ENV} ${PY} build/repo.ttl
+abstract-workflows: ${VIRTUAL_ENV}/bin/activate ${PY} build/repo.ttl
 	-mkdir -p build/
 	rm -f build/wf*.ttl
 	${VENV} quangis convert-abstract -d build/ -x --tools build/repo.ttl workflows-concrete/*.ttl
 
-build/repo.ttl: ${VIRTUAL_ENV} ${PY}
+build/repo.ttl: ${VIRTUAL_ENV}/bin/activate ${PY}
 	-mkdir -p build/
 	${VENV} quangis update-tools -o build/repo.ttl --tools data/all.ttl workflows-concrete/*.ttl
 
