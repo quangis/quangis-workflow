@@ -10,8 +10,9 @@ from rdflib.util import guess_format
 
 from quangis.tools import Repo
 from quangis.workflow import Workflow
-from quangis.namespace import CCD, EX
+from quangis.namespace import CCD, EX, n3
 from quangis.polytype import Polytype
+from quangis.ccdata import dimensions
 
 
 def paths(files: Iterable[str]) -> Iterator[Path]:
@@ -128,21 +129,21 @@ class Generator(cli.Application, WithRepo, WithDestDir):
         # To start with, we generate workflows with two inputs and one output, 
         # of which one input is drawn from the following sources, and the other 
         # is the same as the output without the measurement level.
-        inputs_outputs: list[tuple[str, list[Polytype], list[Polytype]]] = []
+        inputs_outputs: list[tuple[list[Polytype], list[Polytype]]] = []
         for goal_tuple in self.goals:
-            goal = Polytype(gen.dimensions, goal_tuple)
+            goal = Polytype(dimensions, goal_tuple)
             source1 = Polytype(goal)
             source1[CCD.NominalA] = {CCD.NominalA}
             for source_tuple in self.sources:
-                source2 = Polytype(gen.dimensions, source_tuple)
-                inputs_outputs.append((
-                    f"{source1.short()}+{source2.short()}_{goal.short()}_",
-                    [source1, source2], [goal]))
+                source2 = Polytype(dimensions, source_tuple)
+                inputs_outputs.append(([source1, source2], [goal]))
 
         running_total = 0
-        for run, (name, inputs, outputs) in enumerate(inputs_outputs):
+        for run, (inputs, outputs) in enumerate(inputs_outputs):
+            print(f"Attempting {', '.join(n3(x.uris()) for x in inputs)} "
+                f"-> {', '.join(n3(x.uris()) for x in outputs)}")
             for solution in gen.run(inputs, outputs, solutions=1, 
-                    prefix=EX[name]):
+                    prefix=EX.solution):
                 running_total += 1
                 path = self.output_dir / f"solution{running_total}.ttl"
                 print(f"Writing solution: {path}")
