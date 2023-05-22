@@ -139,8 +139,6 @@ class Multi(Implementation):
 
         super().__init__(uri)
 
-        self.inputs: dict[str, Artefact] = dict()
-        self.output: Artefact | None = None
         self.actions: list[Action] = []
         self.comments: list[str] = list(comments)
 
@@ -150,7 +148,11 @@ class Multi(Implementation):
 
         for action in actions:
             self._add_action(action)
-        self._add_io(inputs, output)
+
+        self.inputs: dict[str, Artefact]
+        self.output: Artefact
+        self._set_inputs(inputs)
+        self._set_output(output)
 
         self.min_graph = Graph()
         self.to_graph(self.min_graph, with_comments=False)
@@ -242,8 +244,7 @@ class Multi(Implementation):
                 actions=actions,
                 comments=comments)
 
-    def _add_io(self, inputs: Mapping[str, Artefact],
-            output: Artefact | None = None) -> None:
+    def _set_inputs(self, inputs: Mapping[str, Artefact]) -> None:
         # Sanity check: any artefact must be both the output and input of an 
         # action; or else, only one of these, in which case it must be 
         # accounted for as the input or output of the supertool.
@@ -255,9 +256,11 @@ class Multi(Implementation):
                 f"Expected {len(real_inputs)} input(s) for {n3(self.uri)} but "
                 f"found {len(found_inputs)} inside.")
 
+        self.inputs = dict()
         for label, input in inputs.items():
             self.inputs[label] = input
 
+    def _set_output(self, output: Artefact | None = None) -> None:
         found_outputs = list(self.all_outputs - self.all_inputs)
 
         if len(found_outputs) != 1:
