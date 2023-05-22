@@ -5,7 +5,7 @@ This module holds the RDF namespaces that we use frequently.
 import sys
 from rdflib import Namespace, Graph
 from rdflib.term import Node, URIRef, BNode
-from rdflib.namespace import NamespaceManager, RDFS, RDF, OWL
+from rdflib.namespace import NamespaceManager, RDFS, RDF, OWL, DC
 from quangis.cctrans import CCT
 from typing import Mapping
 

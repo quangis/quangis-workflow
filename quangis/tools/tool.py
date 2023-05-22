@@ -11,7 +11,7 @@ from quangis.defaultdict import DefaultDict
 from quangis.workflow import Workflow
 from quangis.polytype import Polytype
 from quangis.namespace import (
-    n3, RDF, RDFS, TOOL, MULTI, ABSTR, CCT)
+    n3, RDF, RDFS, TOOL, MULTI, ABSTR, CCT, DC)
 from quangis.cctrans import cct
 from quangis.ccdata import dimensions
 
@@ -24,6 +24,19 @@ class UntypedArtefactError(Exception):
 class DisconnectedArtefactsError(Exception):
     pass
 
+
+def gettype(g: Graph, node: Node) -> Polytype:
+    return Polytype.assemble(dimensions, g.objects(node, RDF.type))
+
+def geturis(g: Graph, node: Node, pred: Node) -> Iterator[URIRef]:
+    for uri in g.objects(node, pred):
+        assert isinstance(uri, URIRef)
+        yield uri
+
+def getstrs(g: Graph, node: Node, pred: Node) -> Iterator[str]:
+    for literal in g.objects(node, RDFS.comment):
+        assert isinstance(literal, Literal) and isinstance(literal.value, str)
+        yield literal.value
 
 class Artefact(object):
     """An artefact is the input or output of a tool or an action. The schematic 
@@ -53,17 +66,16 @@ class Artefact(object):
 
     @staticmethod
     def from_graph(g: Graph, artefact: Node) -> Artefact:
-        type = Polytype.assemble(dimensions, g.objects(artefact, RDF.type))
-
-        id_node = g.value(artefact, TOOL.id, any=False)
-        id = id_node.value if isinstance(id_node, Literal) else None
-
-        comments: list[str] = []
-        for comment in g.objects(artefact, RDFS.comment):
-            assert isinstance(comment, Literal)
-            comments.append(comment.value)
-
-        return Artefact(type=type, id=id, comments=comments)
+        id_literal = (g.value(artefact, TOOL.id, any=False)
+            or g.value(artefact, DC.identifier, any=False))
+        if id_literal:
+            assert isinstance(id_literal, Literal)
+            id = id_literal.value
+            assert isinstance(id, str)
+        else:
+            id = None
+        return Artefact(type=gettype(g, artefact), id=id,
+            comments=getstrs(g, artefact, RDFS.comment))
 
 
 class Action(object):
@@ -78,20 +90,15 @@ class Action(object):
 
 
 class Tool(object):
-    def __init__(self, uri: URIRef, comments: list[str] = []):
+    def __init__(self, uri: URIRef, comments: Iterable[str] = []):
         self.uri = uri
         self.name = shorten(uri)
-        self.comments: list[str] = comments
+        self.comments: list[str] = list(comments)
 
     @abstractmethod
     def to_graph(self, g: Graph) -> Graph:
         return NotImplemented
 
-    @staticmethod
-    def comments_from_graph(uri: URIRef, g: Graph) -> Iterator[str]:
-        for comment in g.objects(uri, RDFS.comment):
-            assert isinstance(comment, Literal)
-            yield comment.value
 
 class Implementation(Tool):
     pass
@@ -101,7 +108,8 @@ class Unit(Implementation):
     """A basic concrete tool is a reference to a single implemented tool, as 
     implemented by, for example, ArcGIS or QGIS."""
 
-    def __init__(self, uri: URIRef, url: Iterable[URIRef], comments: list[str] = []) -> None:
+    def __init__(self, uri: URIRef, url: Iterable[URIRef],
+            comments: Iterable[str] = ()) -> None:
         super().__init__(uri, comments)
         self.url = list(url)
 
@@ -115,8 +123,8 @@ class Unit(Implementation):
                 assert isinstance(url, URIRef)
                 urls.append(url)
 
-            comments = list(Tool.comments_from_graph(tool, graph))
-            yield Unit(tool, urls, comments=comments)
+            yield Unit(tool, geturis(graph, tool, RDFS.seeAlso), 
+                comments=getstrs(graph, tool, RDFS.comment))
 
     def to_graph(self, g: Graph) -> Graph:
         assert not (self.uri, RDF.type, TOOL.Unit) in g
@@ -234,15 +242,10 @@ class Multi(Implementation):
 
                 actions.append(Action(tool, inputs, output, comments))
 
-            comments = []
-            for comment in g.objects(uri, RDFS.comment):
-                assert isinstance(comment, Literal)
-                comments.append(comment.value)
-
             yield Multi(uri=uri,
                 inputs=global_inputs,
                 actions=actions,
-                comments=comments)
+                comments=getstrs(g, uri, RDFS.comment))
 
     def _set_inputs(self, inputs: Mapping[str, Artefact]) -> None:
         # Sanity check: any artefact must be both the output and input of an 
@@ -289,17 +292,17 @@ class Multi(Implementation):
 
 
 class Abstraction(Tool):
-    """An abstract tool is a *signature* or *specification* of a tool. It may 
-    correspond to one or more concrete tools, or even ensembles of tools. It 
-    must describe the format of its input and output (ie the core concept 
-    datatypes) and it must describe its purpose (in terms of a core concept 
-    transformation expression).
+    """A tool abstraction holds the abstract "signature" of one or more tools, 
+    or even of ensembles of tools (multitools). It must describe the format of 
+    its input and output (ie the core concept datatypes) and it must describe 
+    its purpose (in terms of a core concept transformation expression).
 
-    An abstract tool may be implemented by multiple (super)tools, because, for 
-    example, a tool could be implemented in both QGIS and ArcGIS. Conversely, 
-    multiple signatures may be implemented by the same (super)tool, if it can 
-    be used in multiple contexts --- in the same way that a hammer can be used 
-    either to drive a nail into a plank of wood or to break a piggy bank."""
+    A tool abstraction may be implemented by multiple (multi)tools, because, 
+    for example, a tool could be implemented in both QGIS and ArcGIS. 
+    Conversely, multiple abstractions may be implemented by the same 
+    (multi)tool, if it can be used in multiple contexts --- in the same way 
+    that a hammer can be used either to drive a nail into a plank of wood or to 
+    break a piggy bank."""
 
     def __init__(self, uri: URIRef,
             inputs: dict[str, Artefact],
@@ -317,7 +320,8 @@ class Abstraction(Tool):
 
     @staticmethod
     def propose(wf: Workflow, action: Node) -> Abstraction:
-        """Create a new signature proposal from a tool application."""
+        """Create a new abstraction proposal from a concrete tool 
+        application."""
         impl = wf.impl(action)
         name = wf.label(impl)
         if isinstance(impl, URIRef):
@@ -354,12 +358,11 @@ class Abstraction(Tool):
             assert isinstance(sig, URIRef)
 
             cct_literal = graph.value(sig, CCT.expression, any=False)
-            assert isinstance(cct_literal, Literal)
+            assert (isinstance(cct_literal, Literal)
+                and isinstance(cct_literal.value, str))
 
-            implementations: set[URIRef] = set()
-            for impl in graph.objects(sig, TOOL.implementation):
-                assert isinstance(impl, URIRef)
-                implementations.add(impl)
+            implementations: set[URIRef] = set(geturis(graph, sig, 
+                TOOL.implementation))
 
             inputs: dict[str, Artefact] = dict()
             for x in graph.objects(sig, TOOL.input):
@@ -371,17 +374,12 @@ class Abstraction(Tool):
             assert output_node
             output = Artefact.from_graph(graph, output_node)
 
-            comments = []
-            for comment in graph.objects(sig, RDFS.comment):
-                assert isinstance(comment, Literal)
-                comments.append(comment.value)
-
             yield Abstraction(uri=sig,
                 inputs=inputs,
                 output=output,
-                cct_expr=str(cct_literal),
+                cct_expr=cct_literal.value,
                 implementations=implementations,
-                comments=comments
+                comments=getstrs(graph, sig, RDFS.comment)
             )
 
     def to_graph(self, g: Graph) -> Graph:
