@@ -2,15 +2,16 @@ from __future__ import annotations
 from rdflib import Graph
 from rdflib.term import URIRef, Node, BNode, Literal
 from rdflib.compare import isomorphic
-from typing import Iterator, Iterable, Hashable, Mapping
+from typing import Iterator, Iterable, Mapping, MutableMapping
 from abc import abstractmethod
 from transforge.namespace import shorten
+from collections import defaultdict
 
 from quangis.defaultdict import DefaultDict
 from quangis.workflow import Workflow
 from quangis.polytype import Polytype
 from quangis.namespace import (
-    n3, RDF, RDFS, TOOL, WF, MULTI, ABSTR, CCT)
+    n3, RDF, RDFS, TOOL, MULTI, ABSTR, CCT)
 from quangis.cctrans import cct
 from quangis.ccdata import dimensions
 
@@ -25,10 +26,17 @@ class DisconnectedArtefactsError(Exception):
 
 
 class Artefact(object):
-    def __init__(self, type: Polytype,
+    """An artefact is the input or output of a tool or an action. The schematic 
+    input artefacts of a tool MUST be associated with an ID; all other 
+    artefacts MUST NOT have IDs. The concrete artefacts of a workflow action 
+    and the schematic artefact of a tool abstraction MUST have a type; all 
+    other artefacts MAY have a type. These constraints aren't checked at the 
+    moment."""
+
+    def __init__(self, type: Polytype | None = None,
             id: str | None = None,
             comments: Iterable[str] = ()):
-        self.type = type
+        self.type = type or Polytype(dimensions)
         self.id = id
         self.comments = list(comments)
 
@@ -44,21 +52,16 @@ class Artefact(object):
         return artefact
 
     @staticmethod
-    def from_graph(g: Graph, artefact: Node, with_type: bool = True,
-            with_comments: bool = True) -> Artefact:
-        if with_type:
-            type = Polytype.assemble(dimensions, g.objects(artefact, RDF.type))
-        else:
-            type = Polytype(dimensions)
+    def from_graph(g: Graph, artefact: Node) -> Artefact:
+        type = Polytype.assemble(dimensions, g.objects(artefact, RDF.type))
 
         id_node = g.value(artefact, TOOL.id, any=False)
         id = id_node.value if isinstance(id_node, Literal) else None
 
         comments: list[str] = []
-        if with_comments:
-            for comment in g.objects(artefact, RDFS.comment):
-                assert isinstance(comment, Literal)
-                comments.append(comment.value)
+        for comment in g.objects(artefact, RDFS.comment):
+            assert isinstance(comment, Literal)
+            comments.append(comment.value)
 
         return Artefact(type=type, id=id, comments=comments)
 
@@ -176,16 +179,19 @@ class Multi(Implementation):
 
     @staticmethod
     def extract(wf: Workflow, action: Node) -> Multi:
-        """Propose a composite tool that corresponds to the subworkflow 
-        associated with the given action."""
+        """Propose a multitool that corresponds to the subworkflow associated 
+        with the given action."""
 
-        m: Mapping[Node, Artefact] = DefaultDict(
-            lambda n: Artefact.from_graph(wf, n, with_type=False, 
-                with_comments=False))
+        m: MutableMapping[Node, Artefact] = defaultdict(Artefact)
+
+        inputs = dict()
+        for k, v in wf.inputs_labelled(action).items():
+            inputs[k] = m[v] = Artefact(id=k)
+
         subwf = wf.subworkflow(action)
         return Multi(
             uri=MULTI[wf.label(subwf)],
-            inputs={k: m[v] for k, v in wf.inputs_labelled(action).items()},
+            inputs=inputs,
             output=m[wf.output(action)],
             actions=(
                 Action(wf.tool(a),
