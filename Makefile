@@ -3,8 +3,9 @@ VENV:= . ${VIRTUAL_ENV}/bin/activate &&
 PY:= $(shell find quangis -name '*.py')
 
 ${VIRTUAL_ENV}: requirements.txt
-	test -d "${VIRTUAL_ENV}" || virtualenv "${VIRTUAL_ENV}"
+	test -d "${VIRTUAL_ENV}" || python -m venv "${VIRTUAL_ENV}"
 	${VENV} pip install -Ur requirements.txt
+	${VENV} pip install -e .
 
 solutions: ${VIRTUAL_ENV} ${PY}
 	-mkdir -p build/
@@ -12,8 +13,8 @@ solutions: ${VIRTUAL_ENV} ${PY}
 
 abstract-workflows: ${VIRTUAL_ENV} ${PY} build/repo.ttl
 	-mkdir -p build/
-	rm build/wf*.ttl
-	${VENV} quangis convert-abstract -d build/ --tools build/repo.ttl workflows-concrete/*.ttl
+	rm -f build/wf*.ttl
+	${VENV} quangis convert-abstract -d build/ -x --tools build/repo.ttl workflows-concrete/*.ttl
 
 build/repo.ttl: ${VIRTUAL_ENV} ${PY}
 	-mkdir -p build/
