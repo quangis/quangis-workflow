@@ -226,32 +226,24 @@ class Repo(object):
         sigs: set[Abstraction] = set(s for s in self.abstractions.values()
             if s.covers_implementation(proposal))
 
-        reasons = []
+        msg = (f"The repository contains no abstraction for an application of "
+            f"{'/'.join(n3(impl) for impl in proposal.implementations)}. ")
         if sigs:
-            reasons.append("Some abstractions implement this tool, but: ")
+            msg += ("The following abstractions for this tool are "
+                "insufficient: ")
+            attempts = []
             for sig in sigs:
-                if not sig.subsumes_input_datatype(proposal):
-                    reasons.append(
-                        f"{n3(sig.uri)} input abstraction doesn't match."
-                    )
-                elif not sig.subsumes_output_datatype(proposal):
-                    reasons.append(
-                        f"{n3(sig.uri)} output abstraction doesn't match."
-                    )
-                elif not sig.matches_cct(proposal):
-                    reasons.append(
-                        f"{n3(sig.uri)} CCT expression doesn't match."
-                    )
-                else:
-                    reasons.append(
-                        f"{n3(sig.uri)} doesn't work for an unknown reason.")
+                reasons = []
+                if not sig.subsumes_datatype(proposal):
+                    reasons.append("CCD mismatch")
+                if not sig.matches_cct(proposal):
+                    reasons.append("CCT mismatch")
+                attempts.append(
+                    f"{n3(sig.uri)} ({', '.join(reasons)})")
+            msg += "; ".join(attempts)
         else:
-            reasons.append("There are no abstractions to implement this tool.")
-
-        raise ToolNotFoundError(
-            f"The repository contains no abstraction for an application of "
-            f"{'/'.join(n3(impl) for impl in proposal.implementations)}. "
-            "\n\t".join(reasons))
+            msg += "No abstractions cover this implementation."
+        raise ToolNotFoundError(msg)
 
     def register_abstraction(self, proposal: Abstraction) -> Abstraction:
         """Register the proposed abstraction under a unique name."""
