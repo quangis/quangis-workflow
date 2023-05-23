@@ -130,24 +130,33 @@ class Generator(cli.Application, WithRepo, WithDestDir):
         # of which one input is drawn from the following sources, and the other 
         # is the same as the output without the measurement level.
         inputs_outputs: list[tuple[list[Polytype], list[Polytype]]] = []
+
+        # inputs_outputs = [
+        #     (
+        #         [Polytype.project(dimensions, s) for s in self.sources],
+        #         [Polytype.project(dimensions, g) for g in self.goals]
+        #     )
+        # ]
+
         for goal_tuple in self.goals:
-            goal = Polytype(dimensions, goal_tuple)
+            goal = Polytype.project(dimensions, goal_tuple)
             source1 = Polytype(goal)
             source1[CCD.NominalA] = {CCD.NominalA}
             for source_tuple in self.sources:
-                source2 = Polytype(dimensions, source_tuple)
+                source2 = Polytype.project(dimensions, source_tuple)
                 inputs_outputs.append(([source1, source2], [goal]))
 
         running_total = 0
         for run, (inputs, outputs) in enumerate(inputs_outputs):
-            print(f"Attempting {', '.join(n3(x.uris()) for x in inputs)} "
-                f"-> {', '.join(n3(x.uris()) for x in outputs)}")
+            print(f"Attempting [ {' ] & [ '.join(x.short() for x in inputs)} "
+                f"] -> [ {' & '.join(x.short() for x in outputs)} ]")
             for solution in gen.run(inputs, outputs, solutions=1, 
                     prefix=EX.solution):
                 running_total += 1
                 path = self.output_dir / f"solution{running_total}.ttl"
                 print(f"Writing solution: {path}")
                 solution.serialize(path, format="ttl")
+            print(f"Running total is {running_total}.")
 
 def main():
     CLI.run()

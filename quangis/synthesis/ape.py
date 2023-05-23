@@ -70,7 +70,7 @@ class APE(object):
     """
 
     def __init__(self, taxonomy: Path | Graph, tools: Path | ToolsDict,
-            namespace: Namespace, tool_root: Node, dimensions: list[Node],
+            ontology_prefix_iri: str, tool_root: Node, dimensions: list[Node],
             build_dir: Path = Path("."),
             strictToolAnnotations: bool = True):
 
@@ -90,9 +90,12 @@ class APE(object):
 
         # Set up APE in JVM
         self.config = j_ape.configuration.APECoreConfig(
-            j_io.File(str(taxonomy_file)), str(namespace), str(tool_root),
-            j_util.Arrays.asList(*map(str, dimensions)),
-            j_io.File(str(tools_file)), strictToolAnnotations
+            j_io.File(str(taxonomy_file)),  # ontology
+            str(ontology_prefix_iri),  # ontologyPrefixIRI
+            str(tool_root),  # toolTaxonomyRoot
+            j_util.Arrays.asList(*map(str, dimensions)),  # dataDimensionsRoots
+            j_io.File(str(tools_file)),  # toolAnnotations
+            strictToolAnnotations  # strictToolAnnotations
         )
         self.ape = j_ape.APE(self.config)
         self.setup = self.ape.getDomainSetup()

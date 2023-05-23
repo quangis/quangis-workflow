@@ -48,8 +48,8 @@ class Dimension(object):
         f(root)
 
     def __contains__(self, node: Node) -> bool:
-        return ((node, None, None) in self.graph
-            or (None, None, node) in self.graph)
+        return (node == self.root
+            or ((node, RDFS.subClassOf, None)) in self.graph)
 
     def parents(self, node: Node) -> Iterable[URIRef]:
         return self.graph.objects(node, RDFS.subClassOf)  # type: ignore
@@ -85,9 +85,9 @@ class Polytype(MutableMapping[Dimension, set[URIRef]]):
 
         self.dimensions: list[Dimension] = list(dimensions)
 
-        self.dimension: dict[URIRef, Dimension] = {
-            d.root: d for d in self.dimensions}
-        self.data: dict[Dimension, set[URIRef]]
+        self.dimension: dict[URIRef, Dimension] = {d.root: d
+            for d in self.dimensions}
+        self.data: Mapping[Dimension, set[URIRef]]
 
         if types is not None:
             self.data = {k: {t} for k, t in zip(self.dimensions, types)}
