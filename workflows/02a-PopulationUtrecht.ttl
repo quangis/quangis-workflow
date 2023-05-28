@@ -3,8 +3,7 @@
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
 @prefix xml: <http://www.w3.org/XML/1998/namespace>.
 @prefix wf: <http://geographicknowledge.de/vocab/Workflow.rdf#>.
-@prefix tools: <https://github.com/quangis/cct/blob/master/tools/tools.ttl#>.
-# @prefix tools: <http://geographicknowledge.de/vocab/GISTools.rdf#>.
+@prefix abstr: <https://quangis.github.io/tool/abstract#>.
 @prefix repo: <https://example.com/#>.
 
 # [SC] data prefix
@@ -25,16 +24,16 @@ repo:PopulationUtrecht a wf:Workflow;
     wf:edge _:wf1_1, _:wf1_3, _:wf1_5.
 
 # Workflow nodes
-_:wf1_1 wf:applicationOf tools:SelectLayerByObjectTessObjects;
+_:wf1_1 wf:applicationOf abstr:SelectLayerByObjectTessObjects;
     wf:input1 pdok:cbs-gebiedsindelingen;
     wf:output _:utrecht.
 
-_:wf1_3 wf:applicationOf tools:SelectLayerByLocationTessObjects ;
+_:wf1_3 wf:applicationOf abstr:SelectLayerByLocationTessObjects ;
     wf:input1 pdok:cbs-wijken-en-buurten;
     wf:input2 _:utrecht;
     wf:output _:neighborhoodsutrecht.
 
-_:wf1_5 wf:applicationOf tools:SpatialJoinAmountSumTessCount;
+_:wf1_5 wf:applicationOf abstr:SpatialJoinAmountSumTessCount;
     wf:input1 pdok:cbs-vierkantstatistieken;
     wf:input2 _:neighborhoodsutrecht;
     wf:output _:countneighborhoodsutrecht.

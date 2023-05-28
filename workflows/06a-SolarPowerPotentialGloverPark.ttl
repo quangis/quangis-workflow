@@ -5,8 +5,7 @@
 @prefix dbo: <https://dbpedia.org/ontology/>.
 @prefix dct: <http://purl.org/dc/terms/>.
 @prefix wf: <http://geographicknowledge.de/vocab/Workflow.rdf#>.
-@prefix tools: <https://github.com/quangis/cct/blob/master/tools/tools.ttl#>.
-# @prefix tools: <http://geographicknowledge.de/vocab/GISTools.rdf#>.
+@prefix abstr: <https://quangis.github.io/tool/abstract#>.
 @prefix repo: <https://example.com/#>.
 
 # [SC] data prefix
@@ -31,62 +30,62 @@ repo:SolarPowerPotentialGloverPark a wf:Workflow;
 
 # Workflow nodes
 
-_:wf1_1 wf:applicationOf tools:Aspect;
+_:wf1_1 wf:applicationOf abstr:Aspect;
     wf:input1 rfdataS:dsm;
     rdfs:comment "calculate aspects in Glover";
     wf:output _:aspectDsm.
 
-_:wf1_2 wf:applicationOf tools:Slope;
+_:wf1_2 wf:applicationOf abstr:Slope;
     wf:input1 rfdataS:dsm;
     rdfs:comment "calculate slopes in Glover";
     wf:output _:slopeDsm.
 
-_:wf1_4 wf:applicationOf tools:LocalMapAlgebraDivide;
+_:wf1_4 wf:applicationOf abstr:LocalMapAlgebraDivide;
     wf:input1 rfdataS:solarRad;
     rdfs:comment "watt-hours to kilowatt hours (divide by 1000)";
     wf:output _:solarRad2.
 
-_:wf1_5 wf:applicationOf tools:con2;
+_:wf1_5 wf:applicationOf abstr:con2;
     wf:input1 _:slopeDsm;
     wf:input2 _:solarRad2;
     rdfs:comment "get solar radiation where slope VALUE < 45 degrees";
     wf:output _:solarRad3.
 
-_:wf1_6 wf:applicationOf tools:con1;
+_:wf1_6 wf:applicationOf abstr:con1;
     wf:input1 _:solarRad3;
     rdfs:comment "get solar_rad where VALUE > 800 KWH";
     wf:output _:solarRad4.
 
-_:wf1_7 wf:applicationOf tools:con2;
+_:wf1_7 wf:applicationOf abstr:con2;
     wf:input1 _:slopeDsm;
     wf:input2 _:solarRad4;
     rdfs:comment "get solar ratiation for flat locations (where slope VALUE < 10 degrees)";
     wf:output _:solarRad5.
 
-_:wf1_8 wf:applicationOf tools:con3;
+_:wf1_8 wf:applicationOf abstr:con3;
     wf:input1 _:aspectDsm;
     wf:input2 _:solarRad4;
     wf:input3 _:solarRad5;
     rdfs:comment "get solar radiation where aspect where VALUE >= 225 degrees and VALUE <= 3375 degrees, for flat locations otherwise";
     wf:output _:solarRad6.
 
-_:wf1_9 wf:applicationOf tools:ZonalStatisticsMeanRatio ;
+_:wf1_9 wf:applicationOf abstr:ZonalStatisticsMeanRatio ;
     wf:input2 rfdataS:buildings;
     wf:input1 _:solarRad6;
     rdfs:comment "calculate average solar radiation for each building";
     wf:output _:solarBuildings.
 
-_:wf1_11 wf:applicationOf tools:SelectLayerByRatioGEQPlainRegionObjects  ;
+_:wf1_11 wf:applicationOf abstr:SelectLayerByRatioGEQPlainRegionObjects  ;
     wf:input1 _:solarBuildings;
     rdfs:comment "select buildings where solar radiation is greater than 30 KWH";
     wf:output _:solarBuildings3.
 
-_:wf1_13 wf:applicationOf tools:CalculateObjectSpatialAmount;
+_:wf1_13 wf:applicationOf abstr:CalculateObjectSpatialAmount;
     wf:input1 _:solarBuildings3;
     rdfs:comment "calculate field for total amount of solar radiation received per year by each building's usable area."; # <(!AREA! * !MEAN!) / 1000>
     wf:output _:solarBuildings5.
 
-_:wf1_15 wf:applicationOf tools:CalculateProd;
+_:wf1_15 wf:applicationOf abstr:CalculateProd;
     wf:input1 _:solarBuildings5;
     rdfs:comment "Calculate field for electric power production potential";  # <!Usable_SR_MWh! * 0.15 * 0.86>
     wf:output _:solarBuildings7.

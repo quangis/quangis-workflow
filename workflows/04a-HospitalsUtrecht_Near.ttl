@@ -5,8 +5,7 @@
 @prefix dbo: <https://dbpedia.org/ontology/>.
 @prefix dct: <http://purl.org/dc/terms/>.
 @prefix wf: <http://geographicknowledge.de/vocab/Workflow.rdf#>.
-@prefix tools: <https://github.com/quangis/cct/blob/master/tools/tools.ttl#>.
-# @prefix tools: <http://geographicknowledge.de/vocab/GISTools.rdf#>.
+@prefix abstr: <https://quangis.github.io/tool/abstract#>.
 @prefix repo: <https://example.com/#>.
 
 # [SC] data prefix
@@ -30,7 +29,7 @@ repo:HospitalsUtrecht_Near a wf:Workflow;
 
 # Workflow nodes
 
-_:wf1_1 wf:applicationOf tools:NearPointObjects;
+_:wf1_1 wf:applicationOf abstr:NearPointObjects;
     wf:input1 rfdata:incident;
     wf:input2 rfdata:hospitals;
     rdfs:comment "Search for the three closest hospitals using Euclidean distance"; #.Parameters are <Find only closest feature: False>, <Maximum number of closest: 3>

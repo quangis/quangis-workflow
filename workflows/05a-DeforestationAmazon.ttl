@@ -5,8 +5,7 @@
 @prefix dbo: <https://dbpedia.org/ontology/>.
 @prefix dct: <http://purl.org/dc/terms/>.
 @prefix wf: <http://geographicknowledge.de/vocab/Workflow.rdf#>.
-@prefix tools: <https://github.com/quangis/cct/blob/master/tools/tools.ttl#>.
-# @prefix tools: <http://geographicknowledge.de/vocab/GISTools.rdf#>.
+@prefix abstr: <https://quangis.github.io/tool/abstract#>.
 @prefix repo: <https://example.com/#>.
 
 # [SC] data prefix
@@ -30,39 +29,39 @@ repo:DeforestationAmazon a wf:Workflow;
 
 # Workflow nodes
 
-_:wf1_1 wf:applicationOf tools:SelectObjectbyExtent;
+_:wf1_1 wf:applicationOf abstr:SelectObjectbyExtent;
     wf:input1 rfdataF:roads;
     rdfs:comment "select existing roads within window";
     wf:output _:roadsSelectForBuffer.
 
-_:wf1_2 wf:applicationOf tools:ObjectBuffer;
+_:wf1_2 wf:applicationOf abstr:ObjectBuffer;
     wf:input1 _:roadsSelectForBuffer;
     rdfs:comment "generate buffers for existing roads";
     wf:output _:roadsBuffer.
 
-_:wf1_3 wf:applicationOf tools:ClipBoolFieldVector2Extent;
+_:wf1_3 wf:applicationOf abstr:ClipBoolFieldVector2Extent;
     wf:input1 rfdataF:deforested;
     wf:input2 _:roadsBuffer;
     rdfs:comment "clip deforested area with roads buffer";
     wf:output _:deforestedRoadArea.
 
-_:wf1_4 wf:applicationOf tools:CalculateVectorFieldAreaPercentage;
+_:wf1_4 wf:applicationOf abstr:CalculateVectorFieldAreaPercentage;
     wf:input1 _:roadsBuffer;  #area of buffers
     wf:input2 _:deforestedRoadArea; #deforested area
     rdfs:comment "area percentage of current deforestation (summary of nominal field areas)";
     wf:output _:areaPercentage.
 
-_:wf1_6 wf:applicationOf tools:ObjectBuffer;
+_:wf1_6 wf:applicationOf abstr:ObjectBuffer;
     wf:input1 rfdataF:planned; #planned roads
     wf:output _:plannedRoadBuffer.
 
-_:wf1_7 wf:applicationOf tools:EraseFieldExtentfromFieldVector;
+_:wf1_7 wf:applicationOf abstr:EraseFieldExtentfromFieldVector;
     wf:input1 _:plannedRoadBuffer; #from
     wf:input2 rfdataF:deforested; #erase features
     rdfs:comment "erase features";
     wf:output _:erasedBuffer.
 
-_:wf1_8 wf:applicationOf tools:CalculateVectorFieldPartialArea;
+_:wf1_8 wf:applicationOf abstr:CalculateVectorFieldPartialArea;
     wf:input1 _:erasedBuffer; #area of buffers
     wf:input2 _:areaPercentage; #deforested area ratio
     rdfs:comment "area of predicted deforestation from buffers in deforested area";

@@ -3,8 +3,7 @@
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
 @prefix xml: <http://www.w3.org/XML/1998/namespace>.
 @prefix wf: <http://geographicknowledge.de/vocab/Workflow.rdf#>.
-@prefix tools: <https://github.com/quangis/cct/blob/master/tools/tools.ttl#>.
-# @prefix tools: <http://geographicknowledge.de/vocab/GISTools.rdf#>.
+@prefix abstr: <https://quangis.github.io/tool/abstract#>.
 @prefix repo: <https://example.com/#>.
 
 # [SC] data prefix
@@ -22,24 +21,24 @@ repo:NoiseProportionAmsterdam_Vector a wf:Workflow;
     wf:edge _:wf3_1, _:wf3_3,_:wf3_5, _:wf3_6, _:wf3_8.
 
 
-_:wf3_1 wf:applicationOf tools:SelectLayerContourToExistenceVector;
+_:wf3_1 wf:applicationOf abstr:SelectLayerContourToExistenceVector;
     wf:input1 amsd:WO-7loNDBtEcWg; #noise map
     wf:output _:noisy_vector. #noisy map
 
-_:wf3_3  wf:applicationOf tools:SelectLayerByObjectTessObjects;
+_:wf3_3  wf:applicationOf abstr:SelectLayerByObjectTessObjects;
     wf:input1 pdok:cbs-gebiedsindelingen;
     wf:output _:amsterdam_shp.
 
-_:wf3_6  wf:applicationOf  tools:AddObjectVectorRegionArea;
+_:wf3_6  wf:applicationOf  abstr:AddObjectVectorRegionArea;
     wf:input1 _:amsterdam_shp;
     wf:output _:amsterdam_area_shp.
 
-_:wf3_5  wf:applicationOf tools:IntersectDissolveField2Object;
+_:wf3_5  wf:applicationOf abstr:IntersectDissolveField2Object;
     wf:input1 _:noisy_vector;
     wf:input2 _:amsterdam_area_shp;
     wf:output _:amsterdam_area_area_shp.
 
-_:wf3_8 wf:applicationOf  tools:CalculateObjectAttrRatio;
+_:wf3_8 wf:applicationOf  abstr:CalculateObjectAttrRatio;
     wf:input1 _:amsterdam_area_area_shp;
     wf:input2 _:amsterdam_area_shp;
     wf:output _:amsterdam_final_shp.

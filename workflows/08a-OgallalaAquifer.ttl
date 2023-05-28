@@ -5,8 +5,7 @@
 @prefix dbo: <https://dbpedia.org/ontology/>.
 @prefix dct: <http://purl.org/dc/terms/>.
 @prefix wf: <http://geographicknowledge.de/vocab/Workflow.rdf#>.
-@prefix tools: <https://github.com/quangis/cct/blob/master/tools/tools.ttl#>.
-# @prefix tools: <http://geographicknowledge.de/vocab/GISTools.rdf#>.
+@prefix abstr: <https://quangis.github.io/tool/abstract#>.
 @prefix repo: <https://example.com/#>.
 
 # [SC] data prefix
@@ -32,34 +31,34 @@ repo:OgallalaAquifer a wf:Workflow;
 
 # Workflow nodes
 
-_:wf1_1 wf:applicationOf tools:SelectFeaturesByObjectPlainRegionObjects;
+_:wf1_1 wf:applicationOf abstr:SelectFeaturesByObjectPlainRegionObjects;
     wf:input1 rfdataA:aquifer;
     rdfs:comment "select Oogallala aquifer";
     wf:output _:aquifer2.
 
-_:wf1_3 wf:applicationOf tools:SelectFeaturesCoverageToExistenceVector;
+_:wf1_3 wf:applicationOf abstr:SelectFeaturesCoverageToExistenceVector;
     wf:input1 rfdataA:precipitation;
     rdfs:comment "select areas with low precipitation";
     wf:output _:precipitation2.
 
-_:wf1_5 wf:applicationOf tools:SelectFeaturesCoverageToExistenceVector;
+_:wf1_5 wf:applicationOf abstr:SelectFeaturesCoverageToExistenceVector;
     wf:input1 rfdataA:irrigation;
     rdfs:comment "select areas with high irrigation";
     wf:output _:irrigation2.
 
-_:wf1_7 wf:applicationOf tools:SelectLayerByLocationPlainRegionObjectsDist;
+_:wf1_7 wf:applicationOf abstr:SelectLayerByLocationPlainRegionObjectsDist;
     wf:input1 rfdataA:UrbanAreas;
     wf:input2 _:aquifer2;
     rdfs:comment "select urban areas within 150 miles (geodesic) of the aquifer";
     wf:output _:urbanAreas2.
 
-_:wf1_8 wf:applicationOf tools:SelectLayerByLocationPlainRegionObjectsFieldDist;
+_:wf1_8 wf:applicationOf abstr:SelectLayerByLocationPlainRegionObjectsFieldDist;
     wf:input1 _:urbanAreas2;
     wf:input2 _:precipitation2;
     rdfs:comment "further select urban areas within the area with low precipitation";
     wf:output _:urbanAreas3.
 
-_:wf1_9 wf:applicationOf tools:SelectLayerByLocationPlainRegionObjectsFieldDist;
+_:wf1_9 wf:applicationOf abstr:SelectLayerByLocationPlainRegionObjectsFieldDist;
     wf:input1 _:urbanAreas3;
     wf:input2 _:irrigation2;
     rdfs:comment "further select urban areas that intersect with the irrigation region dataset";

@@ -5,8 +5,7 @@
 @prefix dbo: <https://dbpedia.org/ontology/>.
 @prefix dct: <http://purl.org/dc/terms/>.
 @prefix wf: <http://geographicknowledge.de/vocab/Workflow.rdf#>.
-@prefix tools: <https://github.com/quangis/cct/blob/master/tools/tools.ttl#>.
-# @prefix tools: <http://geographicknowledge.de/vocab/GISTools.rdf#>.
+@prefix abstr: <https://quangis.github.io/tool/abstract#>.
 @prefix repo: <https://example.com/#>.
 
 # [SC] data prefix
@@ -33,42 +32,42 @@ repo:InfrastructureAccessShikoku a wf:Workflow;
 
 #Calculate rural population
 
-_:wf1_1 wf:applicationOf tools:SelectLayerByAttributeTessObjects ;
+_:wf1_1 wf:applicationOf abstr:SelectLayerByAttributeTessObjects ;
     wf:input1 rfdataI:urbanization;
     rdfs:comment "select rural from different urbanization grade areas and create new layer from them";
     wf:output _:rural.
 
-_:wf1_3 wf:applicationOf tools:ClipObject2Object;
+_:wf1_3 wf:applicationOf abstr:ClipObject2Object;
     wf:input1 rfdataI:chochomoku;
     wf:input2 _:rural;
     rdfs:comment "clip SCCM regions by rural areas";
     wf:output _:rural_clip.
 
-_:wf1_4 wf:applicationOf tools:ObjectSummaryStatisticsAmount;
+_:wf1_4 wf:applicationOf abstr:ObjectSummaryStatisticsAmount;
     wf:input1 _:rural_clip;
     rdfs:comment "sum the total population (2015)";
     wf:output _:rural_pop1.
 
 #Calculate rural population within road buffer
 
-_:wf1_7 wf:applicationOf tools:ObjectBuffer;
+_:wf1_7 wf:applicationOf abstr:ObjectBuffer;
     wf:input1 rfdataI:roads;
     rdfs:comment "buffer roads within 2km distance";
     wf:output _:roads_buffer.
 
-_:wf1_8 wf:applicationOf tools:CalculatePartialAmountsfromObjects;
+_:wf1_8 wf:applicationOf abstr:CalculatePartialAmountsfromObjects;
     wf:input1 _:rural_clip;
     wf:input2 _:roads_buffer;
     rdfs:comment "clip rural areas with the roads buffer and estimate the total population that is within the buffer of 2km";
     wf:output _:rural_2km4.
 
-_:wf1_12 wf:applicationOf tools:SummaryStatisticsAmount;
+_:wf1_12 wf:applicationOf abstr:SummaryStatisticsAmount;
     wf:input1 _:rural_2km4;
     rdfs:comment "sum the total population that is within the buffer of 2km (i.e. has access to infrastructure)";
     wf:output _:rural_access1.
 
 
-_:wf1_6 wf:applicationOf tools:CalculateCountAmountRatio;
+_:wf1_6 wf:applicationOf abstr:CalculateCountAmountRatio;
     wf:input1 _:rural_pop1;
     wf:input2 _:rural_access1;
     rdfs:comment "calculate the percentage of population living within 2km of infrastructure";

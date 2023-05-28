@@ -5,8 +5,7 @@
 @prefix dbo: <https://dbpedia.org/ontology/>.
 @prefix dct: <http://purl.org/dc/terms/>.
 @prefix wf: <http://geographicknowledge.de/vocab/Workflow.rdf#>.
-@prefix tools: <https://github.com/quangis/cct/blob/master/tools/tools.ttl#>.
-# @prefix tools: <http://geographicknowledge.de/vocab/GISTools.rdf#>.
+@prefix abstr: <https://quangis.github.io/tool/abstract#>.
 @prefix repo: <https://example.com/#>.
 
 # [SC] data prefix
@@ -32,12 +31,12 @@ repo:HospitalsUtrecht_Network a wf:Workflow;
 # Workflow nodes
 
 # Builds network data file from roads file
-_:wf1_0 wf:applicationOf tools:BuildNetwork;
+_:wf1_0 wf:applicationOf abstr:BuildNetwork;
     wf:input1 rfdata:roads;
     wf:output _:networkdata.
 
 # Distance to the closest hospital from each incident
-_:wf1_1 wf:applicationOf tools:closestfacilityanalysis;
+_:wf1_1 wf:applicationOf abstr:ClosestFacilityAnalysis;
     wf:input1 _:networkdata;
     wf:input2 rfdata:hospitals; # goals
     wf:input3 rfdata:incident; # origins

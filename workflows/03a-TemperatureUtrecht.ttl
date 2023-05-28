@@ -3,8 +3,7 @@
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
 @prefix xml: <http://www.w3.org/XML/1998/namespace>.
 @prefix wf: <http://geographicknowledge.de/vocab/Workflow.rdf#>.
-@prefix tools: <https://github.com/quangis/cct/blob/master/tools/tools.ttl#>.
-# @prefix tools: <http://geographicknowledge.de/vocab/GISTools.rdf#>.
+@prefix abstr: <https://quangis.github.io/tool/abstract#>.
 @prefix repo: <https://example.com/#>.
 
 # [SC] data prefix
@@ -28,24 +27,24 @@ repo:TemperatureUtrecht a wf:Workflow;
 
 # Workflow nodes
 
-_:wf2_1 wf:applicationOf tools:MakePointMeasuresFromTable;
+_:wf2_1 wf:applicationOf abstr:MakePointMeasuresFromTable;
     wf:input1 <http://projects.knmi.nl/klimatologie/daggegevens/selectie.cgi>; #KNMI weather stations
     wf:output _:knmi_shp2.
 
-_:wf2_5 wf:applicationOf tools:IDWInterval;
+_:wf2_5 wf:applicationOf abstr:IDWInterval;
     wf:input1 _:knmi_shp2   ;
     wf:output _:tempraster.
 
-_:wf2_6 wf:applicationOf tools:SelectLayerByObjectTessObjects;
+_:wf2_6 wf:applicationOf abstr:SelectLayerByObjectTessObjects;
     wf:input1 pdok:cbs-gebiedsindelingen;
     wf:output _:utrecht_shp.
 
-_:wf2_8 wf:applicationOf tools:SelectLayerByLocationTessObjects;
+_:wf2_8 wf:applicationOf abstr:SelectLayerByLocationTessObjects;
     wf:input1 pdok:cbs-wijken-en-buurten    ;
     wf:input2 _:utrecht_shp ;
     wf:output _:utrecht_buurten.
 
-_:wf2_10 wf:applicationOf tools:ZonalStatisticsMeanInterval;
+_:wf2_10 wf:applicationOf abstr:ZonalStatisticsMeanInterval;
     wf:input1 _:tempraster  ;
     wf:input2 _:utrecht_buurten;
     wf:output _:utrecht_buurten_agg_temp.

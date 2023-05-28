@@ -5,8 +5,7 @@
 @prefix dbo: <https://dbpedia.org/ontology/>.
 @prefix dct: <http://purl.org/dc/terms/>.
 @prefix wf: <http://geographicknowledge.de/vocab/Workflow.rdf#>.
-@prefix tools: <https://github.com/quangis/cct/blob/master/tools/tools.ttl#>.
-# @prefix tools: <http://geographicknowledge.de/vocab/GISTools.rdf#>.
+@prefix abstr: <https://quangis.github.io/tool/abstract#>.
 @prefix repo: <https://example.com/#>.
 
 # [SC] data prefix
@@ -32,51 +31,51 @@ repo:FloodsVermont a wf:Workflow;
 
 #Find Velocity Weight raster
 
-_:wf1_1 wf:applicationOf tools:Slope;
+_:wf1_1 wf:applicationOf abstr:Slope;
     wf:input1 rfdataH:stoweDem; 
     rdfs:comment "Calculate slopes in Glover";
     wf:output _:stoweSlope.
 
-_:wf1_3 wf:applicationOf tools:VelocityFieldDEM;
+_:wf1_3 wf:applicationOf abstr:VelocityFieldDEM;
     wf:input1 _:stoweSlope;
     wf:input2 _:accumulation;
     rdfs:comment "Calculate slope-area term (Maidment et al. equation)"; # <SquareRoot("Stowe_slope") * SquareRoot("Stowe_flow_accumulation")>
     wf:output _:stoweVelocity.
 
-_:wf1_4 wf:applicationOf tools:con1;
+_:wf1_4 wf:applicationOf abstr:con1;
     wf:input1 _:stoweVelocity;
     rdfs:comment "set a lower bound of 0.02";
     wf:output _:stoweVelocity2.
 
-_:wf1_5 wf:applicationOf tools:con1;
+_:wf1_5 wf:applicationOf abstr:con1;
     wf:input1 _:stoweVelocity2;
     rdfs:comment "set an upper bound of 2";
     wf:output _:stoweVelocity3.
 
-_:wf1_6 wf:applicationOf tools:LocalMapAlgebraInvert;
+_:wf1_6 wf:applicationOf abstr:LocalMapAlgebraInvert;
     wf:input1 _:stoweVelocity3;
     rdfs:comment "Create a weight (impedance) grid"; # < 1/"%wf_Stowe_Velocity%">
     wf:output _:stoweWeight.
 
 #Flow direction, accumulation and watershed (This part is new since second workflow)
 
-_:wf1_7 wf:applicationOf tools:FlowDirection;
+_:wf1_7 wf:applicationOf abstr:FlowDirection;
     wf:input1 rfdataH:stoweDem;
     rdfs:comment "get directions of water flow";
     wf:output _:direction.
 
-_:wf1_8 wf:applicationOf tools:FlowAccumulation;
+_:wf1_8 wf:applicationOf abstr:FlowAccumulation;
     wf:input1 _:direction;
     rdfs:comment "get accumulations of water flow";
     wf:output _:accumulation.
 
-_:wf1_9 wf:applicationOf tools:SnapPourPoint;
+_:wf1_9 wf:applicationOf abstr:SnapPourPoint;
     wf:input1 rfdataH:pourPoint;
     wf:input2 _:accumulation;
     rdfs:comment "snap pour point to river (Distance: 60m)";
     wf:output _:snappedPoint.
 
-_:wf1_10 wf:applicationOf tools:Watershed;
+_:wf1_10 wf:applicationOf abstr:Watershed;
     wf:input1 _:direction;
     wf:input2 _:snappedPoint;
     rdfs:comment "get watershed";
@@ -84,24 +83,24 @@ _:wf1_10 wf:applicationOf tools:Watershed;
 
 #Continues the same as old workflow from here
 
-_:wf1_11 wf:applicationOf tools:ExtractByMask;
+_:wf1_11 wf:applicationOf abstr:ExtractByMask;
     wf:input1 _:direction;
     wf:input2 _:watershed;
     rdfs:comment "extract flow directions by watershed mask";
     wf:output _:flowDirections.
 
-_:wf1_12 wf:applicationOf tools:FlowLength;
+_:wf1_12 wf:applicationOf abstr:FlowLength;
     wf:input1 _:stoweWeight;
     wf:input2 _:flowDirections;
     rdfs:comment "calculate the upstream or downstream distance, or weighted distance, along the flow path for each cell";
     wf:output _:stoweTime.
 
-_:wf1_13 wf:applicationOf tools:RasterToIsoRaster;
+_:wf1_13 wf:applicationOf abstr:RasterToIsoRaster;
     wf:input1 _:stoweTime;
     rdfs:comment "reclassify flow time values to specific ranges (Isochrones raster)";
     wf:output _:stoweIsochrones.
 
-_:wf1_14 wf:applicationOf tools:CreateUnitHydrograph;
+_:wf1_14 wf:applicationOf abstr:CreateUnitHydrograph;
     wf:input1 _:stoweIsochrones;
     rdfs:comment "convert to unit hydrograph";
     wf:output _:stoweTable.
