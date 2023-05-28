@@ -9,7 +9,7 @@
 @prefix arcsa: <https://pro.arcgis.com/en/pro-app/latest/tool-reference/spatial-analyst/> .
 @prefix arcss: <https://pro.arcgis.com/en/pro-app/latest/tool-reference/spatial-statistics/> .
 @prefix ccd: <http://geographicknowledge.de/vocab/CoreConceptData.rdf#> .
-@prefix cct: <https://quangis.github.io/cct#> .
+@prefix cct: <https://quangis.github.io/vocab/cct#> .
 @prefix multi: <https://quangis.github.io/tool/multi#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 

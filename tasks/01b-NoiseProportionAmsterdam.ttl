@@ -1,6 +1,6 @@
 @prefix : <https://github.com/quangis/transforge#>.
 @prefix from: <https://github.com/quangis/transforge#from>.
-@prefix type: <https://quangis.github.io/cct#>.
+@prefix type: <https://quangis.github.io/vocab/cct#>.
 @prefix via: <https://github.com/quangis/transforge#via>.
 
 _:NoiseContourMap
