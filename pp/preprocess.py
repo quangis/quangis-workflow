@@ -4,7 +4,7 @@
 
 from rdflib import Graph, Literal
 from sys import argv
-from quangis.namespace import CCT_
+from quangis.namespace import CCT
 from quangis.cctrans import cct, Val
 from transforge.type import TypeOperation, TypeInstance
 
@@ -22,12 +22,12 @@ def rewrite(t: TypeInstance) -> TypeOperation:
 def process(path: str) -> Graph:
     g = Graph()
     g.parse(path)
-    for node, ltype in g.subject_objects(CCT_.type):
+    for node, ltype in g.subject_objects(CCT.type):
         assert isinstance(ltype, Literal)
         old_type = ltype.value
         new_type = str(rewrite(cct.parse_type(old_type)))
-        g.remove((node, CCT_.type, ltype))
-        g.add((node, CCT_.type, Literal(new_type)))
+        g.remove((node, CCT.type, ltype))
+        g.add((node, CCT.type, Literal(new_type)))
     return g
 
 
