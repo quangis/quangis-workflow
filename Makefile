@@ -2,7 +2,8 @@ VIRTUAL_ENV?=./venv
 DEST?=build
 CONFIG?=data/ioconfig.ttl
 TOOLS?=build/repo.ttl
-MARKLOGIC?=user:password@https://127.0.0.1:8000
+MARKLOGIC?=marklogic@https://127.0.0.1:8000
+CRED?=user:password
 
 VENV=${VIRTUAL_ENV}/bin/activate
 PY=$(shell find quangis/ -name '*.py')
@@ -73,6 +74,6 @@ skeletons: ${SKELETON_TASKS}
 
 ${DEST}/results/skeletal.csv: ${VENV} ${SKELETON_TASKS}
 	-mkdir -p "${@D}"
-	. ${VENV} && transforge query cct -s "${MARKLOGIC}" ${SKELETON_TASKS} --summary "$@"
+	. ${VENV} && transforge query cct -s "${MARKLOGIC}" -u "${CRED}" ${SKELETON_TASKS} --summary "$@"
 results: ${DEST}/results/skeletal.csv
 .PHONY: results
