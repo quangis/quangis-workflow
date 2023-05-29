@@ -1,7 +1,8 @@
-VIRTUAL_ENV?= ./venv
-DEST?= build/
+VIRTUAL_ENV?=./venv
+DEST?=build
 CONFIG?=data/ioconfig.ttl
 TOOLS?=build/repo.ttl
+MARKLOGIC?=user:password@https://127.0.0.1:8000
 
 VENV=${VIRTUAL_ENV}/bin/activate
 PY=$(shell find quangis/ -name '*.py')
@@ -25,7 +26,7 @@ solutions: ${TOOLS} ${PY} ${VENV} ${TOOLS} ${CONFIG}
 .PHONY: solutions
 
 # Convert concrete workflows into abstract ones
-ABSTRACT_WORKFLOWS:=$(patsubst ${CONCRETE_WORKFLOWS},workflows-concrete/%.ttl,${DEST}/workflows-abstract/%.ttl)
+ABSTRACT_WORKFLOWS:=$(patsubst workflows-concrete/%.ttl,${DEST}/workflows-abstract/%.ttl,${CONCRETE_WORKFLOWS})
 ${DEST}/workflows-abstract/%.ttl: workflows-concrete/%.ttl ${VENV} ${PY} ${TOOLS}
 	-mkdir -p "${@D}"
 	-rm -f "$@"
@@ -47,17 +48,31 @@ ${DEST}/repo.ttl: data/all.ttl ${CONCRETE_WORKFLOWS} ${VENV} ${PY}
 
 # Vocabulary for the CCT algebra
 ${DEST}/cct.ttl: quangis/cctrans.py ${VENV}
+	-mkdir -p "${@D}"
 	. ${VENV} && transforge vocab "$<" -o "$@" -t ttl
 
 # All manual workflows, decorated with transformation graphs
 build/graph.trig: ${TOOLS} ${MANUAL_WORKFLOWS}
-	transforge graph cct -T "${TOOLS}" --skip-error \
+	-mkdir -p "${@D}"
+	. ${VENV} && transforge graph cct -T "${TOOLS}" --skip-error \
 		${MANUAL_WORKFLOWS} -o "$@" -t trig
 
 # Skeleton tasks are tasks where basic types are replaced with the 
-# highest-level basic type (apart from Top)
-SKELETON_TASKS:=$(patsubst ${TASKS},tasks/%.ttl,${DEST}/skeletons/%.ttl)
+# highest-level basic type (underneath `Top`)
+SKELETON_TASKS:=$(patsubst tasks/%.ttl,${DEST}/task-skeletons/%.ttl,${TASKS})
+
 ${DEST}/task-skeletons/%.ttl: tasks/%.ttl scripts/preprocess.py
-	${VENV} python3 scripts/preprocess.py "$<" > "$@"
+	-mkdir -p "${@D}"
+	. ${VENV} && python3 scripts/preprocess.py "$<" > "$@"
+
 skeletons: ${SKELETON_TASKS}
 .PHONY: skeletons
+
+
+# Queries #
+
+${DEST}/results/skeletal.csv: ${VENV} ${SKELETON_TASKS}
+	-mkdir -p "${@D}"
+	. ${VENV} && transforge query cct -s "${MARKLOGIC}" ${SKELETON_TASKS} --summary "$@"
+results: ${DEST}/results/skeletal.csv
+.PHONY: results
