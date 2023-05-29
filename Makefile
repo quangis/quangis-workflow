@@ -57,7 +57,7 @@ build/graph.trig: ${TOOLS} ${MANUAL_WORKFLOWS}
 # Skeleton tasks are tasks where basic types are replaced with the 
 # highest-level basic type (apart from Top)
 SKELETON_TASKS:=$(patsubst ${TASKS},tasks/%.ttl,${DEST}/skeletons/%.ttl)
-${DEST}/task-skeletons/%.ttl: tasks/%.ttl
-	${VENV} python3 pp/preprocess.py "$<" > "$@"
+${DEST}/task-skeletons/%.ttl: tasks/%.ttl scripts/preprocess.py
+	${VENV} python3 scripts/preprocess.py "$<" > "$@"
 skeletons: ${SKELETON_TASKS}
 .PHONY: skeletons
