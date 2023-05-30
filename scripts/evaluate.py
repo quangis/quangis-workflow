@@ -7,22 +7,25 @@ from __future__ import annotations
 import csv
 from itertools import chain, product
 from pathlib import Path
+from rdflib.graph import Graph
 from rdflib.term import Node
+from rdflib.util import guess_format
 
-from transforge import TransformationQuery
-from transforge.namespace import TA, EX
+from transforge.graph import TransformationGraph
+from transforge.query import TransformationQuery
+from transforge.namespace import TF, EX
+from transforge.workflow import WorkflowGraph
 from transforge.util.store import TransformationStore
-from transforge.util.common import (graph, build_transformation)
-from cct.language import cct
+from cct import cct
 
-STORE_TYPE = "fuseki"
-STORE_URL = "https://localhost:3030"
-STORE_USER = None
-# STORE_TYPE = "marklogic"
-# STORE_URL = "http://localhost:8000"
-# STORE_USER = ("user", "password")
+# STORE_TYPE = "fuseki"
+# STORE_URL = "https://localhost:3030"
+# STORE_USER = None
+STORE_TYPE = "marklogic"
+STORE_URL = "http://192.168.56.1:8000"
+STORE_USER = ("", "")
 
-ROOT = Path(__file__).parent
+ROOT = Path(__file__).parent.parent
 BUILD_DIR = ROOT / "build"
 
 
@@ -70,12 +73,13 @@ def write_evaluations(
         opacities=('workflow', 'tool', 'internal'),
         passthroughs=('pass', 'block'),
         orderings=('any', 'chronological'),
-        task_paths=ROOT.glob("tasks/*.ttl"),
+        task_paths=ROOT.glob("build/task-skeletons/*.ttl"),
         workflow_paths=ROOT.glob("workflows/*.ttl")) -> None:
 
     task_paths = list(task_paths)
     workflow_paths = list(workflow_paths)
-    tools = graph(ROOT / "tools" / "tools.ttl")
+    tools = Graph()
+    tools.parse(ROOT / "data" / "all.ttl")
 
     for variant in product(opacities, passthroughs, orderings):
         opacity, passthrough, ordering = variant
@@ -87,12 +91,15 @@ def write_evaluations(
 
         # Build & send transformation graphs for every workflow
         for wf_path in workflow_paths:
-            workflow = graph(wf_path)
             print(f"Building graph for workflow {wf_path}...")
-            g = build_transformation(cct, tools, workflow,
+            wg = WorkflowGraph(cct, tools)
+            wg.parse(wf_path, format=guess_format(wf_path))
+            wg.refresh()
+            g = TransformationGraph(cct,
                 passthrough=(passthrough == 'pass'),
                 with_intermediate_types=(opacity == 'internal'),
-                with_noncanonical_types=False)
+                with_noncanonical_types=True)
+            g.add_workflow(wg)
             print("Sending transformation graph to graph store...")
             store.put(g)
 
@@ -102,17 +109,18 @@ def write_evaluations(
         for task_path in task_paths:
             print(f"Reading transformation graph for task {task_path}...")
             name = task_path.stem[4:]
-            task_graph = graph(task_path)
+            task_graph = Graph()
+            task_graph.parse(task_path, format=guess_format(task_path))
             query = TransformationQuery(cct, task_graph,
                 by_types=(opacity != 'workflow'),
                 by_chronology=(ordering == 'chronological' and
                     opacity != 'workflow'),
                 unfold_tree=True)
             expected[name] = set(task_graph.objects(query.root,
-                TA.implementation))
+                TF.implementation))
 
             print("Querying graph store...")
-            actual[name] = result = store.query(query)
+            actual[name] = result = store.run(query)
             print(f"Results: {', '.join(str(wf) for wf in result)}")
 
             BUILD_DIR.mkdir(exist_ok=True)
