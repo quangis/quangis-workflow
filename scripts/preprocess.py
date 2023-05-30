@@ -22,6 +22,15 @@ def top_eq(left: TypeInstance, right: TypeInstance) -> bool:
 
 def rewrite(t: TypeInstance) -> TypeOperation:
     if isinstance(t, TypeOperation):
+        if len(t.params) == 0:
+            return Val
+        else:
+            return t.operator(*(Top for _ in t.params))
+    else:
+        raise RuntimeError
+
+def rewrite2(t: TypeInstance) -> TypeOperation:
+    if isinstance(t, TypeOperation):
         while True:
             st = set(t1 for t1 in cct.supertypes(t) if top_eq(t, t1))
             if len(st) == 0:
