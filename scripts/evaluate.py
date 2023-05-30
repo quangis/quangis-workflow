@@ -13,7 +13,7 @@ from rdflib.util import guess_format
 
 from transforge.graph import TransformationGraph
 from transforge.query import TransformationQuery
-from transforge.namespace import TF, EX
+from transforge.namespace import TF, shorten
 from transforge.workflow import WorkflowGraph
 from transforge.util.store import TransformationStore
 from cct import cct
@@ -23,7 +23,7 @@ from cct import cct
 # STORE_USER = None
 STORE_TYPE = "marklogic"
 STORE_URL = "http://192.168.56.1:8000"
-STORE_USER = ("", "")
+STORE_USER = ("user", "password")
 
 ROOT = Path(__file__).parent.parent
 BUILD_DIR = ROOT / "build"
@@ -38,7 +38,7 @@ def summary_csv(path: Path | str,
         table_actual.values()))
 
     header = ["Task", "Precision", "Recall"] + sorted([
-        str(wf)[len(EX):] for wf in workflows])
+        shorten(wf) for wf in workflows])
 
     with open(path, 'w', newline='') as h:
         n_tpos, n_tneg, n_fpos, n_fneg = 0, 0, 0, 0
@@ -52,7 +52,7 @@ def summary_csv(path: Path | str,
             for wf in workflows:
                 s = ("●" if wf in actual else "○")
                 s += ("⨯" if (wf in actual) ^ (wf in expected) else "")
-                row[str(wf)[len(EX):]] = s
+                row[shorten(wf)] = s
 
             n_fpos += len(actual - expected)
             n_fneg += len(expected - actual)
@@ -120,13 +120,21 @@ def write_evaluations(
                 TF.implementation))
 
             print("Querying graph store...")
-            actual[name] = result = store.run(query)
-            print(f"Results: {', '.join(str(wf) for wf in result)}")
+            try:
+                actual[name] = result = store.run(query)
+            except ValueError:
+                print("Warning: Some internal error")
+                error = "-error"
+                actual[name] = result = set()
+            else:
+                print(f"Results: {', '.join(str(wf) for wf in result)}")
+                error = ""
 
-            BUILD_DIR.mkdir(exist_ok=True)
-            summary_csv(
-                BUILD_DIR / f"eval-{opacity}-{passthrough}-{ordering}.csv",
-                expected, actual)
+        BUILD_DIR.mkdir(exist_ok=True)
+        summary_csv(
+            BUILD_DIR / f"eval-{opacity}-{passthrough}-{ordering}{error}.csv",
+            expected, actual)
+
 
 
 if __name__ == '__main__':
