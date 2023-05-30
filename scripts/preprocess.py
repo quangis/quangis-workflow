@@ -3,6 +3,10 @@
 # `R(Val, Val * Val)`, or whatever canonical type (excluding `Top`, except 
 # where the type already contained `Top`) is highest.
 
+# TODO note that transforming R(_ * _, _) to R(Top, Top) is possible, but since 
+# we still translate to the deprecated R2/R3, that might throw off the 
+# translation. Probably not an issue in practice, but keep in mind
+
 from rdflib import Graph, Literal
 from sys import argv
 from quangis.namespace import CCT
