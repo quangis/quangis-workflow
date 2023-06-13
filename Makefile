@@ -32,12 +32,3 @@ ${DEST}/workflows-abstract/%.ttl: workflows-concrete/%.ttl ${VENV} ${PY} ${TOOLS
 		"$<"
 abstract-workflows: ${ABSTRACT_WORKFLOWS}
 .PHONY: abstract-workflows
-
-# Tool repository built upon existing tool repository, expanded with tools 
-# extracted from concrete workflows
-${DEST}/repo.ttl: data/all.ttl ${CONCRETE_WORKFLOWS} ${VENV} ${PY}
-	-mkdir -p ${DEST}
-	. ${VENV} && quangis update-tools \
-		-o "$@" \
-		--tools "$<" -x \
-		${CONCRETE_WORKFLOWS}

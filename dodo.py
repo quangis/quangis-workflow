@@ -12,8 +12,13 @@ from quangis.evaluation import read_transformation, variants, \
 
 ROOT = Path(__file__).parent
 DATA = ROOT
+TOOLS = DATA / "data" / "all.ttl"
 TASKS = list((DATA / "tasks").glob("*.ttl"))
 WORKFLOWS = list((DATA / "workflows").glob("*.ttl"))
+
+# These are the workflows as generated from Eric's GraphML. That process should 
+# eventually be ran from here too...
+CWORKFLOWS = list((DATA / "concrete-workflows").glob("*.ttl"))
 
 STORE_URL = "http://192.168.56.1:8000"
 STORE_USER = ("user", "password")
@@ -71,6 +76,7 @@ def task_visualize():
             targets=[tfm],
             actions=[(action, (wf, tfm))])
 
+
 def task_evaluations():
     """Prepare queries and send evaluations."""
 
@@ -94,3 +100,26 @@ def task_evaluations():
             targets=[DEST / f"{variant}.csv"],
             actions=[(action, variant)]
         )
+
+
+def task_update_tools():
+    """Extract a tool repository from concrete workflows."""
+
+    DEST = ROOT / "build" / "repo.ttl"
+
+    def action() -> bool:
+        from quangis.tools.repo import Repo
+        from quangis.workflow import Workflow
+        repo = Repo.from_file(TOOLS, check_integrity=True)
+        for wf_path in CWORKFLOWS:
+            cwf = Workflow.from_file(wf_path)
+            repo.update(cwf)
+        graph = repo.graph()
+        graph.serialize(DEST)
+        return True
+
+    return dict(
+        file_dep=CWORKFLOWS,
+        targets=[DEST],
+        actions=[action]
+    )

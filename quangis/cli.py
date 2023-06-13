@@ -58,27 +58,6 @@ class WithDestDir(object):
         else:
             raise RuntimeError(f"{path} is not a directory")
 
-@CLI.subcommand("update-tools")
-class RepoBuilder(cli.Application, WithRepo, WithDestDir):
-    """Extract a tool repository from concrete workflows"""
-
-    output_file = cli.SwitchAttr(["-o", "--output"],
-        help="output file", default=None)
-
-    def main(self, *WORKFLOW):
-        repo = self.tools
-        for file in paths(WORKFLOW):
-            cwf = Workflow.from_file(file)
-            repo.update(cwf)
-
-        graph = repo.graph()
-        if self.output_file:
-            graph.serialize(self.output_file,
-                format=guess_format(self.output_file))
-        else:
-            print(graph.serialize(format="turtle"))
-
-
 @CLI.subcommand("convert-abstract")
 class AbstractConverter(cli.Application, WithRepo, WithDestDir):
     """Turn concrete workflows into abstract workflows"""
