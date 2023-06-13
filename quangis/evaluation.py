@@ -36,10 +36,8 @@ def write_csv_summary(handle: TextIO,
         tasks: set[URIRef],
         expect: Mapping[URIRef, set[URIRef]],
         actual: Mapping[URIRef, set[URIRef]]) -> None:
-    """
-    Create a summary CSV by providing a mapping from tasks to expected and 
-    actual workflows that match it.
-    """
+    """Create a summary CSV by providing a mapping from tasks to expected and 
+    actual workflows that match it."""
 
     assert all(wf in workflows for wf in actual.keys())
     assert all(wf in workflows for wf in expect.keys())
