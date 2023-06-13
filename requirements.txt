@@ -3,4 +3,5 @@ rdflib
 plumbum
 typing_extensions
 platformdirs
+doit
 git+https://github.com/quangis/transforge.git@develop#egg=transforge

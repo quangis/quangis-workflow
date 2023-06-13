@@ -19,31 +19,24 @@ from transforge.util.store import TransformationStore
 from cct import cct
 from typing import Mapping, Iterator, TextIO
 
-
-# STORE_URL = "https://localhost:3030"
-# STORE_USER = None
-STORE_URL = "http://192.168.56.1:8000"
-STORE_USER = ("user", "password")
-
-ROOT = Path(__file__).parent
+ROOT = Path(__file__).parent.parent
 BUILD_DIR = ROOT / "build"
 
 tools = Graph()
 tools.parse(ROOT / "data" / "all.ttl")
 
 def write_csv_summary(handle: TextIO,
-        workflows: set[URIRef],
-        tasks: set[URIRef],
         expect: Mapping[URIRef, set[URIRef]],
-        actual: Mapping[URIRef, set[URIRef]]) -> None:
+        actual: Mapping[URIRef, set[URIRef]],
+        workflows: set[URIRef]) -> None:
     """Create a summary CSV by providing a mapping from tasks to expected and 
     actual workflows that match it."""
 
-    assert all(wf in workflows for wf in actual.keys())
-    assert all(wf in workflows for wf in expect.keys())
-    assert all(wf in expect and wf in actual for wf in workflows)
-    assert all(t in tasks for t in expect.values())
-    assert all(t in tasks for t in actual.values())
+    tasks = set(expect.keys())
+
+    assert all(wf in workflows for wfs in expect.values() for wf in wfs)
+    assert all(wf in workflows for wfs in actual.values() for wf in wfs)
+    assert tasks == set(actual.keys())
 
     n_tpos, n_tneg, n_fpos, n_fneg = 0, 0, 0, 0
     header = ["Task", "Precision", "Recall"] + sorted(
@@ -92,6 +85,7 @@ def read_query(task_path: Path,
     query = TransformationQuery(cct, qg, **kwargs)
     return query
 
+
 def variants() -> Iterator[tuple[str, dict, dict]]:
     """Parameters for the workflow and task graphs in order to run different 
     variants of the experiment."""
@@ -115,48 +109,26 @@ def variants() -> Iterator[tuple[str, dict, dict]]:
         yield name, kwargsg, kwargsq
 
 
-def write_evaluations(store: TransformationStore,
-        task_paths=ROOT.glob("tasks/*.ttl"),
-        workflow_paths=ROOT.glob("workflows/*.ttl")) -> None:
-
-    task_paths = list(task_paths)
-    workflow_paths = list(workflow_paths)
-
-    for variant, kwargsg, kwargsq in variants():
-        print("Variant:", variant)
-
-        # Build & send transformation graphs for every workflow
-        workflows: set[URIRef] = set()
-        for wf_path in workflow_paths:
-            print(f"Building graph for workflow {wf_path}...")
-            g = read_transformation(wf_path, **kwargsg)
-            assert g.uri
-            workflows.add(g.uri)
-            print("Sending transformation graph to graph store...")
-            store.put(g)
-
-        # Fire query for every task
-        tasks: set[URIRef] = set()
-        actual: dict[URIRef, set[URIRef]] = dict()
-        expect: dict[URIRef, set[URIRef]] = dict()
-        for task_path in task_paths:
-            print(f"Reading transformation graph for task {task_path}...")
-            query = read_query(task_path, **kwargsq)
-            root = query.root
-            tasks.add(root)
-
-            print("Querying graph store...")
-            actual[root] = store.run(query)  # type: ignore
-            expect[root] = set(
-                query.graph.objects(root, TF.implementation))  # type: ignore
-            print(f"Results: {', '.join(str(wf) for wf in actual[root])}")
-
-        (BUILD_DIR / "eval").mkdir(exist_ok=True)
-        with open(BUILD_DIR / f"{variant}.csv") as f:
-            write_csv_summary(f, workflows, tasks, expect, actual)
+def upload(workflow_paths: list[Path], store: TransformationStore,
+        **kwargs) -> set[URIRef]:
+    workflows = set()
+    for wf_path in workflow_paths:
+        g = read_transformation(wf_path, **kwargs)
+        assert g.uri
+        workflows.add(g.uri)
+        store.put(g)
+    return workflows
 
 
-if __name__ == '__main__':
-    store = TransformationStore.backend('marklogic', STORE_URL,
-        cred=STORE_USER)
-    write_evaluations(store)
+def query(task_paths: list[Path], store: TransformationStore, **kwargs) \
+        -> tuple[dict[URIRef, set[URIRef]], dict[URIRef, set[URIRef]]]:
+    actual: dict[URIRef, set[URIRef]] = dict()
+    expect: dict[URIRef, set[URIRef]] = dict()
+    for task_path in task_paths:
+        query = read_query(task_path, **kwargs)
+        root = query.root
+        actual[root] = store.run(query)  # type: ignore
+        expect[root] = set(
+            query.graph.objects(root, TF.implementation))  # type: ignore
+        print(f"Results: {', '.join(str(wf) for wf in actual[root])}")
+    return actual, expect
