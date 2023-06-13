@@ -18,6 +18,23 @@ WORKFLOWS = list((DATA / "workflows").glob("*.ttl"))
 STORE_URL = "http://192.168.56.1:8000"
 STORE_USER = ("user", "password")
 
+def task_cct():
+    """Produce CCT vocabulary file."""
+    DEST = ROOT / "build" / "cct.ttl"
+
+    def action():
+        from cct import cct
+        from transforge.graph import TransformationGraph
+        g = TransformationGraph(cct)
+        g.add_vocabulary()
+        g.serialize(DEST)
+
+    return dict(
+        file_dep=[ROOT / "quangis" / "cctrans.py"],
+        targets=[DEST],
+        actions=[action]
+    )
+
 def task_transformation():
     """Produce transformation graphs for workflows"""
 
