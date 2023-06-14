@@ -74,6 +74,7 @@ def read_transformation(wf_path: Path,
     wg.refresh()
     g = TransformationGraph(cct, **kwargs)
     g.add_workflow(wg)
+    g += wg
     return g
 
 
