@@ -9,12 +9,12 @@ from transforge.util.store import TransformationStore
 from quangis.evaluation import read_transformation, variants, \
     write_csv_summary, upload, query
 
-DOIT_CONFIG = {'default_tasks': []}
+DOIT_CONFIG = {'default_tasks': []}  # type: ignore
 
 ROOT = Path(__file__).parent
-DATA = ROOT
-IOCONFIG = DATA / "data" / "ioconfig.ttl"
-TOOLS = DATA / "data" / "all.ttl"
+DATA = ROOT / "data"
+IOCONFIG = DATA / "ioconfig.ttl"
+TOOLS = DATA / "all.ttl"
 TASKS = list((DATA / "tasks").glob("*.ttl"))
 WORKFLOWS = list((DATA / "workflows").glob("*.ttl"))
 
@@ -42,14 +42,13 @@ def task_cct():
         actions=[action]
     )
 
-def task_transformation():
+def task_transformations_ttl():
     """Produce transformation graphs for workflows."""
 
     DEST = ROOT / "build" / "transformations"
     DEST.mkdir(exist_ok=True)
 
     def action(wf: Path, tfm: Path) -> bool:
-        tfm.parent.mkdir(exist_ok=True)
         read_transformation(wf).serialize(tfm)
         return True
 
@@ -60,7 +59,7 @@ def task_transformation():
             targets=[tfm],
             actions=[(action, (wf, tfm))])
 
-def task_visualize():
+def task_transformations_visual():
     """Visualizations of transformation graphs."""
 
     DEST = ROOT / "build" / "transformations"
@@ -79,10 +78,10 @@ def task_visualize():
             actions=[(action, (wf, tfm))])
 
 
-def task_evaluations():
+def task_evaluate():
     """Prepare queries and send evaluations."""
 
-    DEST = ROOT / "build" / "summary"
+    DEST = ROOT / "build" / "eval"
 
     store = TransformationStore.backend('marklogic', STORE_URL,
         cred=STORE_USER)
