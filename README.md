@@ -18,6 +18,9 @@ This program is part of the [QuAnGIS][quangis] project.
     -   Encodings of the underlying tasks can be found in the 
         [tasks/](tasks/) directory.
 
+Recipes to produce the files of this project are defined using 
+[doit](https://pydoit.org/) in the [`dodo.py`](dodo.py) file. Run `doit 
+list` to see an overview of what you can create.
 
 ## Installation
 
