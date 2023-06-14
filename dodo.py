@@ -6,12 +6,14 @@
 from pathlib import Path
 # from transforge.util.utils import write_graphs
 from transforge.util.store import TransformationStore
-
 from quangis.evaluation import read_transformation, variants, \
     write_csv_summary, upload, query
 
+DOIT_CONFIG = {'default_tasks': []}
+
 ROOT = Path(__file__).parent
 DATA = ROOT
+IOCONFIG = DATA / "data" / "ioconfig.ttl"
 TOOLS = DATA / "data" / "all.ttl"
 TASKS = list((DATA / "tasks").glob("*.ttl"))
 WORKFLOWS = list((DATA / "workflows").glob("*.ttl"))
@@ -41,7 +43,7 @@ def task_cct():
     )
 
 def task_transformation():
-    """Produce transformation graphs for workflows"""
+    """Produce transformation graphs for workflows."""
 
     DEST = ROOT / "build" / "transformations"
     DEST.mkdir(exist_ok=True)
@@ -81,12 +83,12 @@ def task_evaluations():
     """Prepare queries and send evaluations."""
 
     DEST = ROOT / "build" / "summary"
-    DEST.mkdir(exist_ok=True)
 
     store = TransformationStore.backend('marklogic', STORE_URL,
         cred=STORE_USER)
 
     def action(variant, kwargsg, kwargsq) -> bool:
+        DEST.mkdir(exist_ok=True)
         workflows = upload(WORKFLOWS, store, **kwargsg)
         expect, actual = query(TASKS, store, **kwargsq)
         with open(DEST / f"{variant}.csv") as f:
@@ -151,3 +153,65 @@ def task_abstract():
             targets=[DEST / wf.name],
             actions=[(action, [wf, DEST / wf.name])]
         )
+
+def task_generate():
+    """Synthesize workflows using APE."""
+
+    DESTDIR = ROOT / "build" / "generated"
+
+    def action() -> bool:
+        from rdflib.graph import Graph
+        from rdflib.namespace import Namespace, RDF
+        from rdflib.term import URIRef
+        from quangis.polytype import Polytype
+        from quangis.synthesis import WorkflowGenerator
+        from quangis.namespace import CCD, EX
+        from quangis.ccdata import dimensions
+
+        confgraph = Graph()
+        confgraph.parse(IOCONFIG)
+        base = Namespace(IOCONFIG.parent.absolute().as_uri() + "/")
+        sources: list[list[URIRef]] = [
+            list(y for y in confgraph.objects(x, RDF.type)
+                 if isinstance(y, URIRef))
+            for x in confgraph.objects(None, base.input)]
+        goals: list[list[URIRef]] = [
+            list(y for y in confgraph.objects(x, RDF.type)
+                 if isinstance(y, URIRef))
+            for x in confgraph.objects(None, base.output)]
+
+        DESTDIR.mkdir(exist_ok=True)
+        gen = WorkflowGenerator(TOOLS, DESTDIR)
+
+        inputs_outputs: list[tuple[list[Polytype], list[Polytype]]] = []
+
+        # To start with, we generate workflows with two inputs and one output, 
+        # of which one input is drawn from the following sources, and the other 
+        # is the same as the output without the measurement level.
+        for goal_tuple in goals:
+            goal = Polytype.project(dimensions, goal_tuple)
+            source1 = Polytype(goal)
+            source1[CCD.NominalA] = {CCD.NominalA}
+            for source_tuple in sources:
+                source2 = Polytype.project(dimensions, source_tuple)
+                inputs_outputs.append(([source1, source2], [goal]))
+
+        running_total = 0
+        for run, (inputs, outputs) in enumerate(inputs_outputs):
+            print(f"Attempting [ {' ] & [ '.join(x.short() for x in inputs)} "
+                f"] -> [ {' & '.join(x.short() for x in outputs)} ]")
+            for solution in gen.run(inputs, outputs, solutions=1, 
+                    prefix=EX.solution):
+                running_total += 1
+                path = DESTDIR / f"solution{running_total}.ttl"
+                print(f"Writing solution: {path}")
+                solution.serialize(path, format="ttl")
+            print(f"Running total is {running_total}.")
+
+        return True
+
+    return dict(
+        file_dep=[IOCONFIG, TOOLS],
+        targets=[DESTDIR / "solution1.ttl"],
+        actions=[(action, [])],
+    )

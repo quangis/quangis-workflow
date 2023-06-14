@@ -43,7 +43,7 @@ To run (rather limited) tests, install and run `nose2`.
 Assuming that RDF files containing manually annotated workflows are in 
 the `ttl/` directory, the tool repository is built using:
 
-    quangis update-tools --tools tools/concrete.ttl ttl/*.ttl
+    doit update_tools
 
 
 ## Workflow generation
@@ -59,7 +59,7 @@ that APE understands. APE is then instructed to generate workflows for
 different possible input/output data configurations. To perform this 
 step, run:
 
-    quangis synthesis --config tools/ioconfig.ttl
+    doit generate
 
 The second step involves abstracting away from implementation details. 
 For this, the tools are also annotated with a description of their 
@@ -137,6 +137,3 @@ with property paths).
 [tf]: https://github.com/quangis/transforge
 [tools]: https://raw.githubusercontent.com/quangis/cct/master/tools/tools.ttl
 [tools2]: https://github.com/simonscheider/QuAnGIS/tree/master/ToolRepository/ToolDescription.ttl
-
-
-
