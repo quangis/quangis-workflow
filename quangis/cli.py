@@ -58,30 +58,6 @@ class WithDestDir(object):
         else:
             raise RuntimeError(f"{path} is not a directory")
 
-@CLI.subcommand("convert-abstract")
-class AbstractConverter(cli.Application, WithRepo, WithDestDir):
-    """Turn concrete workflows into abstract workflows"""
-
-    def main(self, *WORKFLOW):
-        for file in paths(WORKFLOW):
-            cwf = Workflow.from_file(file)
-            try:
-                g = self.tools.convert_to_abstractions(cwf, cwf.root)
-            except Exception as e:
-                if e.args:
-                    print(f"Skipping {file} because of the following "
-                        f"{type(e).__name__}: {','.join(e.args)}.", 
-                        file=stderr)
-                else:
-                    print(f"Skipping {file} because of a "
-                        f"{type(e).__name__}.")
-            else:
-                print(f"Successfully processed {file}")
-                output_file = self.output_dir / f"{file.stem}_abstract.ttl"
-                assert not output_file.exists()
-                g.serialize(output_file, format="turtle")
-            print()
-
 
 @CLI.subcommand("synthesis")
 class Generator(cli.Application, WithRepo, WithDestDir):

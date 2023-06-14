@@ -18,7 +18,7 @@ WORKFLOWS = list((DATA / "workflows").glob("*.ttl"))
 
 # These are the workflows as generated from Eric's GraphML. That process should 
 # eventually be ran from here too...
-CWORKFLOWS = list((DATA / "concrete-workflows").glob("*.ttl"))
+CWORKFLOWS = list((DATA / "workflows-concrete").glob("*.ttl"))
 
 STORE_URL = "http://192.168.56.1:8000"
 STORE_USER = ("user", "password")
@@ -123,3 +123,31 @@ def task_update_tools():
         targets=[DEST],
         actions=[action]
     )
+
+def task_abstract():
+    """Produce abstract workflows from concrete workflows."""
+
+    DEST = ROOT / "build" / "abstract"
+    repo_path = ROOT / "build" / "repo.ttl"
+
+    def action(wf_path, target):
+        from quangis.workflow import Workflow
+        from quangis.tools.repo import Repo
+        DEST.mkdir(exist_ok=True)
+
+        # Todo: this should be produced by an action itself
+        repo = Repo.from_file(repo_path, check_integrity=False)
+
+        cwf = Workflow.from_file(wf_path)
+        print(cwf.serialize())
+
+        g = repo.convert_to_abstractions(cwf, cwf.root)
+        g.serialize(target, format="ttl")
+
+    for wf in CWORKFLOWS:
+        yield dict(
+            name=wf.name,
+            file_dep=[wf],
+            targets=[DEST / wf.name],
+            actions=[(action, [wf, DEST / wf.name])]
+        )
