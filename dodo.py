@@ -53,13 +53,13 @@ def task_transformations_ttl():
         return True
 
     for wf in WORKFLOWS:
-        tfm = DEST / "transformations" / f"{wf.stem}.ttl"
+        tfm = DEST / f"{wf.stem}.ttl"
         yield dict(name=wf.stem,
             file_dep=[wf],
             targets=[tfm],
             actions=[(action, (wf, tfm))])
 
-def task_transformations_visual():
+def task_transformations_dot():
     """Visualizations of transformation graphs."""
 
     DEST = ROOT / "build" / "transformations"
@@ -71,12 +71,31 @@ def task_transformations_visual():
         return True
 
     for wf in WORKFLOWS:
-        tfm = DEST / "transformations" / f"{wf.stem}.dot"
+        tfm = DEST / f"{wf.stem}.dot"
         yield dict(name=wf.stem,
             file_dep=[wf],
             targets=[tfm],
             actions=[(action, (wf, tfm))])
 
+def task_transformations_pdf():
+    """Visualizations of transformation graphs as a PDF."""
+
+    DEST = ROOT / "build" / "transformations"
+    DEST.mkdir(exist_ok=True)
+
+    def action(dot_path: Path, pdf_path: Path) -> bool:
+        import pydot  # type: ignore
+        graphs = pydot.graph_from_dot_file(dot_path)
+        graphs[0].write_pdf(pdf_path)
+        return True
+
+    for wf in WORKFLOWS:
+        src = DEST / f"{wf.stem}.dot"
+        dest = DEST / f"{wf.stem}.pdf"
+        yield dict(name=wf.stem,
+            file_dep=[src],
+            targets=[dest],
+            actions=[(action, (src, dest))])
 
 def task_evaluate():
     """Prepare queries and send evaluations."""
