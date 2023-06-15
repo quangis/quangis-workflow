@@ -37,7 +37,7 @@ def task_cct():
         g.serialize(DEST)
 
     return dict(
-        file_dep=[ROOT / "quangis" / "cctrans.py"],
+        file_dep=[ROOT / "quangis" / "cct.py"],
         targets=[DEST],
         actions=[action]
     )
@@ -167,7 +167,7 @@ def task_abstract():
     for wf in CWORKFLOWS:
         yield dict(
             name=wf.name,
-            file_dep=[wf],
+            file_dep=[wf, repo_path],
             targets=[DEST / wf.name],
             actions=[(action, [wf, DEST / wf.name])]
         )
@@ -184,7 +184,7 @@ def task_generate():
         from quangis.polytype import Polytype
         from quangis.synthesis import WorkflowGenerator
         from quangis.namespace import CCD, EX
-        from quangis.ccdata import dimensions
+        from quangis.ccd import ccd
 
         confgraph = Graph()
         confgraph.parse(IOCONFIG)
@@ -207,11 +207,11 @@ def task_generate():
         # of which one input is drawn from the following sources, and the other 
         # is the same as the output without the measurement level.
         for goal_tuple in goals:
-            goal = Polytype.project(dimensions, goal_tuple)
+            goal = Polytype.project(ccd.dimensions, goal_tuple)
             source1 = Polytype(goal)
             source1[CCD.NominalA] = {CCD.NominalA}
             for source_tuple in sources:
-                source2 = Polytype.project(dimensions, source_tuple)
+                source2 = Polytype.project(ccd.dimensions, source_tuple)
                 inputs_outputs.append(([source1, source2], [goal]))
 
         running_total = 0

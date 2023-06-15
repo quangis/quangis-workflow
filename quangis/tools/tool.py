@@ -12,8 +12,8 @@ from quangis.workflow import Workflow
 from quangis.polytype import Polytype
 from quangis.namespace import (
     n3, RDF, RDFS, TOOL, MULTI, ABSTR, CCT, DC)
-from quangis.cctrans import cct
-from quangis.ccdata import dimensions
+from quangis.cct import cct
+from quangis.ccd import ccd
 
 class CCTError(Exception):
     pass
@@ -26,7 +26,7 @@ class DisconnectedArtefactsError(Exception):
 
 
 def gettype(g: Graph, node: Node) -> Polytype:
-    return Polytype.assemble(dimensions, g.objects(node, RDF.type))
+    return Polytype.assemble(ccd.dimensions, g.objects(node, RDF.type))
 
 def geturis(g: Graph, node: Node, pred: Node) -> Iterator[URIRef]:
     for uri in g.objects(node, pred):
@@ -49,7 +49,7 @@ class Artefact(object):
     def __init__(self, type: Polytype | None = None,
             id: str | None = None,
             comments: Iterable[str] = ()):
-        self.type = type or Polytype(dimensions)
+        self.type = type or Polytype(ccd.dimensions)
         self.id = id
         self.comments = list(comments)
 

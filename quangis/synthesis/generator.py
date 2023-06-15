@@ -8,7 +8,7 @@ from rdflib.util import guess_format
 from itertools import chain
 from transforge.namespace import shorten
 
-from quangis.ccdata import ccd_graph, dimensions
+from quangis.ccd import ccd
 from quangis.polytype import Polytype
 from quangis.namespace import CCD, TOOL, OWL, RDF, RDFS, ADA
 from quangis.synthesis.ape import APE, ToolsDict
@@ -31,7 +31,7 @@ class WorkflowGenerator(APE):
         tooltax = self.ape_tool_taxonomy()
 
         # Purely for troubleshooting
-        for d in dimensions:
+        for d in ccd.dimensions:
             d.graph.serialize(build_dir / f"dimension_{shorten(d.root)}.ttl")
         typetax.serialize(build_dir / "taxonomy_types.ttl")
         tooltax.serialize(build_dir / "taxonomy_tools.ttl")
@@ -42,7 +42,7 @@ class WorkflowGenerator(APE):
             tool_root=TOOL.Abstraction,
             ontology_prefix_iri=CCD,
             build_dir=build_dir,
-            dimensions=[d.root for d in dimensions]
+            dimensions=[d.root for d in ccd.dimensions]
         )
 
     def ape_tools(self) -> ToolsDict:
@@ -66,7 +66,7 @@ class WorkflowGenerator(APE):
                         {
                             k.root: list(v)
                             for k, v in Polytype.project(
-                                dimensions,
+                                ccd.dimensions,
                                 self.tools.objects(input, RDF.type)
                             ).items()
                         }
@@ -76,7 +76,7 @@ class WorkflowGenerator(APE):
                         {
                             k.root: list(v)
                             for k, v in Polytype.project(
-                                dimensions,
+                                ccd.dimensions,
                                 self.tools.objects(output, RDF.type)
                             ).downcast(casts).items()
                         }
@@ -111,10 +111,10 @@ class WorkflowGenerator(APE):
 
     def ape_type_taxonomy(self) -> Graph:
         taxonomy = Graph()
-        for s, o in ccd_graph.subject_objects(RDFS.subClassOf):
+        for s, o in ccd.subject_objects(RDFS.subClassOf):
             # Only keep nodes that intersect with exactly one dimension
             taxonomy.add((o, RDF.type, OWL.Class))
-            if sum(1 for dim in dimensions if s in dim) == 1:
+            if sum(1 for dim in ccd.dimensions if s in dim) == 1:
                 taxonomy.add((s, RDFS.subClassOf, o))
                 taxonomy.add((s, RDF.type, OWL.Class))
 

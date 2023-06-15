@@ -6,7 +6,7 @@ import sys
 from rdflib import Namespace, Graph
 from rdflib.term import Node, URIRef, BNode
 from rdflib.namespace import NamespaceManager, RDFS, RDF, OWL, DC
-from quangis.cctrans import CCT
+from quangis.cct import CCT
 from typing import Mapping
 
 EX = Namespace('https://example.com/#')

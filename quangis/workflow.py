@@ -21,7 +21,7 @@ from transforge.namespace import shorten
 from quangis.namespace import (
     WF, RDF, RDFS, CCT, CCT_, n3)
 from quangis.polytype import Polytype
-from quangis.ccdata import dimensions
+from quangis.ccd import ccd
 
 root_dir = Path(__file__).parent.parent
 
@@ -64,7 +64,8 @@ class Workflow(Graph):
         raise RuntimeError("Workflow graph has no identifiable root.")
 
     def type(self, artefact: Node) -> Polytype:
-        return Polytype.assemble(dimensions, self.objects(artefact, RDF.type))
+        return Polytype.assemble(ccd.dimensions,
+            self.objects(artefact, RDF.type))
 
     def cct_expr(self, action: Node) -> str | None:
         a = (self.value(action, CCT_.expression, any=False) or

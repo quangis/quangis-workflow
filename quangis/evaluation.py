@@ -16,7 +16,7 @@ from transforge.query import TransformationQuery
 from transforge.namespace import TF, shorten
 from transforge.workflow import WorkflowGraph
 from transforge.util.store import TransformationStore
-from cct import cct
+from quangis.cct import cct
 from typing import Mapping, Iterator, TextIO
 
 ROOT = Path(__file__).parent.parent
