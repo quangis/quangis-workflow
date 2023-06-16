@@ -128,9 +128,9 @@ def task_update_tools():
     DEST = ROOT / "build" / "repo.ttl"
 
     def action() -> bool:
-        from quangis.tools.repo import Repo
+        from quangis.tools.repo import ToolRepository
         from quangis.workflow import Workflow
-        repo = Repo.from_file(TOOLS, check_integrity=True)
+        repo = ToolRepository.from_file(TOOLS, check_integrity=True)
         for wf_path in CWORKFLOWS:
             cwf = Workflow.from_file(wf_path)
             repo.update(cwf)
@@ -152,11 +152,11 @@ def task_abstract():
 
     def action(wf_path, target):
         from quangis.workflow import Workflow
-        from quangis.tools.repo import Repo
+        from quangis.tools.repo import ToolRepository
         DEST.mkdir(exist_ok=True)
 
         # Todo: this should be produced by an action itself
-        repo = Repo.from_file(repo_path, check_integrity=False)
+        repo = ToolRepository.from_file(repo_path, check_integrity=False)
 
         cwf = Workflow.from_file(wf_path)
         print(cwf.serialize())

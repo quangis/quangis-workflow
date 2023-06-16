@@ -21,7 +21,7 @@ class ToolAlreadyExistsError(Exception):
 class ToolNotFoundError(KeyError):
     pass
 
-class Repo(object):
+class ToolRepository(object):
     """A repository contains abstractions and tools."""
 
     def __init__(self) -> None:
@@ -31,11 +31,11 @@ class Repo(object):
         super().__init__()
 
     @staticmethod
-    def from_file(file: Path, check_integrity: bool = True) -> Repo:
+    def from_file(file: Path, check_integrity: bool = True) -> ToolRepository:
         g = Graph()
         g.parse(file)
 
-        repo = Repo()
+        repo = ToolRepository()
         for tool in Unit.from_graph(g):
             repo.add(tool)
         for sig in Abstraction.from_graph(g):
