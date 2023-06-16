@@ -31,9 +31,11 @@ class ToolRepository(object):
         super().__init__()
 
     @staticmethod
-    def from_file(file: Path, check_integrity: bool = True) -> ToolRepository:
+    def from_file(*files: Path,
+            check_integrity: bool = True) -> ToolRepository:
         g = Graph()
-        g.parse(file)
+        for file in files:
+            g.parse(file)
 
         repo = ToolRepository()
         for tool in Unit.from_graph(g):

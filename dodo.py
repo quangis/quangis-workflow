@@ -15,6 +15,11 @@ ROOT = Path(__file__).parent
 DATA = ROOT / "data"
 IOCONFIG = DATA / "ioconfig.ttl"
 TOOLS = DATA / "all.ttl"
+
+# TOOLS_UNIT = DATA / "tools" / "unit.ttl"
+# TOOLS_MULTI = DATA / "tools" / "multi.ttl"
+# TOOLS_ABSTR = DATA / "tools" / "abstract.ttl"
+
 TASKS = list((DATA / "tasks").glob("*.ttl"))
 WORKFLOWS = list((DATA / "workflows").glob("*.ttl"))
 
@@ -125,22 +130,35 @@ def task_evaluate():
 def task_update_tools():
     """Extract a tool repository from concrete workflows."""
 
-    DEST = ROOT / "build" / "repo.ttl"
+    DESTDIR = ROOT / "build" / "tools"
 
     def action() -> bool:
+        from rdflib import Graph
+        from quangis.namespace import TOOL, bind_all
         from quangis.tools.repo import ToolRepository
         from quangis.workflow import Workflow
         repo = ToolRepository.from_file(TOOLS, check_integrity=True)
+        # _UNIT, TOOLS_MULTI, TOOLS_ABSTR
         for wf_path in CWORKFLOWS:
             cwf = Workflow.from_file(wf_path)
             repo.update(cwf)
-        graph = repo.graph()
-        graph.serialize(DEST)
+
+        composites = Graph()
+        for multi in repo.composites.values():
+            multi.to_graph(composites)
+        bind_all(composites, default=TOOL)
+        abstractions = Graph()
+        for abstr in repo.abstractions.values():
+            abstr.to_graph(abstractions)
+        bind_all(abstractions, default=TOOL)
+        DESTDIR.mkdir(exist_ok=True)
+        composites.serialize(DESTDIR / "multi.ttl")
+        abstractions.serialize(DESTDIR / "abstract.ttl")
         return True
 
     return dict(
-        file_dep=CWORKFLOWS,
-        targets=[DEST],
+        file_dep=CWORKFLOWS + [TOOLS],
+        targets=[DESTDIR / "multi.ttl", DESTDIR / "abstract.ttl"],
         actions=[action]
     )
 
