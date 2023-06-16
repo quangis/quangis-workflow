@@ -1,28 +1,17 @@
 import unittest
 
-from pathlib import Path
-from rdflib import Graph
-from quangiswf.namespace import EM, CCD
-from quangiswf.types import Polytype, Dimension
+from quangis.namespace import CCD
+from quangis.ccd import ccd
+from quangis.polytype import Polytype
+from rdflib.namespace import Namespace
 
-build_dir = Path(__file__).parent.parent / "build"
-
+EM = Namespace('http://geographicknowledge.de/vocab/ExtensiveMeasures.rdf#')
 
 class TestProjection(unittest.TestCase):
 
     def test_projection(self):
-        """
-        To test the correctness of the class projection based on a list of
-        examples.
-        """
-
-        ccd = Graph()
-        ccd.parse(build_dir / 'CoreConceptData.rdf', format='xml')
-
-        dimensions = [
-            Dimension(root, source=ccd)
-            for root in [CCD.CoreConceptQ, CCD.LayerA, CCD.NominalA]
-        ]
+        """Test the correctness of the class projection based on a list of
+        examples."""
 
         testnodes = [
             CCD.ExistenceRaster, CCD.RasterA, CCD.FieldRaster,
@@ -48,13 +37,14 @@ class TestProjection(unittest.TestCase):
         ]
 
         for ix, node in enumerate(testnodes):
-            p = Polytype.project(dimensions, [node])
-            self.assertEqual(p[CCD.CoreConceptQ],
-                set(correctCC[ix]) or {CCD.CoreConceptQ})
-            self.assertEqual(p[CCD.LayerA],
-                set(correctLayerA[ix]) or {CCD.LayerA})
-            self.assertEqual(p[CCD.NominalA],
-                set(correctNominalA[ix]) or {CCD.NominalA})
+            with self.subTest(f"{node}"):
+                p = Polytype.project(ccd.dimensions, [node])
+                self.assertEqual(p[CCD.CoreConceptQ],
+                    set(correctCC[ix]) or {CCD.CoreConceptQ})
+                self.assertEqual(p[CCD.LayerA],
+                    set(correctLayerA[ix]) or {CCD.LayerA})
+                self.assertEqual(p[CCD.NominalA],
+                    set(correctNominalA[ix]) or {CCD.NominalA})
 
 
 if __name__ == '__main__':

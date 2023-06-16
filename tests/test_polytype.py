@@ -1,7 +1,7 @@
 import unittest
 
-from quangiswf.namespace import EX
-from quangiswf.types import Polytype, Dimension
+from quangis.namespace import EX
+from quangis.polytype import Polytype, Dimension
 
 
 class TestPolytype(unittest.TestCase):
@@ -44,3 +44,7 @@ class TestPolytype(unittest.TestCase):
         t1 = Polytype({dim: [EX.B, EX.D]})
         t2 = Polytype({dim: [EX.C, EX.E]})
         self.assertSubtype((t1, t2, False), (t1, t2, False))
+
+
+if __name__ == '__main__':
+    unittest.main()
