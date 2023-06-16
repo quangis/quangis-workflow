@@ -14,12 +14,7 @@ DOIT_CONFIG = {'default_tasks': []}  # type: ignore
 ROOT = Path(__file__).parent
 DATA = ROOT / "data"
 IOCONFIG = DATA / "ioconfig.ttl"
-TOOLS = DATA / "all.ttl"
-
-# TOOLS_UNIT = DATA / "tools" / "unit.ttl"
-# TOOLS_MULTI = DATA / "tools" / "multi.ttl"
-# TOOLS_ABSTR = DATA / "tools" / "abstract.ttl"
-
+TOOLS = list((DATA / "tools").glob("*.ttl"))
 TASKS = list((DATA / "tasks").glob("*.ttl"))
 WORKFLOWS = list((DATA / "workflows").glob("*.ttl"))
 
@@ -137,8 +132,7 @@ def task_update_tools():
         from quangis.namespace import TOOL, bind_all
         from quangis.tools.repo import ToolRepository
         from quangis.workflow import Workflow
-        repo = ToolRepository.from_file(TOOLS, check_integrity=True)
-        # _UNIT, TOOLS_MULTI, TOOLS_ABSTR
+        repo = ToolRepository.from_file(*TOOLS, check_integrity=True)
         for wf_path in CWORKFLOWS:
             cwf = Workflow.from_file(wf_path)
             repo.update(cwf)
@@ -157,7 +151,7 @@ def task_update_tools():
         return True
 
     return dict(
-        file_dep=CWORKFLOWS + [TOOLS],
+        file_dep=CWORKFLOWS + TOOLS,
         targets=[DESTDIR / "multi.ttl", DESTDIR / "abstract.ttl"],
         actions=[action]
     )
@@ -217,7 +211,7 @@ def task_generate():
             for x in confgraph.objects(None, base.output)]
 
         DESTDIR.mkdir(exist_ok=True)
-        gen = WorkflowGenerator(TOOLS, DESTDIR)
+        gen = WorkflowGenerator(DATA / "tools" / "abstract.ttl", DESTDIR)
 
         inputs_outputs: list[tuple[list[Polytype], list[Polytype]]] = []
 
@@ -247,7 +241,7 @@ def task_generate():
         return True
 
     return dict(
-        file_dep=[IOCONFIG, TOOLS],
+        file_dep=[IOCONFIG, DATA / "tools" / "abstract.ttl"],
         targets=[DESTDIR / "solution1.ttl"],
         actions=[(action, [])],
     )

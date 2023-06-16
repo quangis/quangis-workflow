@@ -46,14 +46,14 @@ class ToolRepository(object):
             repo.add(multitool)
 
         if check_integrity:
-            print(f"Checking integrity of {file}...", file=sys.stderr)
+            print(f"Checking integrity of {files}...", file=sys.stderr)
             if not isomorphic(g, repo.graph()):
                 raise RuntimeError(
-                    f"Integrity check failed for {file}. It may contain "
+                    f"Integrity check failed for {files}. It may contain "
                     f"tuples that aren't interpreted by this program, "
                     f"which will be lost if you proceed.")
             else:
-                print(f"File {file} passed check", file=sys.stderr)
+                print(f"Files {files} passed check", file=sys.stderr)
         return repo
 
     def __getitem__(self, key: URIRef) -> Tool:

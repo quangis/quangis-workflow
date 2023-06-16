@@ -1,0 +1,199 @@
+@prefix : <https://quangis.github.io/vocab/tool#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix arcgis: <https://quangis.github.io/tool#> .
+@prefix arc3d: <https://pro.arcgis.com/en/pro-app/latest/tool-reference/3d-analyst/> .
+@prefix arcan: <https://pro.arcgis.com/en/pro-app/latest/tool-reference/analysis/> .
+@prefix arcco: <https://pro.arcgis.com/en/pro-app/latest/tool-reference/conversion/> .
+@prefix arcdm: <https://pro.arcgis.com/en/pro-app/latest/tool-reference/data-management/> .
+@prefix arcna: <https://pro.arcgis.com/en/pro-app/latest/tool-reference/network-analyst/> .
+@prefix arcsa: <https://pro.arcgis.com/en/pro-app/latest/tool-reference/spatial-analyst/> .
+@prefix arcss: <https://pro.arcgis.com/en/pro-app/latest/tool-reference/spatial-statistics/> .
+
+arcgis:AddGeometryAttributes a :Unit ;
+    rdfs:seeAlso arcdm:add-geometry-attributes.htm .
+
+arcgis:AddJoin a :Unit ;
+    rdfs:seeAlso arcdm:add-join.htm .
+
+arcgis:AddObjectVectorRegionArea a :Unit ;
+    rdfs:seeAlso arcdm:add-geometry-attributes.htm .
+
+arcgis:AlterField a :Unit ;
+    rdfs:seeAlso arcdm:alter-field-properties.htm .
+
+arcgis:Aspect a :Unit ;
+    rdfs:seeAlso arc3d:aspect.htm .
+
+arcgis:Buffer a :Unit ;
+    rdfs:seeAlso arcan:buffer.htm .
+
+arcgis:BuildNetwork a :Unit ;
+    rdfs:comment "Builds ratio network from line objects" ;
+    rdfs:seeAlso arcna:build-network.htm .
+
+arcgis:CalculateGeometryAttributes a :Unit ;
+    rdfs:seeAlso arcdm:calculate-geometry-attributes.htm .
+
+arcgis:CollectEvents a :Unit ;
+    rdfs:seeAlso arcss:collect-events.htm .
+
+arcgis:CreateNetworkDataset a :Unit ;
+    rdfs:seeAlso arcna:create-network-dataset.htm .
+
+arcgis:CreateRandomPoints a :Unit ;
+    rdfs:seeAlso arcdm:create-random-points.htm .
+
+arcgis:ExportFeatures a :Unit ;
+    rdfs:seeAlso arcco:export-features.htm .
+
+arcgis:ExportTable a :Unit ;
+    rdfs:seeAlso arcco:export-table.htm .
+
+arcgis:FeatureClassToFeatureClass a :Unit ;
+    rdfs:seeAlso arcco:feature-class-to-feature-class.htm .
+
+arcgis:FeatureToPoint a :Unit ;
+    rdfs:seeAlso arcdm:feature-to-point.htm .
+
+arcgis:FeatureVerticesToPoints a :Unit ;
+    rdfs:seeAlso arcdm:feature-vertices-to-points.htm .
+
+arcgis:GenerateNearTable a :Unit ;
+    rdfs:seeAlso arcan:generate-near-table.htm .
+
+arcgis:KernelDensity a :Unit ;
+    rdfs:seeAlso arcsa:kernel-density.htm .
+
+arcgis:MakeRouteAnalysisLayer a :Unit ;
+    rdfs:seeAlso arcna:make-route-analysis-layer.htm .
+
+arcgis:Merge a :Unit ;
+    rdfs:seeAlso arcdm:merge.htm .
+
+arcgis:ObjectBuffer a :Unit ;
+    rdfs:comment "Buffer (interpreted as vector representation of boolean field)" ;
+    rdfs:seeAlso arcan:buffer.htm .
+
+arcgis:SummarizeWithin a :Unit ;
+    rdfs:seeAlso arcan:summarize-within.htm .
+
+arcgis:AddFields a :Unit ;
+    rdfs:seeAlso arcdm:add-fields.htm .
+
+arcgis:Dissolve a :Unit ;
+    rdfs:comment "Merge object parts into single object" ;
+    rdfs:seeAlso arcdm:dissolve.htm .
+
+arcgis:Erase a :Unit ;
+    rdfs:comment "Erase Vector fields" ;
+    rdfs:seeAlso arcan:erase.htm .
+
+arcgis:ExtractByMask a :Unit ;
+    rdfs:seeAlso arcsa:extract-by-mask.htm .
+
+arcgis:FC2FC a :Unit ;
+    rdfs:comment "Feature class to feature class (=Select)" ;
+    rdfs:seeAlso arcco:feature-class-to-feature-class.htm .
+
+arcgis:FlowAccumulation a :Unit ;
+    rdfs:comment "Flow direction accumulation" ;
+    rdfs:seeAlso arcsa:flow-accumulation.htm .
+
+arcgis:FlowDirection a :Unit ;
+    rdfs:comment "Flow direction raster" ;
+    rdfs:seeAlso arcsa:flow-direction.htm .
+
+arcgis:FlowLength a :Unit ;
+    rdfs:seeAlso arcsa:flow-length.htm .
+
+arcgis:IDWInterval a :Unit ;
+    rdfs:seeAlso arcsa:idw.htm .
+
+arcgis:Intersect a :Unit ;
+    rdfs:seeAlso arcan:intersect.htm .
+
+arcgis:KrigingInterval a :Unit ;
+    rdfs:seeAlso arcsa:kriging.htm .
+
+arcgis:MakeClosestFacilityAnalysisLayer a :Unit ;
+    rdfs:seeAlso arcna:make-closest-facility-analysis-layer.htm .
+
+arcgis:MakeXyEventLayer a :Unit ;
+    rdfs:seeAlso arcdm:make-xy-event-layer.htm .
+
+arcgis:NearPointObjects a :Unit ;
+    rdfs:comment "Near tool, to seach for the closest objects using Euclidean distance" ;
+    rdfs:seeAlso arcan:generate-near-table.htm .
+
+arcgis:Project a :Unit ;
+    rdfs:seeAlso arcdm:project.htm .
+
+arcgis:SelectLayerByLocation a :Unit ;
+    rdfs:seeAlso arcdm:select-layer-by-location.htm .
+
+arcgis:SelectObjectByExtent a :Unit ;
+    rdfs:seeAlso arcan:select.htm .
+
+arcgis:Slope a :Unit ;
+    rdfs:seeAlso arcsa:slope.htm .
+
+arcgis:SnapPourPoint a :Unit ;
+    rdfs:seeAlso arcsa:snap-pour-point.htm .
+
+arcgis:Solve a :Unit ;
+    rdfs:seeAlso arcna:solve.htm .
+
+arcgis:TableToTable a :Unit ;
+    rdfs:seeAlso arcco:table-to-table.htm .
+
+arcgis:Watershed a :Unit ;
+    rdfs:seeAlso arcsa:watershed.htm .
+
+arcgis:ZonalStatisticsAsTable a :Unit ;
+    rdfs:seeAlso arcsa:zonal-statistics-as-table.htm .
+
+arcgis:AddLocations a :Unit ;
+    rdfs:seeAlso arcna:add-locations.htm .
+
+arcgis:CopyFeatures a :Unit ;
+    rdfs:seeAlso arcdm:copy-features .
+
+arcgis:ExcelToTable a :Unit ;
+    rdfs:seeAlso arcco:excel-to-table.htm .
+
+arcgis:PolygonToRaster a :Unit ;
+    rdfs:seeAlso arcco:polygon-to-raster.htm .
+
+arcgis:RasterToIsoRaster a :Unit ;
+    rdfs:seeAlso arcsa:reclassify.htm .
+
+arcgis:RegionFromRasterExtent a :Unit ;
+    rdfs:seeAlso arcco:raster-to-polygon.htm .
+
+arcgis:SelectLayerByAttribute a :Unit ;
+    rdfs:seeAlso arcdm:select-layer-by-attribute.htm .
+
+arcgis:SummaryStatistics a :Unit ;
+    rdfs:seeAlso arcan:summary-statistics.htm .
+
+arcgis:AddField a :Unit ;
+    rdfs:seeAlso arcdm:add-field.htm .
+
+arcgis:Con a :Unit ;
+    rdfs:seeAlso arcsa:con-.htm .
+
+arcgis:CalculateField a :Unit ;
+    rdfs:seeAlso arcdm:calculate-field.htm .
+
+arcgis:JoinField a :Unit ;
+    rdfs:seeAlso arcdm:join-field.htm .
+
+arcgis:Clip a :Unit ;
+    rdfs:seeAlso arcan:clip.htm,
+        arcdm:clip.htm .
+
+arcgis:RasterCalculator a :Unit ;
+    rdfs:seeAlso arcsa:raster-calculator.htm .
+
+arcgis:SpatialJoin a :Unit ;
+    rdfs:seeAlso arcan:spatial-join.htm .

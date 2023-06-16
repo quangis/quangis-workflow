@@ -33,9 +33,9 @@ There are abstract workflows in the directory
 evaluations. Abstract workflows can also be generated (see below).
 
 Abstract and concrete GIS tools are described in the tool database at 
-[`data/tools/all.ttl`](data/tools/all.ttl). Furthermore, new abstract 
-tools can be *extracted* from properly annotated concrete workflows. 
-Assuming that concrete workflows in `.ttl` format have been put in the 
+[`data/tools/`](data/tools/). Furthermore, new abstract tools can be 
+*extracted* from properly annotated concrete workflows. Assuming that 
+concrete workflows in `.ttl` format have been put in the 
 [`data/workflows-concrete/`] directory, you can do this via:
 
     doit update_tools

@@ -23,7 +23,7 @@ ROOT = Path(__file__).parent.parent
 BUILD_DIR = ROOT / "build"
 
 tools = Graph()
-tools.parse(ROOT / "data" / "all.ttl")
+tools.parse(ROOT / "data" / "tools" / "abstract.ttl")
 
 def write_csv_summary(handle: TextIO,
         expect: Mapping[URIRef, set[URIRef]],

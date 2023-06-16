@@ -1,0 +1,180 @@
+@prefix : <https://quangis.github.io/vocab/tool#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix multi: <https://quangis.github.io/tool/multi#> .
+@prefix arcgis: <https://quangis.github.io/tool#> .
+@prefix ccd: <http://geographicknowledge.de/vocab/CoreConceptData.rdf#> .
+
+multi:ClosestFacilityAnalysis a :Multi ;
+    :action [ :apply arcgis:AddLocations ;
+            :input [ rdfs:comment "goals" ;
+                    :id "2" ],
+                _:Nefd0ddc809bd4ce58f0b46310f02e7f6 ;
+            :output _:N58cf9374a46d4eb9bf37433bd30b0c84 ],
+        [ :apply arcgis:Solve ;
+            :input _:N8b6d9f61cf5a40ac8e1fc85a4091c38c ;
+            :output [ ] ],
+        [ :apply arcgis:AddLocations ;
+            :input _:N58cf9374a46d4eb9bf37433bd30b0c84,
+                [ rdfs:comment "origins" ;
+                    :id "3" ] ;
+            :output _:N8b6d9f61cf5a40ac8e1fc85a4091c38c ],
+        [ :apply arcgis:MakeClosestFacilityAnalysisLayer ;
+            :input [ rdfs:comment "roads" ;
+                    :id "1" ] ;
+            :output _:Nefd0ddc809bd4ce58f0b46310f02e7f6 ] .
+
+multi:CalculatePartialAmounts a :Multi ;
+    rdfs:comment "Calculates a set of portions from a set of object based count amounts using some boolean vector field. Only the portions that are within the true value of the boolean field are considered. This is an areal interpolation problem, which is solved by first generating area proportions and then multiplying them with the count amount." ;
+    :action [ :apply arcgis:Clip ;
+            :input [ :id "1" ],
+                [ :id "2" ] ;
+            :output _:Nfee061fa3ca041929a56169b819a3317 ],
+        [ :apply arcgis:CalculateField ;
+            :input _:N71197d5a1f89417cbe6c90b9662a5a5b ;
+            :output _:Na868852ea8c141ea800e060f23533ba3 ],
+        [ :apply arcgis:AddFields ;
+            :input _:Nfee061fa3ca041929a56169b819a3317 ;
+            :output _:N71197d5a1f89417cbe6c90b9662a5a5b ],
+        [ :apply arcgis:CalculateField ;
+            :input _:Na868852ea8c141ea800e060f23533ba3 ;
+            :output [ ] ] .
+
+multi:IntersectDissolve a :Multi ;
+    rdfs:comment "this tool computes the coverage of a field inside object region by first intersecting and then dissolving  and joining, to obtain the area covered by the field inside the object region" ;
+    :action [ :apply arcgis:Intersect ;
+            :input [ :id "1" ],
+                _:N974b67a1d9f84506bad04739a6138423 ;
+            :output _:Ne461b28a7e374dd6b48f2beb9b47643e ],
+        [ :apply arcgis:MergeObjects ;
+            :input _:Ne461b28a7e374dd6b48f2beb9b47643e ;
+            :output _:Nf60078598dd646de8f1140b401357b73 ],
+        [ :apply arcgis:JoinField ;
+            :input _:N974b67a1d9f84506bad04739a6138423,
+                _:Nf60078598dd646de8f1140b401357b73 ;
+            :output [ ] ] .
+
+_:N974b67a1d9f84506bad04739a6138423 :id "2" .
+
+multi:JoinFromTable a :Multi ;
+    rdfs:comment "Make table from Excel" ;
+    :action [ :apply arcgis:ExcelToTable ;
+            :input [ :id "1" ] ;
+            :output _:N1906ccec208e45e0af194d5e4fcf748b ],
+        [ :apply arcgis:JoinField ;
+            :input _:N1906ccec208e45e0af194d5e4fcf748b,
+                [ :id "2" ] ;
+            :output [ ] ] .
+
+multi:MakeLayerFromTable a :Multi ;
+    :action [ :apply arcgis:ExcelToTable ;
+            :input _:N36fcacddd48543ed8b7ed02804a6a465 ;
+            :output _:Nc6a7d835924c474eb2d7f5eb37cfb547 ],
+        [ :apply arcgis:JoinField ;
+            :input _:N1e75649da0f74676b6508dbdf30c4afb,
+                _:Nc6a7d835924c474eb2d7f5eb37cfb547 ;
+            :output [ ] ],
+        [ :apply arcgis:Project ;
+            :input _:N99eb7f8197e94f17b3627d8caf56928e ;
+            :output _:N1e75649da0f74676b6508dbdf30c4afb ],
+        [ :apply arcgis:MakeXyEventLayer ;
+            :input _:N36fcacddd48543ed8b7ed02804a6a465 ;
+            :output _:N99eb7f8197e94f17b3627d8caf56928e ] .
+
+_:N36fcacddd48543ed8b7ed02804a6a465 :id "1" .
+
+multi:RasterCoverage a :Multi ;
+    rdfs:comment "Computes coverage (size) from a raster table for each raster value" ;
+    :action [ :apply arcgis:CalculateField ;
+            :input _:N1f75eb5a14e8448da79f791a0d10d96f ;
+            :output [ ] ],
+        [ :apply arcgis:TableToTable ;
+            :input [ :id "1" ] ;
+            :output _:Nbfa70e6717d24ab8aa8f3bd6c59e3352 ],
+        [ :apply arcgis:AddField ;
+            :input _:Nbfa70e6717d24ab8aa8f3bd6c59e3352 ;
+            :output _:N1f75eb5a14e8448da79f791a0d10d96f ] .
+
+multi:RasterToContour a :Multi ;
+    :action [ :apply arcgis:RegionFromRasterExtent ;
+            :input _:N4924664ae7194f6e8848354ff417d5b0 ;
+            :output [ ] ],
+        [ :apply arcgis:RasterToIsoRaster ;
+            :input [ :id "1" ] ;
+            :output _:N4924664ae7194f6e8848354ff417d5b0 ] .
+
+multi:VelocityField a :Multi ;
+    rdfs:comment """Computes a water flow velocity raster from slope * accumulation area
+
+    # Select by attribute is always followed by copying features
+    # This computes SquareRoot("slope") * SquareRoot("flow_accumulation")
+    """ ;
+    :action [ rdfs:comment "This second step computes 0.1 * (Stowe_slope_area_term / [Mean slope-area term]). It needs looking up of parameter [Mean slope-area term]." ;
+            :apply arcgis:RasterCalculator1 ;
+            :input _:N52f56e60fee0472c9c4ad7cc6e4bc9c7 ;
+            :output [ ] ],
+        [ :apply arcgis:RasterCalculator ;
+            :input [ :id "2" ],
+                [ :id "1" ] ;
+            :output _:N52f56e60fee0472c9c4ad7cc6e4bc9c7 ] .
+
+multi:FullSelectFeatures a :Multi ;
+    rdfs:comment "Query to select items from layers using attribut values" ;
+    :action [ rdfs:comment "Select by attribute is always followed by copying features" ;
+            :apply arcgis:SelectLayerByAttribute ;
+            :input [ :id "1" ] ;
+            :output _:Nd4352c931dd0464186eeecc2f122ad3f ],
+        [ :apply arcgis:FC2FCObjectTess ;
+            :input _:Nd4352c931dd0464186eeecc2f122ad3f ;
+            :output [ ] ] .
+
+multi:AddandCalculateAttribute a :Multi ;
+    rdfs:comment "Add an attribute and calculate value based on one other attribute" ;
+    :action [ :apply arcgis:AddField ;
+            :input [ :id "1" ] ;
+            :output _:N2bd10b1e289f49dbb22354e283ab98c6 ],
+        [ :apply arcgis:CalculateField ;
+            :input _:N2bd10b1e289f49dbb22354e283ab98c6 ;
+            :output [ ] ] .
+
+multi:ZonalStatistics a :Multi ;
+    :action [ :apply arcgis:ZonalStatisticsAsTable ;
+            :input [ :id "1" ],
+                _:Nc0068b79817542498638462c9f7114a6 ;
+            :output _:N47a029f12e414c30841fc1a79f2cfa84 ],
+        [ :apply arcgis:JoinField ;
+            :input _:N47a029f12e414c30841fc1a79f2cfa84,
+                _:Nc0068b79817542498638462c9f7114a6 ;
+            :output [ ] ] .
+
+_:Nc0068b79817542498638462c9f7114a6 :id "2" .
+
+multi:CalculateAreaMeasure a :Multi ;
+    rdfs:comment "This is an abbreviated workflow for calculating area based measures with attributes" ;
+    :action [ :apply arcgis:CalculateField2 ;
+            :input [ :id "2" ],
+                _:Nb6bb1c24833746c5819e4c2ce6b5c5db ;
+            :output [ ] ],
+        [ :apply arcgis:AddField ;
+            :input [ :id "1" ] ;
+            :output _:Nb6bb1c24833746c5819e4c2ce6b5c5db ] .
+
+multi:FullSelectLayerByLocation a :Multi ;
+    :action [ :apply arcgis:SelectLayerByLocation ;
+            :input [ :id "1" ],
+                [ :id "2" ] ;
+            :output _:Nab50d9a30f194be4bf9326516c609522 ],
+        [ :apply arcgis:CopyFeatures ;
+            :input _:Nab50d9a30f194be4bf9326516c609522 ;
+            :output [ ] ] .
+
+multi:FullSelectLayerByAttribute a :Multi ;
+    rdfs:comment "Select by attribute is always followed by copy features (treated as one tool in the annotation",
+        "a SQL query to select features matching a selection criterion. You build a query expression to generate the subset. You can query a dataset based on a field in a layer or a table. Using this selection a new Feature dataset is created with only the selected features using the 'Copy Features tool'. This feature dataset represents all the areas that fulfill the criterion" ;
+    :action [ :apply arcgis:CopyFeatures ;
+            :input _:Nd97eb88953634e5a935b285da3b3ed97 ;
+            :output [ ] ],
+        [ :apply arcgis:SelectLayerByAttribute ;
+            :input [ :id "1" ] ;
+            :output _:Nd97eb88953634e5a935b285da3b3ed97 ] .
+
+
