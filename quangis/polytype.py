@@ -72,29 +72,41 @@ class Polytype(MutableMapping[Dimension, set[URIRef]]):
     def __init__(self,
             dimensions: Iterable[Dimension]
                 | Mapping[Dimension, Iterable[URIRef]],
-            types: Iterable[URIRef] | None = None):
+            types: Iterable[Node] = (),
+            ignore_extradimensional_types: bool = False):
         """
         A polytype associates each given dimension with a conjunction of 
-        classes in that dimension.
-
-        This corresponds to the subtaxonomies and classes in the domain 
-        ontology of APE; see also:
+        classes in that dimension. This corresponds to the subtaxonomies and 
+        classes in the domain ontology of APE; see also:
         <https://ape-framework.readthedocs.io/en/latest/docs/specifications/setup.html#referencing-the-domain-model>
+
+        If `types` is given, each of the given types are simply added to all 
+        dimension(s) it's part of.
         """
         super().__init__()
 
         self.dimensions: list[Dimension] = list(dimensions)
-
         self.dimension: dict[URIRef, Dimension] = {d.root: d
             for d in self.dimensions}
-        self.data: Mapping[Dimension, set[URIRef]]
 
-        if types is not None:
-            self.data = {k: {t} for k, t in zip(self.dimensions, types)}
-        elif isinstance(dimensions, Mapping):
+        self.data: dict[Dimension, set[URIRef]]
+
+        if isinstance(dimensions, Mapping):
             self.data = {k: set(v) for k, v in dimensions.items()}
+            if not all(all(v in k for v in vs) for k, vs in self.data.items()):
+                raise RuntimeError
         else:
             self.data = {k: set() for k in self.dimensions}
+
+        for t in types:
+            in_any_dimension = False
+            for d in dimensions:
+                if t in d:
+                    assert isinstance(t, URIRef)
+                    self.data[d].add(t)
+                    in_any_dimension = True
+            if not in_any_dimension and not ignore_extradimensional_types:
+                raise RuntimeError(f"Type {t} is not part of any dimension.")
 
     def __str__(self) -> str:
         return "; ".join(
@@ -193,25 +205,4 @@ class Polytype(MutableMapping[Dimension, set[URIRef]]):
                 result[d].update(projection)
             if not result[d]:
                 result[d] = {d.root}
-        return result
-
-    @staticmethod
-    def assemble(dimensions: Iterable[Dimension],
-            types: Iterable[Node]) -> Polytype:
-        """
-        An alternative constructor for a `Polytype`. It simply adds every type 
-        to the dimensions it's part of.
-        """
-        dimensions, types = list(dimensions), list(types)
-        result = Polytype(dimensions)
-        for t in types:
-            assert isinstance(t, URIRef)
-            n = 0
-            for d in dimensions:
-                if t in d:
-                    result[d].add(t)
-                    n += 1
-            if n < 1:
-                raise RuntimeError(f"Type {t} is not part of any dimension.")
-
         return result

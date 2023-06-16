@@ -64,8 +64,7 @@ class Workflow(Graph):
         raise RuntimeError("Workflow graph has no identifiable root.")
 
     def type(self, artefact: Node) -> Polytype:
-        return Polytype.assemble(ccd.dimensions,
-            self.objects(artefact, RDF.type))
+        return Polytype(ccd.dimensions, self.objects(artefact, RDF.type))
 
     def cct_expr(self, action: Node) -> str | None:
         a = (self.value(action, CCT_.expression, any=False) or

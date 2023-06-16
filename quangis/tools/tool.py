@@ -26,7 +26,7 @@ class DisconnectedArtefactsError(Exception):
 
 
 def gettype(g: Graph, node: Node) -> Polytype:
-    return Polytype.assemble(ccd.dimensions, g.objects(node, RDF.type))
+    return Polytype(ccd.dimensions, g.objects(node, RDF.type))
 
 def geturis(g: Graph, node: Node, pred: Node) -> Iterator[URIRef]:
     for uri in g.objects(node, pred):
