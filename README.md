@@ -75,7 +75,7 @@ transformations via the [`transforge`][tf] library, which was developed
 for this purpose. To perform this step on the manual abstract workflows 
 of [`data/workflows/`](data/workflows/), run the following:
 
-    doit transformations_ttl
+    doit transformations
 
 Or, for a visual representation:
 

@@ -42,7 +42,7 @@ def task_cct():
         actions=[action]
     )
 
-def task_transformations_ttl():
+def task_transformations():
     """Produce transformation graphs for workflows."""
 
     DEST = ROOT / "build" / "transformations"
@@ -246,7 +246,7 @@ def task_generate():
         actions=[(action, [])],
     )
 
-def task_tests():
+def task_test():
     """Run unit tests."""
     def action():
         import pytest
