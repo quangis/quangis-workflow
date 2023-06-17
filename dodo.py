@@ -245,3 +245,14 @@ def task_generate():
         targets=[DESTDIR / "solution1.ttl"],
         actions=[(action, [])],
     )
+
+def task_tests():
+    """Run unit tests."""
+    def action():
+        import pytest
+        pytest.main(list((ROOT / "tests").glob("test_*.py")))
+
+    return dict(
+        actions=[action],
+        verbosity=2
+    )
