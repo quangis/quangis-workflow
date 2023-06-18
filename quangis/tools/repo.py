@@ -318,7 +318,8 @@ class ToolRepository(object):
     def check_integrity(self) -> None:
         for name in self.__dir__():
             if name.startswith("check_") and name != "check_integrity":
-                if name == "check_duplicate_unittools":
+                if name in ("check_duplicate_unittools", 
+                            "check_implementations"):
                     # Temporarily disabled while other checks are put in place
                     continue
                 getattr(self, name)()
@@ -334,6 +335,7 @@ class ToolRepository(object):
                         f"{n3(uri)} is not.")
 
     def check_duplicate_unittools(self) -> None:
+        """No two unit tools may refer to the same URL."""
         for n, m in combinations(self.unit.values(), 2):
             for s, u in product(n.url, m.url):
                 if s == u:
@@ -349,6 +351,35 @@ class ToolRepository(object):
                 raise IntegrityError(
                     f"Multitools {n3(n.uri)} and "
                     f"{n3(m.uri)} are isomorphic.")
+
+    def check_implementations_and_abstractions(self) -> None:
+        """All abstractions must have at least one implementation; all 
+        multitools must implement at least one abstraction; all unit tools must 
+        implement at least one abstraction or occur in at least one 
+        multitool."""
+
+        has_abstract: set[URIRef] = set()
+        for abstr in self.abstract.values():
+            if not abstr.implementations:
+                raise IntegrityError(
+                    f"{n3(abstr.uri)} has no implementation.")
+            has_abstract.update(abstr.implementations)
+
+        # All multitools implement at least one abstraction
+        occurs_in_multi: set[URIRef] = set()
+        for multi in self.multi.values():
+            if multi not in has_abstract:
+                raise IntegrityError(
+                    f"{n3(multi.uri)} has no abstract counterpart.")
+            occurs_in_multi.update(multi.all_tools)
+
+        # All unit tools must either implement an abstraction or occur in a 
+        # multitool
+        for unit in self.unit.values():
+            if unit not in has_abstract and unit not in occurs_in_multi:
+                raise IntegrityError(
+                    f"{n3(unit.uri)} has no abstraction and does not occur "
+                    f"in another tool.")
 
     def check_empty_ccd(self) -> None:
         """Abstractions must have a non-empty CCD signature (see issue #6), and 
