@@ -6,7 +6,7 @@ from rdflib import Graph
 from rdflib.compare import isomorphic
 from typing import Iterator
 from transforge.list import GraphList
-from itertools import count, repeat, chain, combinations
+from itertools import count, repeat, chain, combinations, product
 from pathlib import Path
 from collections import defaultdict
 
@@ -318,6 +318,9 @@ class ToolRepository(object):
     def check_integrity(self) -> None:
         for name in self.__dir__():
             if name.startswith("check_") and name != "check_integrity":
+                if name == "check_duplicate_unittools":
+                    # Temporarily disabled while other checks are put in place
+                    continue
                 getattr(self, name)()
 
     def check_multi_composed_of_unit_tools(self) -> None:
@@ -329,6 +332,14 @@ class ToolRepository(object):
                         f"All constituents of a multitool must themselves "
                         f"be concrete unit tools, but {n3(tool)} inside "
                         f"{n3(uri)} is not.")
+
+    def check_duplicate_unittools(self) -> None:
+        for n, m in combinations(self.unit.values(), 2):
+            for s, u in product(n.url, m.url):
+                if s == u:
+                    raise IntegrityError(
+                        f"The tools {n3(n.uri)} and {n3(m.uri)} "
+                        f"refer to the same URL, namely, {s}")
 
     def check_duplicate_multitools(self) -> None:
         """No two multitools may be isomorphic to one another (disregarding 
