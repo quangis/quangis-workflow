@@ -15,6 +15,10 @@ from quangis.workflow import (Workflow)
 from quangis.tools.tool import (Tool, Unit, Multi, Abstraction)
 
 
+class IntegrityError(Exception):
+    """Tool repository does not satisfy expectations."""
+    pass
+
 class ToolAlreadyExistsError(Exception):
     pass
 
@@ -25,9 +29,9 @@ class ToolRepository(object):
     """A repository contains abstractions and tools."""
 
     def __init__(self) -> None:
-        self.units: dict[URIRef, Unit] = dict()
-        self.composites: dict[URIRef, Multi] = dict()
-        self.abstractions: dict[URIRef, Abstraction] = dict()
+        self.unit: dict[URIRef, Unit] = dict()
+        self.multi: dict[URIRef, Multi] = dict()
+        self.abstract: dict[URIRef, Abstraction] = dict()
         super().__init__()
 
     @staticmethod
@@ -55,6 +59,21 @@ class ToolRepository(object):
             else:
                 print(f"Files {files} passed check", file=sys.stderr)
         return repo
+
+    # @deprecated
+    @property
+    def composites(self) -> dict[URIRef, Multi]:
+        return self.multi
+
+    # @deprecated
+    @property
+    def units(self) -> dict[URIRef, Unit]:
+        return self.unit
+
+    # @deprecated
+    @property
+    def abstractions(self) -> dict[URIRef, Abstraction]:
+        return self.abstract
 
     def __getitem__(self, key: URIRef) -> Tool:
         return (self.units.get(key)
@@ -280,14 +299,6 @@ class ToolRepository(object):
                 f"repository.")
         self.composites[multitool.uri] = multitool
 
-    def check_multitool_composition(self):
-        """Check that all tools in every multitool are concrete tools."""
-        for multitool in self.concrete_multitools:
-            if not all(tool in self.units for tool in 
-                    multitool.constituent_tools):
-                raise RuntimeError(
-                    "All tools in a multitool must be concrete tools")
-
     def update(self, wf: Workflow):
         for action, impl in wf.subject_objects(WF.applicationOf):
             if wf.value(action, CCT_.expression):
@@ -303,3 +314,17 @@ class ToolRepository(object):
             assert isinstance(tool, Tool)
             tool.to_graph(g)
         return g
+
+    def check_integrity(self) -> None:
+        for name in self.__dir__():
+            if name.startswith("check_") and name != "check_integrity":
+                getattr(self, name)()
+
+    def check_multi_composed_of_unit_tools(self) -> None:
+        """Check that all tools in every multitool are concrete tools."""
+        for uri, multitool in self.multi.items():
+            for tool in multitool.all_tools:
+                if tool not in self.unit:
+                    raise IntegrityError(
+                        f"All tools in a multitool must themselves be concrete "
+                        f"unit tools; violated by {n3(uri)} due to {n3(tool)}")

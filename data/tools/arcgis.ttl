@@ -49,6 +49,7 @@ arcgis:ExportFeatures a :Unit ;
 arcgis:ExportTable a :Unit ;
     rdfs:seeAlso arcco:export-table.htm .
 
+# Duplicate
 arcgis:FeatureClassToFeatureClass a :Unit ;
     rdfs:seeAlso arcco:feature-class-to-feature-class.htm .
 
@@ -68,6 +69,10 @@ arcgis:MakeRouteAnalysisLayer a :Unit ;
     rdfs:seeAlso arcna:make-route-analysis-layer.htm .
 
 arcgis:Merge a :Unit ;
+    rdfs:seeAlso arcdm:merge.htm .
+
+# Duplicate
+arcgis:MergeObjects a :Unit ;
     rdfs:seeAlso arcdm:merge.htm .
 
 arcgis:ObjectBuffer a :Unit ;
@@ -93,6 +98,10 @@ arcgis:ExtractByMask a :Unit ;
 
 arcgis:FC2FC a :Unit ;
     rdfs:comment "Feature class to feature class (=Select)" ;
+    rdfs:seeAlso arcco:feature-class-to-feature-class.htm .
+
+# Duplicate
+arcgis:FC2FCObjectTess a :Unit ;
     rdfs:seeAlso arcco:feature-class-to-feature-class.htm .
 
 arcgis:FlowAccumulation a :Unit ;
@@ -185,6 +194,10 @@ arcgis:Con a :Unit ;
 arcgis:CalculateField a :Unit ;
     rdfs:seeAlso arcdm:calculate-field.htm .
 
+# Duplicate
+arcgis:CalculateField2 a :Unit ;
+    rdfs:seeAlso arcdm:calculate-field.htm .
+
 arcgis:JoinField a :Unit ;
     rdfs:seeAlso arcdm:join-field.htm .
 
@@ -193,6 +206,10 @@ arcgis:Clip a :Unit ;
         arcdm:clip.htm .
 
 arcgis:RasterCalculator a :Unit ;
+    rdfs:seeAlso arcsa:raster-calculator.htm .
+
+# Duplicate
+arcgis:RasterCalculator1 a :Unit ;
     rdfs:seeAlso arcsa:raster-calculator.htm .
 
 arcgis:SpatialJoin a :Unit ;

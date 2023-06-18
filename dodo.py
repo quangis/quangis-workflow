@@ -256,3 +256,16 @@ def task_test():
         actions=[action],
         verbosity=2
     )
+
+def task_check_integrity():
+    """Check integrity of tool file."""
+    def action() -> bool:
+        from quangis.tools.repo import ToolRepository
+        repo = ToolRepository.from_file(*TOOLS, check_integrity=False)
+        repo.check_integrity()
+        return True
+
+    return dict(
+        actions=[action],
+        verbosity=2
+    )

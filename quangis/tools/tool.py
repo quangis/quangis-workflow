@@ -198,6 +198,7 @@ class Multi(Implementation):
         for k, v in wf.inputs_labelled(action).items():
             inputs[k] = m[v] = Artefact(id=k)
 
+        # Find the subworkflow node associated with this action.
         subwf = wf.subworkflow(action)
         return Multi(
             uri=MULTI[wf.label(subwf)],
