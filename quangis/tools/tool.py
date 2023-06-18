@@ -163,28 +163,36 @@ class Multi(Implementation):
         self._set_output(output)
 
         self.min_graph = Graph()
-        self.to_graph(self.min_graph, with_comments=False)
+        self.to_graph(self.min_graph, minimal=True)
 
-    def to_graph(self, g: Graph, with_comments: bool = True) -> Graph:
+    def to_graph(self, g: Graph, minimal: bool = False) -> Graph:
         assert not (self.uri, RDF.type, TOOL.Multi) in g
-        g.add((self.uri, RDF.type, TOOL.Multi))
 
-        m: Mapping[Artefact, BNode] = DefaultDict(
-            lambda x: x.to_graph(g, with_comments=with_comments))
+        root: Node
+        m: Mapping[Artefact, BNode]
+        if minimal:
+            root = BNode()
+            m = defaultdict(BNode)
+        else:
+            root = self.uri
+            g.add((self.uri, RDF.type, TOOL.Multi))
+            m = DefaultDict(
+                lambda x: x.to_graph(g, with_comments=not minimal))
+
         for a in self.actions:
             action = BNode()
-            g.add((self.uri, TOOL.action, action))
+            g.add((root, TOOL.action, action))
             g.add((action, TOOL.apply, a.tool))
             g.add((action, TOOL.output, m[a.output]))
             for input in a.inputs:
                 g.add((action, TOOL.input, m[input]))
-            if with_comments:
+            if not minimal:
                 for comment in a.comments:
                     g.add((action, RDFS.comment, Literal(comment)))
 
-        if with_comments:
+        if not minimal:
             for c in self.comments:
-                g.add((self.uri, RDFS.comment, Literal(c)))
+                g.add((root, RDFS.comment, Literal(c)))
         return g
 
     @staticmethod

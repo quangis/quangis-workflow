@@ -6,7 +6,7 @@ from rdflib import Graph
 from rdflib.compare import isomorphic
 from typing import Iterator
 from transforge.list import GraphList
-from itertools import count, repeat, chain
+from itertools import count, repeat, chain, combinations
 from pathlib import Path
 from collections import defaultdict
 
@@ -321,10 +321,20 @@ class ToolRepository(object):
                 getattr(self, name)()
 
     def check_multi_composed_of_unit_tools(self) -> None:
-        """Check that all tools in every multitool are concrete tools."""
+        """All tools in every multitool are concrete tools."""
         for uri, multitool in self.multi.items():
             for tool in multitool.all_tools:
                 if tool not in self.unit:
                     raise IntegrityError(
-                        f"All tools in a multitool must themselves be concrete "
-                        f"unit tools; violated by {n3(uri)} due to {n3(tool)}")
+                        f"All constituents of a multitool must themselves "
+                        f"be concrete unit tools, but {n3(tool)} inside "
+                        f"{n3(uri)} is not.")
+
+    def check_duplicate_multitools(self) -> None:
+        """No two multitools may be isomorphic to one another (disregarding 
+        IDs)."""
+        for n, m in combinations(self.multi.values(), 2):
+            if n.match(m):
+                raise IntegrityError(
+                    f"Multitools {n3(n.uri)} and "
+                    f"{n3(m.uri)} are isomorphic.")
