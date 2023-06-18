@@ -338,3 +338,13 @@ class ToolRepository(object):
                 raise IntegrityError(
                     f"Multitools {n3(n.uri)} and "
                     f"{n3(m.uri)} are isomorphic.")
+
+    def check_empty_ccd(self) -> None:
+        """Abstractions must have a non-empty CCD signature (see issue #6), and 
+        each of its rdf:types must be part of at least one CCD dimension."""
+        for abstr in self.abstract.values():
+            for artefact in chain(abstr.inputs.values(), [abstr.output]):
+                if artefact.type.empty():
+                    raise IntegrityError(
+                        f"The CCD type of an artefact associated with " 
+                        f"{n3(abstr.uri)} is too general.")
