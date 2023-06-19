@@ -89,8 +89,10 @@ class Polytype(MutableMapping[URIRef, set[URIRef]]):
 
         if isinstance(dimensions, Mapping):
             self.data = {k.root: set(v) for k, v in dimensions.items()}
-            if not all(all(v in k for v in vs) for k, vs in self.data.items()):
-                raise RuntimeError
+            if not all(all(v in self.dimensions[k] for v in vs)
+                    for k, vs in self.data.items()):
+                raise RuntimeError(
+                    "Not all given classes are part of their dimension")
         else:
             self.data = {k: set() for k in self.dimensions}
 
@@ -164,6 +166,18 @@ class Polytype(MutableMapping[URIRef, set[URIRef]]):
                     for a, b in product(self[d], other[d])):
                 return False
         return True
+
+    def normalize(self) -> Polytype:
+        """A polytype is an intersection of types. The normalization of a 
+        polytype simply removes extraneous activations: if β is a subtype of α, 
+        then clearly activating β means that the activation of α is implicit 
+        and so α can be left out."""
+        return Polytype({
+            dim: set(
+                x for x in self[d]
+                if not any(dim.subsume(y, x, strict=True) for y in self[d])
+            ) for d, dim in self.dimensions.items()
+        })
 
     @staticmethod
     def project(dimensions: Iterable[Dimension],

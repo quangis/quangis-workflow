@@ -45,6 +45,44 @@ class TestPolytype(unittest.TestCase):
         t2 = Polytype({dim: [EX.C, EX.E]})
         self.assertSubtype((t1, t2, False), (t1, t2, False))
 
+    def test_normalization(self):
+        """Polytypes need to be normalizable so that they can be sortable."""
+        dim = Dimension(EX.A, {
+            EX.A: [EX.B, EX.C],
+            EX.B: [EX.D, EX.E],
+            EX.C: [EX.D]})
+
+        self.assertEqual(
+            Polytype({dim: [EX.E, EX.D]}).normalize(),
+            Polytype({dim: [EX.E, EX.D]})
+        )
+
+        self.assertNotEqual(
+            Polytype({dim: [EX.B, EX.D]}).normalize(),
+            Polytype({dim: [EX.B, EX.D]})
+        )
+        self.assertEqual(
+            Polytype({dim: [EX.B, EX.D]}).normalize(),
+            Polytype({dim: [EX.D]})
+        )
+        self.assertEqual(
+            Polytype({dim: [EX.A, EX.D]}).normalize(),
+            Polytype({dim: [EX.D]})
+        )
+        self.assertEqual(
+            Polytype({dim: [EX.B, EX.C]}).normalize(),
+            Polytype({dim: [EX.B, EX.C]})
+        )
+        self.assertEqual(
+            Polytype({dim: [EX.B, EX.C, EX.D]}).normalize(),
+            Polytype({dim: [EX.D]})
+        )
+
+    # def test_sorted(self):
+    #     """Polytypes need to be sortable so that permutations of inputs can be 
+    #     detected."""
+    #     raise NotImplementedError
+
 
 if __name__ == '__main__':
     unittest.main()
