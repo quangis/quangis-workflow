@@ -179,6 +179,14 @@ class Polytype(MutableMapping[URIRef, set[URIRef]]):
             ) for d, dim in self.dimensions.items()
         })
 
+    def lexical(self) -> tuple[tuple[URIRef, ...], ...]:
+        """Obtain a tuple with which to order polytypes."""
+        t = self.normalize()
+        result: tuple[tuple[URIRef, ...], ...] = ()
+        for d in sorted(t.dimensions):
+            result += (tuple(sorted(t[d])),)
+        return result
+
     @staticmethod
     def project(dimensions: Iterable[Dimension],
             types: Iterable[Node]) -> Polytype:

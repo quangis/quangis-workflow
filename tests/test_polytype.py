@@ -78,10 +78,41 @@ class TestPolytype(unittest.TestCase):
             Polytype({dim: [EX.D]})
         )
 
-    # def test_sorted(self):
-    #     """Polytypes need to be sortable so that permutations of inputs can be 
-    #     detected."""
-    #     raise NotImplementedError
+    def test_sorted(self):
+        """Polytypes need to be sortable so that permutations of inputs can be 
+        detected."""
+
+        dim1 = Dimension(EX.A, {
+            EX.A: [EX.B, EX.C],
+            EX.C: [EX.D],
+            EX.B: [EX.D, EX.E]})
+        dim2 = Dimension(EX.F, {
+            EX.F: [EX.B],
+            EX.B: [EX.C]})
+
+        self.assertGreater(
+            Polytype({dim1: [EX.A, EX.D]}).lexical(),
+            Polytype({dim1: [EX.A, EX.C]}).lexical()
+        )
+        self.assertLess(
+            Polytype({dim1: [EX.D]}).lexical(),
+            Polytype({dim1: [EX.E]}).lexical()
+        )
+        self.assertEqual(
+            Polytype({dim1: [EX.A, EX.D]}).lexical(),
+            Polytype({dim1: [EX.C, EX.D]}).lexical()
+        )
+
+        self.assertGreater(
+            Polytype({
+                dim1: [EX.A, EX.D],
+                dim2: [EX.C]
+            }).lexical(),
+            Polytype({
+                dim1: [EX.A, EX.C],
+                dim2: [EX.B]
+            }).lexical()
+        )
 
 
 if __name__ == '__main__':
