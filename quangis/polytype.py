@@ -15,10 +15,8 @@ from quangis.namespace import RDFS, n3
 
 
 class Dimension(object):
-    """
-    A semantic dimension is a directed acyclic graph of classes belonging to 
-    that dimension. The graph represents the subclass structure.
-    """
+    """A semantic dimension is a directed acyclic graph of classes belonging to 
+    that dimension. The graph represents the subclass structure."""
 
     def __init__(self, root: Node,
             source: Graph | Mapping[URIRef, Iterable[URIRef]],
@@ -63,7 +61,7 @@ class Dimension(object):
                 for parent in self.parents(subclass)))
 
 
-class Polytype(MutableMapping[Dimension, set[URIRef]]):
+class Polytype(MutableMapping[URIRef, set[URIRef]]):
     """
     A type representing an intersection of types (represented by RDF nodes) 
     across multiple semantic dimensions.
@@ -74,25 +72,23 @@ class Polytype(MutableMapping[Dimension, set[URIRef]]):
                 | Mapping[Dimension, Iterable[URIRef]],
             types: Iterable[Node] = (),
             ignore_extradimensional_types: bool = False):
-        """
-        A polytype associates each given dimension with a conjunction of 
+        """A polytype associates each given dimension with a conjunction of 
         classes in that dimension. This corresponds to the subtaxonomies and 
         classes in the domain ontology of APE; see also:
         <https://ape-framework.readthedocs.io/en/latest/docs/specifications/setup.html#referencing-the-domain-model>
 
         If `types` is given, each of the given types are simply added to all 
-        dimension(s) it's part of.
-        """
+        dimension(s) it's part of."""
         super().__init__()
 
-        self.dimensions: list[Dimension] = list(dimensions)
-        self.dimension: dict[URIRef, Dimension] = {d.root: d
-            for d in self.dimensions}
+        # self.dimensions: list[Dimension] = list(dimensions)
+        self.dimensions: dict[URIRef, Dimension] = {d.root: d
+            for d in dimensions}
 
-        self.data: dict[Dimension, set[URIRef]]
+        self.data: dict[URIRef, set[URIRef]]
 
         if isinstance(dimensions, Mapping):
-            self.data = {k: set(v) for k, v in dimensions.items()}
+            self.data = {k.root: set(v) for k, v in dimensions.items()}
             if not all(all(v in k for v in vs) for k, vs in self.data.items()):
                 raise RuntimeError
         else:
@@ -103,45 +99,45 @@ class Polytype(MutableMapping[Dimension, set[URIRef]]):
             for d in dimensions:
                 if t in d:
                     assert isinstance(t, URIRef)
-                    self.data[d].add(t)
+                    self.data[d.root].add(t)
                     in_any_dimension = True
             if not in_any_dimension and not ignore_extradimensional_types:
                 raise RuntimeError(f"Type {t} is not part of any dimension.")
 
     def __str__(self) -> str:
         return "; ".join(
-            f"{', '.join(n3(v) for v in vs)} (in {n3(k.root)})"
+            f"{', '.join(n3(v) for v in vs)} (in {n3(k)})"
             for k, vs in self.items()
         )
 
     def __len__(self) -> int:
         return len(self.data)
 
-    def __delitem__(self, k: Dimension) -> None:
-        del self.data[k]
+    def __delitem__(self, k: Dimension | URIRef) -> None:
+        del self.data[k if isinstance(k, URIRef) else k.root]
 
-    def __iter__(self) -> Iterator[Dimension]:
+    def __iter__(self) -> Iterator[URIRef]:
         return iter(self.data)
 
     def __getitem__(self, k: Dimension | URIRef) -> set[URIRef]:
-        dimension = k if isinstance(k, Dimension) else self.dimension[k]
-        return self.data.__getitem__(dimension)  # `or {d.root}` as fallback
+        dimension = k if isinstance(k, Dimension) else self.dimensions[k]
+        return self.data.__getitem__(dimension.root)
 
     def __setitem__(self, k: Dimension | URIRef, v: Iterable[URIRef]) -> None:
-        dimension = k if isinstance(k, Dimension) else self.dimension[k]
+        dimension = k if isinstance(k, Dimension) else self.dimensions[k]
         types = set()
         for t in v:
             if t not in dimension:
                 raise RuntimeError
             else:
                 types.add(t)
-        return self.data.__setitem__(dimension, types)
+        return self.data.__setitem__(dimension.root, types)
 
     def empty(self) -> bool:
         """Return True if the type is empty, that is, if every dimension is 
         empty or at the root node."""
         assert self.data.keys()
-        return all(not ts or all(t == dim.root for t in ts)
+        return all(not ts or all(t == dim for t in ts)
             for dim, ts in self.data.items())
 
     def uris(self) -> set[URIRef]:
@@ -151,12 +147,10 @@ class Polytype(MutableMapping[Dimension, set[URIRef]]):
         return separator.join(sorted(n3(t) for t in self.uris()))
 
     def downcast(self, mapping: Mapping[URIRef, URIRef]) -> Polytype:
-        """
-        This method can be used to cast certain branch nodes to identifiable 
+        """This method can be used to cast certain branch nodes to identifiable 
         leaf nodes, so that they can be considered as valid answers. This is 
         useful because APE has a closed world assumption, in that it considers 
-        the set of leaf nodes it knows about as exhaustive.
-        """
+        the set of leaf nodes it knows about as exhaustive."""
         for dimension, classes in self.items():
             self[dimension] = set(mapping.get(n, n) for n in classes)
         return self
@@ -165,7 +159,7 @@ class Polytype(MutableMapping[Dimension, set[URIRef]]):
         if self.dimensions != other.dimensions:
             return False
 
-        for d in self.dimensions:
+        for k, d in self.dimensions.items():
             if not all(d.subsume(a, b, strict=strict)
                     for a, b in product(self[d], other[d])):
                 return False
@@ -182,7 +176,7 @@ class Polytype(MutableMapping[Dimension, set[URIRef]]):
         dimension (ie a node that belongs to exactly one dimension).
         """
 
-        dimensions, types = list(dimensions), list(types)
+        dimensions, types = set(dimensions), list(types)
         result = Polytype(dimensions)
 
         for d in dimensions:

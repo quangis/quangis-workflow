@@ -64,7 +64,7 @@ class WorkflowGenerator(APE):
                     'taxonomyOperations': [tool],
                     'inputs': [
                         {
-                            k.root: list(v)
+                            k: list(v)
                             for k, v in Polytype.project(
                                 ccd.dimensions,
                                 self.tools.objects(input, RDF.type)
@@ -74,7 +74,7 @@ class WorkflowGenerator(APE):
                     ],
                     'outputs': [
                         {
-                            k.root: list(v)
+                            k: list(v)
                             for k, v in Polytype.project(
                                 ccd.dimensions,
                                 self.tools.objects(output, RDF.type)
