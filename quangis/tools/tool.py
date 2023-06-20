@@ -6,6 +6,7 @@ from typing import Iterator, Iterable, Mapping, MutableMapping
 from abc import abstractmethod
 from transforge.namespace import shorten
 from collections import defaultdict
+from itertools import permutations
 
 from quangis.defaultdict import DefaultDict
 from quangis.workflow import Workflow
@@ -422,6 +423,20 @@ class Abstraction(Tool):
         `f(g(x))`). Therefore, some manual intervention may be necessary."""
         return (self.cct_p and candidate.cct_p
             and self.cct_p.match(candidate.cct_p))
+
+    def subsumes_input_datatype_permutation(self, other: Abstraction) -> bool:
+        """Is there a permutation of inputs so that the other abstraction's 
+        inputs are covered by this one's?"""
+        # There's probably a smarter way to arrange the inputs so that we don't 
+        # have to literally just try every permutation, but that would need 
+        # some thought that's not worth it at the moment.
+        if len(self.inputs) != len(other.inputs):
+            return False
+        x_inputs = list(self.inputs.values())
+        for y_inputs in permutations(other.inputs.values()):
+            if all(y.type.subtype(x.type) for x, y in zip(x_inputs, y_inputs)):
+                return True
+        return False
 
     def subsumes_input_datatype(self, candidate: Abstraction) -> bool:
         # For now, we do not take into account permutations. We probably 

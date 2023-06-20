@@ -79,8 +79,10 @@ class TestPolytype(unittest.TestCase):
         )
 
     def test_sorted(self):
-        """Polytypes need to be sortable so that permutations of inputs can be 
-        detected."""
+        """Polytypes need to be sortable."""
+        # This was originally implemented so that permutations of inputs can
+        # be detected, but I forgot about subtypes, so this and 
+        # `Polytype.lexical` can probably be removed later on.
 
         dim1 = Dimension(EX.A, {
             EX.A: [EX.B, EX.C],
