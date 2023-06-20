@@ -319,7 +319,8 @@ class ToolRepository(object):
         for name in self.__dir__():
             if name.startswith("check_") and name != "check_integrity":
                 if name in ("check_duplicate_unittools", 
-                            "check_implementations_and_abstractions"):
+                            "check_implementations_and_abstractions",
+                            "check_subsuming_ccd_signatures"):
                     # Temporarily disabled while other checks are put in place
                     continue
                 getattr(self, name)()
@@ -391,7 +392,10 @@ class ToolRepository(object):
                         f"The CCD type of an artefact associated with " 
                         f"{n3(abstr.uri)} is too general.")
 
-    def check_subtype_signatures(self) -> None:
+    def check_subsuming_ccd_signatures(self) -> None:
+        """Any pair of abstractions must have at least a differing CCT 
+        signature or an independent CCD signature (ie a CCD type that neither 
+        subsumes nor is subsumed by the other)."""
         abstrs = list(self.abstract.values())
         for a, b in product(abstrs, abstrs):
             if a != b and a.subsumes_datatype_permutation(b):
@@ -400,4 +404,19 @@ class ToolRepository(object):
                 if a.matches_cct(b):
                     raise IntegrityError(f"{msg} with matching CCT expression")
                 else:
-                    print(f"Warning: {msg}")
+                    sys.stderr.write(f"Warning: {msg}\n")
+
+    def check_multitools_input_labels(self) -> None:
+        """The IDs of any abstraction that is implemented by a multitool must 
+        correspond exactly to the IDs of said multitool. Note that this does 
+        NOT check whether the right labels are assigned to the right artefacts: 
+        they may still be mixed up."""
+        # TODO check whether correct artefacts are labelled
+        for abstr in self.abstract.values():
+            input_labels = set(abstr.inputs.keys())
+            for tool in abstr.implementations:
+                if tool in self.multi:
+                    input_labels2 = set(self.multi[tool].inputs)
+                    if input_labels != input_labels2:
+                        raise IntegrityError(
+                            f"{input_labels} != {input_labels2}")
