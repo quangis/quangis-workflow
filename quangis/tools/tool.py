@@ -462,3 +462,7 @@ class Abstraction(Tool):
         independent."""
         return (self.subsumes_input_datatype(candidate) and 
             self.subsumes_output_datatype(candidate))
+
+    def subsumes_datatype_permutation(self, other: Abstraction) -> bool:
+        return (self.subsumes_input_datatype_permutation(other) and 
+            self.subsumes_output_datatype(other))

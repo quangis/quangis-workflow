@@ -319,7 +319,7 @@ class ToolRepository(object):
         for name in self.__dir__():
             if name.startswith("check_") and name != "check_integrity":
                 if name in ("check_duplicate_unittools", 
-                            "check_implementations"):
+                            "check_implementations_and_abstractions"):
                     # Temporarily disabled while other checks are put in place
                     continue
                 getattr(self, name)()
@@ -390,3 +390,14 @@ class ToolRepository(object):
                     raise IntegrityError(
                         f"The CCD type of an artefact associated with " 
                         f"{n3(abstr.uri)} is too general.")
+
+    def check_subtype_signatures(self) -> None:
+        abstrs = list(self.abstract.values())
+        for a, b in product(abstrs, abstrs):
+            if a != b and a.subsumes_datatype_permutation(b):
+                msg = (f"The CCD signature of {n3(a.uri)} subsumes "
+                    f"that of {n3(b.uri)}")
+                if a.matches_cct(b):
+                    raise IntegrityError(f"{msg} with matching CCT expression")
+                else:
+                    print(f"Warning: {msg}")
