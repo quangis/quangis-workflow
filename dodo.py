@@ -8,6 +8,7 @@ from pathlib import Path
 from transforge.util.store import TransformationStore
 from quangis.evaluation import read_transformation, variants, \
     write_csv_summary, upload, query
+from quangis.tools.repo import ToolRepository, IntegrityError
 
 DOIT_CONFIG = {'default_tasks': []}  # type: ignore
 
@@ -260,13 +261,19 @@ def task_test_unittest():
 
 def task_test_tool_repo():
     """Check integrity of tool file."""
-    def action() -> bool:
-        from quangis.tools.repo import ToolRepository
+    def action(method) -> bool:
         repo = ToolRepository.from_file(*TOOLS, check_integrity=False)
-        repo.check_integrity()
-        return True
+        try:
+            method(repo)
+        except IntegrityError:
+            raise
+        else:
+            return True
 
-    return dict(
-        actions=[action],
-        verbosity=2
-    )
+    for attr in dir(ToolRepository):
+        if attr.startswith("check_") and not attr == "check_integrity":
+            yield dict(
+                name=attr,
+                actions=[(action, [getattr(ToolRepository, attr)])],
+                verbosity=2
+            )
