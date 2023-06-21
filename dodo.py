@@ -267,7 +267,7 @@ def task_test_unittest():
         verbosity=2
     )
 
-def task_test_tool_repo_integrity():
+def task_test_tool_repo():
     """Check integrity of tool file."""
     def action(method) -> bool:
         repo = ToolRepository.from_file(*TOOLS, check_integrity=False)
