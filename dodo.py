@@ -10,7 +10,7 @@ from quangis.evaluation import read_transformation, variants, \
     write_csv_summary, upload, query
 from quangis.tools.repo import ToolRepository, IntegrityError
 
-DOIT_CONFIG = {'default_tasks': []}  # type: ignore
+DOIT_CONFIG = {'default_tasks': [], 'continue': True}  # type: ignore
 
 ROOT = Path(__file__).parent
 DATA = ROOT / "data"
@@ -248,6 +248,14 @@ def task_wf_generate():
         actions=[(action, [])],
     )
 
+def task_test():
+    """Run all tests."""
+    return dict(
+        actions=None,
+        task_dep=['test_unittest', 'test_tool_repo'],
+        verbosity=2
+    )
+
 def task_test_unittest():
     """Perform unit tests for checking the code."""
     def action():
@@ -259,7 +267,7 @@ def task_test_unittest():
         verbosity=2
     )
 
-def task_test_tool_repo():
+def task_test_tool_repo_integrity():
     """Check integrity of tool file."""
     def action(method) -> bool:
         repo = ToolRepository.from_file(*TOOLS, check_integrity=False)
