@@ -29,21 +29,21 @@ be annotated with CCT expressions (see below).
 
 For now, the [annotation repository][annot] contains concrete workflows. 
 There are abstract workflows in the directory 
-[`data/workflows/`](`data/workflows/`), which were used for our initial 
+[`data/workflows/`](data/workflows/), which were used for our initial 
 evaluations. Abstract workflows can also be generated (see below).
 
 Abstract and concrete GIS tools are described in the tool database at 
 [`data/tools/`](data/tools/). Furthermore, new abstract tools can be 
 *extracted* from properly annotated concrete workflows. Assuming that 
 concrete workflows in `.ttl` format have been put in the 
-[`data/workflows-concrete/`] directory, you can do this via:
+`data/workflows-concrete/` directory, you can do this via:
 
-    doit update_tools
+    doit tool_repo_update
 
 Assuming that the tool database is up-to-date, the concrete workflow can 
 then be converted into abstract workflows:
 
-    doit abstract
+    doit wf_abstract
 
 
 ## Workflow synthesis
@@ -59,7 +59,7 @@ understands. APE is then instructed to generate workflows for different
 possible input/output data configurations, as specified in 
 [`data/ioconfig.ttl`](data/ioconfig.ttl). To perform this step, run:
 
-    doit generate
+    doit wf_generate
 
 
 ## Core concept transformations
@@ -102,7 +102,7 @@ This is the basis of our evaluations. To reproduce our them, set up a
 triple store like MarkLogic, change the `STORE_*` variables to the 
 appropriate values and run:
 
-    doit evaluate
+    doit eval_tasks
 
 In the `build/eval/` directory, CSV files will be produced that show 
 which workflows are retrieved for which task descriptions, for all 
@@ -113,8 +113,9 @@ to build. MarkLogic is the fastest.
 
 ### Tests
 
-To run (rather limited) tests, and sanity checks, install and run 
-`nose2`.
+To run (rather limited) tests, and sanity checks
+
+    doit test
 
 
 [annot]: https://github.com/quangis/QuAnGIS_workflow_annotation

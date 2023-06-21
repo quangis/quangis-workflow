@@ -25,7 +25,7 @@ CWORKFLOWS = list((DATA / "workflows-concrete").glob("*.ttl"))
 STORE_URL = "http://192.168.56.1:8000"
 STORE_USER = ("user", "password")
 
-def task_cct():
+def task_vocab_cct():
     """Produce CCT vocabulary file."""
     DEST = ROOT / "build" / "cct.ttl"
 
@@ -97,10 +97,11 @@ def task_transformations_pdf():
             targets=[dest],
             actions=[(action, (src, dest))])
 
-def task_evaluate():
-    """Prepare queries and send evaluations."""
+def task_eval_tasks():
+    """Evaluate workflows' transformations against tasks.
+    For this, graphs are sent to the triple store and then queried."""
 
-    DEST = ROOT / "build" / "eval"
+    DEST = ROOT / "build" / "eval_tasks"
 
     store = TransformationStore.backend('marklogic', STORE_URL,
         cred=STORE_USER)
@@ -122,7 +123,7 @@ def task_evaluate():
         )
 
 
-def task_update_tools():
+def task_tool_repo_update():
     """Extract a tool repository from concrete workflows."""
 
     DESTDIR = ROOT / "build" / "tools"
@@ -156,7 +157,7 @@ def task_update_tools():
         actions=[action]
     )
 
-def task_abstract():
+def task_wf_abstract():
     """Produce abstract workflows from concrete workflows."""
 
     DEST = ROOT / "build" / "abstract"
@@ -184,8 +185,8 @@ def task_abstract():
             actions=[(action, [wf, DEST / wf.name])]
         )
 
-def task_generate():
-    """Synthesize workflows using APE."""
+def task_wf_generate():
+    """Synthesize new abstract workflows using APE."""
 
     DESTDIR = ROOT / "build" / "generated"
 
@@ -220,7 +221,7 @@ def task_generate():
         # is the same as the output without the measurement level.
         for goal_tuple in goals:
             goal = Polytype.project(ccd.dimensions, goal_tuple)
-            source1 = Polytype(goal)
+            source1 = Polytype(ccd.dimensions, goal)
             source1[CCD.NominalA] = {CCD.NominalA}
             for source_tuple in sources:
                 source2 = Polytype.project(ccd.dimensions, source_tuple)
@@ -246,8 +247,8 @@ def task_generate():
         actions=[(action, [])],
     )
 
-def task_test():
-    """Run unit tests."""
+def task_test_unittest():
+    """Perform unit tests for checking the code."""
     def action():
         import pytest
         pytest.main(list((ROOT / "tests").glob("test_*.py")))
@@ -257,7 +258,7 @@ def task_test():
         verbosity=2
     )
 
-def task_check_integrity():
+def task_test_tool_repo():
     """Check integrity of tool file."""
     def action() -> bool:
         from quangis.tools.repo import ToolRepository
