@@ -12,7 +12,7 @@ from quangis.tools.repo import ToolRepository, IntegrityError
 
 def mkdir(*paths: Path):
     for path in paths:
-        path.mkdir(exist_ok=True)
+        path.mkdir(exist_ok=True, parents=True)
 
 
 DOIT_CONFIG = {'default_tasks': [], 'continue': True}  # type: ignore
@@ -28,6 +28,10 @@ WORKFLOWS = list((DATA / "workflows").glob("*.ttl"))
 
 # Created files
 BUILD = ROOT / "build"
+BWORKFLOWS = BUILD / "workflows"
+BTRANSFORMATIONS = BUILD / "transformations"
+BTOOLS = BUILD / "tools"
+BQUERIES = BUILD / "queries"
 
 # These are the workflows as generated from Eric's GraphML. That process should 
 # eventually be ran from here too...
@@ -71,13 +75,17 @@ def task_transformations_dot():
     """Visualizations of transformation graphs."""
 
     def action(dependencies, targets) -> bool:
-        read_transformation(dependencies[0]).visualize(targets[0])
+        from quangis.cct import cct
+        from transforge.graph import TransformationGraph
+        g = TransformationGraph(cct)
+        g.parse(dependencies[0])
+        g.visualize(targets[0])
         return True
 
     destdir = BUILD / "transformations"
     for wf in WORKFLOWS:
         yield dict(name=wf.stem,
-            file_dep=[wf],  # [BUILD / "transformations" / f"{wf.stem}.ttl"],
+            file_dep=[destdir / f"{wf.stem}.ttl"],
             targets=[destdir / f"{wf.stem}.dot"],
             actions=[(mkdir, [destdir]), action])
 
