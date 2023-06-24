@@ -10,14 +10,24 @@ from quangis.evaluation import read_transformation, variants, \
     write_csv_summary, upload, query
 from quangis.tools.repo import ToolRepository, IntegrityError
 
+def mkdir(*paths: Path):
+    for path in paths:
+        path.mkdir(exist_ok=True)
+
+
 DOIT_CONFIG = {'default_tasks': [], 'continue': True}  # type: ignore
 
 ROOT = Path(__file__).parent
 DATA = ROOT / "data"
 IOCONFIG = DATA / "ioconfig.ttl"
+
+# Source files
 TOOLS = list((DATA / "tools").glob("*.ttl"))
 TASKS = list((DATA / "tasks").glob("*.ttl"))
 WORKFLOWS = list((DATA / "workflows").glob("*.ttl"))
+
+# Created files
+BUILD = ROOT / "build"
 
 # These are the workflows as generated from Eric's GraphML. That process should 
 # eventually be ran from here too...
@@ -28,90 +38,79 @@ STORE_USER = ("user", "password")
 
 def task_vocab_cct():
     """Produce CCT vocabulary file."""
-    DEST = ROOT / "build" / "cct.ttl"
 
-    def action():
+    def action(targets):
         from cct import cct
         from transforge.graph import TransformationGraph
         g = TransformationGraph(cct)
         g.add_vocabulary()
-        g.serialize(DEST)
+        g.serialize(targets[0])
 
     return dict(
         file_dep=[ROOT / "quangis" / "cct.py"],
-        targets=[DEST],
-        actions=[action]
+        targets=[BUILD / "cct.ttl"],
+        actions=[(mkdir, [BUILD]), action]
     )
 
 def task_transformations():
     """Produce transformation graphs for workflows."""
 
-    DEST = ROOT / "build" / "transformations"
-    DEST.mkdir(exist_ok=True)
-
-    def action(wf: Path, tfm: Path) -> bool:
+    def action(dependencies, targets) -> bool:
+        wf, tfm = dependencies[0], targets[0]
         read_transformation(wf).serialize(tfm)
         return True
 
+    destdir = BUILD / "transformations"
     for wf in WORKFLOWS:
-        tfm = DEST / f"{wf.stem}.ttl"
         yield dict(name=wf.stem,
             file_dep=[wf],
-            targets=[tfm],
-            actions=[(action, (wf, tfm))])
+            targets=[destdir / f"{wf.stem}.ttl"],
+            actions=[(mkdir, [destdir]), action])
 
 def task_transformations_dot():
     """Visualizations of transformation graphs."""
 
-    DEST = ROOT / "build" / "transformations"
-    DEST.mkdir(exist_ok=True)
-
-    def action(wf: Path, tfm: Path) -> bool:
-        tfm.parent.mkdir(exist_ok=True)
-        read_transformation(wf).visualize(tfm)
+    def action(dependencies, targets) -> bool:
+        read_transformation(dependencies[0]).visualize(targets[0])
         return True
 
+    destdir = BUILD / "transformations"
     for wf in WORKFLOWS:
-        tfm = DEST / f"{wf.stem}.dot"
         yield dict(name=wf.stem,
-            file_dep=[wf],
-            targets=[tfm],
-            actions=[(action, (wf, tfm))])
+            file_dep=[wf],  # [BUILD / "transformations" / f"{wf.stem}.ttl"],
+            targets=[destdir / f"{wf.stem}.dot"],
+            actions=[(mkdir, [destdir]), action])
 
 def task_transformations_pdf():
     """Visualizations of transformation graphs as a PDF."""
 
-    DEST = ROOT / "build" / "transformations"
-    DEST.mkdir(exist_ok=True)
-
-    def action(dot_path: Path, pdf_path: Path) -> bool:
+    def action(dependencies, targets) -> bool:
         import pydot  # type: ignore
-        graphs = pydot.graph_from_dot_file(dot_path)
-        graphs[0].write_pdf(pdf_path)
+        graphs = pydot.graph_from_dot_file(dependencies[0])
+        graphs[0].write_pdf(targets[0])
         return True
 
+    destdir = BUILD / "transformations"
+
     for wf in WORKFLOWS:
-        src = DEST / f"{wf.stem}.dot"
-        dest = DEST / f"{wf.stem}.pdf"
         yield dict(name=wf.stem,
-            file_dep=[src],
-            targets=[dest],
-            actions=[(action, (src, dest))])
+            file_dep=[destdir / f"{wf.stem}.dot"],
+            targets=[destdir / f"{wf.stem}.pdf"],
+            actions=[(mkdir, [destdir]), action])
 
 def task_eval_tasks():
     """Evaluate workflows' transformations against tasks.
     For this, graphs are sent to the triple store and then queried."""
 
-    DEST = ROOT / "build" / "eval_tasks"
+    destdir = BUILD / "eval_tasks"
 
     store = TransformationStore.backend('marklogic', STORE_URL,
         cred=STORE_USER)
 
     def action(variant, kwargsg, kwargsq) -> bool:
-        DEST.mkdir(exist_ok=True)
         workflows = upload(WORKFLOWS, store, **kwargsg)
         expect, actual = query(TASKS, store, **kwargsq)
-        with open(DEST / f"{variant}.csv") as f:
+        with open(destdir / f"{variant}.csv") as f:
             write_csv_summary(f, expect, actual, workflows)
         return True
 
@@ -119,15 +118,15 @@ def task_eval_tasks():
         yield dict(
             name=variant[0],
             file_dep=TASKS + WORKFLOWS,
-            targets=[DEST / f"{variant}.csv"],
-            actions=[(action, variant)]
+            targets=[destdir / f"{variant}.csv"],
+            actions=[(mkdir, [destdir]), (action, variant)]
         )
 
 
 def task_tool_repo_update():
     """Extract a tool repository from concrete workflows."""
 
-    DESTDIR = ROOT / "build" / "tools"
+    destdir = BUILD / "tools"
 
     def action() -> bool:
         from rdflib import Graph
@@ -147,30 +146,31 @@ def task_tool_repo_update():
         for abstr in repo.abstractions.values():
             abstr.to_graph(abstractions)
         bind_all(abstractions, default=TOOL)
-        DESTDIR.mkdir(exist_ok=True)
-        composites.serialize(DESTDIR / "multi.ttl")
-        abstractions.serialize(DESTDIR / "abstract.ttl")
+        composites.serialize(destdir / "multi.ttl")
+        abstractions.serialize(destdir / "abstract.ttl")
         return True
 
     return dict(
         file_dep=CWORKFLOWS + TOOLS,
-        targets=[DESTDIR / "multi.ttl", DESTDIR / "abstract.ttl"],
-        actions=[action]
+        targets=[destdir / "multi.ttl", destdir / "abstract.ttl"],
+        actions=[(mkdir, [destdir]), action]
     )
 
 def task_wf_abstract():
     """Produce abstract workflows from concrete workflows."""
 
-    DEST = ROOT / "build" / "abstract"
-    repo_path = ROOT / "build" / "repo.ttl"
+    destdir = BUILD / "abstract"
+    tools = [
+        BUILD / "tools" / "abstract.ttl",
+        BUILD / "tools" / "multi.ttl",
+        DATA / "tools" / "arcgis.ttl"]
 
     def action(wf_path, target):
         from quangis.workflow import Workflow
         from quangis.tools.repo import ToolRepository
-        DEST.mkdir(exist_ok=True)
 
-        # Todo: this should be produced by an action itself
-        repo = ToolRepository.from_file(repo_path, check_integrity=False)
+        # TODO: this should be produced by an action itself
+        repo = ToolRepository.from_file(*tools, check_integrity=False)
 
         cwf = Workflow.from_file(wf_path)
         print(cwf.serialize())
@@ -181,17 +181,19 @@ def task_wf_abstract():
     for wf in CWORKFLOWS:
         yield dict(
             name=wf.name,
-            file_dep=[wf, repo_path],
-            targets=[DEST / wf.name],
-            actions=[(action, [wf, DEST / wf.name])]
+            file_dep=[wf] + tools,
+            targets=[destdir / wf.name],
+            actions=[
+                (mkdir, [destdir]),
+                (action, [wf, destdir / wf.name])]
         )
 
 def task_wf_generate():
     """Synthesize new abstract workflows using APE."""
 
-    DESTDIR = ROOT / "build" / "generated"
+    destdir = BUILD / "generated"
 
-    def action() -> bool:
+    def action(dependencies) -> bool:
         from rdflib.graph import Graph
         from rdflib.namespace import Namespace, RDF
         from rdflib.term import URIRef
@@ -212,8 +214,7 @@ def task_wf_generate():
                  if isinstance(y, URIRef))
             for x in confgraph.objects(None, base.output)]
 
-        DESTDIR.mkdir(exist_ok=True)
-        gen = WorkflowGenerator(DATA / "tools" / "abstract.ttl", DESTDIR)
+        gen = WorkflowGenerator(dependencies[1], destdir)
 
         inputs_outputs: list[tuple[list[Polytype], list[Polytype]]] = []
 
@@ -235,7 +236,7 @@ def task_wf_generate():
             for solution in gen.run(inputs, outputs, solutions=1, 
                     prefix=EX.solution):
                 running_total += 1
-                path = DESTDIR / f"solution{running_total}.ttl"
+                path = destdir / f"solution{running_total}.ttl"
                 print(f"Writing solution: {path}")
                 solution.serialize(path, format="ttl")
             print(f"Running total is {running_total}.")
@@ -244,8 +245,8 @@ def task_wf_generate():
 
     return dict(
         file_dep=[IOCONFIG, DATA / "tools" / "abstract.ttl"],
-        targets=[DESTDIR / "solution1.ttl"],
-        actions=[(action, [])],
+        targets=[destdir / "solution1.ttl"],
+        actions=[(mkdir, [destdir]), action],
     )
 
 def task_test():
