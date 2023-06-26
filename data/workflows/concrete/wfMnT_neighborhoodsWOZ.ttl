@@ -6,7 +6,8 @@
 @prefix tools: <https://quangis.github.io/tool#> .
 @prefix wf: <http://geographicknowledge.de/vocab/Workflow.rdf#> .
 
-[] wf:applicationOf [ a wf:Workflow ;
+<https://quangis.github.io/workflows/expert/wfMnT_neighborhoodsWOZ> 
+            wf:applicationOf [ a wf:Workflow ;
             rdfs:label "wfMnT_neighborhoodsWOZ" ;
             wf:edge _:n10,
                 _:n13,

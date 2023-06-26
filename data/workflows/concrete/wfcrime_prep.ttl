@@ -6,7 +6,8 @@
 @prefix tools: <https://quangis.github.io/tool#> .
 @prefix wf: <http://geographicknowledge.de/vocab/Workflow.rdf#> .
 
-[] wf:applicationOf [ a wf:Workflow ;
+<https://quangis.github.io/workflows/expert/wfcrime_prep> wf:applicationOf [ a 
+            wf:Workflow ;
             rdfs:label "wfcrime_prep" ;
             wf:edge [ wf:applicationOf tools:CreateRandomPoints ;
                     wf:inputx _:supermarket_area_points ;

@@ -6,7 +6,8 @@
 @prefix tools: <https://quangis.github.io/tool#> .
 @prefix wf: <http://geographicknowledge.de/vocab/Workflow.rdf#> .
 
-[] wf:applicationOf [ a wf:Workflow ;
+<https://quangis.github.io/workflows/expert/wfwalk_landusemix> wf:applicationOf 
+            [ a wf:Workflow ;
             rdfs:label "wfwalk_landusemix" ;
             wf:edge [ wf:applicationOf tools:SummarizeWithin ;
                     wf:input1 _:retail_area ;

@@ -6,7 +6,8 @@
 @prefix tools: <https://quangis.github.io/tool#> .
 @prefix wf: <http://geographicknowledge.de/vocab/Workflow.rdf#> .
 
-[] wf:applicationOf [ a wf:Workflow ;
+<https://quangis.github.io/workflows/expert/wfwalk_intersectiondensity> 
+            wf:applicationOf [ a wf:Workflow ;
             rdfs:label "wfwalk_intersectiondensity" ;
             wf:edge _:n1,
                 _:n22,

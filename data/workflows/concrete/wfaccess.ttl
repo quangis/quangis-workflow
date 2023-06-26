@@ -7,7 +7,7 @@
 @prefix tools: <https://quangis.github.io/tool#> .
 @prefix wf: <http://geographicknowledge.de/vocab/Workflow.rdf#> .
 
-[] wf:applicationOf [ a wf:Workflow ;
+<https://quangis.github.io/workflows/expert/wfaccess> wf:applicationOf [ a wf:Workflow ;
             rdfs:label "wfaccess" ;
             wf:edge _:n0,
                 [ wf:applicationOf tools:Clip ;
