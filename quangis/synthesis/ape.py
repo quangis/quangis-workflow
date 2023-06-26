@@ -110,7 +110,7 @@ class APE(object):
             array = j_json.JSONArray()
             for c in classes:
                 array.put(str(c))
-            obj.put(str(dimension.root), array)
+            obj.put(str(dimension), array)
 
         return j_ape.models.Type.taxonomyInstanceFromJson(
             obj, self.setup, is_output)

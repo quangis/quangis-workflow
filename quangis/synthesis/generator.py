@@ -13,20 +13,18 @@ from quangis.polytype import Polytype
 from quangis.namespace import CCD, TOOL, OWL, RDF, RDFS, ADA
 from quangis.synthesis.ape import APE, ToolsDict
 
-def graph(path: Path) -> Graph:
-    g = Graph()
-    g.parse(path, format=guess_format(str(path)))
-    return g
-
-
 class WorkflowGenerator(APE):
     """
     A wrapper around the lower-level APE wrapper that takes input and output in
     the form we want it to.
     """
 
-    def __init__(self, tools: Path, build_dir: Path):
-        self.tools = graph(tools)
+    def __init__(self, *tools: Path, build_dir: Path):
+        print(tools)
+        self.tools = Graph()
+        for path in tools:
+            self.tools.parse(path, format=guess_format(str(path)))
+
         typetax = self.ape_type_taxonomy()
         tooltax = self.ape_tool_taxonomy()
 

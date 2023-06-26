@@ -14,6 +14,9 @@ def mkdir(*paths: Path):
     for path in paths:
         path.mkdir(exist_ok=True, parents=True)
 
+# TODO see https://github.com/pydoit/doit/issues/254: dependencies[i] might not 
+# behave as expected
+
 
 DOIT_CONFIG = {'default_tasks': [], 'continue': True}  # type: ignore
 
@@ -222,7 +225,9 @@ def task_wf_generate():
                  if isinstance(y, URIRef))
             for x in confgraph.objects(None, base.output)]
 
-        gen = WorkflowGenerator(dependencies[1], destdir)
+        gen = WorkflowGenerator(BUILD / "tools" / "abstract.ttl",
+            BUILD / "tools" / "multi.ttl",
+            DATA / "tools" / "arcgis.ttl", build_dir=destdir)
 
         inputs_outputs: list[tuple[list[Polytype], list[Polytype]]] = []
 
@@ -252,7 +257,10 @@ def task_wf_generate():
         return True
 
     return dict(
-        file_dep=[IOCONFIG, DATA / "tools" / "abstract.ttl"],
+        file_dep=[IOCONFIG,
+            BUILD / "tools" / "abstract.ttl",
+            BUILD / "tools" / "multi.ttl",
+            DATA / "tools" / "arcgis.ttl"],
         targets=[destdir / "solution1.ttl"],
         actions=[(mkdir, [destdir]), action],
     )
