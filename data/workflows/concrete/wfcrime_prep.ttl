@@ -1,0 +1,96 @@
+# @Author(s): Eric Top, Haiqi Xu, Simon Scheider, 
+@prefix ccd: <http://geographicknowledge.de/vocab/CoreConceptData.rdf#> .
+@prefix cct: <https://github.com/quangis/cct#> .
+@prefix dct: <http://purl.org/dc/terms/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix tools: <https://quangis.github.io/tool#> .
+@prefix wf: <http://geographicknowledge.de/vocab/Workflow.rdf#> .
+
+[] wf:applicationOf [ a wf:Workflow ;
+            rdfs:label "wfcrime_prep" ;
+            wf:edge [ wf:applicationOf tools:CreateRandomPoints ;
+                    wf:inputx _:supermarket_area_points ;
+                    wf:output _:supermarket ;
+                    cct:expression "generateobjects (1: ObjectInfo(Nom))" ],
+                [ wf:applicationOf tools:Merge ;
+                    wf:input1 _:office ;
+                    wf:input2 _:sport ;
+                    wf:input3 _:supermarket ;
+                    wf:output _:work_sport_store_locations ;
+                    cct:expression """ set_union(
+        3:ObjectInfo(Nom),
+        set_union(
+            1:ObjectInfo(Nom), 
+            2:ObjectInfo(Nom)
+            )
+        )""" ],
+                [ wf:applicationOf [ a wf:Workflow ;
+                            rdfs:label "makePointObjects" ;
+                            wf:edge _:n5,
+                                _:n6 ;
+                            wf:source _:office_area ;
+                            dct:subject "generateobjects (1: ObjectInfo(Nom))" ] ;
+                    wf:inputx _:office_area ;
+                    wf:output _:office ;
+                    cct:expression "generateobjects (1: ObjectInfo(Nom))" ],
+                [ wf:applicationOf tools:FeatureClassToFeatureClass ;
+                    wf:inputx _:function_mix ;
+                    wf:output _:office_area ;
+                    cct:expression "subset (1: ObjectInfo(Nom)) (-: C(Nom))" ],
+                _:n5,
+                _:n6,
+                [ wf:applicationOf tools:CreateRandomPoints ;
+                    wf:inputx _:sport_area_points ;
+                    wf:output _:sport ;
+                    cct:expression "generateobjects (1: ObjectInfo(Nom))" ] ;
+            wf:source _:function_mix,
+                _:sport_area_points,
+                _:supermarket_area_points ;
+            rdfs:comment "What are supermarkets, sport facilities and offices in Amsterdam?" ] ;
+    wf:inputx _:function_mix,
+        _:sport_area_points,
+        _:supermarket_area_points ;
+    wf:output _:work_sport_store_locations ;
+    rdfs:comment "What are supermarkets, sport facilities and offices in Amsterdam?" .
+
+_:n5 wf:applicationOf tools:FeatureToPoint ;
+    wf:inputx _:office_area ;
+    wf:output _:office_area_points .
+
+_:n6 wf:applicationOf tools:CreateRandomPoints ;
+    wf:inputx _:office_area_points ;
+    wf:output _:office .
+
+_:sport a ccd:NominalA,
+        ccd:ObjectQ,
+        ccd:PointA .
+
+_:supermarket a ccd:NominalA,
+        ccd:ObjectQ,
+        ccd:PointA .
+
+_:work_sport_store_locations a ccd:NominalA,
+        ccd:ObjectQ,
+        ccd:PointA .
+
+_:function_mix a ccd:NominalA,
+        ccd:ObjectQ,
+        ccd:PlainVectorRegionA ;
+    rdfs:comment "Buildings with functions" .
+
+_:office a ccd:NominalA,
+        ccd:ObjectQ,
+        ccd:PointA .
+
+_:sport_area_points a ccd:NominalA,
+        ccd:ObjectQ,
+        ccd:PointA .
+
+_:supermarket_area_points a ccd:NominalA,
+        ccd:ObjectQ,
+        ccd:PointA .
+
+_:office_area a ccd:NominalA,
+        ccd:ObjectQ,
+        ccd:PlainVectorRegionA .
+

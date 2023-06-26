@@ -1,0 +1,159 @@
+# @Author(s): Eric Top, Enkhbold Nyamsuren, Simon Scheider, 
+@prefix ccd: <http://geographicknowledge.de/vocab/CoreConceptData.rdf#> .
+@prefix cct: <https://github.com/quangis/cct#> .
+@prefix dct: <http://purl.org/dc/terms/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix tools: <https://quangis.github.io/tool#> .
+@prefix wf: <http://geographicknowledge.de/vocab/Workflow.rdf#> .
+
+[] wf:applicationOf [ a wf:Workflow ;
+            rdfs:label "wfwalk_residentialdensity" ;
+            wf:edge _:n0,
+                _:n11,
+                _:n13,
+                [ wf:applicationOf tools:SelectLayerByAttribute ;
+                    wf:inputx _:Amsterdam_land ;
+                    wf:output _:residential_area ;
+                    rdfs:comment "Select residential area in Amsterdam" ;
+                    cct:expression "revert (select eq (invert (1: Field(Nom)): Coverages(Nom)) (-: Nom))" ],
+                [ wf:applicationOf tools:SummarizeWithin ;
+                    wf:input1 _:residential_area ;
+                    wf:input2 _:buurten ;
+                    wf:output _:buurten_HH_RA ;
+                    rdfs:comment "Sum residential area size in each neighbourhood" ;
+                    cct:expression """    1: Field(Nom);
+    2: ObjectInfo(Nom);
+    join_attr
+            (get_attrL 2)
+            (apply1 
+                (compose size pi1) 
+                (apply1 
+                    (compose (subset (1)) deify) 
+                    (get_attrL 2)
+                )
+            )""" ],
+                _:n21,
+                _:n22,
+                [ wf:applicationOf [ a wf:Workflow ;
+                            rdfs:label "LoadCountAmounts" ;
+                            wf:edge _:n0,
+                                _:n11,
+                                _:n13,
+                                _:n6 ;
+                            wf:source _:Amsterdam_buurt,
+                                _:households ;
+                            dct:subject """        1: R2(Obj, Count);
+        2: ObjectInfo(_);
+        join_attr (get_attrL 2) 1""" ] ;
+                    wf:input1 _:households ;
+                    wf:input2 _:Amsterdam_buurt ;
+                    wf:output _:buurten_HH ;
+                    cct:expression """        1: R2(Obj, Count);
+        2: ObjectInfo(_);
+        join_attr (get_attrL 2) 1""" ],
+                [ wf:applicationOf [ a wf:Workflow ;
+                            rdfs:label "CalculateObjectVectorAmountRatio" ;
+                            wf:edge _:n21,
+                                _:n22 ;
+                            wf:source _:buurten_HH,
+                                _:buurten_HH_RA ;
+                            dct:subject """        1: ObjectInfo(Count);
+        2: ObjectInfo(Ratio);
+        join_attr
+            (get_attrL 1)
+            (apply2 ratio (get_attrR 1) (get_attrR 2))""" ] ;
+                    wf:input1 _:buurten_HH ;
+                    wf:input2 _:buurten_HH_RA ;
+                    wf:output _:buurten_res_dens ;
+                    cct:expression """        1: ObjectInfo(Count);
+        2: ObjectInfo(Ratio);
+        join_attr
+            (get_attrL 1)
+            (apply2 ratio (get_attrR 1) (get_attrR 2))""" ],
+                _:n6 ;
+            wf:source _:Amsterdam_buurt,
+                _:Amsterdam_land,
+                _:households ;
+            rdfs:comment "What is the proportion of area covered by residential landuse for each neighbourhood in Amsterdam?" ] ;
+    wf:inputx _:Amsterdam_buurt,
+        _:Amsterdam_land,
+        _:households ;
+    wf:output _:buurten_res_dens ;
+    rdfs:comment "What is the proportion of area covered by residential landuse for each neighbourhood in Amsterdam?" .
+
+_:buurten_HH_RA2 a ccd:ObjectQ,
+        ccd:VectorTessellationA .
+
+_:buurten_HH_Temp a ccd:CountA,
+        ccd:ObjectQ,
+        ccd:VectorTessellationA .
+
+_:buurten_HH_Temp2 a ccd:CountA,
+        ccd:ObjectQ,
+        ccd:VectorTessellationA .
+
+_:n0 wf:applicationOf tools:CopyFeatures ;
+    wf:inputx _:Amsterdam_buurt ;
+    wf:output _:buurten ;
+    rdfs:comment "Copy vector polygons representing buurten of Amsterdam to local file" .
+
+_:n11 wf:applicationOf tools:AddField ;
+    wf:inputx _:buurten_HH_Temp ;
+    wf:output _:buurten_HH_Temp2 ;
+    rdfs:comment "Add field for household count data to an attribute in the buurten attribute table" .
+
+_:n13 wf:applicationOf tools:CalculateField ;
+    wf:inputx _:buurten_HH_Temp2 ;
+    wf:output _:buurten_HH ;
+    rdfs:comment "Copy household count data to an attribute in the buurten attribute table" .
+
+_:n21 wf:applicationOf tools:AddField ;
+    wf:inputx _:buurten_HH_RA ;
+    wf:output _:buurten_HH_RA2 ;
+    rdfs:comment "Add a residential density attribute" .
+
+_:n22 wf:applicationOf tools:CalculateField ;
+    wf:input1 _:buurten_HH ;
+    wf:input2 _:buurten_HH_RA2 ;
+    wf:output _:buurten_res_dens ;
+    rdfs:comment "Calculate residential density" .
+
+_:n6 wf:applicationOf tools:JoinField ;
+    wf:input1 _:households ;
+    wf:input2 _:buurten ;
+    wf:output _:buurten_HH_Temp ;
+    rdfs:comment "Join household count data to the buurten attribute table" .
+
+_:residential_area a ccd:FieldQ,
+        ccd:NominalA,
+        ccd:PlainVectorRegionA .
+
+_:Amsterdam_land a ccd:FieldQ,
+        ccd:NominalA,
+        ccd:VectorTessellationA ;
+    rdfs:comment "Land use dataset of Amsterdam" .
+
+_:buurten a ccd:NominalA,
+        ccd:ObjectQ,
+        ccd:VectorTessellationA .
+
+_:buurten_res_dens a ccd:ObjectQ,
+        ccd:RatioA,
+        ccd:VectorTessellationA .
+
+_:buurten_HH_RA a ccd:ObjectQ,
+        ccd:RatioA,
+        ccd:VectorTessellationA .
+
+_:Amsterdam_buurt a ccd:NominalA,
+        ccd:ObjectQ,
+        ccd:VectorTessellationA ;
+    rdfs:comment "Vector polygons representing neighborhoods in Amsterdam" .
+
+_:buurten_HH a ccd:CountA,
+        ccd:ObjectQ,
+        ccd:VectorTessellationA .
+
+_:households a ccd:CountA,
+        ccd:ObjectQ .
+

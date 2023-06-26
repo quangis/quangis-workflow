@@ -1,0 +1,245 @@
+# @Author(s): Eric Top, Enkhbold Nyamsuren, Simon Scheider, 
+@prefix ccd: <http://geographicknowledge.de/vocab/CoreConceptData.rdf#> .
+@prefix cct: <https://github.com/quangis/cct#> .
+@prefix dct: <http://purl.org/dc/terms/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix tools: <https://quangis.github.io/tool#> .
+@prefix wf: <http://geographicknowledge.de/vocab/Workflow.rdf#> .
+
+[] wf:applicationOf [ a wf:Workflow ;
+            rdfs:label "wfwalk_landusemix" ;
+            wf:edge [ wf:applicationOf tools:SummarizeWithin ;
+                    wf:input1 _:retail_area ;
+                    wf:input2 _:Amsterdam_buurt ;
+                    wf:output _:BRdRaRe ;
+                    rdfs:comment "Sum retail area size in each neighbourhood" ;
+                    cct:expression """    1: Field(Nom);
+    2: ObjectInfo(Nom);
+    join_attr
+            (get_attrL 2)
+            (apply1 
+                (compose size pi1) 
+                (apply1 
+                    (compose (subset (1)) deify) 
+                    (get_attrL 2)
+                )
+            )""" ],
+                [ wf:applicationOf tools:SummarizeWithin ;
+                    wf:input1 _:office_area ;
+                    wf:input2 _:Amsterdam_buurt ;
+                    wf:output _:BRdRaReOf ;
+                    rdfs:comment "Sum office area size in each neighbourhood" ;
+                    cct:expression """    1: Field(Nom);
+    2: ObjectInfo(Nom);
+    join_attr
+            (get_attrL 2)
+            (apply1 
+                (compose size pi1) 
+                (apply1 
+                    (compose (subset (1)) deify) 
+                    (get_attrL 2)
+                )
+            )""" ],
+                [ wf:applicationOf tools:SummarizeWithin ;
+                    wf:input1 _:institution_area ;
+                    wf:input2 _:Amsterdam_buurt ;
+                    wf:output _:BRdRaReOfIn ;
+                    rdfs:comment "Sum institutional area size in each neighbourhood" ;
+                    cct:expression """    1: Field(Nom);
+    2: ObjectInfo(Nom);
+    join_attr
+            (get_attrL 2)
+            (apply1 
+                (compose size pi1) 
+                (apply1 
+                    (compose (subset (1)) deify) 
+                    (get_attrL 2)
+                )
+            )""" ],
+                [ wf:applicationOf tools:SummarizeWithin ;
+                    wf:input1 _:recreational_area ;
+                    wf:input2 _:Amsterdam_buurt ;
+                    wf:output _:BRdRaReOfInRec ;
+                    rdfs:comment "Sum recreational area size in each neighbourhood" ;
+                    cct:expression """    1: Field(Nom);
+    2: ObjectInfo(Nom);
+    join_attr
+            (get_attrL 2)
+            (apply1 
+                (compose size pi1) 
+                (apply1 
+                    (compose (subset (1)) deify) 
+                    (get_attrL 2)
+                )
+            )""" ],
+                _:n24,
+                _:n25,
+                [ wf:applicationOf tools:SelectLayerByAttribute ;
+                    wf:inputx _:Amsterdam_land ;
+                    wf:output _:retail_area ;
+                    rdfs:comment "Select retail area in Amsterdam" ;
+                    cct:expression "revert (select eq (invert (1: Field(Nom)): Coverages(Nom)) (-: Nom))" ],
+                [ wf:applicationOf [ a wf:Workflow ;
+                            rdfs:label "CalculateDiversity4onObjectVector" ;
+                            wf:edge _:n24,
+                                _:n25 ;
+                            wf:source _:BRdRaRe,
+                                _:BRdRaReOf,
+                                _:BRdRaReOfIn,
+                                _:BRdRaReOfInRec ;
+                            dct:subject """    1: ObjectInfo(Ratio);
+    2: ObjectInfo(Ratio);
+    3: ObjectInfo(Ratio);
+    4: ObjectInfo(Ratio);
+    join_attr
+        (get_attrL 1)
+        (diversity
+            (addlistrel
+                (addlistrel
+                    (addlistrel            
+                        (conslistrel
+                            (apply2 ratio 
+                                (get_attrR 1)            
+                                (apply1 (compose size deify) (get_attrL 1))
+                            )
+                        )
+                        (apply2 ratio 
+                                (get_attrR 2)            
+                                (apply1 (compose size deify) (get_attrL 2))
+                        )
+                    )
+                    (apply2 ratio 
+                                (get_attrR 3)            
+                                (apply1 (compose size deify) (get_attrL 3))
+                    )
+                )
+                (apply2 ratio 
+                                (get_attrR 4)            
+                                (apply1 (compose size deify) (get_attrL 4))
+                )    
+            )
+        )""" ;
+                            rdfs:comment "Calculate diversity of 4 attributes" ] ;
+                    wf:input1 _:BRdRaRe ;
+                    wf:input2 _:BRdRaReOf ;
+                    wf:input3 _:BRdRaReOfIn ;
+                    wf:input4 _:BRdRaReOfInRec ;
+                    wf:output _:BRdRaReOfInRec3 ;
+                    rdfs:comment "Calculate diversity of 4 attributes" ;
+                    cct:expression """    1: ObjectInfo(Ratio);
+    2: ObjectInfo(Ratio);
+    3: ObjectInfo(Ratio);
+    4: ObjectInfo(Ratio);
+    join_attr
+        (get_attrL 1)
+        (diversity
+            (addlistrel
+                (addlistrel
+                    (addlistrel            
+                        (conslistrel
+                            (apply2 ratio 
+                                (get_attrR 1)            
+                                (apply1 (compose size deify) (get_attrL 1))
+                            )
+                        )
+                        (apply2 ratio 
+                                (get_attrR 2)            
+                                (apply1 (compose size deify) (get_attrL 2))
+                        )
+                    )
+                    (apply2 ratio 
+                                (get_attrR 3)            
+                                (apply1 (compose size deify) (get_attrL 3))
+                    )
+                )
+                (apply2 ratio 
+                                (get_attrR 4)            
+                                (apply1 (compose size deify) (get_attrL 4))
+                )    
+            )
+        )""" ],
+                [ wf:applicationOf tools:SelectLayerByAttribute ;
+                    wf:inputx _:Amsterdam_land ;
+                    wf:output _:office_area ;
+                    rdfs:comment "Select office area in Amsterdam" ;
+                    cct:expression "revert (select eq (invert (1: Field(Nom)): Coverages(Nom)) (-: Nom))" ],
+                [ wf:applicationOf tools:SelectLayerByAttribute ;
+                    wf:inputx _:Amsterdam_land ;
+                    wf:output _:institution_area ;
+                    rdfs:comment "Select institution area in Amsterdam" ;
+                    cct:expression "revert (select eq (invert (1: Field(Nom)): Coverages(Nom)) (-: Nom))" ],
+                [ wf:applicationOf tools:SelectLayerByAttribute ;
+                    wf:inputx _:Amsterdam_land ;
+                    wf:output _:recreational_area ;
+                    rdfs:comment "Select recreational area in Amsterdam" ;
+                    cct:expression "revert (select eq (invert (1: Field(Nom)): Coverages(Nom)) (-: Nom))" ] ;
+            wf:source _:Amsterdam_buurt,
+                _:Amsterdam_land ;
+            rdfs:comment "What is the diversity of land use for each neighborhood in Amsterdam?" ] ;
+    wf:inputx _:Amsterdam_buurt,
+        _:Amsterdam_land ;
+    wf:output _:BRdRaReOfInRec3 ;
+    rdfs:comment "What is the diversity of land use for each neighborhood in Amsterdam?" .
+
+_:BRdRaReOfInRec2 a ccd:ObjectQ,
+        ccd:VectorTessellationA .
+
+_:institution_area a ccd:FieldQ,
+        ccd:NominalA,
+        ccd:PlainVectorRegionA .
+
+_:n24 wf:applicationOf tools:AddField ;
+    wf:inputx _:BRdRaReOfInRec ;
+    wf:output _:BRdRaReOfInRec2 ;
+    rdfs:comment "Add a land use mix attribute" .
+
+_:n25 wf:applicationOf tools:CalculateField ;
+    wf:input1 _:BRdRaRe ;
+    wf:input2 _:BRdRaReOf ;
+    wf:input3 _:BRdRaReOfIn ;
+    wf:input4 _:BRdRaReOfInRec2 ;
+    wf:output _:BRdRaReOfInRec3 ;
+    rdfs:comment "Calculate a land use mix attribute" .
+
+_:office_area a ccd:FieldQ,
+        ccd:NominalA,
+        ccd:PlainVectorRegionA .
+
+_:recreational_area a ccd:FieldQ,
+        ccd:NominalA,
+        ccd:PlainVectorRegionA .
+
+_:retail_area a ccd:FieldQ,
+        ccd:NominalA,
+        ccd:PlainVectorRegionA .
+
+_:BRdRaReOfInRec3 a ccd:ObjectQ,
+        ccd:RatioA,
+        ccd:VectorTessellationA .
+
+_:BRdRaRe a ccd:ObjectQ,
+        ccd:RatioA,
+        ccd:VectorTessellationA .
+
+_:BRdRaReOf a ccd:ObjectQ,
+        ccd:RatioA,
+        ccd:VectorTessellationA .
+
+_:BRdRaReOfIn a ccd:ObjectQ,
+        ccd:RatioA,
+        ccd:VectorTessellationA .
+
+_:BRdRaReOfInRec a ccd:ObjectQ,
+        ccd:RatioA,
+        ccd:VectorTessellationA .
+
+_:Amsterdam_buurt a ccd:NominalA,
+        ccd:ObjectQ,
+        ccd:VectorTessellationA ;
+    rdfs:comment "Vector polygons representing neighborhoods in Amsterdam" .
+
+_:Amsterdam_land a ccd:FieldQ,
+        ccd:NominalA,
+        ccd:VectorTessellationA ;
+    rdfs:comment "Land use dataset of Amsterdam" .
+

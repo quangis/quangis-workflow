@@ -1,0 +1,121 @@
+# @Author(s): Eric Top, Haiqi Xu, Simon Scheider, 
+@prefix ccd: <http://geographicknowledge.de/vocab/CoreConceptData.rdf#> .
+@prefix cct: <https://github.com/quangis/cct#> .
+@prefix dct: <http://purl.org/dc/terms/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix tools: <https://quangis.github.io/tool#> .
+@prefix wf: <http://geographicknowledge.de/vocab/Workflow.rdf#> .
+
+[] wf:applicationOf [ a wf:Workflow ;
+            rdfs:label "wfcrime_route" ;
+            wf:edge _:n10,
+                _:n12,
+                _:n13,
+                _:n16,
+                _:n2,
+                [ wf:applicationOf [ a wf:Workflow ;
+                            rdfs:label "CreateAndBuildNetwork" ;
+                            wf:edge _:n2,
+                                _:n8 ;
+                            wf:source _:roads ;
+                            dct:subject "nbuild (1: ObjectInfo(Ratio))" ] ;
+                    wf:inputx _:roads ;
+                    wf:output _:network ;
+                    cct:expression "nbuild (1: ObjectInfo(Ratio))" ],
+                [ wf:applicationOf [ a wf:Workflow ;
+                            rdfs:label "RouteAnalysis" ;
+                            wf:edge _:n10,
+                                _:n12,
+                                _:n13,
+                                _:n16 ;
+                            wf:source _:home,
+                                _:network,
+                                _:work_sport_store_locations ;
+                            dct:subject """1: Network(Ratio);
+2: ObjectInfo(Nom);
+3: ObjectInfo(Nom);        
+           generateobjectsfromrel (nRoutes (get_attrL 2) (get_attrL 3) 1)""" ] ;
+                    wf:input1 _:network ;
+                    wf:input2 _:home ;
+                    wf:input3 _:work_sport_store_locations ;
+                    wf:output _:route_analysis_layer_solved ;
+                    cct:expression """1: Network(Ratio);
+2: ObjectInfo(Nom);
+3: ObjectInfo(Nom);        
+           generateobjectsfromrel (nRoutes (get_attrL 2) (get_attrL 3) 1)""" ],
+                _:n8 ;
+            wf:source _:home,
+                _:roads,
+                _:work_sport_store_locations ;
+            rdfs:comment "What is the shortest path from my home through my workplace, a gym and a supermarket in Amsterdam?" ] ;
+    wf:inputx _:home,
+        _:roads,
+        _:work_sport_store_locations ;
+    wf:output _:route_analysis_layer_solved ;
+    rdfs:comment "What is the shortest path from my home through my workplace, a gym and a supermarket in Amsterdam?" .
+
+_:n10 wf:applicationOf tools:MakeRouteAnalysisLayer ;
+    wf:inputx _:network ;
+    wf:output _:route_analysis_layer ;
+    rdfs:comment "Create a route analysis layer" .
+
+_:n12 wf:applicationOf tools:AddLocations ;
+    wf:input1 _:route_analysis_layer ;
+    wf:input2 _:home ;
+    wf:output _:route_analysis_layer_home ;
+    rdfs:comment "Add a home location to the route analysis layer" .
+
+_:n13 wf:applicationOf tools:AddLocations ;
+    wf:input1 _:route_analysis_layer_home ;
+    wf:input2 _:work_sport_store_locations ;
+    wf:output _:route_analysis_layer_all ;
+    rdfs:comment "Add a work, a sport, and a store location to the route analysis layer" .
+
+_:n16 wf:applicationOf tools:Solve ;
+    wf:inputx _:route_analysis_layer_all ;
+    wf:output _:route_analysis_layer_solved ;
+    rdfs:comment "Execute the route analysis" .
+
+_:n2 wf:applicationOf tools:CreateNetworkDataset ;
+    wf:inputx _:roads ;
+    wf:output _:network_dataset ;
+    rdfs:comment "Create a network dataset layer" .
+
+_:n8 wf:applicationOf tools:BuildNetwork ;
+    wf:inputx _:network_dataset ;
+    wf:output _:network ;
+    rdfs:comment "Build a representation of the Amsterdam road network" .
+
+_:network_dataset a ccd:LineA,
+        ccd:NetworkQ .
+
+_:route_analysis_layer a ccd:LineA,
+        ccd:NetworkQ .
+
+_:route_analysis_layer_all a ccd:LineA,
+        ccd:NetworkQ .
+
+_:route_analysis_layer_home a ccd:LineA,
+        ccd:NetworkQ .
+
+_:route_analysis_layer_solved a ccd:LineA,
+        ccd:NominalA,
+        ccd:ObjectQ .
+
+_:home a ccd:ObjectQ,
+        ccd:PointA ;
+    rdfs:comment "Point location of a home address" .
+
+_:network a ccd:LineA,
+        ccd:NetworkQ,
+        ccd:RatioA .
+
+_:roads a ccd:LineA,
+        ccd:ObjectQ,
+        ccd:RatioA ;
+    rdfs:comment "A line dataset representing roads in Amsterdam" .
+
+_:work_sport_store_locations a ccd:ObjectQ,
+        ccd:PointA ;
+    rdfs:comment "Points representing work, sport and store locations" .
+

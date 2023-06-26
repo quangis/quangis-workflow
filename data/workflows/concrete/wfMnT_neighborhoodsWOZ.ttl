@@ -1,0 +1,119 @@
+# @Author(s): Eric Top, Enkhbold Nyamsuren, Simon Scheider, 
+@prefix ccd: <http://geographicknowledge.de/vocab/CoreConceptData.rdf#> .
+@prefix cct: <https://github.com/quangis/cct#> .
+@prefix dct: <http://purl.org/dc/terms/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix tools: <https://quangis.github.io/tool#> .
+@prefix wf: <http://geographicknowledge.de/vocab/Workflow.rdf#> .
+
+[] wf:applicationOf [ a wf:Workflow ;
+            rdfs:label "wfMnT_neighborhoodsWOZ" ;
+            wf:edge _:n10,
+                _:n13,
+                _:n16,
+                _:n19,
+                _:n2,
+                [ wf:applicationOf [ a wf:Workflow ;
+                            rdfs:label "SelectWOZByRatioObjects" ;
+                            wf:edge _:n2,
+                                _:n6 ;
+                            wf:source _:WOZ ;
+                            dct:subject "select (compose2 notj leq) (1: ObjectInfo(Ratio)) (-: Ratio)" ] ;
+                    wf:inputx _:WOZ ;
+                    wf:output _:WOZ_pos ;
+                    cct:expression "select (compose2 notj leq) (1: ObjectInfo(Ratio)) (-: Ratio)" ],
+                [ wf:applicationOf [ a wf:Workflow ;
+                            rdfs:label "JoinObjectRatios" ;
+                            wf:edge _:n10,
+                                _:n13 ;
+                            wf:source _:WOZ_pos,
+                                _:neighborhoods_Utrecht_near_schools ;
+                            dct:subject """1:ObjectInfo(Nom);
+    2:ObjectInfo(Ratio);
+    join_attr (get_attrL 1) (get_attrR 2)""" ] ;
+                    wf:input1 _:neighborhoods_Utrecht_near_schools ;
+                    wf:input2 _:WOZ_pos ;
+                    wf:output _:neighborhoods_Utrecht_WOZ ;
+                    cct:expression """1:ObjectInfo(Nom);
+    2:ObjectInfo(Ratio);
+    join_attr (get_attrL 1) (get_attrR 2)""" ],
+                [ wf:applicationOf [ a wf:Workflow ;
+                            rdfs:label "SelectNeighborhoodsByRatioObjects" ;
+                            wf:edge _:n16,
+                                _:n19 ;
+                            wf:source _:neighborhoods_Utrecht_WOZ ;
+                            dct:subject "select (compose2 notj leq) (1: ObjectInfo(Ratio)) (-: Ratio)" ] ;
+                    wf:inputx _:neighborhoods_Utrecht_WOZ ;
+                    wf:output _:suitable_neighborhoods ;
+                    cct:expression "select (compose2 notj leq) (1: ObjectInfo(Ratio)) (-: Ratio)" ],
+                _:n6 ;
+            wf:source _:WOZ,
+                _:neighborhoods_Utrecht_near_schools ;
+            rdfs:comment "Which neighborhoods have an averaged WOZ value of less than 200 in Utrecht?" ] ;
+    wf:inputx _:WOZ,
+        _:neighborhoods_Utrecht_near_schools ;
+    wf:output _:suitable_neighborhoods ;
+    rdfs:comment "Which neighborhoods have an averaged WOZ value of less than 200 in Utrecht?" .
+
+_:WOZ_select a ccd:ObjectQ,
+        ccd:RatioA .
+
+_:n10 wf:applicationOf tools:AddJoin ;
+    wf:input1 _:neighborhoods_Utrecht_near_schools ;
+    wf:input2 _:WOZ_pos ;
+    wf:output _:neighborhoods_Utrecht_near_schools_WOZ_pos_join ;
+    rdfs:comment "Join the data of WOZ to the attribute table of the neighborhoods in Utrecht near schools based on neighborhood names" .
+
+_:n13 wf:applicationOf tools:ExportFeatures ;
+    wf:inputx _:neighborhoods_Utrecht_near_schools_WOZ_pos_join ;
+    wf:output _:neighborhoods_Utrecht_WOZ ;
+    rdfs:comment "Export the joined data of WOZ to the attribute table of the neighborhoods in Utrecht near schools based on neighborhood names to a  new layer file" .
+
+_:n16 wf:applicationOf tools:SelectLayerByAttribute ;
+    wf:inputx _:neighborhoods_Utrecht_WOZ ;
+    wf:output _:neighborhoods_Utrecht_WOZ_perc_select ;
+    rdfs:comment "Select only cases where the WOZ is less than 200" .
+
+_:n19 wf:applicationOf tools:ExportFeatures ;
+    wf:inputx _:neighborhoods_Utrecht_WOZ_perc_select ;
+    wf:output _:suitable_neighborhoods ;
+    rdfs:comment "Export cases where  the WOZ is less than 200" .
+
+_:n2 wf:applicationOf tools:SelectLayerByAttribute ;
+    wf:inputx _:WOZ ;
+    wf:output _:WOZ_select ;
+    rdfs:comment "Select only cases where WOZ > 0" .
+
+_:n6 wf:applicationOf tools:ExportTable ;
+    wf:inputx _:WOZ_select ;
+    wf:output _:WOZ_pos ;
+    rdfs:comment "Extract selected cases (only cases where WOZ > 0)" .
+
+_:neighborhoods_Utrecht_WOZ_perc_select a ccd:ObjectQ,
+        ccd:PlainVectorRegionA,
+        ccd:RatioA .
+
+_:neighborhoods_Utrecht_near_schools_WOZ_pos_join a ccd:ObjectQ,
+        ccd:PlainVectorRegionA,
+        ccd:RatioA .
+
+_:suitable_neighborhoods a ccd:ObjectQ,
+        ccd:PlainVectorRegionA,
+        ccd:RatioA .
+
+_:WOZ a ccd:ObjectQ,
+        ccd:RatioA ;
+    rdfs:comment "Table with average WOZ data per neigborhood" .
+
+_:WOZ_pos a ccd:ObjectQ,
+        ccd:RatioA .
+
+_:neighborhoods_Utrecht_WOZ a ccd:ObjectQ,
+        ccd:PlainVectorRegionA,
+        ccd:RatioA .
+
+_:neighborhoods_Utrecht_near_schools a ccd:NominalA,
+        ccd:ObjectQ,
+        ccd:PlainVectorRegionA ;
+    rdfs:comment "Utrecht neighborhoods " .
+

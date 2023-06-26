@@ -1,0 +1,189 @@
+# @Author(s): Eric Top, Haiqi Xu, Simon Scheider, 
+@prefix ccd: <http://geographicknowledge.de/vocab/CoreConceptData.rdf#> .
+@prefix cct: <https://github.com/quangis/cct#> .
+@prefix dct: <http://purl.org/dc/terms/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix tools: <https://quangis.github.io/tool#> .
+@prefix wf: <http://geographicknowledge.de/vocab/Workflow.rdf#> .
+
+[] wf:applicationOf [ a wf:Workflow ;
+            rdfs:label "wfcrime_exposure" ;
+            wf:edge _:n0,
+                _:n10,
+                _:n12,
+                _:n13,
+                _:n14,
+                _:n16,
+                _:n19,
+                _:n28,
+                _:n29,
+                [ wf:applicationOf [ a wf:Workflow ;
+                            rdfs:label "JoinCountAttribute" ;
+                            wf:edge _:n0,
+                                _:n7 ;
+                            wf:source _:buurt,
+                                _:crimes ;
+                            dct:subject """1: R2(Obj, Count);
+2: ObjectExtent; 
+join_attr 2 1""" ] ;
+                    wf:input1 _:crimes ;
+                    wf:input2 _:buurt ;
+                    wf:output _:buurt_crime ;
+                    cct:expression """1: R2(Obj, Count);
+2: ObjectExtent; 
+join_attr 2 1""" ],
+                [ wf:applicationOf [ a wf:Workflow ;
+                            rdfs:label "ComputeCountDensityonObject" ;
+                            wf:edge _:n10,
+                                _:n12,
+                                _:n13,
+                                _:n14,
+                                _:n28,
+                                _:n29 ;
+                            wf:source _:buurt_crime ;
+                            dct:subject """ 1: ObjectInfo(Count);        
+        join_attr
+            (get_attrL 1)
+            (apply2 ratio (get_attrR 1)  (apply1
+                (compose size deify)
+                (get_attrL 1)
+            ))""" ] ;
+                    wf:inputx _:buurt_crime ;
+                    wf:output _:buurt_crime_density ;
+                    cct:expression """ 1: ObjectInfo(Count);        
+        join_attr
+            (get_attrL 1)
+            (apply2 ratio (get_attrR 1)  (apply1
+                (compose size deify)
+                (get_attrL 1)
+            ))""" ],
+                [ wf:applicationOf [ a wf:Workflow ;
+                            rdfs:label "InterpolateDensityonObjects2LineObject" ;
+                            wf:edge _:n16,
+                                _:n19 ;
+                            wf:source _:buurt_crime_density,
+                                _:routes ;
+                            dct:subject """1: ObjectInfo(Ratio);
+2: ObjectInfo(Nom);
+arealinterpol
+(getamounts 1)
+(pi2 (get_attrL 2))""" ] ;
+                    wf:input1 _:buurt_crime_density ;
+                    wf:input2 _:routes ;
+                    wf:output _:buurt_crime_density_avg ;
+                    cct:expression """1: ObjectInfo(Ratio);
+2: ObjectInfo(Nom);
+arealinterpol
+(getamounts 1)
+(pi2 (get_attrL 2))""" ],
+                _:n7 ;
+            wf:source _:buurt,
+                _:crimes,
+                _:routes ;
+            rdfs:comment "What is the crime density along the shortest path from my home to my workplace in Amsterdam?" ] ;
+    wf:inputx _:buurt,
+        _:crimes,
+        _:routes ;
+    wf:output _:buurt_crime_density_avg ;
+    rdfs:comment "What is the crime density along the shortest path from my home to my workplace in Amsterdam?" .
+
+_:buurt_crime_addfield a ccd:ObjectQ,
+        ccd:VectorTessellationA .
+
+_:buurt_crime_count a ccd:CountA,
+        ccd:ObjectQ,
+        ccd:VectorTessellationA .
+
+_:buurt_crime_count_addfield a ccd:ObjectQ,
+        ccd:VectorTessellationA .
+
+_:buurt_crime_density2 a ccd:IRA,
+        ccd:LineA,
+        ccd:ObjectQ .
+
+_:buurt_crime_geom a ccd:ObjectQ,
+        ccd:VectorTessellationA .
+
+_:buurt_crime_geom_addfield a ccd:ObjectQ,
+        ccd:VectorTessellationA .
+
+_:buurt_crime_join a ccd:ObjectQ,
+        ccd:VectorTessellationA .
+
+_:n0 wf:applicationOf tools:JoinField ;
+    wf:input1 _:crimes ;
+    wf:input2 _:buurt ;
+    wf:output _:buurt_crime_join ;
+    rdfs:comment "Join crime data to vector polygons representing buurten of Amsterdam " .
+
+_:n10 wf:applicationOf tools:AddField ;
+    wf:inputx _:buurt_crime ;
+    wf:output _:buurt_crime_addfield ;
+    rdfs:comment "Add a field for area sizes" .
+
+_:n12 wf:applicationOf tools:CalculateGeometryAttributes ;
+    wf:inputx _:buurt_crime_addfield ;
+    wf:output _:buurt_crime_geom ;
+    rdfs:comment "Calculate area sizes for the Amsterdam neighborhoods" .
+
+_:n13 wf:applicationOf tools:AddField ;
+    wf:inputx _:buurt_crime_geom ;
+    wf:output _:buurt_crime_geom_addfield ;
+    rdfs:comment "Add a field for copying the crime counts in Amsterdam neighborhoods" .
+
+_:n14 wf:applicationOf tools:CalculateField ;
+    wf:inputx _:buurt_crime_geom_addfield ;
+    wf:output _:buurt_crime_count ;
+    rdfs:comment "Copy the crime counts in Amsterdam neighborhoods to new field" .
+
+_:n16 wf:applicationOf tools:Intersect ;
+    wf:input1 _:buurt_crime_density ;
+    wf:input2 _:routes ;
+    wf:output _:buurt_crime_density2 ;
+    rdfs:comment "Intersect neighborhoods with crime density values with routes in Amsterdam" .
+
+_:n19 wf:applicationOf tools:SummaryStatistics ;
+    wf:inputx _:buurt_crime_density2 ;
+    wf:output _:buurt_crime_density_avg ;
+    rdfs:comment "Get the average crime density along the route" .
+
+_:n28 wf:applicationOf tools:AddField ;
+    wf:inputx _:buurt_crime_count ;
+    wf:output _:buurt_crime_count_addfield ;
+    rdfs:comment "Add a field for crime density" .
+
+_:n29 wf:applicationOf tools:CalculateField ;
+    wf:inputx _:buurt_crime_count_addfield ;
+    wf:output _:buurt_crime_density ;
+    rdfs:comment "Calculate crime density" .
+
+_:n7 wf:applicationOf tools:CopyFeatures ;
+    wf:inputx _:buurt_crime_join ;
+    wf:output _:buurt_crime ;
+    rdfs:comment "Copy the join to a new layer" .
+
+_:buurt_crime_density_avg a ccd:IRA,
+        ccd:LineA,
+        ccd:ObjectQ .
+
+_:buurt a ccd:ObjectQ,
+        ccd:VectorTessellationA ;
+    rdfs:comment "Vector polygons representing neighborhoods in Amsterdam" .
+
+_:buurt_crime a ccd:CountA,
+        ccd:ObjectQ,
+        ccd:VectorTessellationA .
+
+_:buurt_crime_density a ccd:IRA,
+        ccd:ObjectQ,
+        ccd:VectorTessellationA .
+
+_:crimes a ccd:CountA,
+        ccd:ObjectQ ;
+    rdfs:comment "Table with counts of crime for each neighborhood in Amsterdam" .
+
+_:routes a ccd:LineA,
+        ccd:NominalA,
+        ccd:ObjectQ ;
+    rdfs:comment "A custom-generated route through Amsterdam" .
+
