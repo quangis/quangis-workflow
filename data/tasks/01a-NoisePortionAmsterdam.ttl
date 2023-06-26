@@ -10,7 +10,7 @@ _:Amsterdam
 
 <https://example.com/task/NoisePortionAmsterdam> a :Task;
     # :question "What is the portion of noise ≥ 70dB in Amsterdam?";
-    :implementation <https://example.com/#NoisePortionAmsterdam>;
+    :implementation <https://quangis.github.io/workflows/expert/NoisePortionAmsterdam>;
     :input _:NoiseContourMap, _:Amsterdam;
     :output [
         # Noise coverage

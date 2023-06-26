@@ -12,7 +12,7 @@ _:PopulationCountPerCell
 
 <https://example.com/task/MalariaCongo> a :Task;
     # :question "What is the malaria incidence rate per 1000 inhabitants in the Democratic Republic of the Congo?";
-    :implementation <https://example.com/#MalariaCongo>;
+    :implementation <https://quangis.github.io/workflows/expert/MalariaCongo>;
     :input _:MalariaIncidence, _:PopulationCountPerCell, _:AdministrativeRegions;
     :output [
         # Proportion of malaria incidents vs population counts (TODO technical?)

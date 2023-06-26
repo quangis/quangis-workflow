@@ -10,7 +10,7 @@ _:PopulationCountPerCell
 
 <https://example.com/task/PopulationUtrecht> a :Task;
     :question "What is the number of inhabitants for each neighborhood in Utrecht?";
-    :implementation <https://example.com/#PopulationUtrecht>;
+    :implementation <https://quangis.github.io/workflows/expert/PopulationUtrecht>;
     :input _:Neighborhoods, _:PopulationCountPerCell;
     :output [
         # Add regions (technical)

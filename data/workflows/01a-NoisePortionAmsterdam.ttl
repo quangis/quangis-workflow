@@ -4,7 +4,7 @@
 @prefix xml: <http://www.w3.org/XML/1998/namespace>.
 @prefix wf: <http://geographicknowledge.de/vocab/Workflow.rdf#>.
 @prefix abstr: <https://quangis.github.io/tool/abstract#>.
-@prefix repo: <https://example.com/#>.
+@prefix repo: <https://quangis.github.io/workflows/expert/#>.
 
 # [SC] data prefix
 @prefix pdok: <https://www.pdok.nl/introductie/-/article/>.
