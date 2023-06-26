@@ -205,36 +205,33 @@ def task_wf_generate():
     destdir = BUILD / "workflows" / "gen"
     apedir = BUILD / "ape"
 
-    def action(dependencies) -> bool:
+    def make_targets():
         from rdflib.graph import Graph
         from rdflib.namespace import Namespace, RDF
         from rdflib.term import URIRef
-        from quangis.polytype import Polytype
-        from quangis.synthesis import WorkflowGenerator
-        from quangis.namespace import CCD, EX, WFGEN
         from quangis.ccd import ccd
+        from quangis.polytype import Polytype
+        from quangis.namespace import CCD
 
+        # Read configuration graph
         confgraph = Graph()
         confgraph.parse(IOCONFIG)
         base = Namespace(IOCONFIG.parent.absolute().as_uri() + "/")
-        sources: list[list[URIRef]] = [
+
+        sources = [
             list(y for y in confgraph.objects(x, RDF.type)
-                 if isinstance(y, URIRef))
+                if isinstance(y, URIRef))
             for x in confgraph.objects(None, base.input)]
-        goals: list[list[URIRef]] = [
+
+        goals = [
             list(y for y in confgraph.objects(x, RDF.type)
-                 if isinstance(y, URIRef))
+                if isinstance(y, URIRef))
             for x in confgraph.objects(None, base.output)]
-
-        gen = WorkflowGenerator(BUILD / "tools" / "abstract.ttl",
-            BUILD / "tools" / "multi.ttl",
-            DATA / "tools" / "arcgis.ttl", build_dir=apedir)
-
-        inputs_outputs: list[tuple[list[Polytype], list[Polytype]]] = []
 
         # To start with, we generate workflows with two inputs and one output, 
         # of which one input is drawn from the following sources, and the other 
         # is the same as the output without the measurement level.
+        inputs_outputs = []
         for goal_tuple in goals:
             goal = Polytype.project(ccd.dimensions, goal_tuple)
             source1 = Polytype(ccd.dimensions, goal)
@@ -243,28 +240,43 @@ def task_wf_generate():
                 source2 = Polytype.project(ccd.dimensions, source_tuple)
                 inputs_outputs.append(([source1, source2], [goal]))
 
-        running_total = 0
-        for run, (inputs, outputs) in enumerate(inputs_outputs):
-
+        # Finally add names
+        for inputs, outputs in inputs_outputs:
             namei = "-".join(sorted(i.canonical_name() for i in inputs))
             nameo = "-".join(sorted(o.canonical_name() for o in outputs))
             name = f"{namei}--{nameo}"
+            print(name)
+            yield name, inputs, outputs
 
-            for solution in gen.run(inputs, outputs, solutions=1, 
-                    prefix=WFGEN[name]):
-                solution.serialize(destdir / f"{name}.ttl", format="ttl")
-            print(f"Running total is {running_total}.")
+    def action(target, inputs, outputs) -> bool:
+        from rdflib import Graph
+        from quangis.synthesis import WorkflowGenerator
+        from quangis.namespace import WFGEN
+
+        gen = WorkflowGenerator(BUILD / "tools" / "abstract.ttl",
+            BUILD / "tools" / "multi.ttl",
+            DATA / "tools" / "arcgis.ttl", build_dir=apedir)
+
+        solutions = Graph()
+        for i, solution in enumerate(gen.run(inputs, outputs, solutions=1, 
+                prefix=WFGEN[name]), start=1):
+            solutions += solution
+        solutions.serialize(target, format="ttl")
 
         return True
 
-    return dict(
-        file_dep=[IOCONFIG,
-            BUILD / "tools" / "abstract.ttl",
-            BUILD / "tools" / "multi.ttl",
-            DATA / "tools" / "arcgis.ttl"],
-        targets=[destdir / "solution1.ttl"],
-        actions=[(mkdir, [destdir, apedir]), action],
-    )
+    for name, inputs, outputs in list(make_targets()):
+        target = destdir / f"{name}.ttl"
+        yield dict(
+            name=name,
+            file_dep=[IOCONFIG,
+                BUILD / "tools" / "abstract.ttl",
+                BUILD / "tools" / "multi.ttl",
+                DATA / "tools" / "arcgis.ttl"],
+            targets=[target],
+            actions=[(mkdir, [destdir, apedir]),
+                (action, [target, inputs, outputs])],
+        )
 
 def task_test():
     """Run all tests."""
