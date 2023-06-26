@@ -12,6 +12,7 @@ from typing import Iterable, MutableMapping, Iterator, Mapping
 from itertools import product
 
 from quangis.namespace import RDFS, n3
+from transforge.namespace import shorten
 
 
 class Dimension(object):
@@ -104,7 +105,8 @@ class Polytype(MutableMapping[URIRef, set[URIRef]]):
                     self.data[d.root].add(t)
                     in_any_dimension = True
             if not in_any_dimension and not ignore_extradimensional_types:
-                raise RuntimeError(f"Type {t} is not part of any dimension.")
+                raise RuntimeError(
+                    f"Type {t} is not part of any of the given dimensions.")
 
     def __str__(self) -> str:
         return "; ".join(
@@ -187,16 +189,25 @@ class Polytype(MutableMapping[URIRef, set[URIRef]]):
             result += (tuple(sorted(t[d])),)
         return result
 
+    def canonical_name(self) -> str:
+        """A polytype can be referred to by a canonical name. Assuming 
+        alphanumeric class names, the name should use only characters that are 
+        valid in URIs (<https://www.rfc-editor.org/rfc/rfc3986#section-2.3>). A 
+        canonical name only makes sense in the context of a given set of 
+        dimensions."""
+        return ".".join(
+            "_".join(shorten(t) for t in ts)
+            for ts in self.lexical()
+        )
+
     @staticmethod
     def project(dimensions: Iterable[Dimension],
             types: Iterable[Node]) -> Polytype:
-        """
-        An alternative constructor for a `Polytype` that projects type nodes to 
-        the given dimensions. Any type that is subsumed by at least one 
+        """An alternative constructor for a `Polytype` that projects type nodes 
+        to the given dimensions. Any type that is subsumed by at least one 
         dimension can be projected to the closest parent(s) in the 
         corresponding taxonomy graph which belongs to the core of that 
-        dimension (ie a node that belongs to exactly one dimension).
-        """
+        dimension (ie a node that belongs to exactly one dimension)."""
 
         dimensions, types = set(dimensions), list(types)
         result = Polytype(dimensions)

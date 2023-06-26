@@ -202,7 +202,8 @@ def task_wf_abstract():
 def task_wf_generate():
     """Synthesize new abstract workflows using APE."""
 
-    destdir = BUILD / "generated"
+    destdir = BUILD / "workflows" / "gen"
+    apedir = BUILD / "ape"
 
     def action(dependencies) -> bool:
         from rdflib.graph import Graph
@@ -210,7 +211,7 @@ def task_wf_generate():
         from rdflib.term import URIRef
         from quangis.polytype import Polytype
         from quangis.synthesis import WorkflowGenerator
-        from quangis.namespace import CCD, EX
+        from quangis.namespace import CCD, EX, WFGEN
         from quangis.ccd import ccd
 
         confgraph = Graph()
@@ -227,7 +228,7 @@ def task_wf_generate():
 
         gen = WorkflowGenerator(BUILD / "tools" / "abstract.ttl",
             BUILD / "tools" / "multi.ttl",
-            DATA / "tools" / "arcgis.ttl", build_dir=destdir)
+            DATA / "tools" / "arcgis.ttl", build_dir=apedir)
 
         inputs_outputs: list[tuple[list[Polytype], list[Polytype]]] = []
 
@@ -244,14 +245,14 @@ def task_wf_generate():
 
         running_total = 0
         for run, (inputs, outputs) in enumerate(inputs_outputs):
-            print(f"Attempting [ {' ] & [ '.join(x.short() for x in inputs)} "
-                f"] -> [ {' & '.join(x.short() for x in outputs)} ]")
+
+            namei = "-".join(sorted(i.canonical_name() for i in inputs))
+            nameo = "-".join(sorted(o.canonical_name() for o in outputs))
+            name = f"{namei}--{nameo}"
+
             for solution in gen.run(inputs, outputs, solutions=1, 
-                    prefix=EX.solution):
-                running_total += 1
-                path = destdir / f"solution{running_total}.ttl"
-                print(f"Writing solution: {path}")
-                solution.serialize(path, format="ttl")
+                    prefix=WFGEN[name]):
+                solution.serialize(destdir / f"{name}.ttl", format="ttl")
             print(f"Running total is {running_total}.")
 
         return True
@@ -262,7 +263,7 @@ def task_wf_generate():
             BUILD / "tools" / "multi.ttl",
             DATA / "tools" / "arcgis.ttl"],
         targets=[destdir / "solution1.ttl"],
-        actions=[(mkdir, [destdir]), action],
+        actions=[(mkdir, [destdir, apedir]), action],
     )
 
 def task_test():

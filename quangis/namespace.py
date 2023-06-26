@@ -23,6 +23,10 @@ ARCGIS = Namespace("https://quangis.github.io/tool#")
 MULTI = Namespace("https://quangis.github.io/tool/multi#")
 ABSTR = Namespace("https://quangis.github.io/tool/abstract#")
 
+WFGEN = Namespace("https://quangis.github.io/workflows/gen/")
+WFMAN = Namespace("https://quangis.github.io/workflows/manual/")
+WFREAL = Namespace("https://quangis.github.io/workflows/real/")
+
 ARC = "https://pro.arcgis.com/en/pro-app/latest/tool-reference"
 ARCDM = Namespace(ARC + "/data-management/")
 ARC3D = Namespace(ARC + "/3d-analyst/")
