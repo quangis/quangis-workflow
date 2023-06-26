@@ -108,8 +108,11 @@ def task_transformations():
     """Produce transformation graphs for workflows."""
 
     def action(dependencies, targets) -> bool:
+        from rdflib import Graph
         wf, tfm = dependencies[0], targets[0]
-        read_transformation(wf).serialize(tfm)
+        tools = Graph()
+        tools.parse(DATA / "tools" / "abstract.ttl")
+        read_transformation(wf, tools).serialize(tfm)
         return True
 
     destdir = BUILD / "transformations"
@@ -288,8 +291,11 @@ def task_wf_generate_transformations():
     destdir = BUILD / "transformations" / "gen"
 
     def action(dependencies, targets) -> bool:
+        from rdflib import Graph
+        tools = Graph()
+        tools.parse(BUILD / "tools" / "abstract.ttl")
         wf, tfm = dependencies[0], targets[0]
-        read_transformation(wf).serialize(tfm)
+        read_transformation(wf, tools).serialize(tfm)
         return True
 
     for name, inputs, outputs in generated_workflow_names():

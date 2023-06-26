@@ -17,13 +17,11 @@ from transforge.namespace import TF, shorten
 from transforge.workflow import WorkflowGraph
 from transforge.util.store import TransformationStore
 from quangis.cct import cct
+from quangis.namespace import bind_all
 from typing import Mapping, Iterator, TextIO
 
 ROOT = Path(__file__).parent.parent
 BUILD_DIR = ROOT / "build"
-
-tools = Graph()
-tools.parse(ROOT / "data" / "tools" / "abstract.ttl")
 
 def write_csv_summary(handle: TextIO,
         expect: Mapping[URIRef, set[URIRef]],
@@ -66,15 +64,23 @@ def write_csv_summary(handle: TextIO,
         w.writerow({"Precision": "?", "Recall": "?"})
 
 
-def read_transformation(wf_path: Path,
+def read_transformation(wf_path: Path, tools: Graph,
         format: str | None = None, **kwargs) -> TransformationGraph:
     """Read a single workflow into a transformation graph."""
     wg = WorkflowGraph(cct, tools)
     wg.parse(wf_path, format=format or guess_format(str(wf_path)))
-    wg.refresh()
+
     g = TransformationGraph(cct, **kwargs)
-    g.add_workflow(wg)
-    g += wg
+    try:
+        wg.refresh()
+    except ValueError:
+        # Graph is empty, so do nothing
+        # TODO detect this properly
+        pass
+    else:
+        g.add_workflow(wg)
+        g += wg
+    bind_all(g)
     return g
 
 
