@@ -39,7 +39,7 @@ BQUERIES = BUILD / "queries"
 
 # These are the workflows as generated from Eric's GraphML. That process should 
 # eventually be ran from here too...
-CWORKFLOWS = list((DATA / "workflows-concrete").glob("*.ttl"))
+CWORKFLOWS = list((DATA / "workflows" / "concrete").glob("*.ttl"))
 
 STORE_URL = "http://192.168.56.1:8000"
 STORE_USER = ("user", "password")
@@ -218,7 +218,7 @@ def task_tool_repo_update():
 def task_wf_abstract():
     """Produce abstract workflows from concrete workflows."""
 
-    destdir = BUILD / "abstract"
+    destdir = BUILD / "workflows" / "abstract"
     tools = [
         BUILD / "tools" / "abstract.ttl",
         BUILD / "tools" / "multi.ttl",
@@ -303,6 +303,28 @@ def task_wf_generate_transformations():
         target = destdir / f"{name}.ttl"
         yield dict(
             name=name,
+            file_dep=[src],
+            targets=[target],
+            actions=[(mkdir, [destdir]), action])
+
+def task_wf_abstract_transformations():
+    """Add transformations to abstract workflows."""
+    srcdir = BUILD / "workflows" / "abstract"
+    destdir = BUILD / "transformations" / "abstract"
+
+    def action(dependencies, targets) -> bool:
+        from rdflib import Graph
+        tools = Graph()
+        tools.parse(BUILD / "tools" / "abstract.ttl")
+        wf, tfm = dependencies[0], targets[0]
+        read_transformation(wf, tools).serialize(tfm)
+        return True
+
+    for wf in CWORKFLOWS:
+        src = srcdir / f"{wf.stem}.ttl"
+        target = destdir / f"{wf.stem}.ttl"
+        yield dict(
+            name=wf.stem,
             file_dep=[src],
             targets=[target],
             actions=[(mkdir, [destdir]), action])
