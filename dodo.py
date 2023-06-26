@@ -3,6 +3,7 @@
 # PASSWORD = read('password')
 
 # from itertools import product
+import functools
 from pathlib import Path
 # from transforge.util.utils import write_graphs
 from transforge.util.store import TransformationStore
@@ -42,6 +43,50 @@ CWORKFLOWS = list((DATA / "workflows-concrete").glob("*.ttl"))
 
 STORE_URL = "http://192.168.56.1:8000"
 STORE_USER = ("user", "password")
+
+
+def generated_workflow_names():
+    from rdflib.graph import Graph
+    from rdflib.namespace import Namespace, RDF
+    from rdflib.term import URIRef
+    from quangis.ccd import ccd
+    from quangis.polytype import Polytype
+    from quangis.namespace import CCD
+
+    # Find sources and goals from configuration
+    confgraph = Graph()
+    confgraph.parse(IOCONFIG)
+    base = Namespace(IOCONFIG.parent.absolute().as_uri() + "/")
+
+    sources = [
+        list(y for y in confgraph.objects(x, RDF.type)
+            if isinstance(y, URIRef))
+        for x in confgraph.objects(None, base.input)]
+
+    goals = [
+        list(y for y in confgraph.objects(x, RDF.type)
+            if isinstance(y, URIRef))
+        for x in confgraph.objects(None, base.output)]
+
+    # To start with, we generate workflows with two inputs and one output, 
+    # of which one input is drawn from the following sources, and the other 
+    # is the same as the output without the measurement level.
+    inputs_outputs = []
+    for goal_tuple in goals:
+        goal = Polytype.project(ccd.dimensions, goal_tuple)
+        source1 = Polytype(ccd.dimensions, goal)
+        source1[CCD.NominalA] = {CCD.NominalA}
+        for source_tuple in sources:
+            source2 = Polytype.project(ccd.dimensions, source_tuple)
+            inputs_outputs.append(([source1, source2], [goal]))
+
+    # Finally add names
+    for inputs, outputs in inputs_outputs:
+        namei = "-".join(sorted(i.canonical_name() for i in inputs))
+        nameo = "-".join(sorted(o.canonical_name() for o in outputs))
+        name = f"{namei}--{nameo}"
+        yield name, inputs, outputs
+
 
 def task_vocab_cct():
     """Produce CCT vocabulary file."""
@@ -205,78 +250,56 @@ def task_wf_generate():
     destdir = BUILD / "workflows" / "gen"
     apedir = BUILD / "ape"
 
-    def make_targets():
-        from rdflib.graph import Graph
-        from rdflib.namespace import Namespace, RDF
-        from rdflib.term import URIRef
-        from quangis.ccd import ccd
-        from quangis.polytype import Polytype
-        from quangis.namespace import CCD
-
-        # Read configuration graph
-        confgraph = Graph()
-        confgraph.parse(IOCONFIG)
-        base = Namespace(IOCONFIG.parent.absolute().as_uri() + "/")
-
-        sources = [
-            list(y for y in confgraph.objects(x, RDF.type)
-                if isinstance(y, URIRef))
-            for x in confgraph.objects(None, base.input)]
-
-        goals = [
-            list(y for y in confgraph.objects(x, RDF.type)
-                if isinstance(y, URIRef))
-            for x in confgraph.objects(None, base.output)]
-
-        # To start with, we generate workflows with two inputs and one output, 
-        # of which one input is drawn from the following sources, and the other 
-        # is the same as the output without the measurement level.
-        inputs_outputs = []
-        for goal_tuple in goals:
-            goal = Polytype.project(ccd.dimensions, goal_tuple)
-            source1 = Polytype(ccd.dimensions, goal)
-            source1[CCD.NominalA] = {CCD.NominalA}
-            for source_tuple in sources:
-                source2 = Polytype.project(ccd.dimensions, source_tuple)
-                inputs_outputs.append(([source1, source2], [goal]))
-
-        # Finally add names
-        for inputs, outputs in inputs_outputs:
-            namei = "-".join(sorted(i.canonical_name() for i in inputs))
-            nameo = "-".join(sorted(o.canonical_name() for o in outputs))
-            name = f"{namei}--{nameo}"
-            print(name)
-            yield name, inputs, outputs
-
-    def action(target, inputs, outputs) -> bool:
-        from rdflib import Graph
+    @functools.cache
+    def generator():
         from quangis.synthesis import WorkflowGenerator
-        from quangis.namespace import WFGEN
-
         gen = WorkflowGenerator(BUILD / "tools" / "abstract.ttl",
             BUILD / "tools" / "multi.ttl",
             DATA / "tools" / "arcgis.ttl", build_dir=apedir)
+        return gen
 
+    def action(target, inputs, outputs) -> bool:
+        from rdflib import Graph
+        from quangis.namespace import WFGEN, bind_all
+
+        gen = generator()
         solutions = Graph()
-        for i, solution in enumerate(gen.run(inputs, outputs, solutions=1, 
-                prefix=WFGEN[name]), start=1):
-            solutions += solution
+        for wf in gen.run(inputs, outputs, solutions=1, prefix=WFGEN[name]):
+            solutions += wf
+        bind_all(solutions)
         solutions.serialize(target, format="ttl")
 
         return True
 
-    for name, inputs, outputs in list(make_targets()):
+    for name, inputs, outputs in generated_workflow_names():
         target = destdir / f"{name}.ttl"
         yield dict(
             name=name,
-            file_dep=[IOCONFIG,
-                BUILD / "tools" / "abstract.ttl",
+            file_dep=[BUILD / "tools" / "abstract.ttl",
                 BUILD / "tools" / "multi.ttl",
                 DATA / "tools" / "arcgis.ttl"],
             targets=[target],
             actions=[(mkdir, [destdir, apedir]),
-                (action, [target, inputs, outputs])],
-        )
+                (action, [target, inputs, outputs])])
+
+def task_wf_generate_transformations():
+    """Add transformations to synthesized workflows."""
+    srcdir = BUILD / "workflows" / "gen"
+    destdir = BUILD / "transformations" / "gen"
+
+    def action(dependencies, targets) -> bool:
+        wf, tfm = dependencies[0], targets[0]
+        read_transformation(wf).serialize(tfm)
+        return True
+
+    for name, inputs, outputs in generated_workflow_names():
+        src = srcdir / f"{name}.ttl"
+        target = destdir / f"{name}.ttl"
+        yield dict(
+            name=name,
+            file_dep=[src],
+            targets=[target],
+            actions=[(mkdir, [destdir]), action])
 
 def task_test():
     """Run all tests."""
