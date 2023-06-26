@@ -4,6 +4,7 @@ build/*.rdf
 build/*.ttl
 build/*.jar
 .doit.db
+.doit.db.db
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
