@@ -13,7 +13,11 @@ from quangis.tools.repo import ToolRepository, IntegrityError
 
 def mkdir(*paths: Path):
     for path in paths:
-        path.mkdir(exist_ok=True, parents=True)
+        try:
+            if not path.exists():
+                path.mkdir(parents=True)
+        except AttributeError:
+            pass
 
 # TODO see https://github.com/pydoit/doit/issues/254: dependencies[i] might not 
 # behave as expected
@@ -23,23 +27,16 @@ DOIT_CONFIG = {'default_tasks': [], 'continue': True}  # type: ignore
 
 ROOT = Path(__file__).parent
 DATA = ROOT / "data"
+BUILD = ROOT / "build"
 IOCONFIG = DATA / "ioconfig.ttl"
 
 # Source files
 TOOLS = list((DATA / "tools").glob("*.ttl"))
 TASKS = list((DATA / "tasks").glob("*.ttl"))
-WORKFLOWS = list((DATA / "workflows").glob("*.ttl"))
-
-# Created files
-BUILD = ROOT / "build"
-BWORKFLOWS = BUILD / "workflows"
-BTRANSFORMATIONS = BUILD / "transformations"
-BTOOLS = BUILD / "tools"
-BQUERIES = BUILD / "queries"
-
+WORKFLOWS = list((DATA / "workflows" / "expert1").glob("*.ttl"))
 # These are the workflows as generated from Eric's GraphML. That process should 
 # eventually be ran from here too...
-CWORKFLOWS = list((DATA / "workflows" / "concrete").glob("*.ttl"))
+CWORKFLOWS = list((DATA / "workflows" / "expert2").glob("*.ttl"))
 
 STORE_URL = "http://192.168.56.1:8000"
 STORE_USER = ("user", "password")
@@ -88,6 +85,12 @@ def generated_workflow_names():
         yield name, inputs, outputs
 
 
+GENERATED_WORKFLOWS_INCL = list(generated_workflow_names())
+GEN_WORKFLOWS = [BUILD / "workflows" / "gen" / f"{wf[0]}.ttl"
+    for wf in GENERATED_WORKFLOWS_INCL]
+
+ALL_WORKFLOWS = WORKFLOWS + CWORKFLOWS + GEN_WORKFLOWS
+
 def task_vocab_cct():
     """Produce CCT vocabulary file."""
 
@@ -105,7 +108,7 @@ def task_vocab_cct():
     )
 
 def task_transformations():
-    """Produce transformation graphs for workflows."""
+    """Produce all transformation graphs for workflows."""
 
     def action(dependencies, targets) -> bool:
         from rdflib import Graph
@@ -115,12 +118,25 @@ def task_transformations():
         read_transformation(wf, tools).serialize(tfm)
         return True
 
-    destdir = BUILD / "transformations"
-    for wf in WORKFLOWS:
-        yield dict(name=wf.stem,
-            file_dep=[wf],
-            targets=[destdir / f"{wf.stem}.ttl"],
+    dest = BUILD / "transformations"
+    for path in ALL_WORKFLOWS:
+        destdir = dest / f"{path.parent.stem}"
+        yield dict(name=path.stem,
+            file_dep=[path],
+            targets=[destdir / f"{path.stem}.ttl"],
             actions=[(mkdir, [destdir]), action])
+
+def task_transformations_expert1():
+    return dict(task_dep=[f"transformations:{x.stem}" for x in WORKFLOWS],
+        actions=None)
+
+def task_transformations_expert2():
+    return dict(task_dep=[f"transformations:{x.stem}" for x in CWORKFLOWS],
+        actions=None)
+
+def task_transformations_gen():
+    return dict(task_dep=[f"transformations:{x.stem}" for x in GEN_WORKFLOWS],
+        actions=None)
 
 def task_transformations_dot():
     """Visualizations of transformation graphs."""
@@ -274,7 +290,7 @@ def task_wf_generate():
 
         return True
 
-    for name, inputs, outputs in generated_workflow_names():
+    for name, inputs, outputs in GENERATED_WORKFLOWS_INCL:
         target = destdir / f"{name}.ttl"
         yield dict(
             name=name,
@@ -284,50 +300,6 @@ def task_wf_generate():
             targets=[target],
             actions=[(mkdir, [destdir, apedir]),
                 (action, [target, inputs, outputs])])
-
-def task_wf_generate_transformations():
-    """Add transformations to synthesized workflows."""
-    srcdir = BUILD / "workflows" / "gen"
-    destdir = BUILD / "transformations" / "gen"
-
-    def action(dependencies, targets) -> bool:
-        from rdflib import Graph
-        tools = Graph()
-        tools.parse(BUILD / "tools" / "abstract.ttl")
-        wf, tfm = dependencies[0], targets[0]
-        read_transformation(wf, tools).serialize(tfm)
-        return True
-
-    for name, inputs, outputs in generated_workflow_names():
-        src = srcdir / f"{name}.ttl"
-        target = destdir / f"{name}.ttl"
-        yield dict(
-            name=name,
-            file_dep=[src],
-            targets=[target],
-            actions=[(mkdir, [destdir]), action])
-
-def task_wf_abstract_transformations():
-    """Add transformations to abstract workflows."""
-    srcdir = BUILD / "workflows" / "abstract"
-    destdir = BUILD / "transformations" / "abstract"
-
-    def action(dependencies, targets) -> bool:
-        from rdflib import Graph
-        tools = Graph()
-        tools.parse(BUILD / "tools" / "abstract.ttl")
-        wf, tfm = dependencies[0], targets[0]
-        read_transformation(wf, tools).serialize(tfm)
-        return True
-
-    for wf in CWORKFLOWS:
-        src = srcdir / f"{wf.stem}.ttl"
-        target = destdir / f"{wf.stem}.ttl"
-        yield dict(
-            name=wf.stem,
-            file_dep=[src],
-            targets=[target],
-            actions=[(mkdir, [destdir]), action])
 
 def task_test():
     """Run all tests."""
@@ -343,10 +315,7 @@ def task_test_unittest():
         import pytest
         pytest.main(list((ROOT / "tests").glob("test_*.py")))
 
-    return dict(
-        actions=[action],
-        verbosity=2
-    )
+    return dict(actions=[action], verbosity=2)
 
 def task_test_tool_repo():
     """Check integrity of tool file."""
