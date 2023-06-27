@@ -23,7 +23,7 @@ def mkdir(*paths: Path):
 # behave as expected
 
 
-DOIT_CONFIG = {'default_tasks': [] }  #, 'continue': True}  # type: ignore
+DOIT_CONFIG = {'default_tasks': [], 'continue': True}  # type: ignore
 
 ROOT = Path(__file__).parent
 DATA = ROOT / "data"
@@ -144,7 +144,7 @@ def task_tfm_gen():
     return dict(task_dep=[f"tfm:{x.stem}" for x in GEN_WORKFLOWS],
         actions=None)
 
-def task_viz_dot_tfm_expert1():
+def task_viz_dot():
     """Visualizations of transformation graphs."""
 
     def action(dependencies, targets) -> bool:
@@ -155,14 +155,15 @@ def task_viz_dot_tfm_expert1():
         g.visualize(targets[0])
         return True
 
-    destdir = BUILD / "transformations"
-    for wf in WORKFLOWS:
-        yield dict(name=wf.stem,
-            file_dep=[destdir / f"{wf.stem}.ttl"],
-            targets=[destdir / f"{wf.stem}.dot"],
+    for path in ALL_WORKFLOWS:
+        srcdir = BUILD / "transformations" / f"{path.parent.stem}"
+        destdir = BUILD / "visualizations" / f"{path.parent.stem}"
+        yield dict(name=path.stem,
+            file_dep=[srcdir / f"{path.stem}.ttl"],
+            targets=[destdir / f"{path.stem}.dot"],
             actions=[(mkdir, [destdir]), action])
 
-def task_viz_pdf_tfm_expert1():
+def task_viz_pdf():
     """Visualizations of transformation graphs as a PDF."""
 
     def action(dependencies, targets) -> bool:
@@ -173,11 +174,24 @@ def task_viz_pdf_tfm_expert1():
 
     destdir = BUILD / "transformations"
 
-    for wf in WORKFLOWS:
-        yield dict(name=wf.stem,
-            file_dep=[destdir / f"{wf.stem}.dot"],
-            targets=[destdir / f"{wf.stem}.pdf"],
+    for path in ALL_WORKFLOWS:
+        destdir = BUILD / "visualizations" / f"{path.parent.stem}"
+        yield dict(name=path.stem,
+            file_dep=[destdir / f"{path.stem}.dot"],
+            targets=[destdir / f"{path.stem}.pdf"],
             actions=[(mkdir, [destdir]), action])
+
+def task_viz_pdf_expert1():
+    return dict(task_dep=[f"viz_pdf:{x.stem}" for x in WORKFLOWS],
+        actions=None)
+
+def task_viz_pdf_expert2():
+    return dict(task_dep=[f"viz_pdf:{x.stem}" for x in CWORKFLOWS],
+        actions=None)
+
+def task_viz_pdf_gen():
+    return dict(task_dep=[f"viz_pdf:{x.stem}" for x in GEN_WORKFLOWS],
+        actions=None)
 
 def task_eval_tasks():
     """Evaluate workflows' transformations against tasks.
@@ -254,8 +268,6 @@ def task_wf_expert2():
         repo = ToolRepository.from_file(*tools, check_integrity=False)
 
         cwf = Workflow.from_file(wf_path)
-        print(cwf.serialize())
-
         g = repo.convert_to_abstractions(cwf, cwf.root)
         g.serialize(target, format="ttl")
 
