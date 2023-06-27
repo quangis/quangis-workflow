@@ -116,7 +116,9 @@ def task_tfm():
 
     def action(dependencies, targets) -> bool:
         from rdflib import Graph
-        wf, tfm = dependencies[0], targets[0]
+        # Quick workaround for https://github.com/pydoit/doit/issues/254
+        wf = next(x for x in dependencies if not x.endswith("abstract.ttl"))
+        tfm = targets[0]
         tools = Graph()
         tools.parse(BUILD / "tools" / "abstract.ttl")
         read_transformation(wf, tools).serialize(tfm)
