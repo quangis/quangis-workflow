@@ -12,7 +12,7 @@ _:RegionalPopulationCounts
 
 <https://example.com/task/InfrastructureAccessShikoku> a :Task;
     # :question "What is the percentage of rural population within 2km distance to all-season roads in Shikoku, Japan?";
-    :implementation <https://quangis.github.io/workflows/expert/InfrastructureAccessShikoku>;
+    :implementation <https://quangis.github.io/workflows/expert1/InfrastructureAccessShikoku>;
     :input _:Roads, _:AdminstrativeAreas, _:RegionalPopulationCounts;
     :output [
         # Proportion of rural areas close to roads wrt total rural population

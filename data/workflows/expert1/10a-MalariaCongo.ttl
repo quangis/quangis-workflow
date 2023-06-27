@@ -6,7 +6,7 @@
 @prefix dct: <http://purl.org/dc/terms/>.
 @prefix wf: <http://geographicknowledge.de/vocab/Workflow.rdf#>.
 @prefix abstr: <https://quangis.github.io/tool/abstract#>.
-@prefix repo: <https://quangis.github.io/workflows/expert/>.
+@prefix repo: <https://quangis.github.io/workflows/expert1/>.
 
 # [SC] data prefix
 @prefix rfdataM: <https://learn.arcgis.com/en/projects/monitor-malaria-epidemics/#>.

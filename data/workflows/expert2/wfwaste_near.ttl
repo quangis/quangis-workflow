@@ -6,7 +6,7 @@
 @prefix tools: <https://quangis.github.io/tool#> .
 @prefix wf: <http://geographicknowledge.de/vocab/Workflow.rdf#> .
 
-<https://quangis.github.io/workflows/expert/wfwaste_near> wf:applicationOf [ a 
+<https://quangis.github.io/workflows/expert2/wfwaste_near> wf:applicationOf [ a 
             wf:Workflow ;
             rdfs:label "wfwaste_near" ;
             wf:edge [ wf:applicationOf tools:SelectLayerByAttribute ;

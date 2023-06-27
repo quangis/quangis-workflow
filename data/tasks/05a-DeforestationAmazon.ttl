@@ -12,7 +12,7 @@ _:DeforestedArea
 
 <https://example.com/task/DeforestationAmazon> a :Task;
     # :question "What is the impact of roads on deforestation in the Amazon rainforest?";
-    :implementation <https://quangis.github.io/workflows/expert/DeforestationAmazon>;
+    :implementation <https://quangis.github.io/workflows/expert1/DeforestationAmazon>;
     :input _:ExistingRoads, _:PlannedRoads, _:DeforestedArea;
     :output [
         # Size of the area covered by the land use field

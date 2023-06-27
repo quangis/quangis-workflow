@@ -6,7 +6,7 @@
 @prefix tools: <https://quangis.github.io/tool#> .
 @prefix wf: <http://geographicknowledge.de/vocab/Workflow.rdf#> .
 
-<https://quangis.github.io/workflows/expert/wffood> wf:applicationOf [ a 
+<https://quangis.github.io/workflows/expert2/wffood> wf:applicationOf [ a 
             wf:Workflow ;
             rdfs:label "wffood" ;
             wf:edge _:n10,
