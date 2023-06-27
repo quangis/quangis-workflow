@@ -89,7 +89,11 @@ GENERATED_WORKFLOWS_INCL = list(generated_workflow_names())
 GEN_WORKFLOWS = [BUILD / "workflows" / "gen" / f"{wf[0]}.ttl"
     for wf in GENERATED_WORKFLOWS_INCL]
 
-ALL_WORKFLOWS = WORKFLOWS + CWORKFLOWS + GEN_WORKFLOWS
+ALL_WORKFLOWS = []
+ALL_WORKFLOWS += WORKFLOWS
+ALL_WORKFLOWS += [BUILD / "workflows" / "expert2" / f"{wf.stem}.ttl"
+    for wf in CWORKFLOWS]
+ALL_WORKFLOWS += GEN_WORKFLOWS
 
 def task_vocab_cct():
     """Produce CCT vocabulary file."""
@@ -114,7 +118,7 @@ def task_tfm():
         from rdflib import Graph
         wf, tfm = dependencies[0], targets[0]
         tools = Graph()
-        tools.parse(DATA / "tools" / "abstract.ttl")
+        tools.parse(BUILD / "tools" / "abstract.ttl")
         read_transformation(wf, tools).serialize(tfm)
         return True
 
@@ -122,7 +126,7 @@ def task_tfm():
     for path in ALL_WORKFLOWS:
         destdir = dest / f"{path.parent.stem}"
         yield dict(name=path.stem,
-            file_dep=[path],
+            file_dep=[path, BUILD / "tools" / "abstract.ttl"],
             targets=[destdir / f"{path.stem}.ttl"],
             actions=[(mkdir, [destdir]), action])
 
