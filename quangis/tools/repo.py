@@ -131,7 +131,17 @@ class ToolRepository(object):
         bind_all(g, default=TOOL)
 
         assert (root, RDF.type, WF.Workflow) in wf
-        g.add((root, RDF.type, WF.Workflow))
+
+        # This is because the root workflow is itself an 'application of' 
+        # (subworkflow of) another workflow in Eric's usage
+        if isinstance(root, URIRef):
+            root_real = root
+        else:
+            root2 = wf.value(None, WF.applicationOf, root, any=False)
+            assert isinstance(root2, URIRef)
+            root_real = root2
+
+        g.add((root_real, RDF.type, WF.Workflow))
 
         counter = count()
         map: dict[Node, BNode] = defaultdict(
@@ -140,14 +150,14 @@ class ToolRepository(object):
         inputs, outputs = wf.io(root)
         for i, artefact in enumerate(inputs, start=1):
             map[artefact] = BNode(f"in{i}")
-            g.add((root, WF.source, map[artefact]))
+            g.add((root_real, WF.source, map[artefact]))
         for artefact in outputs:
-            g.add((root, WF.target, map[artefact]))
+            g.add((root_real, WF.target, map[artefact]))
 
         for orig_action, tool, sig in self.signed_actions(wf, root):
             assert sig.uri
             action = BNode()
-            g.add((root, WF.edge, action))
+            g.add((root_real, WF.edge, action))
             g.add((action, WF.applicationOf, sig.uri))
             for i, artefact in enumerate(
                     wf.inputs(orig_action, labelled=True), start=1):
