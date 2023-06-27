@@ -23,7 +23,7 @@ def mkdir(*paths: Path):
 # behave as expected
 
 
-DOIT_CONFIG = {'default_tasks': [], 'continue': True}  # type: ignore
+DOIT_CONFIG = {'default_tasks': [] }  #, 'continue': True}  # type: ignore
 
 ROOT = Path(__file__).parent
 DATA = ROOT / "data"
@@ -107,7 +107,7 @@ def task_vocab_cct():
         actions=[(mkdir, [BUILD]), action]
     )
 
-def task_transformations():
+def task_tfm():
     """Produce all transformation graphs for workflows."""
 
     def action(dependencies, targets) -> bool:
@@ -126,19 +126,19 @@ def task_transformations():
             targets=[destdir / f"{path.stem}.ttl"],
             actions=[(mkdir, [destdir]), action])
 
-def task_transformations_expert1():
-    return dict(task_dep=[f"transformations:{x.stem}" for x in WORKFLOWS],
+def task_tfm_expert1():
+    return dict(task_dep=[f"tfm:{x.stem}" for x in WORKFLOWS],
         actions=None)
 
-def task_transformations_expert2():
-    return dict(task_dep=[f"transformations:{x.stem}" for x in CWORKFLOWS],
+def task_tfm_expert2():
+    return dict(task_dep=[f"tfm:{x.stem}" for x in CWORKFLOWS],
         actions=None)
 
-def task_transformations_gen():
-    return dict(task_dep=[f"transformations:{x.stem}" for x in GEN_WORKFLOWS],
+def task_tfm_gen():
+    return dict(task_dep=[f"tfm:{x.stem}" for x in GEN_WORKFLOWS],
         actions=None)
 
-def task_transformations_dot():
+def task_viz_dot_tfm_expert1():
     """Visualizations of transformation graphs."""
 
     def action(dependencies, targets) -> bool:
@@ -156,7 +156,7 @@ def task_transformations_dot():
             targets=[destdir / f"{wf.stem}.dot"],
             actions=[(mkdir, [destdir]), action])
 
-def task_transformations_pdf():
+def task_viz_pdf_tfm_expert1():
     """Visualizations of transformation graphs as a PDF."""
 
     def action(dependencies, targets) -> bool:
@@ -231,10 +231,10 @@ def task_tool_repo_update():
         actions=[(mkdir, [destdir]), action]
     )
 
-def task_wf_abstract():
+def task_wf_expert2():
     """Produce abstract workflows from concrete workflows."""
 
-    destdir = BUILD / "workflows" / "abstract"
+    destdir = BUILD / "workflows" / "expert2"
     tools = [
         BUILD / "tools" / "abstract.ttl",
         BUILD / "tools" / "multi.ttl",
@@ -263,7 +263,7 @@ def task_wf_abstract():
                 (action, [wf, destdir / wf.name])]
         )
 
-def task_wf_generate():
+def task_wf_gen():
     """Synthesize new abstract workflows using APE."""
 
     destdir = BUILD / "workflows" / "gen"

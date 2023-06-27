@@ -35,15 +35,16 @@ evaluations. Abstract workflows can also be generated (see below).
 Abstract and concrete GIS tools are described in the tool database at 
 [`data/tools/`](data/tools/). Furthermore, new abstract tools can be 
 *extracted* from properly annotated concrete workflows. Assuming that 
-concrete workflows in `.ttl` format have been put in the 
-`data/workflows-concrete/` directory, you can do this via:
+concrete workflows in `.ttl` format have been put are in the 
+[`data/workflows/expert2/`](data/workflows/expert2/) directory, you can 
+do this via:
 
     doit tool_repo_update
 
 Assuming that the tool database is up-to-date, the concrete workflow can 
 then be converted into abstract workflows:
 
-    doit wf_abstract
+    doit wf_expert2
 
 
 ## Workflow synthesis
@@ -73,21 +74,22 @@ algebra are defined in the [`quangis/cct.py`](quangis/cct.py) module.
 This information is then weaved into a graph of conceptual 
 transformations via the [`transforge`][tf] library, which was developed 
 for this purpose. To perform this step on the manual abstract workflows 
-of [`data/workflows/`](data/workflows/), run the following:
+of [`data/workflows/expert1/`](data/workflows/expert1/), run the 
+following:
 
-    doit transformations
+    doit tfm_expert1
 
 Or, for a visual representation:
 
-    doit transformations_pdf
+    doit viz_pdf_tfm_expert1
 
 
 ## Evaluation
 
-The [`data/workflows/`](data/workflows/) directory contains workflows 
-that answer particular questions. These questions, in turn, correspond 
-to tasks that are encoded as transformation graphs in the 
-[`data/tasks/`](data/tasks/) directory.
+The [`data/workflows/expert1/`](data/workflows/expert1/) directory 
+contains workflows that answer particular questions. These questions, in 
+turn, correspond to tasks that are encoded as transformation graphs in 
+the [`data/tasks/`](data/tasks/) directory.
 
 These can then be turned into SPARQL queries and fired at a SPARQL 
 endpoint. `rdflib` is not powerful enough to handle the workflow store 
