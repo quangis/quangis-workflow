@@ -295,7 +295,7 @@ def task_wf_gen():
             DATA / "tools" / "arcgis.ttl", build_dir=apedir)
         return gen
 
-    def action(target, inputs, outputs) -> bool:
+    def action(name, target, inputs, outputs) -> bool:
         from rdflib import Graph
         from quangis.namespace import WFGEN, bind_all
 
@@ -317,7 +317,7 @@ def task_wf_gen():
                 DATA / "tools" / "arcgis.ttl"],
             targets=[target],
             actions=[(mkdir, [destdir, apedir]),
-                (action, [target, inputs, outputs])])
+                (action, [name, target, inputs, outputs])])
 
 def task_test():
     """Run all tests."""
