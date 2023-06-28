@@ -121,7 +121,8 @@ class ToolRepository(object):
                     yield from self.signed_actions(wf, impl)
                 else:
                     raise
-            yield action, tool, sig
+            else:
+                yield action, tool, sig
 
     def convert_to_abstractions(self, wf: Workflow, root: Node) -> Graph:
         """Convert a (sub-)workflow that uses concrete tools to a workflow that 
