@@ -422,7 +422,7 @@ class Abstraction(Tool):
         multiple ways to express the same idea (consider `compose f g x` vs 
         `f(g(x))`). Therefore, some manual intervention may be necessary."""
         return (self.cct_p and candidate.cct_p
-            and self.cct_p.match(candidate.cct_p))
+            and self.cct_p.match(candidate.cct_p, strict=False))
 
     def subsumes_input_datatype_permutation(self, other: Abstraction) -> bool:
         """Is there a permutation of inputs so that the other abstraction's 

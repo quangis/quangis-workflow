@@ -152,11 +152,17 @@ class Workflow(Graph):
 
         return ginputs, goutputs
 
-    def high_level_actions(self, root: Node) -> Iterator[Node]:
+    def high_level_actions(self, root: Node) -> set[Node]:
+        """Actions that are part of the root workflow, but not also part of any 
+        of its subworkflows."""
         assert (root, RDF.type, WF.Workflow) in self
-        for action in self.objects(root, WF.edge):
-            if tuple(self.subjects(WF.edge, action)) == (root,):
-                yield action
+        actions = set(self.objects(root, WF.edge))
+        subactions = set(subaction
+            for action in actions
+            for subwf in self.objects(action, WF.applicationOf)
+            for subaction in self.objects(subwf, WF.edge)
+        )
+        return actions - subactions
 
     def low_level_actions(self, root: Node) -> Iterator[Node]:
         assert (root, RDF.type, WF.Workflow) in self

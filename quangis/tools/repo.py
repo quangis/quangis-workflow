@@ -118,6 +118,7 @@ class ToolRepository(object):
                 sig = self.find_abstraction(proposal_sig)
             except ToolNotFoundError:
                 if impl and (impl, RDF.type, WF.Workflow) in wf:
+                    # print(f"Descending into {wf.value(impl, RDFS.label)}")
                     yield from self.signed_actions(wf, impl)
                 else:
                     raise
