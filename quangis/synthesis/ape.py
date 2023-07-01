@@ -129,7 +129,7 @@ class APE(object):
             solutions: int = 10,
             timeout: int = 600,
             use_workflow_input: typing.Literal["NONE", "ONE", "ALL"] = "ALL",
-            output_dir: Path = Path(".")) -> Iterator[Workflow]:
+            output_dir: Path = Path(".")) -> Iterator[Graph]:
 
         inputs = self.type_array(False, inputs)
         outputs = self.type_array(True, outputs)
@@ -153,7 +153,7 @@ class APE(object):
 
         for i in range(result.getNumberOfSolutions()):
             uri: URIRef = prefix + str(i + 1)
-            wf = Workflow(uri)
+            wf = _Workflow(uri)
             wf.add_wf(result.get(i))
             yield wf
 
@@ -161,7 +161,7 @@ class APE(object):
 WF = Namespace("http://geographicknowledge.de/vocab/Workflow.rdf#")
 
 
-class Workflow(Graph):
+class _Workflow(Graph):
     """
     A single solution workflow represented as an RDF graph in the
     <http://geographicknowledge.de/vocab/Workflow.rdf#> namespace.
