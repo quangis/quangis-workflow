@@ -3,6 +3,7 @@
 # PASSWORD = read('password')
 
 # from itertools import product
+import sys
 import functools
 from pathlib import Path
 # from transforge.util.utils import write_graphs
@@ -18,6 +19,12 @@ def mkdir(*paths: Path):
                 path.mkdir(parents=True)
         except AttributeError:
             pass
+
+@functools.cache
+def transformation_store() -> TransformationStore:
+    return TransformationStore.backend('marklogic', STORE_URL,
+        cred=STORE_USER)
+
 
 # TODO see https://github.com/pydoit/doit/issues/254: dependencies[i] might not 
 # behave as expected
@@ -144,6 +151,33 @@ def task_tfm_gen():
     return dict(task_dep=[f"tfm:{x.stem}" for x in GEN_WORKFLOWS],
         actions=None)
 
+def task_upload():
+    """Send transformation graphs to MarkLogic."""
+
+    def action(dependencies):
+        from quangis.cct import cct
+        from transforge.graph import TransformationGraph
+        store = transformation_store()
+        for d in dependencies:
+            sys.stderr.write(f"Uploading {d}...\n")
+            g = TransformationGraph(cct)
+            g.parse(d)
+            result = store.put(g)
+            sys.stderr.write(f"Uploaded with {result}...\n")
+
+    return dict(
+        file_dep=[
+            BUILD / "transformations" / f"{x.parent.stem}" / f"{x.stem}.ttl"
+            for x in CWORKFLOWS] + [
+            BUILD / "transformations" / f"{x.parent.stem}" / f"{x.stem}.ttl"
+            for x in WORKFLOWS
+        ],
+        actions=[action],
+        uptodate=[False],
+        verbosity=2
+    )
+
+
 def task_viz_dot():
     """Visualizations of transformation graphs."""
 
@@ -199,10 +233,8 @@ def task_eval_tasks():
 
     destdir = BUILD / "eval_tasks"
 
-    store = TransformationStore.backend('marklogic', STORE_URL,
-        cred=STORE_USER)
-
     def action(variant, kwargsg, kwargsq) -> bool:
+        store = transformation_store()
         workflows = upload(WORKFLOWS, store, **kwargsg)
         expect, actual = query(TASKS, store, **kwargsq)
         with open(destdir / f"{variant}.csv") as f:
