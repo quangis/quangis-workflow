@@ -355,7 +355,7 @@ class ToolRepository(object):
                     f"Number of inputs doesn't correspond for {n3(tool)}")
 
             # Find tool inputs
-            tool_labels, tool_types = zip(*((label, artefact.type)
+            tool_labels, tool_types = zip(*((label, artefact.type.projection())
                 for label, artefact in abstr.inputs.items()
             ))
 
