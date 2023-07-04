@@ -204,18 +204,16 @@ class _Workflow(Graph):
             self.add((self.root, WF.edge, app))
             self.add((app, WF.applicationOf, tool))
 
-            in_preds = (WF.input1, WF.input2, WF.input3)
-            for in_pred, type in zip(in_preds, module.getInputTypes()):
+            for type in module.getInputTypes():
                 resource = self.add_resource(type)
-                self.add((app, in_pred, resource))
+                self.add((app, WF.inputx, resource))
 
-            out_preds = (WF.output, WF.output2, WF.output3)
-            for out_pred, type in zip(out_preds, module.getOutputTypes()):
+            for type in module.getOutputTypes():
                 # Workaround: there's often an empty output for some reason
                 if not list(type.getTypes()):
                     break
                 resource = self.add_resource(type)
-                self.add((app, out_pred, resource))
+                self.add((app, WF.output, resource))
 
             return app
 

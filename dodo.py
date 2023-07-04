@@ -327,14 +327,20 @@ def task_wf_gen():
             DATA / "tools" / "arcgis.ttl", build_dir=apedir)
         return gen
 
+    @functools.cache
+    def tool_repo():
+        return ToolRepository.from_file(BUILD / "tools" / "abstract.ttl", 
+            check_integrity=True)
+
     def action(name, target, inputs, outputs) -> bool:
         from rdflib import Graph
         from quangis.namespace import WFGEN, bind_all
 
+        repo = tool_repo()
         gen = generator()
         solutions = Graph()
         for wf in gen.run(inputs, outputs, solutions=1, prefix=WFGEN[name]):
-            solutions += wf
+            solutions += repo.input_permutation_hack(wf)
         bind_all(solutions)
         solutions.serialize(target, format="ttl")
 

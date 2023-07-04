@@ -200,6 +200,9 @@ class Polytype(MutableMapping[URIRef, set[URIRef]]):
             for ts in self.lexical()
         )
 
+    def projection(self) -> Polytype:
+        return Polytype.project(self.dimensions.values(), self.uris())
+
     @staticmethod
     def project(dimensions: Iterable[Dimension],
             types: Iterable[Node]) -> Polytype:
