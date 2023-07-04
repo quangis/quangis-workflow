@@ -173,7 +173,7 @@ def task_upload():
     return dict(
         file_dep=[
             BUILD / "transformations" / f"{x.parent.stem}" / f"{x.stem}.ttl"
-            for x in CWORKFLOWS if x.stem != "wfwalk_residentialdensity"] + [
+            for x in CWORKFLOWS] + [
             BUILD / "transformations" / f"{x.parent.stem}" / f"{x.stem}.ttl"
             for x in WORKFLOWS
         ],

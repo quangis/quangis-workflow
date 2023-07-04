@@ -19,7 +19,7 @@
                     cct:expression "revert (select eq (invert (1: Field(Nom)): Coverages(Nom)) (-: Nom))" ],
                 [ wf:applicationOf tools:SummarizeWithin ;
                     wf:input1 _:residential_area ;
-                    wf:input2 _:buurten ;
+                    wf:input2 _:Amsterdam_buurt ;
                     wf:output _:buurten_HH_RA ;
                     rdfs:comment "Sum residential area size in each neighbourhood" ;
                     cct:expression """    1: Field(Nom);
@@ -82,6 +82,10 @@
     wf:output _:buurten_res_dens ;
     rdfs:comment "What is the proportion of area covered by residential landuse for each neighbourhood in Amsterdam?" .
 
+_:buurten a ccd:NominalA,
+        ccd:ObjectQ,
+        ccd:VectorTessellationA .
+
 _:buurten_HH_RA2 a ccd:ObjectQ,
         ccd:VectorTessellationA .
 
@@ -134,10 +138,6 @@ _:Amsterdam_land a ccd:FieldQ,
         ccd:VectorTessellationA ;
     rdfs:comment "Land use dataset of Amsterdam" .
 
-_:buurten a ccd:NominalA,
-        ccd:ObjectQ,
-        ccd:VectorTessellationA .
-
 _:buurten_res_dens a ccd:ObjectQ,
         ccd:RatioA,
         ccd:VectorTessellationA .
@@ -146,15 +146,15 @@ _:buurten_HH_RA a ccd:ObjectQ,
         ccd:RatioA,
         ccd:VectorTessellationA .
 
-_:Amsterdam_buurt a ccd:NominalA,
-        ccd:ObjectQ,
-        ccd:VectorTessellationA ;
-    rdfs:comment "Vector polygons representing neighborhoods in Amsterdam" .
-
 _:buurten_HH a ccd:CountA,
         ccd:ObjectQ,
         ccd:VectorTessellationA .
 
 _:households a ccd:CountA,
         ccd:ObjectQ .
+
+_:Amsterdam_buurt a ccd:NominalA,
+        ccd:ObjectQ,
+        ccd:VectorTessellationA ;
+    rdfs:comment "Vector polygons representing neighborhoods in Amsterdam" .
 
