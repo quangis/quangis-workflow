@@ -156,12 +156,17 @@ def task_upload():
 
     def action(dependencies):
         from quangis.cct import cct
+        from quangis.namespace import RDF, WF
+        from rdflib import URIRef
         from transforge.graph import TransformationGraph
         store = transformation_store()
         for d in dependencies:
             sys.stderr.write(f"Uploading {d}...\n")
             g = TransformationGraph(cct)
             g.parse(d)
+            root = g.value(None, RDF.type, WF.Workflow, any=False)
+            assert isinstance(root, URIRef)
+            g.uri = root
             result = store.put(g)
             sys.stderr.write(f"Uploaded with {result}...\n")
 
