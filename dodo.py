@@ -1,7 +1,5 @@
 """
 """
-# PASSWORD = read('password')
-
 # from itertools import product
 import sys
 import functools
@@ -19,12 +17,6 @@ def mkdir(*paths: Path):
                 path.mkdir(parents=True)
         except AttributeError:
             pass
-
-@functools.cache
-def transformation_store() -> TransformationStore:
-    return TransformationStore.backend('marklogic', STORE_URL,
-        cred=STORE_USER)
-
 
 # TODO see https://github.com/pydoit/doit/issues/254: dependencies[i] might not 
 # behave as expected
@@ -45,8 +37,16 @@ WORKFLOWS = list((DATA / "workflows" / "expert1").glob("*.ttl"))
 # eventually be ran from here too...
 CWORKFLOWS = list((DATA / "workflows" / "expert2").glob("*.ttl"))
 
-STORE_URL = "http://192.168.56.1:8000"
-STORE_USER = ("user", "password")
+STORE_URL = "https://qanda.soliscom.uu.nl:8000"
+
+
+@functools.cache
+def transformation_store() -> TransformationStore:
+    print(f"Uploading to {STORE_URL}...")
+    username = input("Username: ")
+    password = input("Password: ")
+    return TransformationStore.backend('marklogic', STORE_URL,
+        cred=(username, password))
 
 
 def generated_workflow_names():
@@ -168,7 +168,7 @@ def task_upload():
     return dict(
         file_dep=[
             BUILD / "transformations" / f"{x.parent.stem}" / f"{x.stem}.ttl"
-            for x in CWORKFLOWS] + [
+            for x in CWORKFLOWS if x.stem != "wfwalk_residentialdensity"] + [
             BUILD / "transformations" / f"{x.parent.stem}" / f"{x.stem}.ttl"
             for x in WORKFLOWS
         ],
