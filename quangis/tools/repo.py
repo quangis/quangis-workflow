@@ -385,31 +385,45 @@ class ToolRepository(object):
 
     def check_multi_composed_of_unit_tools(self) -> None:
         """All tools in every multitool are concrete tools."""
+        conflicts: set[Node] = set()
         for uri, multitool in self.multi.items():
             for tool in multitool.all_tools:
                 if tool not in self.unit:
-                    raise IntegrityError(
-                        f"All constituents of a multitool must themselves "
-                        f"be concrete unit tools, but {n3(tool)} inside "
-                        f"{n3(uri)} is not.")
+                    conflicts.add(uri)
+
+        if conflicts:
+            raise IntegrityError(
+                f"All constituents of a multitool must themselves "
+                f"be known concrete unit tools, but this is not the case "
+                f"for {n3(conflicts)}.")
 
     def check_duplicate_unittools(self) -> None:
         """No two unit tools may refer to the same URL."""
+
+        conflicts: set[tuple[Node, Node]] = set()
+
         for n, m in combinations(self.unit.values(), 2):
             for s, u in product(n.url, m.url):
                 if s == u:
-                    raise IntegrityError(
-                        f"The tools {n3(n.uri)} and {n3(m.uri)} "
-                        f"refer to the same URL, namely, {s}")
+                    conflicts.add((n.uri, m.uri))
+
+        if conflicts:
+            raise IntegrityError(
+                "The following tools refer to the same URL: "
+                + "; ".join(f"{n3(c[0])} and {n3(c[1])}" for c in conflicts))
 
     def check_duplicate_multitools(self) -> None:
         """No two multitools may be isomorphic to one another (disregarding 
         IDs)."""
+        conflicts: set[tuple[Node, Node]] = set()
         for n, m in combinations(self.multi.values(), 2):
             if n.match(m):
-                raise IntegrityError(
-                    f"Multitools {n3(n.uri)} and "
-                    f"{n3(m.uri)} are isomorphic.")
+                conflicts.add((n.uri, m.uri))
+
+        if conflicts:
+            raise IntegrityError("; ".join(
+                f"{n3(c[0])} and {n3(c[1])} are isomorphic."
+                for c in conflicts))
 
     def check_implementations_and_abstractions(self) -> None:
         """All abstractions must have at least one implementation; all 
