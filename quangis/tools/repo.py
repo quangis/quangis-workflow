@@ -32,26 +32,26 @@ class ToolRepository(object):
         self.unit: dict[URIRef, Unit] = dict()
         self.multi: dict[URIRef, Multi] = dict()
         self.abstract: dict[URIRef, Abstraction] = dict()
+        self._original: Graph = Graph()
         super().__init__()
 
     @staticmethod
     def from_file(*files: Path,
             check_integrity: bool = True) -> ToolRepository:
-        g = Graph()
-        for file in files:
-            g.parse(file)
-
         repo = ToolRepository()
-        for tool in Unit.from_graph(g):
+        for file in files:
+            repo._original.parse(file)
+
+        for tool in Unit.from_graph(repo._original):
             repo.add(tool)
-        for sig in Abstraction.from_graph(g):
+        for sig in Abstraction.from_graph(repo._original):
             repo.add(sig)
-        for multitool in Multi.from_graph(g):
+        for multitool in Multi.from_graph(repo._original):
             repo.add(multitool)
 
         if check_integrity:
             print(f"Checking integrity of {files}...", file=sys.stderr)
-            if not isomorphic(g, repo.graph()):
+            if not isomorphic(repo._original, repo.graph()):
                 raise RuntimeError(
                     f"Integrity check failed for {files}. It may contain "
                     f"tuples that aren't interpreted by this program, "
