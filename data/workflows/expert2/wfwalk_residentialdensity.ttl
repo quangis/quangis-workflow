@@ -43,13 +43,13 @@
                                 _:n6 ;
                             wf:source _:Amsterdam_buurt,
                                 _:households ;
-                            dct:subject """        1: R2(Obj, Count);
+                            dct:subject """        1: R2(Obj, Reg * Count);
         2: ObjectInfo(_);
         join_attr (get_attrL 2) 1""" ] ;
                     wf:input1 _:households ;
                     wf:input2 _:Amsterdam_buurt ;
                     wf:output _:buurten_HH ;
-                    cct:expression """        1: R2(Obj, Count);
+                    cct:expression """        1: R2(Obj, Reg * Count);
         2: ObjectInfo(_);
         join_attr (get_attrL 2) 1""" ],
                 [ wf:applicationOf [ a wf:Workflow ;
