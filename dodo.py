@@ -321,10 +321,11 @@ def task_wf_expert2():
                 (action, [wf, destdir / wf.name])]
         )
 
-def task_wf_gen():
+
+def task_wf_gen_raw():
     """Synthesize new abstract workflows using APE."""
 
-    destdir = BUILD / "workflows" / "gen"
+    destdir = BUILD / "workflows" / "gen-raw"
     apedir = BUILD / "ape"
 
     @functools.cache
@@ -335,23 +336,16 @@ def task_wf_gen():
             DATA / "tools" / "arcgis.ttl", build_dir=apedir)
         return gen
 
-    @functools.cache
-    def tool_repo():
-        return ToolRepository.from_file(BUILD / "tools" / "abstract.ttl", 
-            check_integrity=True)
-
     def action(name, target, inputs, outputs) -> bool:
         from rdflib import Graph
         from quangis.namespace import WFGEN, bind_all
 
-        repo = tool_repo()
         gen = generator()
-        solutions = Graph()
+        solutions_raw = Graph()
         for wf in gen.run(inputs, outputs, solutions=1, prefix=WFGEN[name]):
-            solutions += repo.input_permutation_hack(wf)
-        bind_all(solutions)
-        solutions.serialize(target, format="ttl")
-
+            solutions_raw += wf
+        bind_all(solutions_raw)
+        solutions_raw.serialize(target, format="ttl")
         return True
 
     for name, inputs, outputs in GENERATED_WORKFLOWS_INCL:
@@ -364,6 +358,36 @@ def task_wf_gen():
             targets=[target],
             actions=[(mkdir, [destdir, apedir]),
                 (action, [name, target, inputs, outputs])])
+
+def task_wf_gen():
+    """Hack around limitations of APE; see issue #18."""
+
+    @functools.cache
+    def tool_repo():
+        return ToolRepository.from_file(BUILD / "tools" / "abstract.ttl", 
+            check_integrity=True)
+
+    def action(dependencies, targets) -> bool:
+        from rdflib import Graph
+        from quangis.namespace import RDF, WF, bind_all
+        repo = tool_repo()
+        orig = Graph()
+        orig.parse(dependencies[0])
+        if (None, RDF.type, WF.Workflow) in orig:
+            solution = repo.input_permutation_hack(orig)
+        else:
+            solution = orig
+        bind_all(solution)
+        solution.serialize(targets[0], format="ttl")
+        return True
+
+    for dest in GEN_WORKFLOWS:
+        name = dest.stem
+        src = BUILD / "workflows" / "gen-raw" / f"{name}.ttl"
+        yield dict(name=name,
+            file_dep=[src],
+            targets=[dest],
+            actions=[(mkdir, [dest.parent]), action])
 
 def task_test():
     """Run all tests."""
