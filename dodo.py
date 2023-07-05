@@ -179,7 +179,7 @@ def task_upload():
                 sys.stderr.write(f"Uploaded with {str(result)}...\n")
 
     return dict(
-        file_dep=[],,
+        file_dep=[],
         actions=[action],
         uptodate=[False],
         verbosity=2

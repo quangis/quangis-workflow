@@ -6,8 +6,7 @@
 @prefix tools: <https://quangis.github.io/tool#> .
 @prefix wf: <http://geographicknowledge.de/vocab/Workflow.rdf#> .
 
-<https://quangis.github.io/workflows/expert2/wffood> wf:applicationOf [ a 
-            wf:Workflow ;
+<https://quangis.github.io/workflows/expert2/wffood> wf:applicationOf [ a wf:Workflow ;
             rdfs:label "wffood" ;
             wf:edge _:n10,
                 _:n14,
@@ -21,10 +20,10 @@
                 [ wf:applicationOf tools:SummaryStatistics ;
                     wf:inputx _:NL_network_centrum_supermarkets_households_solved ;
                     wf:output _:summary_centrum ;
-                    cct:expression """    1: ObjectInfo(Ratio);     
-    join_attr  
-    (nest2 (objectfromobjects (pi1 1)) (avg (getamounts 1))) 
-    (nest2 (objectfromobjects (pi1 1))  (merge (pi1 (getamounts 1))))""" ],
+                    cct:expression """1: ObjectInfo(Ratio);     
+    join_attr      
+    (nest2 (objectfromobjects (pi1 1))  (merge (pi1 (getamounts 1))))
+    (nest2 (objectfromobjects (pi1 1)) (avg (getamounts 1))) """ ],
                 [ wf:applicationOf [ a wf:Workflow ;
                             rdfs:label "convert2PointObjects" ;
                             wf:edge _:n10,
