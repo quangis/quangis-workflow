@@ -350,6 +350,14 @@ class ToolRepository(object):
             assert isinstance(tool, URIRef)
             abstr = self.abstract[tool]
 
+            # This is a hack within a hack, see issue #23. Sometimes APE uses 
+            # the same input multiple times, in which case it does not 
+            # duplicate the node. We forcibly duplicate the first input in that 
+            # case, which should work at least for the tool for which this 
+            # occurred. 
+            while len(orig_app_inputs) < len(abstr.inputs):
+                orig_app_inputs.append(orig_app_inputs[0])
+
             if len(abstr.inputs) != len(orig_app_inputs):
                 raise RuntimeError(
                     f"Number of inputs doesn't correspond for {n3(tool)}")
