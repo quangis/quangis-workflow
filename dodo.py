@@ -1,8 +1,8 @@
 """
 """
-# from itertools import product
 import sys
 import functools
+from itertools import chain
 from pathlib import Path
 # from transforge.util.utils import write_graphs
 from transforge.util.store import TransformationStore
@@ -160,23 +160,26 @@ def task_upload():
         from rdflib import URIRef
         from transforge.graph import TransformationGraph
         store = transformation_store()
-        for d in dependencies:
+
+        files = [
+            BUILD / "transformations" / f"{x.parent.stem}" / f"{x.stem}.ttl"
+            for x in chain(WORKFLOWS, CWORKFLOWS, GEN_WORKFLOWS)]
+
+        for d in files:
             sys.stderr.write(f"Uploading {d}...\n")
+            if not d.exists():
+                continue
             g = TransformationGraph(cct)
             g.parse(d)
             root = g.value(None, RDF.type, WF.Workflow, any=False)
-            assert isinstance(root, URIRef)
-            g.uri = root
-            result = store.put(g)
-            sys.stderr.write(f"Uploaded with {result}...\n")
+            if root:
+                assert isinstance(root, URIRef)
+                g.uri = root
+                result = store.put(g)
+                sys.stderr.write(f"Uploaded with {str(result)}...\n")
 
     return dict(
-        file_dep=[
-            BUILD / "transformations" / f"{x.parent.stem}" / f"{x.stem}.ttl"
-            for x in CWORKFLOWS] + [
-            BUILD / "transformations" / f"{x.parent.stem}" / f"{x.stem}.ttl"
-            for x in WORKFLOWS
-        ],
+        file_dep=[],,
         actions=[action],
         uptodate=[False],
         verbosity=2
