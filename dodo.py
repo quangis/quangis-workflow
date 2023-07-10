@@ -48,7 +48,7 @@ STORE_URL = "https://qanda.soliscom.uu.nl:8000"
 
 @functools.cache
 def transformation_store() -> TransformationStore:
-    print(f"Uploading to {STORE_URL}...")
+    print(f"Connecting to {STORE_URL}...")
     username = input("Username: ")
     password = input("Password: ")
     return TransformationStore.backend('marklogic', STORE_URL,
@@ -242,7 +242,7 @@ def task_viz_pdf_gen():
     return dict(task_dep=[f"viz_pdf:{x.stem}" for x in GEN_WORKFLOWS],
         actions=None)
 
-def task_eval_tasks():
+def task_ml_query_expert1():
     """Evaluate expert1 workflows' transformations against tasks.
     For this, graphs are sent to the triple store and then queried."""
 
@@ -495,6 +495,35 @@ def task_question_transformation():
             file_dep=[src],
             targets=[dest],
             actions=[(mkdir, [dest.parent]), action]
+        )
+
+def task_ml_query_questions():
+    """Send queries to MarkLogic."""
+
+    def action(dependencies, targets):
+        from rdflib import Graph, Literal
+        from transforge.namespace import TF
+
+        store = transformation_store()
+        g = Graph()
+        g.parse(dependencies[0])
+        for task, sparql in g.subject_objects(TF.sparql):
+            try:
+                matches = [r.workflow for r in store.store.query(sparql.value)]
+            except Exception as e:
+                matches = [Literal(f"{type(e)}: {e}")]
+            for m in matches:
+                g.add((task, TF.match, m))
+
+    for qb in QUESTIONS:
+        src = BUILD / "query" / f"{qb.stem}.ttl"
+        dest = BUILD / "query" / f"{qb.stem}.results.ttl"
+        yield dict(
+            name=qb.stem,
+            file_dep=[src],
+            targets=[dest],
+            actions=[(mkdir, [dest.parent]), action],
+            verbosity=2
         )
 
 def task_test():
