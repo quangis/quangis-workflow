@@ -157,9 +157,11 @@ def task_tfm_gen():
     return dict(task_dep=[f"tfm:{x.stem}" for x in GEN_WORKFLOWS],
         actions=None)
 
-def task_upload():
-    """Send transformation graphs to MarkLogic."""
+def task_ml_upload():
+    """Send known transformation graphs to MarkLogic."""
 
+    # No dependencies because we just want to send any transformation graph 
+    # that is generated; not force generation first
     def action(dependencies):
         from quangis.cct import cct
         from quangis.namespace import RDF, WF
@@ -190,7 +192,6 @@ def task_upload():
         uptodate=[False],
         verbosity=2
     )
-
 
 def task_viz_dot():
     """Visualizations of transformation graphs."""
@@ -242,7 +243,7 @@ def task_viz_pdf_gen():
         actions=None)
 
 def task_eval_tasks():
-    """Evaluate workflows' transformations against tasks.
+    """Evaluate expert1 workflows' transformations against tasks.
     For this, graphs are sent to the triple store and then queried."""
 
     destdir = BUILD / "eval_tasks"
@@ -262,7 +263,6 @@ def task_eval_tasks():
             targets=[destdir / f"{variant}.csv"],
             actions=[(mkdir, [destdir]), (action, variant)]
         )
-
 
 def task_tool_repo_update():
     """Extract a tool repository from concrete workflows."""
@@ -430,24 +430,26 @@ def task_question_parse():
         )
 
 def task_question_transformation():
-    """Convert parsed questions into task transformation graphs."""
+    """Convert parsed questions into task transformation graphs, including 
+    SPARQL queries."""
 
     def action(dependencies, targets) -> bool:
         import json
         from rdflib.term import BNode, Literal
         from transforge.namespace import TF, RDF, RDFS
         from transforge.graph import TransformationGraph
+        from transforge.query import transformation2sparql
         from transforge.type import Product, TypeOperation
         from quangis.cct import cct, R3, R2, Obj, Reg
 
         with open(dependencies[0], 'r') as f:
-            input = json.load(f)
+            inputs = json.load(f)
 
         g = TransformationGraph(cct)
-        for q in input:
+        for parsed_question in inputs:
             task = BNode()
             g.add((task, RDF.type, TF.Task))
-            g.add((task, RDFS.comment, Literal(q['question'])))
+            g.add((task, RDFS.comment, Literal(parsed_question['question'])))
 
             def dict2graph(q: dict) -> BNode:
                 node = BNode()
@@ -476,7 +478,11 @@ def task_question_transformation():
 
                 return node
 
-            g.add((task, TF.output, dict2graph(q['queryEx'])))
+            g.add((task, TF.output, dict2graph(parsed_question['queryEx'])))
+
+        for taskroot in g.subjects(RDF.type, TF.Task):
+            q = transformation2sparql(g, root=taskroot)
+            g.add((taskroot, TF.sparql, Literal(q)))
 
         g.serialize(targets[0])
         return True
