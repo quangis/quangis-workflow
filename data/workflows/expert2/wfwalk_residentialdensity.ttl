@@ -6,8 +6,7 @@
 @prefix tools: <https://quangis.github.io/tool#> .
 @prefix wf: <http://geographicknowledge.de/vocab/Workflow.rdf#> .
 
-<https://quangis.github.io/workflows/expert2/wfwalk_residentialdensity> 
-            wf:applicationOf [ a wf:Workflow ;
+<https://quangis.github.io/workflows/expert2/wfwalk_residentialdensity> wf:applicationOf [ a wf:Workflow ;
             rdfs:label "wfwalk_residentialdensity" ;
             wf:edge _:n0,
                 _:n11,
@@ -43,15 +42,15 @@
                                 _:n6 ;
                             wf:source _:Amsterdam_buurt,
                                 _:households ;
-                            dct:subject """        1: R2(Obj, Reg * Count);
+                            dct:subject """        1: ObjectInfo(Count);
         2: ObjectInfo(_);
-        join_attr (get_attrL 2) 1""" ] ;
+        join_attr (get_attrL 2) (get_attrR 1)""" ] ;
                     wf:input1 _:households ;
                     wf:input2 _:Amsterdam_buurt ;
                     wf:output _:buurten_HH ;
-                    cct:expression """        1: R2(Obj, Reg * Count);
+                    cct:expression """        1: ObjectInfo(Count);
         2: ObjectInfo(_);
-        join_attr (get_attrL 2) 1""" ],
+        join_attr (get_attrL 2) (get_attrR 1)""" ],
                 [ wf:applicationOf [ a wf:Workflow ;
                             rdfs:label "CalculateObjectVectorAmountRatio" ;
                             wf:edge _:n21,
