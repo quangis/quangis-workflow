@@ -25,9 +25,15 @@ def mkdir(*paths: Path):
 DOIT_CONFIG = {'default_tasks': [], 'continue': True}  # type: ignore
 
 ROOT = Path(__file__).parent
+
+# Until it gets turned into a module, this is the best I can do
+QUESTION_PARSER = ROOT.parent / "geo-question-parser"
+sys.path.append(str(QUESTION_PARSER))
+
 DATA = ROOT / "data"
 BUILD = ROOT / "build"
 IOCONFIG = DATA / "ioconfig.ttl"
+QUESTIONS = list((QUESTION_PARSER / "Data").glob("*.json"))
 
 # Source files
 TOOLS = list((DATA / "tools").glob("*.ttl"))
@@ -389,6 +395,102 @@ def task_wf_gen():
             targets=[dest],
             actions=[(mkdir, [dest.parent]), action])
 
+def task_question_parse():
+    """Parse question blocks JSON into JSON with bells and whistles."""
+
+    def action(dependencies, targets) -> bool:
+        import json
+        from QuestionParser import QuestionParser  # type: ignore
+        from TypesToQueryConverter import TQConverter  # type: ignore
+
+        with open(dependencies[0], 'r') as f:
+            input = json.load(f)
+
+        output = []
+        for question_block in input:
+            parser = QuestionParser()
+            qParsed = parser.parseQuestionBlock(question_block)
+            cctAnnotator = TQConverter()
+            cctAnnotator.cctToQuery(qParsed, True, True)
+            cctAnnotator.cctToExpandedQuery(qParsed, False, False)
+            output.append(qParsed)
+
+        with open(targets[0], 'w') as f:
+            json.dump(output, f, indent=4)
+
+        return True
+
+    for qb in QUESTIONS:
+        dest = BUILD / "query" / f"{qb.stem}.json"
+        yield dict(
+            name=qb.stem,
+            file_dep=[qb],
+            targets=[dest],
+            actions=[(mkdir, [dest.parent]), action]
+        )
+
+def task_question_transformation():
+    """Convert parsed questions into task transformation graphs."""
+
+    def action(dependencies, targets) -> bool:
+        import json
+        from rdflib.term import BNode, Literal
+        from transforge.namespace import TF, RDF, RDFS
+        from transforge.graph import TransformationGraph
+        from transforge.type import Product, TypeOperation
+        from quangis.cct import cct, R3, R2, Obj, Reg
+
+        with open(dependencies[0], 'r') as f:
+            input = json.load(f)
+
+        g = TransformationGraph(cct)
+        for q in input:
+            task = BNode()
+            g.add((task, RDF.type, TF.Task))
+            g.add((task, RDFS.comment, Literal(q['question'])))
+
+            def dict2graph(q: dict) -> BNode:
+                node = BNode()
+                t = cct.parse_type(q['after']['cct']).concretize(replace=True)
+
+                # This is a temporary solution: R(x * z, y) is for now
+                # converted to the old-style R3(x, y, z)
+                if isinstance(t.params[0], TypeOperation) and \
+                        t.params[0].operator == Product:
+                    t = R3(t.params[0].params[0], t.params[1], t.params[0].params[1])
+
+                # Another temporary solution. the question parser often returns `R(Obj,
+                # x)` where the manually constructed queries ("gold standard") would
+                # use `R(Obj, Reg * x)`. So, whenever we encounter the former, we will
+                # manually also allow the latter, cf.
+                # <https://github.com/quangis/transformation-algebra/issues/79#issuecomment-1210661153>
+                if isinstance(t.params[0], TypeOperation) and \
+                        t.operator == R2 and \
+                        t.params[0].operator == Obj and \
+                        t.params[1].operator != Product:
+                    g.add((node, TF.type, cct.uri(R2(t.params[0], Reg * t.params[1]))))
+
+                g.add((node, TF.type, cct.uri(t)))
+                for b in q.get('before', ()):
+                    g.add((node, TF['from'], dict2graph(b)))
+
+                return node
+
+            g.add((task, TF.output, dict2graph(q['queryEx'])))
+
+        g.serialize(targets[0])
+        return True
+
+    for qb in QUESTIONS:
+        src = BUILD / "query" / f"{qb.stem}.json"
+        dest = BUILD / "query" / f"{qb.stem}.ttl"
+        yield dict(
+            name=qb.stem,
+            file_dep=[src],
+            targets=[dest],
+            actions=[(mkdir, [dest.parent]), action]
+        )
+
 def task_test():
     """Run all tests."""
     return dict(
@@ -423,3 +525,4 @@ def task_test_tool_repo():
                 actions=[(action, [getattr(ToolRepository, attr)])],
                 verbosity=2
             )
+
