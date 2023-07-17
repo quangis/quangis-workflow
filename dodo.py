@@ -43,7 +43,11 @@ WORKFLOWS = list((DATA / "workflows" / "expert1").glob("*.ttl"))
 # eventually be ran from here too...
 CWORKFLOWS = list((DATA / "workflows" / "expert2").glob("*.ttl"))
 
-STORE_URL = "https://qanda.soliscom.uu.nl:8000"
+# STORE_URL = "https://qanda.soliscom.uu.nl:8000"
+# STORE_URL = "http://uu080967.soliscom.uu.nl:8000"
+
+# When running on WSL2, figure out IP of Windows host with ipconfig
+STORE_URL = "http://192.168.2.3:8000"
 
 
 @functools.cache
@@ -261,7 +265,8 @@ def task_ml_query_expert1():
             name=variant[0],
             file_dep=TASKS + WORKFLOWS,
             targets=[destdir / f"{variant}.csv"],
-            actions=[(mkdir, [destdir]), (action, variant)]
+            actions=[(mkdir, [destdir]), (action, variant)],
+            verbosity=2
         )
 
 def task_tool_repo_update():
@@ -514,6 +519,8 @@ def task_ml_query_questions():
                 matches = [Literal(f"{type(e)}: {e}")]
             for m in matches:
                 g.add((task, TF.match, m))
+
+        g.serialize(targets[0])
 
     for qb in QUESTIONS:
         src = BUILD / "query" / f"{qb.stem}.ttl"
