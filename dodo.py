@@ -253,8 +253,13 @@ def task_ml_query_expert1():
     destdir = BUILD / "eval_tasks"
 
     def action(variant, kwargsg, kwargsq) -> bool:
+        from rdflib import Graph
         store = transformation_store()
-        workflows = upload(WORKFLOWS, store, **kwargsg)
+
+        tools = Graph()
+        tools.parse(BUILD / "tools" / "abstract.ttl")
+
+        workflows = upload(WORKFLOWS, tools, store, **kwargsg)
         expect, actual = query(TASKS, store, **kwargsq)
         with open(destdir / f"{variant}.csv") as f:
             write_csv_summary(f, expect, actual, workflows)
@@ -263,7 +268,7 @@ def task_ml_query_expert1():
     for variant in variants():
         yield dict(
             name=variant[0],
-            file_dep=TASKS + WORKFLOWS,
+            file_dep=TASKS + WORKFLOWS + [BUILD / "tools" / "abstract.ttl"],
             targets=[destdir / f"{variant}.csv"],
             actions=[(mkdir, [destdir]), (action, variant)],
             verbosity=2

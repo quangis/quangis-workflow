@@ -116,11 +116,11 @@ def variants() -> Iterator[tuple[str, dict, dict]]:
         yield name, kwargsg, kwargsq
 
 
-def upload(workflow_paths: list[Path], store: TransformationStore,
-        **kwargs) -> set[URIRef]:
+def upload(workflow_paths: list[Path], tools: Graph,
+        store: TransformationStore, **kwargs) -> set[URIRef]:
     workflows = set()
     for wf_path in workflow_paths:
-        g = read_transformation(wf_path, **kwargs)
+        g = read_transformation(wf_path, tools, **kwargs)
         assert g.uri
         workflows.add(g.uri)
         store.put(g)
