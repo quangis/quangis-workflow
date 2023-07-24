@@ -47,16 +47,21 @@ CWORKFLOWS = list((DATA / "workflows" / "expert2").glob("*.ttl"))
 # STORE_URL = "http://uu080967.soliscom.uu.nl:8000"
 
 # When running on WSL2, figure out IP of Windows host with ipconfig
-STORE_URL = "http://192.168.2.3:8000"
+# STORE_URL = "http://192.168.2.3:8000"
+STORE_URL = "http://localhost:3030/cct"
+STORE_TYPE = "fuseki"
 
 
 @functools.cache
 def transformation_store() -> TransformationStore:
     print(f"Connecting to {STORE_URL}...")
-    username = input("Username: ")
-    password = input("Password: ")
-    return TransformationStore.backend('marklogic', STORE_URL,
-        cred=(username, password))
+    if STORE_TYPE == "marklogic":
+        username = input("Username: ")
+        password = input("Password: ")
+        return TransformationStore.backend('marklogic', STORE_URL,
+            cred=(username, password))
+    else:
+        return TransformationStore.backend('fuseki', STORE_URL)
 
 
 def generated_workflow_names():
