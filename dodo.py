@@ -124,7 +124,7 @@ def task_vocab_cct():
     def action(targets):
         from cct import cct
         from transforge.graph import TransformationGraph
-        g = TransformationGraph(cct)
+        g = TransformationGraph(cct, with_canonical_types=True)
         g.add_vocabulary()
         g.serialize(targets[0])
 
