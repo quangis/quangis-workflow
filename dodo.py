@@ -42,6 +42,7 @@ WORKFLOWS = list((DATA / "workflows" / "expert1").glob("*.ttl"))
 # These are the workflows as generated from Eric's GraphML. That process should 
 # eventually be ran from here too...
 CWORKFLOWS = list((DATA / "workflows" / "expert2").glob("*.ttl"))
+VOCAB = BUILD / "cct.ttl"
 
 # STORE_URL = "https://qanda.soliscom.uu.nl:8000"
 # STORE_URL = "http://uu080967.soliscom.uu.nl:8000"
@@ -129,8 +130,8 @@ def task_vocab_cct():
 
     return dict(
         file_dep=[ROOT / "quangis" / "cct.py"],
-        targets=[BUILD / "cct.ttl"],
-        actions=[(mkdir, [BUILD]), action]
+        targets=[VOCAB],
+        actions=[(mkdir, [VOCAB.parent]), action]
     )
 
 def task_tfm():
@@ -166,6 +167,25 @@ def task_tfm_gen():
     return dict(task_dep=[f"tfm:{x.stem}" for x in GEN_WORKFLOWS],
         actions=None)
 
+def task_ml_upload_cct():
+    """Upload CCT types to MarkLogic."""
+    def action(dependencies):
+        from quangis.cct import cct, CCT
+        from rdflib import URIRef
+        from transforge.graph import TransformationGraph
+        store = transformation_store()
+        g = TransformationGraph(cct)
+        g.parse(VOCAB)
+        store.put(g, URIRef(str(CCT).strip("#/")))
+
+    return dict(
+        file_dep=[VOCAB],
+        actions=[action],
+        uptodate=[False],
+        verbosity=2
+    )
+
+
 def task_ml_upload():
     """Send known transformation graphs to MarkLogic."""
 
@@ -196,6 +216,7 @@ def task_ml_upload():
                 sys.stderr.write(f"Uploaded with {str(result)}...\n")
 
     return dict(
+        task_dep=["ml_upload_cct"],
         file_dep=[],
         actions=[action],
         uptodate=[False],
@@ -273,6 +294,7 @@ def task_ml_query_expert1():
     for variant in variants():
         yield dict(
             name=variant[0],
+            task_dep=["ml_upload_cct"],
             file_dep=TASKS + WORKFLOWS + [BUILD / "tools" / "abstract.ttl"],
             targets=[destdir / f"{variant}.csv"],
             actions=[(mkdir, [destdir]), (action, variant)],
