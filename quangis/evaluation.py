@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 import csv
+from datetime import datetime
 from itertools import product
 from pathlib import Path
 from rdflib.graph import Graph
@@ -134,8 +135,13 @@ def query(task_paths: list[Path], store: TransformationStore, **kwargs) \
     for task_path in task_paths:
         query = read_query(task_path, **kwargs)
         root = query.root
+        assert isinstance(root, URIRef)
+        t1 = datetime.now()
+        print(f"Querying: \t{root.n3()}")
         actual[root] = store.run(query)  # type: ignore
         expect[root] = set(
             query.graph.objects(root, TF.implementation))  # type: ignore
-        print(f"Results: {', '.join(str(wf) for wf in actual[root])}")
+        t2 = datetime.now()
+        print(f"Results: \t{', '.join(wf.n3() for wf in actual[root])}")
+        print(f"Time: \t\t{t2 - t1}")
     return actual, expect
