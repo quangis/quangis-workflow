@@ -25,13 +25,17 @@ ROOT = Path(__file__).parent.parent
 BUILD_DIR = ROOT / "build"
 
 def write_csv_summary(handle: TextIO,
-        expect: Mapping[URIRef, set[URIRef]],
         actual: Mapping[URIRef, set[URIRef]],
+        expect: Mapping[URIRef, set[URIRef]],
         workflows: set[URIRef]) -> None:
     """Create a summary CSV by providing a mapping from tasks to expected and 
     actual workflows that match it."""
 
     tasks = set(expect.keys())
+
+    # Subselect on workflows that we're interested in
+    actual = {x: actual[x].intersection(workflows)
+        for x in actual}
 
     assert all(wf in workflows for wfs in expect.values() for wf in wfs)
     assert all(wf in workflows for wfs in actual.values() for wf in wfs)
