@@ -25,8 +25,8 @@ class ToolAlreadyExistsError(Exception):
 class ToolNotFoundError(KeyError):
     pass
 
-class ToolRepository(object):
-    """A repository contains abstractions and tools."""
+class ToolSet(object):
+    """A toolset contains abstractions and tools."""
 
     def __init__(self) -> None:
         self.unit: dict[URIRef, Unit] = dict()
@@ -37,8 +37,8 @@ class ToolRepository(object):
 
     @staticmethod
     def from_file(*files: Path,
-            check_integrity: bool = True) -> ToolRepository:
-        repo = ToolRepository()
+            check_integrity: bool = True) -> ToolSet:
+        repo = ToolSet()
         for file in files:
             repo._original.parse(file)
 

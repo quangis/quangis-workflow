@@ -8,7 +8,7 @@ from pathlib import Path
 from transforge.util.store import TransformationStore
 from quangis.evaluation import read_transformation, variants, \
     write_csv_summary, upload, query
-from quangis.tools.repo import ToolRepository, IntegrityError
+from quangis.tools.set import ToolSet, IntegrityError
 
 def mkdir(*paths: Path):
     for path in paths:
@@ -301,17 +301,17 @@ def task_ml_query_expert1():
             verbosity=2
         )
 
-def task_tool_repo_update():
-    """Extract a tool repository from concrete workflows."""
+def task_toolset_update():
+    """Extract a toolset from concrete workflows."""
 
     destdir = BUILD / "tools"
 
     def action() -> bool:
         from rdflib import Graph
         from quangis.namespace import TOOL, bind_all
-        from quangis.tools.repo import ToolRepository
+        from quangis.tools.set import ToolSet
         from quangis.workflow import Workflow
-        repo = ToolRepository.from_file(*TOOLS, check_integrity=True)
+        repo = ToolSet.from_file(*TOOLS, check_integrity=True)
         for wf_path in CWORKFLOWS:
             cwf = Workflow.from_file(wf_path)
             repo.update(cwf)
@@ -345,10 +345,10 @@ def task_wf_expert2():
 
     def action(wf_path, target):
         from quangis.workflow import Workflow
-        from quangis.tools.repo import ToolRepository
+        from quangis.tools.set import ToolSet
 
         # TODO: this should be produced by an action itself
-        repo = ToolRepository.from_file(*tools, check_integrity=False)
+        repo = ToolSet.from_file(*tools, check_integrity=False)
 
         cwf = Workflow.from_file(wf_path)
         g = repo.convert_to_abstractions(cwf, cwf.root)
@@ -407,7 +407,7 @@ def task_wf_gen():
 
     @functools.cache
     def tool_repo():
-        return ToolRepository.from_file(BUILD / "tools" / "abstract.ttl", 
+        return ToolSet.from_file(BUILD / "tools" / "abstract.ttl", 
             check_integrity=True)
 
     def action(dependencies, targets) -> bool:
@@ -569,7 +569,7 @@ def task_test():
     """Run all tests."""
     return dict(
         actions=None,
-        task_dep=['test_unittest', 'test_tool_repo'],
+        task_dep=['test_unittest', 'test_toolset'],
         verbosity=2
     )
 
@@ -581,10 +581,10 @@ def task_test_unittest():
 
     return dict(actions=[action], verbosity=2)
 
-def task_test_tool_repo():
+def task_test_toolset():
     """Check integrity of tool file."""
     def action(method) -> bool:
-        repo = ToolRepository.from_file(*TOOLS, check_integrity=False)
+        repo = ToolSet.from_file(*TOOLS, check_integrity=False)
         try:
             method(repo)
         except IntegrityError:
@@ -592,11 +592,10 @@ def task_test_tool_repo():
         else:
             return True
 
-    for attr in dir(ToolRepository):
+    for attr in dir(ToolSet):
         if attr.startswith("check_") and not attr == "check_integrity":
             yield dict(
                 name=attr,
-                actions=[(action, [getattr(ToolRepository, attr)])],
+                actions=[(action, [getattr(ToolSet, attr)])],
                 verbosity=2
             )
-
