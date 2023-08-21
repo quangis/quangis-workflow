@@ -593,7 +593,7 @@ def task_test_toolset():
             return True
 
     for attr in dir(ToolSet):
-        if attr.startswith("check_") and not attr == "check_integrity":
+        if attr.startswith("check_"):
             yield dict(
                 name=attr,
                 actions=[(action, [getattr(ToolSet, attr)])],

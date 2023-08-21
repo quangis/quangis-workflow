@@ -381,16 +381,6 @@ class ToolSet(object):
 
         return wf
 
-    def check_integrity(self) -> None:
-        for name in self.__dir__():
-            if name.startswith("check_") and name != "check_integrity":
-                if name in ("check_duplicate_unittools", 
-                            "check_implementations_and_abstractions",
-                            "check_subsuming_ccd_signatures"):
-                    # Temporarily disabled while other checks are put in place
-                    continue
-                getattr(self, name)()
-
     def check_multi_composed_of_unit_tools(self) -> None:
         """All tools in every multitool are concrete tools."""
         conflicts: set[Node] = set()
@@ -417,7 +407,7 @@ class ToolSet(object):
 
         if conflicts:
             raise IntegrityError(
-                "The following tools refer to the same URL: "
+                "The following unit tools refer to the same URL: "
                 + "; ".join(f"{n3(c[0])} and {n3(c[1])}" for c in conflicts))
 
     def check_duplicate_multitools(self) -> None:
@@ -433,7 +423,7 @@ class ToolSet(object):
                 f"{n3(c[0])} and {n3(c[1])} are isomorphic."
                 for c in conflicts))
 
-    def check_implementations_and_abstractions(self) -> None:
+    def check_abstractions_are_coupled_to_implementations(self) -> None:
         """All abstractions must have at least one implementation; all 
         multitools must implement at least one abstraction; all unit tools must 
         implement at least one abstraction or occur in at least one 
@@ -470,7 +460,7 @@ class ToolSet(object):
                 if artefact.type.empty():
                     raise IntegrityError(
                         f"The CCD type of an artefact associated with " 
-                        f"{n3(abstr.uri)} is too general.")
+                        f"{n3(abstr.uri)}, if any, is too general.")
 
     def check_subsuming_ccd_signatures(self) -> None:
         """Any pair of abstractions must have at least a differing CCT 
@@ -479,10 +469,10 @@ class ToolSet(object):
         abstrs = list(self.abstract.values())
         for a, b in product(abstrs, abstrs):
             if a != b and a.subsumes_datatype_permutation(b):
-                msg = (f"The CCD signature of {n3(a.uri)} subsumes "
-                    f"that of {n3(b.uri)}")
+                msg = (f"CCD type for {n3(a.uri)} subsumes that "
+                    f"of {n3(b.uri)}")
                 if a.matches_cct(b):
-                    raise IntegrityError(f"{msg} with matching CCT expression")
+                    raise IntegrityError(f"CCT expression matches and {msg}")
                 else:
                     sys.stderr.write(f"Warning: {msg}\n")
 
