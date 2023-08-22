@@ -2,6 +2,7 @@
 This module holds the RDF namespaces that we use frequently.
 """
 
+from __future__ import annotations
 import sys
 from rdflib import Namespace, Graph
 from rdflib.term import Node, URIRef, BNode
