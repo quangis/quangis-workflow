@@ -286,7 +286,8 @@ def task_ml_query_expert1():
         tools.parse(BUILD / "tools" / "abstract.ttl")
 
         workflows = upload(WORKFLOWS, tools, store, **kwargsg)
-        expect, actual = query(TASKS, store, **kwargsq)
+        with open(destdir / f"{variant}.txt", 'w') as f:
+            expect, actual = query(TASKS, store, log=f, **kwargsq)
         with open(destdir / f"{variant}.csv", 'w') as f:
             write_csv_summary(f, expect, actual, workflows)
         return True

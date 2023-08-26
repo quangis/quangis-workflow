@@ -132,7 +132,8 @@ def upload(workflow_paths: list[Path], tools: Graph,
     return workflows
 
 
-def query(task_paths: list[Path], store: TransformationStore, **kwargs) \
+def query(task_paths: list[Path], store: TransformationStore,
+          log: TextIO | None = None, **kwargs) \
         -> tuple[dict[URIRef, set[URIRef]], dict[URIRef, set[URIRef]]]:
     actual: dict[URIRef, set[URIRef]] = dict()
     expect: dict[URIRef, set[URIRef]] = dict()
@@ -142,6 +143,9 @@ def query(task_paths: list[Path], store: TransformationStore, **kwargs) \
         assert isinstance(root, URIRef)
         t1 = datetime.now()
         print(f"Querying: \t{root.n3()}")
+        if log:
+            log.write(f"\n\n{task_path}\n")
+            log.write(query.sparql())
         actual[root] = store.run(query)  # type: ignore
         expect[root] = set(
             query.graph.objects(root, TF.implementation))  # type: ignore
