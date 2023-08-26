@@ -114,9 +114,12 @@ def variants() -> Iterator[tuple[str, dict, dict]]:
             passthrough=(passthrough == 'pass'),
             with_intermediate_types=(opacity == 'internal'))
         kwargsq = dict(
+            by_io=True,
             by_types=(opacity != 'workflow'),
             by_chronology=(ordering == 'ordered' and
                 opacity != 'workflow'),
+            by_second_input=False,
+            by_penultimate_output=False,
             unfold_tree=True)
         yield name, kwargsg, kwargsq
 
@@ -143,13 +146,18 @@ def query(task_paths: list[Path], store: TransformationStore,
         assert isinstance(root, URIRef)
         t1 = datetime.now()
         print(f"Querying: \t{root.n3()}")
-        if log:
-            log.write(f"\n\n{task_path}\n")
-            log.write(query.sparql())
+
         actual[root] = store.run(query)  # type: ignore
         expect[root] = set(
             query.graph.objects(root, TF.implementation))  # type: ignore
         t2 = datetime.now()
+
+        if log:
+            log.write(f"\n\nTask: {task_path}\n")
+            log.write(query.sparql())
+            log.write(
+                f"\nWorkflows: {', '.join(wf.n3() for wf in actual[root])}")
+
         print(f"Results: \t{', '.join(wf.n3() for wf in actual[root])}")
         print(f"Time: \t\t{t2 - t1}")
     return actual, expect
