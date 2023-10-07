@@ -403,6 +403,57 @@ def task_wf_gen_raw():
             actions=[(mkdir, [destdir, apedir]),
                 (action, [name, target, inputs, outputs])])
 
+
+def task_wf_gen_variants():
+    """Generate input/output specifications to find variant workflows."""
+
+    destdir = BUILD / "workflows" / "variants"
+    apedir = BUILD / "ape"
+
+    @functools.cache
+    def generator():
+        from quangis.synthesis import WorkflowGenerator
+        gen = WorkflowGenerator(BUILD / "tools" / "abstract.ttl",
+            BUILD / "tools" / "multi.ttl",
+            DATA / "tools" / "arcgis.ttl", build_dir=apedir)
+        return gen
+
+    def action(wf_path, name, target):
+        from rdflib import Graph
+        from quangis.namespace import WFVAR, bind_all
+        from quangis.workflow import Workflow
+
+        # Find out input and output types of existing workflow
+        wf = Workflow.from_file(wf_path)
+        sources, targets = wf.io(wf.root)
+        source_types = [wf.type(s) for s in sources]
+        target_types = [wf.type(t) for t in targets]
+
+        # Generate variants
+        gen = generator()
+        solutions_raw = Graph()
+        for wf in gen.run(source_types, target_types, solutions=10, 
+                prefix=WFVAR[name]):
+            solutions_raw += wf
+        bind_all(solutions_raw)
+        solutions_raw.serialize(target, format="ttl")
+
+    for wf in chain(WORKFLOWS, CWORKFLOWS):
+        target = destdir / wf.name
+        yield dict(
+            name=wf.name,
+            file_dep=[wf,
+                BUILD / "tools" / "abstract.ttl",
+                BUILD / "tools" / "multi.ttl",
+                DATA / "tools" / "arcgis.ttl"],
+            targets=[target],
+            actions=[
+                (mkdir, [apedir]),
+                (mkdir, [destdir]),
+                (action, [wf, wf.stem, target])],
+            verbosity=2)
+
+
 def task_wf_gen():
     """Hack around limitations of APE; see issue #18."""
 

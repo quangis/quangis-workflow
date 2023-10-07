@@ -27,6 +27,7 @@ ABSTR = Namespace("https://quangis.github.io/tool/abstract#")
 WFGEN = Namespace("https://quangis.github.io/workflows/generated/")
 WFEXPERT1 = Namespace("https://quangis.github.io/workflows/expert1/")
 WFEXPERT2 = Namespace("https://quangis.github.io/workflows/expert2/")
+WFVAR = Namespace("https://quangis.github.io/workflows/generated-variants/")
 
 ARC = "https://pro.arcgis.com/en/pro-app/latest/tool-reference"
 ARCDM = Namespace(ARC + "/data-management/")
