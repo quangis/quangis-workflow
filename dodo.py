@@ -426,6 +426,8 @@ def task_wf_gen_variants():
 
     def action(wf_path, name, target) -> None:
         from rdflib import Graph
+        from rdflib.term import Node
+        from transforge.namespace import shorten
         from quangis.namespace import WFVAR, bind_all
         from quangis.workflow import Workflow
         from quangis.polytype import Polytype
@@ -439,7 +441,7 @@ def task_wf_gen_variants():
         # as an output, and determine the types by looking at the types of 
         # corresponding abstract tools
         repo = tool_repo()
-        all_types = defaultdict(set)
+        all_types: dict[Node, Polytype] = dict()
         for action in wf.high_level_actions(wf.root):
             tool = repo.abstract[wf.impl(action)]
             inputs = wf.inputs_labelled(action)
@@ -447,33 +449,45 @@ def task_wf_gen_variants():
             for source in sources:
                 for k, v in inputs.items():
                     if v == source:
-                        all_types[source].update(tool.inputs[k].type.uris())
+                        if source not in all_types:
+                            all_types[source] = tool.inputs[k].type
+                        else:
+                            assert all_types[source] == tool.inputs[k].type
+                        # .update(tool.inputs[k].type.uris())
             target_node, = targets
             if target_node == output:
-                all_types[target_node].update(tool.output.type.uris())
+                if target_node not in all_types:
+                    all_types[target_node] = tool.output.type
+                else:
+                    assert all_types[target_node] == tool.output.type
+                # .update(tool.output.type.uris())
 
         # Determine the overall types
-        source_types = [Polytype.project(ccd.dimensions, all_types[s])
+        source_types = [Polytype.project(ccd.dimensions, all_types[s].uris())
             for s in sources]
-        target_types = [Polytype.project(ccd.dimensions, all_types[t])
+        target_types = [Polytype.project(ccd.dimensions, all_types[t].uris())
             for t in targets]
 
         # Remove the syntactic part of types
-        for x in source_types, target_types:
-            for i in range(len(x)):
-                x[i][CCD.LayerA] = {CCD.LayerA}
+        # for x in source_types, target_types:
+        #     for i in range(len(x)):
+        #         x[i][CCD.LayerA] = {CCD.LayerA}
 
         # Generate variants
         gen = generator()
         solutions_raw = Graph()
-        print('Generating: ',
-              tuple(str(s) for s in source_types),
-              tuple(str(t) for t in target_types))
         for wf in gen.run(source_types, target_types, solutions=10, 
-                prefix=WFVAR[name]):
+                prefix=WFVAR[shorten(wf.root)]):
             solutions_raw += wf
         bind_all(solutions_raw)
         solutions_raw.serialize(target, format="ttl")
+        with open(target, 'a') as f:
+            f.write("\n# Generated with APE\n# Input types:\n")
+            for s in source_types:
+                f.write(f"# \t{s}\n")
+            f.write("# Output types:\n")
+            for t in target_types:
+                f.write(f"# \t{t}\n")
 
     for wf in WORKFLOWS:
         target = destdir / wf.name
