@@ -462,10 +462,12 @@ def task_wf_gen_variants():
                     assert all_types[target_node] == tool.output.type
                 # .update(tool.output.type.uris())
 
-        # Determine the overall types
-        source_types = [Polytype.project(ccd.dimensions, all_types[s].uris())
+        # Determine the overall types and projected types
+        source_types = [all_types[s] for s in sources]
+        p_source_types = [Polytype.project(ccd.dimensions, all_types[s].uris())
             for s in sources]
-        target_types = [Polytype.project(ccd.dimensions, all_types[t].uris())
+        target_types = [all_types[t] for t in targets]
+        p_target_types = [Polytype.project(ccd.dimensions, all_types[t].uris())
             for t in targets]
 
         # Remove the syntactic part of types
@@ -476,18 +478,18 @@ def task_wf_gen_variants():
         # Generate variants
         gen = generator()
         solutions_raw = Graph()
-        for wf in gen.run(source_types, target_types, solutions=10, 
+        for wf in gen.run(p_source_types, p_target_types, solutions=10, 
                 prefix=WFVAR[shorten(wf.root)]):
             solutions_raw += wf
         bind_all(solutions_raw)
         solutions_raw.serialize(target, format="ttl")
         with open(target, 'a') as f:
             f.write("\n# Generated with APE\n# Input types:\n")
-            for s in source_types:
-                f.write(f"# \t{s}\n")
+            for s, ps in zip(source_types, p_source_types):
+                f.write(f"# \t{ps} [projected from {s}]\n")
             f.write("# Output types:\n")
-            for t in target_types:
-                f.write(f"# \t{t}\n")
+            for t, pt in zip(target_types, p_target_types):
+                f.write(f"# \t{pt} [projected from {t}]\n")
 
     for wf in WORKFLOWS:
         target = destdir / wf.name
