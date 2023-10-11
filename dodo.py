@@ -464,16 +464,14 @@ def task_wf_gen_variants():
 
         # Determine the overall types and projected types
         source_types = [all_types[s] for s in sources]
-        p_source_types = [Polytype.project(ccd.dimensions, all_types[s].uris())
-            for s in sources]
         target_types = [all_types[t] for t in targets]
-        p_target_types = [Polytype.project(ccd.dimensions, all_types[t].uris())
-            for t in targets]
+        p_source_types = [all_types[s].projection() for s in sources]
+        p_target_types = [all_types[t].projection() for t in targets]
 
         # Remove the syntactic part of types
-        # for x in source_types, target_types:
-        #     for i in range(len(x)):
-        #         x[i][CCD.LayerA] = {CCD.LayerA}
+        for x in p_source_types, p_target_types:
+            for i in range(len(x)):
+                del x[i][CCD.LayerA]
 
         # Generate variants
         gen = generator()
