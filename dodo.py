@@ -638,13 +638,29 @@ def task_question_transformation():
 
 def task_question_to_ccd():
 
-    def action(dependencies, targets) -> bool:
+    destdir = BUILD / "workflows" / "from_questions"
+    apedir = BUILD / "ape"
+
+    @functools.cache
+    def generator():
+        from quangis.synthesis import WorkflowGenerator
+        gen = WorkflowGenerator(BUILD / "tools" / "abstract.ttl",
+            BUILD / "tools" / "multi.ttl",
+            DATA / "tools" / "arcgis.ttl", build_dir=apedir)
+        return gen
+
+    def tool_repo():
+        return ToolSet.from_file(BUILD / "tools" / "abstract.ttl", 
+            check_integrity=True)
+
+    def action(source, target) -> None:
+        from rdflib import Graph, RDF, RDFS, URIRef, Literal
+        from quangis.namespace import bind_all
         from quangis.cct2ccd import cct2ccd
-        from rdflib import Graph, RDF, URIRef
         from transforge.namespace import TF
 
         g = Graph()
-        g.parse(dependencies[0], format="ttl")
+        g.parse(source, format="ttl")
 
         def leaves(node):
             next = list(g.objects(node, TF["from"]))
@@ -654,8 +670,11 @@ def task_question_to_ccd():
             else:
                 yield node
 
-        with open(targets[0], 'w') as f:
-            for task in g.subjects(RDF.type, TF.Task):
+        # Generate workflows
+        gen = generator()
+        solutions_raw = Graph()
+        for task in g.subjects(RDF.type, TF.Task):
+            try:
                 out_node = g.value(task, TF.output)
 
                 out_type = g.value(out_node, TF.type)
@@ -664,18 +683,26 @@ def task_question_to_ccd():
 
                 out_ccd = cct2ccd(out_type)
                 in_ccds = [cct2ccd(t) for t in in_types]
-                f.write(f"{out_ccd}, {in_ccds}\n")
+            except RuntimeError as e:
+                print(f"cannot find type for {task}: {e}")
+            else:
+                for wf in gen.run(in_ccds, [out_ccd], solutions=10, 
+                        prefix=task):
+                    solutions_raw += wf
+                    solutions_raw.add((wf, RDFS.label, Literal(
+                        f"{task} {out_ccd}, {' & '.join(str(s) for s in in_ccds)}")))
 
-        return True
+        bind_all(solutions_raw)
+        solutions_raw.serialize(target, format="ttl")
 
     for qb in QUESTIONS:
         src = BUILD / "query" / f"{qb.stem}.ttl"
-        dest = BUILD / "query" / f"{qb.stem}.txt"
+        dest = destdir / f"{qb.stem}.ttl"
         yield dict(
             name=qb.stem,
             file_dep=[src],
             targets=[dest],
-            actions=[(mkdir, [dest.parent]), action]
+            actions=[(mkdir, [dest.parent]), (action, [src, dest])]
         )
 
 
