@@ -1,10 +1,8 @@
-"""
-"""
+"""To the next person: sorry about the state of this repository."""
 import sys
 import functools
 from itertools import chain
 from pathlib import Path
-from collections import defaultdict
 # from transforge.util.utils import write_graphs
 from transforge.util.store import TransformationStore
 from quangis.evaluation import read_transformation, variants, \
@@ -34,7 +32,7 @@ sys.path.append(str(QUESTION_PARSER))
 DATA = ROOT / "data"
 BUILD = ROOT / "build"
 IOCONFIG = DATA / "ioconfig.ttl"
-QUESTIONS = list((QUESTION_PARSER / "Data").glob("*.json"))
+QUESTIONS = list((QUESTION_PARSER / "Data").glob("*retri.json"))
 
 # Source files
 TOOLS = list((DATA / "tools").glob("*.ttl"))
@@ -636,6 +634,38 @@ def task_question_transformation():
             targets=[dest],
             actions=[(mkdir, [dest.parent]), action]
         )
+
+
+def task_question_to_ccd():
+
+    def action(dependencies, targets) -> bool:
+        from quangis.cct2ccd import cct2ccd
+        from rdflib import Graph, RDF, URIRef
+        from transforge.namespace import TF
+
+        g = Graph()
+        g.parse(dependencies[0], format="ttl")
+
+        with open(targets[0], 'w') as f:
+            for task in g.subjects(RDF.type, TF.Task):
+                out_node = g.value(task, TF.output)
+                out_type = g.value(out_node, TF.type)
+                assert isinstance(out_type, URIRef)
+                out_ccd = cct2ccd(out_type)
+                f.write(str(out_ccd) + "\n")
+
+        return True
+
+    for qb in QUESTIONS:
+        src = BUILD / "query" / f"{qb.stem}.ttl"
+        dest = BUILD / "query" / f"{qb.stem}.txt"
+        yield dict(
+            name=qb.stem,
+            file_dep=[src],
+            targets=[dest],
+            actions=[(mkdir, [dest.parent]), action]
+        )
+
 
 def task_ml_query_questions():
     """Send queries to MarkLogic."""
