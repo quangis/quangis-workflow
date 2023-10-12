@@ -646,13 +646,25 @@ def task_question_to_ccd():
         g = Graph()
         g.parse(dependencies[0], format="ttl")
 
+        def leaves(node):
+            next = list(g.objects(node, TF["from"]))
+            if next:
+                for n in next:
+                    yield from leaves(n)
+            else:
+                yield node
+
         with open(targets[0], 'w') as f:
             for task in g.subjects(RDF.type, TF.Task):
                 out_node = g.value(task, TF.output)
+
                 out_type = g.value(out_node, TF.type)
+                in_types = [g.value(t, TF.type) for t in leaves(out_node)]
                 assert isinstance(out_type, URIRef)
+
                 out_ccd = cct2ccd(out_type)
-                f.write(str(out_ccd) + "\n")
+                in_ccds = [cct2ccd(t) for t in in_types]
+                f.write(f"{out_ccd}, {in_ccds}\n")
 
         return True
 
