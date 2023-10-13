@@ -655,7 +655,7 @@ def task_question_to_ccd():
 
     def action(source, target) -> None:
         from rdflib import Graph, RDF, RDFS, URIRef, Literal
-        from quangis.namespace import bind_all
+        from quangis.namespace import bind_all, EX
         from quangis.cct2ccd import cct2ccd
         from transforge.namespace import TF
 
@@ -673,7 +673,7 @@ def task_question_to_ccd():
         # Generate workflows
         gen = generator()
         solutions_raw = Graph()
-        for task in g.subjects(RDF.type, TF.Task):
+        for i, task in enumerate(g.subjects(RDF.type, TF.Task)):
             try:
                 out_node = g.value(task, TF.output)
 
@@ -687,10 +687,13 @@ def task_question_to_ccd():
                 print(f"cannot find type for {task}: {e}")
             else:
                 for wf in gen.run(in_ccds, [out_ccd], solutions=10, 
-                        prefix=task):
+                        prefix=EX[f"task{i}_"]):
                     solutions_raw += wf
-                    solutions_raw.add((wf, RDFS.label, Literal(
-                        f"{task} {out_ccd}, {' & '.join(str(s) for s in in_ccds)}")))
+                    for comment in g.objects(task, RDFS.comment):
+                        solutions_raw.add((wf.root, RDFS.comment, comment))
+                    solutions_raw.add((wf.root, RDFS.comment, Literal(
+                        f"Out: {out_ccd}\nIn: \n"
+                        f"{' & '.join(str(s) for s in in_ccds)}")))
 
         bind_all(solutions_raw)
         solutions_raw.serialize(target, format="ttl")
