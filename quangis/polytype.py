@@ -159,27 +159,37 @@ class Polytype(MutableMapping[URIRef, set[URIRef]]):
             self[dimension] = set(mapping.get(n, n) for n in classes)
         return self
 
-    def subtype(self, other: Polytype, strict: bool = False) -> bool:
-        if self.dimensions != other.dimensions:
+    def subtype(self, other: Polytype, strict: bool = False,
+            full: bool = True) -> bool:
+
+        if full and self.dimensions != other.dimensions:
             return False
 
-        for k, d in self.dimensions.items():
-            if not all(d.subsume(a, b, strict=strict)
-                    for a, b in product(self[d], other[d])):
-                return False
+        for d in other.dimensions.values():
+            if full or d in self:
+                if not all(d.subsume(a, b, strict=strict)
+                        for a, b in product(self[d], other[d])):
+                    return False
         return True
 
-    def normalize(self) -> Polytype:
+    def normalize(self, clear_empty: bool = False) -> Polytype:
         """A polytype is an intersection of types. The normalization of a 
         polytype simply removes extraneous activations: if β is a subtype of α, 
         then clearly activating β means that the activation of α is implicit 
-        and so α can be left out."""
-        return Polytype({
+        and so α can be left out.
+
+        Furthermore, if any dimension contains no types, it is simply left out
+        """
+        t = Polytype({
             dim: set(
                 x for x in self[d]
                 if not any(dim.subsume(y, x, strict=True) for y in self[d])
             ) for d, dim in self.dimensions.items()
         })
+        if clear_empty:
+            return Polytype({d: t[d] for d in t.dimensions.values() if t[d]})
+        else:
+            return t
 
     def lexical(self) -> tuple[tuple[URIRef, ...], ...]:
         """Obtain a tuple with which to order polytypes."""

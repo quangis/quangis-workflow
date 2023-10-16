@@ -644,6 +644,8 @@ def task_question_to_ccd():
     destdir = BUILD / "workflows" / "from_questions"
     apedir = BUILD / "ape"
 
+
+
     @functools.cache
     def generator():
         from quangis.synthesis import WorkflowGenerator
@@ -658,7 +660,7 @@ def task_question_to_ccd():
 
     def action(source, target) -> None:
         from rdflib import Graph, RDF, RDFS, URIRef, Literal
-        from quangis.namespace import bind_all, EX
+        from quangis.namespace import bind_all, EX, WF
         from quangis.cct2ccd import cct2ccd
         from transforge.namespace import TF
 
@@ -686,8 +688,6 @@ def task_question_to_ccd():
 
             out_ccd = cct2ccd(out_type)
             in_ccds = [cct2ccd(t) for t in in_types]
-            # except RuntimeError as e:
-            #     print(f"cannot find type for {task}: {e}")
 
             for wf in gen.run(in_ccds, [out_ccd], solutions=10, 
                     prefix=EX[f"task{i}_"]):
@@ -698,8 +698,15 @@ def task_question_to_ccd():
                     f"Out: {out_ccd}\nIn: \n"
                     f"{' & '.join(str(s) for s in in_ccds)}")))
 
-        bind_all(solutions_raw)
-        solutions_raw.serialize(target, format="ttl")
+        # Perform input permutation hack
+        repo = tool_repo()
+        solutions = Graph()
+        if (None, RDF.type, WF.Workflow) in solutions_raw:
+            solutions = repo.input_permutation_hack(solutions_raw)
+        else:
+            solutions = solutions_raw
+        bind_all(solutions)
+        solutions.serialize(target, format="ttl")
 
     for qb in QUESTIONS:
         src = BUILD / "query" / f"{qb.stem}.ttl"

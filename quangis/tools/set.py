@@ -340,44 +340,60 @@ class ToolSet(object):
         wf = Workflow()
         wf += g
 
-        for action in g.objects(wf.root, WF.edge):
-            # Collect original inputs and remove them from the workflow
-            orig_app_inputs = list(g.objects(action, WF.inputx))
-            wf.remove((action, WF.inputx, None))
+        # Elsewhere I assumed that `Workflow` should contain only one workflow, 
+        # but that assumption isn't going to hold here. Just makign a note in 
+        # case it comes back to haunt
+        for root in g.subjects(RDF.type, WF.Workflow):
+            for action in g.objects(root, WF.edge):
+                # Collect original inputs and remove them from the workflow
+                orig_app_inputs = list(g.objects(action, WF.inputx))
+                wf.remove((action, WF.inputx, None))
 
-            # Find tool
-            tool = g.value(action, WF.applicationOf, any=False)
-            assert isinstance(tool, URIRef)
-            abstr = self.abstract[tool]
+                # Find tool
+                tool = g.value(action, WF.applicationOf, any=False)
+                assert isinstance(tool, URIRef)
+                abstr = self.abstract[tool]
 
-            # This is a hack within a hack, see issue #23. Sometimes APE uses 
-            # the same input multiple times, in which case it does not 
-            # duplicate the node. We forcibly duplicate the first input in that 
-            # case, which should work at least for the tool for which this 
-            # occurred. 
-            while len(orig_app_inputs) < len(abstr.inputs):
-                orig_app_inputs.append(orig_app_inputs[0])
+                # This is a hack within a hack, see issue #23. Sometimes APE uses 
+                # the same input multiple times, in which case it does not 
+                # duplicate the node. We forcibly duplicate the first input in that 
+                # case, which should work at least for the tool for which this 
+                # occurred. 
+                while len(orig_app_inputs) < len(abstr.inputs):
+                    orig_app_inputs.append(orig_app_inputs[0])
 
-            if len(abstr.inputs) != len(orig_app_inputs):
-                raise RuntimeError(
-                    f"Number of inputs doesn't correspond for {n3(tool)}")
+                if len(abstr.inputs) != len(orig_app_inputs):
+                    raise RuntimeError(
+                        f"Number of inputs doesn't correspond for {n3(tool)}")
 
-            # Find tool inputs
-            tool_labels, tool_types = zip(*((label, artefact.type.projection())
-                for label, artefact in abstr.inputs.items()
-            ))
+                # Find tool inputs
+                tool_labels, tool_types = zip(*(
+                    (label,
+                     artefact.type.projection().normalize(clear_empty=True))
+                    for label, artefact in abstr.inputs.items()
+                ))
 
-            # Find a permutation of inputs that works
-            orig_app_nodes_types = [(x, wf.type(x)) for x in orig_app_inputs]
-            for app_nodes_types in permutations(orig_app_nodes_types):
-                app_nodes, app_types = zip(*app_nodes_types)
-                if all(app_type.subtype(tool_type)
-                       for tool_type, app_type in zip(tool_types, app_types)):
-                    for label, node in zip(tool_labels, app_nodes):
-                        wf.add((action, WF[f"input{label}"], node))
-                    break
-            else:
-                raise RuntimeError("No permutation works")
+                # Find a permutation of inputs that works
+                orig_app_nodes_types = [
+                    (x, wf.type(x).normalize(clear_empty=True))
+                    for x in orig_app_inputs]
+                for app_nodes_types in permutations(orig_app_nodes_types):
+                    app_nodes, app_types = zip(*app_nodes_types)
+                    if all(app_type.subtype(tool_type, full=False)
+                           for tool_type, app_type in zip(tool_types, app_types)):
+                        for label, node in zip(tool_labels, app_nodes):
+                            wf.add((action, WF[f"input{label}"], node))
+                        break
+                else:
+
+                    msg = [
+                        f"No permutations for an application of {tool}.\n",
+                        "App uses inputs :\n\t- ",
+                        '\n\t- '.join(str(y) for x, y in orig_app_nodes_types),
+                        "\nTool uses inputs: \n\t- ",
+                        '\n\t- '.join(str(x) for x in tool_types)
+                    ]
+                    raise RuntimeError(''.join(msg))
 
         return wf
 
