@@ -681,7 +681,7 @@ def task_question_to_ccd():
         gen = generator()
         solutions = Graph()
         for i, task in enumerate(g.subjects(RDF.type, TF.Task)):
-            # try:
+            assert isinstance(task, URIRef), f"{task}"
             out_node = g.value(task, TF.output)
 
             out_type = g.value(out_node, TF.type)
@@ -693,7 +693,10 @@ def task_question_to_ccd():
 
             for wf_raw in gen.run(in_ccds, [out_ccd], solutions=10, 
                     prefix=EX[f"task{i}_"]):
-                wf_raw.add((wf_raw.root, TF.implementation, task))
+
+                wf_raw.add((wf_raw.root, TF.implements, task))
+                wf_raw.add((task, TF.implementation, wf_raw.root))
+
                 for comment in g.objects(task, RDFS.comment):
                     wf_raw.add((wf_raw.root, RDFS.comment, comment))
                 wf_raw.add((wf_raw.root, RDFS.comment, Literal(
