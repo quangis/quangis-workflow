@@ -69,11 +69,14 @@ def write_csv_summary(handle: TextIO,
         w.writerow({"Precision": "?", "Recall": "?"})
 
 
-def read_transformation(wf_path: Path, tools: Graph,
+def read_transformation(wf_path: Path | Graph, tools: Graph,
         format: str | None = None, **kwargs) -> TransformationGraph:
     """Read a single workflow into a transformation graph."""
     wg = WorkflowGraph(cct, tools)
-    wg.parse(wf_path, format=format or guess_format(str(wf_path)))
+    if isinstance(wf_path, Graph):
+        wg += wf_path
+    else:
+        wg.parse(wf_path, format=format or guess_format(str(wf_path)))
 
     g = TransformationGraph(cct, **kwargs)
     try:

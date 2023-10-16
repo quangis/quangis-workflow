@@ -662,6 +662,7 @@ def task_question_to_ccd():
         from quangis.cct2ccd import cct2ccd
         from quangis.tools.set import InputHackError
         from transforge.namespace import TF
+        from transforge.graph import WorkflowCompositionError
 
         g = Graph()
         g.parse(source, format="ttl")
@@ -692,6 +693,7 @@ def task_question_to_ccd():
 
             for wf_raw in gen.run(in_ccds, [out_ccd], solutions=10, 
                     prefix=EX[f"task{i}_"]):
+                wf_raw.add((wf_raw.root, TF.implementation, task))
                 for comment in g.objects(task, RDFS.comment):
                     wf_raw.add((wf_raw.root, RDFS.comment, comment))
                 wf_raw.add((wf_raw.root, RDFS.comment, Literal(
@@ -714,7 +716,16 @@ def task_question_to_ccd():
                 else:
                     wf = wf_raw
 
+                # Derive transformation graphs
+                try:
+                    wf = read_transformation(wf, repo.graph())
+                except WorkflowCompositionError as e:
+                    wf.remove((wf_raw.root, RDF.type, WF.Workflow))
+                    wf.add((wf_raw.root, RDF.type, WF.InvalidWorkflow))
+                    wf.add((wf_raw.root, RDFS.comment, Literal(str(e))))
+
                 solutions += wf
+
         bind_all(solutions)
         solutions.serialize(target, format="ttl")
 
