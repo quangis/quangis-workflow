@@ -644,8 +644,6 @@ def task_question_to_ccd():
     destdir = BUILD / "workflows" / "from_questions"
     apedir = BUILD / "ape"
 
-
-
     @functools.cache
     def generator():
         from quangis.synthesis import WorkflowGenerator
@@ -662,6 +660,7 @@ def task_question_to_ccd():
         from rdflib import Graph, RDF, RDFS, URIRef, Literal
         from quangis.namespace import bind_all, EX, WF
         from quangis.cct2ccd import cct2ccd
+        from quangis.tools.set import InputHackError
         from transforge.namespace import TF
 
         g = Graph()
@@ -675,9 +674,11 @@ def task_question_to_ccd():
             else:
                 yield node
 
+        repo = tool_repo()
+
         # Generate workflows
         gen = generator()
-        solutions_raw = Graph()
+        solutions = Graph()
         for i, task in enumerate(g.subjects(RDF.type, TF.Task)):
             # try:
             out_node = g.value(task, TF.output)
@@ -689,22 +690,31 @@ def task_question_to_ccd():
             out_ccd = cct2ccd(out_type)
             in_ccds = [cct2ccd(t) for t in in_types]
 
-            for wf in gen.run(in_ccds, [out_ccd], solutions=10, 
+            for wf_raw in gen.run(in_ccds, [out_ccd], solutions=10, 
                     prefix=EX[f"task{i}_"]):
-                solutions_raw += wf
                 for comment in g.objects(task, RDFS.comment):
-                    solutions_raw.add((wf.root, RDFS.comment, comment))
-                solutions_raw.add((wf.root, RDFS.comment, Literal(
+                    wf_raw.add((wf_raw.root, RDFS.comment, comment))
+                wf_raw.add((wf_raw.root, RDFS.comment, Literal(
                     f"Out: {out_ccd}\nIn: \n"
                     f"{' & '.join(str(s) for s in in_ccds)}")))
 
-        # Perform input permutation hack
-        repo = tool_repo()
-        solutions = Graph()
-        if (None, RDF.type, WF.Workflow) in solutions_raw:
-            solutions = repo.input_permutation_hack(solutions_raw)
-        else:
-            solutions = solutions_raw
+                # Perform input permutation hack
+                if (None, RDF.type, WF.Workflow) in wf_raw:
+                    try:
+                        wf = repo.input_permutation_hack(wf_raw)
+                    except InputHackError as e:
+                        # TODO: Note that simply removing workflows that cannot 
+                        # be input-hacked means that we will likely overlook 
+                        # workflows that need e.g. two inputs of the same type
+                        wf = wf_raw
+                        wf.remove((wf_raw.root, RDF.type, WF.Workflow))
+                        wf.add((wf_raw.root, RDF.type, WF.InvalidWorkflow))
+                        wf.add((wf_raw.root, RDFS.comment, Literal(str(e))))
+
+                else:
+                    wf = wf_raw
+
+                solutions += wf
         bind_all(solutions)
         solutions.serialize(target, format="ttl")
 

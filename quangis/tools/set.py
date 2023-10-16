@@ -15,6 +15,9 @@ from quangis.workflow import (Workflow)
 from quangis.tools.tool import (Tool, Unit, Multi, Abstraction)
 
 
+class InputHackError(Exception):
+    pass
+
 class IntegrityError(Exception):
     """Tool repository does not satisfy expectations."""
     pass
@@ -393,7 +396,7 @@ class ToolSet(object):
                         "\nTool uses inputs: \n\t- ",
                         '\n\t- '.join(str(x) for x in tool_types)
                     ]
-                    raise RuntimeError(''.join(msg))
+                    raise InputHackError(''.join(msg))
 
         return wf
 
