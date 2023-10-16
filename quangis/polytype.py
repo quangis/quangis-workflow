@@ -233,6 +233,4 @@ class Polytype(MutableMapping[URIRef, set[URIRef]]):
                             projection.append(current)
 
                 result[d].update(projection)
-            if not result[d]:
-                result[d] = {d.root}
         return result
