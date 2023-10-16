@@ -413,14 +413,16 @@ def task_wf_gen_variants():
     def generator():
         from quangis.synthesis import WorkflowGenerator
         gen = WorkflowGenerator(BUILD / "tools" / "abstract.ttl",
-            BUILD / "tools" / "multi.ttl",
-            DATA / "tools" / "arcgis.ttl", build_dir=apedir)
+                BUILD / "tools" / "multi.ttl",
+                DATA / "tools" / "arcgis.ttl",
+            build_dir=apedir)
         return gen
 
     @functools.cache
     def tool_repo():
-        return ToolSet.from_file(BUILD / "tools" / "abstract.ttl", 
-            check_integrity=True)
+        return ToolSet.from_file(BUILD / "tools" / "abstract.ttl",
+            BUILD / "tools" / "multi.ttl",
+            DATA / "tools" / "arcgis.ttl", check_integrity=True)
 
     def action(wf_path, name, target) -> None:
         from rdflib import Graph
@@ -429,7 +431,7 @@ def task_wf_gen_variants():
         from quangis.namespace import WFVAR, bind_all
         from quangis.workflow import Workflow
         from quangis.polytype import Polytype
-        from quangis.ccd import ccd, CCD
+        from quangis.ccd import CCD
 
         # Find out input and outputs of existing workflow
         wf = Workflow.from_file(wf_path)
@@ -463,6 +465,7 @@ def task_wf_gen_variants():
         # Determine the overall types and projected types
         source_types = [all_types[s] for s in sources]
         target_types = [all_types[t] for t in targets]
+
         p_source_types = [all_types[s].projection() for s in sources]
         p_target_types = [all_types[t].projection() for t in targets]
 
@@ -474,7 +477,7 @@ def task_wf_gen_variants():
         # Generate variants
         gen = generator()
         solutions_raw = Graph()
-        for wf in gen.run(p_source_types, p_target_types, solutions=10, 
+        for wf in gen.run(p_source_types, p_target_types, solutions=5, 
                 prefix=WFVAR[shorten(wf.root)]):
             solutions_raw += wf
         bind_all(solutions_raw)
@@ -674,26 +677,26 @@ def task_question_to_ccd():
         gen = generator()
         solutions_raw = Graph()
         for i, task in enumerate(g.subjects(RDF.type, TF.Task)):
-            try:
-                out_node = g.value(task, TF.output)
+            # try:
+            out_node = g.value(task, TF.output)
 
-                out_type = g.value(out_node, TF.type)
-                in_types = [g.value(t, TF.type) for t in leaves(out_node)]
-                assert isinstance(out_type, URIRef)
+            out_type = g.value(out_node, TF.type)
+            in_types = [g.value(t, TF.type) for t in leaves(out_node)]
+            assert isinstance(out_type, URIRef)
 
-                out_ccd = cct2ccd(out_type)
-                in_ccds = [cct2ccd(t) for t in in_types]
-            except RuntimeError as e:
-                print(f"cannot find type for {task}: {e}")
-            else:
-                for wf in gen.run(in_ccds, [out_ccd], solutions=10, 
-                        prefix=EX[f"task{i}_"]):
-                    solutions_raw += wf
-                    for comment in g.objects(task, RDFS.comment):
-                        solutions_raw.add((wf.root, RDFS.comment, comment))
-                    solutions_raw.add((wf.root, RDFS.comment, Literal(
-                        f"Out: {out_ccd}\nIn: \n"
-                        f"{' & '.join(str(s) for s in in_ccds)}")))
+            out_ccd = cct2ccd(out_type)
+            in_ccds = [cct2ccd(t) for t in in_types]
+            # except RuntimeError as e:
+            #     print(f"cannot find type for {task}: {e}")
+
+            for wf in gen.run(in_ccds, [out_ccd], solutions=10, 
+                    prefix=EX[f"task{i}_"]):
+                solutions_raw += wf
+                for comment in g.objects(task, RDFS.comment):
+                    solutions_raw.add((wf.root, RDFS.comment, comment))
+                solutions_raw.add((wf.root, RDFS.comment, Literal(
+                    f"Out: {out_ccd}\nIn: \n"
+                    f"{' & '.join(str(s) for s in in_ccds)}")))
 
         bind_all(solutions_raw)
         solutions_raw.serialize(target, format="ttl")

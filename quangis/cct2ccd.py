@@ -61,6 +61,6 @@ def cct2ccd(uri: URIRef) -> Polytype:
                 t.params[0].operator == Product:
             t = R3(t.params[0].params[0], t.params[1], t.params[0].params[1])
 
-        if t.match(t2, accept_wildcard=True):
+        if t.match(t2, accept_wildcard=True) is not False:
             return Polytype({dims[d]: uris for d, uris in v.items()})
     raise RuntimeError(f"Cannot convert CCT type {uri} to CCD.")
