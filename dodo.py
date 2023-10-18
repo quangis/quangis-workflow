@@ -577,18 +577,23 @@ def task_question_transformation():
     def action(dependencies, targets) -> bool:
         import json
         from rdflib.term import BNode, Literal
+        from rdflib.namespace import Namespace
         from transforge.namespace import TF, RDF, RDFS
         from transforge.graph import TransformationGraph
         from transforge.query import transformation2sparql
         from transforge.type import Product, TypeOperation
         from quangis.cct import cct, R3, R2, Obj, Reg
+        from urllib.parse import quote_plus
+
+        QUESTION = Namespace("https://quangis.github.io/questions#")
 
         with open(dependencies[0], 'r') as f:
             inputs = json.load(f)
 
         g = TransformationGraph(cct)
         for parsed_question in inputs:
-            task = BNode()
+
+            task = QUESTION[quote_plus(parsed_question['question'])]
             g.add((task, RDF.type, TF.Task))
             g.add((task, RDFS.comment, Literal(parsed_question['question'])))
 
