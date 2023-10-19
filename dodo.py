@@ -646,7 +646,7 @@ def task_question_transformation():
 
 def task_question_to_ccd():
 
-    destdir = BUILD / "workflows" / "from_questions"
+    destdir = BUILD / "transformations" / "questionbased"
     apedir = BUILD / "ape"
 
     @functools.cache
@@ -661,12 +661,12 @@ def task_question_to_ccd():
         return ToolSet.from_file(BUILD / "tools" / "abstract.ttl", 
             check_integrity=True)
 
-    def action(source, target) -> None:
+    def action(source) -> None:
         from rdflib import Graph, RDF, RDFS, URIRef, Literal
-        from quangis.namespace import bind_all, EX, WF
+        from quangis.namespace import bind_all, EX, WF, WFGEN
         from quangis.cct2ccd import cct2ccd
         from quangis.tools.set import InputHackError
-        from transforge.namespace import TF
+        from transforge.namespace import TF, shorten
         from transforge.graph import WorkflowCompositionError
 
         g = Graph()
@@ -684,11 +684,11 @@ def task_question_to_ccd():
 
         # Generate workflows
         gen = generator()
-        solutions = Graph()
-        for i, task in enumerate(g.subjects(RDF.type, TF.Task)):
-            assert isinstance(task, URIRef), f"{task}"
-            out_node = g.value(task, TF.output)
+        for task in g.subjects(RDF.type, TF.Task):
+            assert isinstance(task, URIRef)
 
+            name = shorten(task)
+            out_node = g.value(task, TF.output)
             out_type = g.value(out_node, TF.type)
             in_types = [g.value(t, TF.type) for t in leaves(out_node)]
             assert isinstance(out_type, URIRef)
@@ -696,8 +696,8 @@ def task_question_to_ccd():
             out_ccd = cct2ccd(out_type)
             in_ccds = [cct2ccd(t) for t in in_types]
 
-            for wf_raw in gen.run(in_ccds, [out_ccd], solutions=10, 
-                    prefix=EX[f"task{i}_"]):
+            for i, wf_raw in enumerate(gen.run(
+                    in_ccds, [out_ccd], solutions=10, prefix=WFGEN[name])):
 
                 wf_raw.add((wf_raw.root, TF.implements, task))
                 wf_raw.add((task, TF.implementation, wf_raw.root))
@@ -709,42 +709,39 @@ def task_question_to_ccd():
                     f"{' & '.join(str(s) for s in in_ccds)}")))
 
                 # Perform input permutation hack
-                if (None, RDF.type, WF.Workflow) in wf_raw:
-                    try:
-                        wf = repo.input_permutation_hack(wf_raw)
-                    except InputHackError as e:
-                        # TODO: Note that simply removing workflows that cannot 
-                        # be input-hacked means that we will likely overlook 
-                        # workflows that need e.g. two inputs of the same type
-                        wf = wf_raw
-                        wf.remove((wf_raw.root, RDF.type, WF.Workflow))
-                        wf.add((wf_raw.root, RDF.type, WF.InvalidWorkflow))
-                        wf.add((wf_raw.root, RDFS.comment, Literal(str(e))))
+                assert (None, RDF.type, WF.Workflow) in wf_raw
 
-                else:
-                    wf = wf_raw
-
-                # Derive transformation graphs
                 try:
-                    wf = read_transformation(wf, repo.graph())
-                except WorkflowCompositionError as e:
+                    wf = repo.input_permutation_hack(wf_raw)
+                except InputHackError as e:
+                    # TODO: Note that simply removing workflows that cannot 
+                    # be input-hacked means that we will likely overlook 
+                    # workflows that need e.g. two inputs of the same type
+                    wf = wf_raw
                     wf.remove((wf_raw.root, RDF.type, WF.Workflow))
                     wf.add((wf_raw.root, RDF.type, WF.InvalidWorkflow))
                     wf.add((wf_raw.root, RDFS.comment, Literal(str(e))))
-
-                solutions += wf
-
-        bind_all(solutions)
-        solutions.serialize(target, format="ttl")
+                    name = f"{name}_invalid"
+                else:
+                    # Derive transformation graphs
+                    try:
+                        wf = read_transformation(wf, repo.graph())
+                    except WorkflowCompositionError as e:
+                        wf.remove((wf_raw.root, RDF.type, WF.Workflow))
+                        wf.add((wf_raw.root, RDF.type, WF.InvalidWorkflow))
+                        wf.add((wf_raw.root, RDFS.comment, Literal(str(e))))
+                        name = f"{name}_invalid"
+                    else:
+                        bind_all(wf)
+                        wf.serialize(destdir / f"{name}_{i}.ttl", format="ttl")
 
     for qb in QUESTIONS:
         src = BUILD / "query" / f"{qb.stem}.ttl"
-        dest = destdir / f"{qb.stem}.ttl"
         yield dict(
             name=qb.stem,
             file_dep=[src],
-            targets=[dest],
-            actions=[(mkdir, [dest.parent]), (action, [src, dest])]
+            targets=[destdir / "marker"],
+            actions=[(mkdir, [destdir]), (action, [src])]
         )
 
 
