@@ -711,6 +711,7 @@ def task_question_to_ccd():
                 # Perform input permutation hack
                 assert (None, RDF.type, WF.Workflow) in wf_raw
 
+                invalid = False
                 try:
                     wf = repo.input_permutation_hack(wf_raw)
                 except InputHackError as e:
@@ -721,7 +722,7 @@ def task_question_to_ccd():
                     wf.remove((wf_raw.root, RDF.type, WF.Workflow))
                     wf.add((wf_raw.root, RDF.type, WF.InvalidWorkflow))
                     wf.add((wf_raw.root, RDFS.comment, Literal(str(e))))
-                    name = f"{name}_invalid"
+                    invalid = True
                 else:
                     # Derive transformation graphs
                     try:
@@ -730,10 +731,11 @@ def task_question_to_ccd():
                         wf.remove((wf_raw.root, RDF.type, WF.Workflow))
                         wf.add((wf_raw.root, RDF.type, WF.InvalidWorkflow))
                         wf.add((wf_raw.root, RDFS.comment, Literal(str(e))))
-                        name = f"{name}_invalid"
-                    else:
-                        bind_all(wf)
-                        wf.serialize(destdir / f"{name}_{i}.ttl", format="ttl")
+                        invalid = True
+                bind_all(wf)
+                wf.serialize(
+                    destdir / f"{'invalid_' if invalid else ''}{name}_{i}.ttl",
+                    format="ttl")
 
     for qb in QUESTIONS:
         src = BUILD / "query" / f"{qb.stem}.ttl"
