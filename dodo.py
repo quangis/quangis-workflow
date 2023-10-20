@@ -713,7 +713,8 @@ def task_question_to_ccd():
                     wf = wf_raw
                     wf.remove((wf_raw.root, RDF.type, WF.Workflow))
                     wf.add((wf_raw.root, RDF.type, WF.InvalidWorkflow))
-                    wf.add((wf_raw.root, RDFS.comment, Literal(str(e))))
+                    wf.add((wf_raw.root, RDFS.comment,
+                        Literal(f"{type(e)}: {e}")))
                     invalid = True
                 else:
                     # Derive transformation graphs
@@ -723,7 +724,7 @@ def task_question_to_ccd():
                         wf.remove((wf_raw.root, RDF.type, WF.Workflow))
                         wf.add((wf_raw.root, RDF.type, WF.InvalidWorkflow))
                         wf.add((wf_raw.root, RDFS.comment,
-                            Literal("{type(e)}: {e}")))
+                            Literal(f"{type(e)}: {e}")))
                         invalid = True
                 bind_all(wf)
                 wf.serialize(
