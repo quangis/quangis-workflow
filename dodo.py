@@ -619,6 +619,7 @@ def task_question_transformation():
 
 def task_question_to_ccd():
 
+    dest_impl = BUILD / "query" / "implementations.ttl"
     destdir = BUILD / "transformations" / "questionbased"
     apedir = BUILD / "ape"
 
@@ -655,6 +656,8 @@ def task_question_to_ccd():
 
         repo = tool_repo()
 
+        g_impl = Graph()
+
         # Generate workflows
         gen = generator()
         for task in g.subjects(RDF.type, TF.Task):
@@ -673,7 +676,7 @@ def task_question_to_ccd():
                     in_ccds, [out_ccd], solutions=10, prefix=WFGEN[name])):
 
                 wf_raw.add((wf_raw.root, TF.implements, task))
-                wf_raw.add((task, TF.implementation, wf_raw.root))
+                g_impl.add((task, TF.implementation, wf_raw.root))
 
                 for comment in g.objects(task, RDFS.comment):
                     wf_raw.add((wf_raw.root, RDFS.comment, comment))
@@ -710,12 +713,15 @@ def task_question_to_ccd():
                     destdir / f"{'invalid_' if invalid else ''}{name}_{i}.ttl",
                     format="ttl")
 
+            bind_all(g_impl)
+            g_impl.serialize(dest_impl, format="ttl")
+
     for qb in QUESTIONS:
         src = BUILD / "query" / f"{qb.stem}.ttl"
         yield dict(
             name=qb.stem,
             file_dep=[src],
-            targets=[destdir / "marker"],
+            targets=[dest_impl],
             actions=[(mkdir, [destdir]), (action, [src])]
         )
 
@@ -746,6 +752,49 @@ def task_ml_query_questions():
         yield dict(
             name=qb.stem,
             file_dep=[src],
+            targets=[dest],
+            actions=[(mkdir, [dest.parent]), action],
+            verbosity=2
+        )
+
+
+def task_ml_query_questions_intersection():
+    """For generated workflows, we want to find those workflows that were 
+    *both* generated *for* the question and that match the transformation graph 
+    *of* the question."""
+
+    src_impl = BUILD / "query" / "implementations.ttl"
+    src_results = BUILD / "query" / "blocklyoutput_retri.results.ttl"
+    dest = BUILD / "query" / "blocklyoutput_retri.intersection.ttl"
+
+    def action(dependencies, targets):
+        from rdflib import Graph, BNode, Namespace
+        from rdflib.container import Bag
+        from transforge.namespace import TF, RDF
+
+        g = Graph()
+
+        g_impl = Graph()
+        g_impl.parse(src_impl)
+
+        g_results = Graph()
+        g_results.parse(src_results)
+
+        for task in g_results.subjects(RDF.type, TF.Task):
+            results = [workflow
+                for workflow in g_impl.objects(task, TF.implementation)
+                if (task, TF.match, workflow) in g_results
+            ]
+            b = BNode()
+            Bag(g, b, results)
+            g.add((task, TF.results, b))
+
+        g.serialize(targets[0], format="ttl")
+
+    for qb in QUESTIONS:
+        yield dict(
+            name=qb.stem,
+            file_dep=[src_impl, src_results],
             targets=[dest],
             actions=[(mkdir, [dest.parent]), action],
             verbosity=2
