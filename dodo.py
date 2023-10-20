@@ -641,6 +641,7 @@ def task_question_to_ccd():
         from quangis.cct2ccd import cct2ccd
         from quangis.tools.set import InputHackError
         from transforge.namespace import TF, shorten
+        from transforge.expr import ApplicationError
         from transforge.graph import WorkflowCompositionError
 
         g = Graph()
@@ -682,10 +683,6 @@ def task_question_to_ccd():
                 and (t := g.value(n, TF.type))
                 and isinstance(t, URIRef)]
 
-            print("Input:", in_types, file=sys.stderr)
-            print("Output:", out_type, file=sys.stderr)
-            print("Intermediate types:", intermediate_types, file=sys.stderr)
-
             out_ccds = [cct2ccd(out_type)]
             in_ccds = [cct2ccd(t) for t in in_types]
             intermediate_ccds = [cct2ccd(t) for t in intermediate_types]
@@ -722,10 +719,11 @@ def task_question_to_ccd():
                     # Derive transformation graphs
                     try:
                         wf = read_transformation(wf, repo.graph())
-                    except WorkflowCompositionError as e:
+                    except (WorkflowCompositionError, ApplicationError) as e:
                         wf.remove((wf_raw.root, RDF.type, WF.Workflow))
                         wf.add((wf_raw.root, RDF.type, WF.InvalidWorkflow))
-                        wf.add((wf_raw.root, RDFS.comment, Literal(str(e))))
+                        wf.add((wf_raw.root, RDFS.comment,
+                            Literal("{type(e)}: {e}")))
                         invalid = True
                 bind_all(wf)
                 wf.serialize(
