@@ -134,7 +134,7 @@ def task_vocab_cct():
     )
 
 def task_tfm():
-    """Produce all transformation graphs for workflows."""
+    """Produce all transformation graphs for existing workflows."""
 
     def action(dependencies, targets) -> bool:
         from rdflib import Graph
@@ -153,18 +153,6 @@ def task_tfm():
             file_dep=[path, BUILD / "tools" / "abstract.ttl"],
             targets=[destdir / f"{path.stem}.ttl"],
             actions=[(mkdir, [destdir]), action])
-
-def task_tfm_expert1():
-    return dict(task_dep=[f"tfm:{x.stem}" for x in WORKFLOWS],
-        actions=None)
-
-def task_tfm_expert2():
-    return dict(task_dep=[f"tfm:{x.stem}" for x in CWORKFLOWS],
-        actions=None)
-
-def task_tfm_gen():
-    return dict(task_dep=[f"tfm:{x.stem}" for x in GEN_WORKFLOWS],
-        actions=None)
 
 def task_ml_upload_cct():
     """Upload CCT types to MarkLogic."""
@@ -197,9 +185,7 @@ def task_ml_upload():
         from transforge.graph import TransformationGraph
         store = transformation_store()
 
-        files = [
-            BUILD / "transformations" / f"{x.parent.stem}" / f"{x.stem}.ttl"
-            for x in chain(WORKFLOWS, CWORKFLOWS, GEN_WORKFLOWS)]
+        files = list((BUILD / "transformations").glob("**/*.ttl"))
 
         for d in files:
             sys.stderr.write(f"Uploading {d}...\n")
@@ -223,7 +209,7 @@ def task_ml_upload():
     )
 
 def task_viz_dot():
-    """Visualizations of transformation graphs."""
+    """Visualizations of existing transformation graphs."""
 
     def action(dependencies, targets) -> bool:
         from quangis.cct import cct
@@ -233,16 +219,15 @@ def task_viz_dot():
         g.visualize(targets[0])
         return True
 
-    for path in ALL_WORKFLOWS:
-        srcdir = BUILD / "transformations" / f"{path.parent.stem}"
-        destdir = BUILD / "visualizations" / f"{path.parent.stem}"
+    for path in (BUILD / "transformations").glob("**/*.ttl"):
+        destdir = BUILD / "visualizations"
         yield dict(name=path.stem,
-            file_dep=[srcdir / f"{path.stem}.ttl"],
+            file_dep=[path],
             targets=[destdir / f"{path.stem}.dot"],
             actions=[(mkdir, [destdir]), action])
 
 def task_viz_pdf():
-    """Visualizations of transformation graphs as a PDF."""
+    """Visualizations of existing transformation graphs as PDF."""
 
     def action(dependencies, targets) -> bool:
         import pydot  # type: ignore
@@ -252,24 +237,12 @@ def task_viz_pdf():
 
     destdir = BUILD / "transformations"
 
-    for path in ALL_WORKFLOWS:
-        destdir = BUILD / "visualizations" / f"{path.parent.stem}"
+    for path in (BUILD / "transformations").glob("**/*.ttl"):
+        destdir = BUILD / "visualizations"
         yield dict(name=path.stem,
             file_dep=[destdir / f"{path.stem}.dot"],
             targets=[destdir / f"{path.stem}.pdf"],
             actions=[(mkdir, [destdir]), action])
-
-def task_viz_pdf_expert1():
-    return dict(task_dep=[f"viz_pdf:{x.stem}" for x in WORKFLOWS],
-        actions=None)
-
-def task_viz_pdf_expert2():
-    return dict(task_dep=[f"viz_pdf:{x.stem}" for x in CWORKFLOWS],
-        actions=None)
-
-def task_viz_pdf_gen():
-    return dict(task_dep=[f"viz_pdf:{x.stem}" for x in GEN_WORKFLOWS],
-        actions=None)
 
 def task_ml_query_expert1():
     """Evaluate expert1 workflows' transformations against tasks.
