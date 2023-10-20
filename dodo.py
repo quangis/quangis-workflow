@@ -663,17 +663,36 @@ def task_question_to_ccd():
         for task in g.subjects(RDF.type, TF.Task):
             assert isinstance(task, URIRef)
 
+            # TODO: there's often actually multiple possible types associated 
+            # with a single node because of some corners that were cut earlier, 
+            # ie. the temporary fix that allows R(Obj, x) and R(Obj, Reg * x) 
+            # interchangably. This means that one of these is picked at random 
+            # here
+
             name = shorten(task)
             out_node = g.value(task, TF.output)
             out_type = g.value(out_node, TF.type)
-            in_types = [g.value(t, TF.type) for t in leaves(out_node)]
             assert isinstance(out_type, URIRef)
 
-            out_ccd = cct2ccd(out_type)
+            in_nodes = set(leaves(out_node))
+            in_types = [g.value(n, TF.type) for n in in_nodes]
+            intermediate_types = [t
+                for n in g.transitive_objects(out_node, TF['from'])
+                if n not in in_nodes
+                and (t := g.value(n, TF.type))
+                and isinstance(t, URIRef)]
+
+            print("Input:", in_types, file=sys.stderr)
+            print("Output:", out_type, file=sys.stderr)
+            print("Intermediate types:", intermediate_types, file=sys.stderr)
+
+            out_ccds = [cct2ccd(out_type)]
             in_ccds = [cct2ccd(t) for t in in_types]
+            intermediate_ccds = [cct2ccd(t) for t in intermediate_types]
 
             for i, wf_raw in enumerate(gen.run(
-                    in_ccds, [out_ccd], solutions=10, prefix=WFGEN[name])):
+                    in_ccds, out_ccds, solutions=10, prefix=WFGEN[name],
+                    constraints=gen.constraint(intermediate_ccds))):
 
                 wf_raw.add((wf_raw.root, TF.implements, task))
                 g_impl.add((task, TF.implementation, wf_raw.root))
@@ -681,7 +700,7 @@ def task_question_to_ccd():
                 for comment in g.objects(task, RDFS.comment):
                     wf_raw.add((wf_raw.root, RDFS.comment, comment))
                 wf_raw.add((wf_raw.root, RDFS.comment, Literal(
-                    f"Out: {out_ccd}\nIn: \n"
+                    f"Out: {out_ccds[0]}\nIn: \n"
                     f"{' & '.join(str(s) for s in in_ccds)}")))
 
                 # Perform input permutation hack
@@ -721,7 +740,7 @@ def task_question_to_ccd():
         yield dict(
             name=qb.stem,
             file_dep=[src],
-            targets=[dest_impl],
+            targets=[dest_impl, BUILD / "transformations" / "marker"],
             actions=[(mkdir, [destdir]), (action, [src])]
         )
 
@@ -768,7 +787,7 @@ def task_ml_query_questions_intersection():
     dest = BUILD / "query" / "blocklyoutput_retri.intersection.ttl"
 
     def action(dependencies, targets):
-        from rdflib import Graph, BNode, Namespace
+        from rdflib import Graph, BNode
         from rdflib.container import Bag
         from transforge.namespace import TF, RDF
 

@@ -23,6 +23,7 @@ from transforge.namespace import EX, shorten
 
 from quangis.polytype import Polytype
 
+# def start_ape(version="2.1.5") -> None:
 def start_ape(version="1.1.12") -> None:
     name = f"APE-{version}-executable.jar"
 
@@ -100,20 +101,36 @@ class APE(object):
         self.ape = j_ape.APE(self.config)
         self.setup = self.ape.getDomainSetup()
 
-    def type(self, is_output: bool, t: Polytype) -> j_ape.models.Type:
-        """
-        Convert `Polytype` to the corresponding APE structure.
-        """
-
+    def json_type(self, t: Polytype) -> j_json.Object:
         obj = j_json.JSONObject()
         for dimension, classes in t.items():
             array = j_json.JSONArray()
             for c in classes:
                 array.put(str(c))
             obj.put(str(dimension), array)
+        return obj
+
+    def type(self, is_output: bool, t: Polytype) -> j_ape.models.Type:
+        """Convert `Polytype` to the corresponding APE structure."""
 
         return j_ape.models.Type.taxonomyInstanceFromJson(
-            obj, self.setup, is_output)
+            self.json_type(t), self.setup, is_output)
+
+    def constraint(self, use_t: Iterable[Polytype]) -> j_json.JSONObject:
+        """Add the 'use_t' constraint for the given types."""
+        # TODO: Make a 'real' Constraint wrapper for other types of 
+        # constraints. Just rushing through things atm
+        result = j_json.JSONObject()
+        constraints = j_json.JSONArray()
+        for pt in use_t:
+            obj = j_json.JSONObject()
+            obj.put("constraintid", "use_t")
+            types = j_json.JSONArray()
+            types.put(self.json_type(pt))
+            obj.put("parameters", types)
+            constraints.put(obj)
+        result.put("constraints", constraints)
+        return result
 
     def type_array(self, is_output: bool,
             types: Iterable[Polytype]) -> j_json.JSONArray:
@@ -129,6 +146,7 @@ class APE(object):
             solutions: int = 10,
             timeout: int = 600,
             use_workflow_input: typing.Literal["NONE", "ONE", "ALL"] = "ALL",
+            constraints: j_json.JSONObject = j_json.JSONObject(),
             output_dir: Path = Path(".")) -> Iterator[Graph]:
 
         inputs = self.type_array(False, inputs)
@@ -137,7 +155,7 @@ class APE(object):
         config = j_ape.configuration.APERunConfig\
             .builder()\
             .withSolutionDirPath(str(output_dir))\
-            .withConstraintsJSON(j_json.JSONObject())\
+            .withConstraintsJSON(constraints)\
             .withSolutionMinLength(solution_length[0])\
             .withSolutionMaxLength(solution_length[1])\
             .withMaxNoSolutions(solutions)\
@@ -148,6 +166,9 @@ class APE(object):
             .withUseWorkflowInput(getattr(j_ape.models.enums.ConfigEnum,
                 use_workflow_input))\
             .build()
+
+        print("Building for", prefix, file=sys.stderr)
+        print("With constraints:", constraints, file=sys.stderr)
 
         result = self.ape.runSynthesis(config)
 
