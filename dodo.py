@@ -687,6 +687,12 @@ def task_question_to_ccd():
             in_ccds = [cct2ccd(t) for t in in_types]
             intermediate_ccds = [cct2ccd(t) for t in intermediate_types]
 
+            print('Task:', task, file=sys.stderr)
+            for ccdt in in_ccds:
+                print('Input:', ccdt, file=sys.stderr)
+            for ccdt in out_ccds:
+                print('Output:', ccdt, file=sys.stderr)
+
             for i, wf_raw in enumerate(gen.run(
                     in_ccds, out_ccds, solutions=10, prefix=WFGEN[name],
                     constraints=gen.constraint(intermediate_ccds))):

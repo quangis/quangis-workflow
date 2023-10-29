@@ -66,7 +66,7 @@ class WorkflowGenerator(APE):
                             for k, v in Polytype.project(
                                 ccd.dimensions,
                                 self.tools.objects(input, RDF.type)
-                            ).items()
+                            ).root_empty().items()
                         }
                         for input in self.tools.objects(tool, TOOL.input)
                     ],
@@ -76,7 +76,7 @@ class WorkflowGenerator(APE):
                             for k, v in Polytype.project(
                                 ccd.dimensions,
                                 self.tools.objects(output, RDF.type)
-                            ).downcast(casts).items()
+                            ).downcast(casts).root_empty().items()
                         }
                         for output in self.tools.objects(tool, TOOL.output)
                     ]
