@@ -618,6 +618,8 @@ def task_question_transformation():
 
 
 def task_wf_gen_question():
+    """Generate workflows from queries by translating their CCT types to CCD 
+    specifications for APE."""
 
     dest_impl = BUILD / "query" / "implementations.ttl"
     destdir = BUILD / "transformations" / "questionbased"
