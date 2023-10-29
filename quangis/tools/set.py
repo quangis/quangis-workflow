@@ -372,13 +372,13 @@ class ToolSet(object):
                 # Find tool inputs
                 tool_labels, tool_types = zip(*(
                     (label,
-                     artefact.type.projection().normalize(clear_empty=True))
+                     artefact.type.projection().normalize().clear_empty())
                     for label, artefact in abstr.inputs.items()
                 ))
 
                 # Find a permutation of inputs that works
                 orig_app_nodes_types = [
-                    (x, wf.type(x).normalize(clear_empty=True))
+                    (x, wf.type(x).normalize().clear_empty())
                     for x in orig_app_inputs]
                 for app_nodes_types in permutations(orig_app_nodes_types):
                     app_nodes, app_types = zip(*app_nodes_types)

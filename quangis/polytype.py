@@ -172,24 +172,31 @@ class Polytype(MutableMapping[URIRef, set[URIRef]]):
                     return False
         return True
 
-    def normalize(self, clear_empty: bool = False) -> Polytype:
+    def normalize(self) -> Polytype:
         """A polytype is an intersection of types. The normalization of a 
         polytype simply removes extraneous activations: if β is a subtype of α, 
         then clearly activating β means that the activation of α is implicit 
         and so α can be left out.
 
-        Furthermore, if any dimension contains no types, it is simply left out
         """
-        t = Polytype({
+        return Polytype({
             dim: set(
                 x for x in self[d]
                 if not any(dim.subsume(y, x, strict=True) for y in self[d])
             ) for d, dim in self.dimensions.items()
         })
-        if clear_empty:
-            return Polytype({d: t[d] for d in t.dimensions.values() if t[d]})
-        else:
-            return t
+
+    def clear_empty(self) -> Polytype:
+        """If any dimension contains no types, it is simply left out 
+        completely."""
+        return Polytype({d: self[d] for d in self.dimensions.values()
+            if self[d]})
+
+    def root_empty(self) -> Polytype:
+        """If any dimension contains no types, it is set to the root of that 
+        dimension."""
+        return Polytype({d: self[d] or {d.root}
+            for d in self.dimensions.values()})
 
     def lexical(self) -> tuple[tuple[URIRef, ...], ...]:
         """Obtain a tuple with which to order polytypes."""
