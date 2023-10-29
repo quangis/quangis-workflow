@@ -111,7 +111,7 @@ A final approach is to generate workflows by translating the CCT types
 (found in the transformation graphs that were generated for questions) 
 into CCD types, and using those CCD types to constrain APE's workflows:
 
-    doit question_to_ccd
+    doit wf_gen_question
 
 
 ## Workflow transformation graphs
@@ -133,7 +133,7 @@ following:
 For the workflows generated based on questions, the transformation 
 graphs are currently part of the deal:
 
-    doit question_to_ccd
+    doit wf_gen_question
 
 
 ### Visualization

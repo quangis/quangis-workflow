@@ -617,7 +617,7 @@ def task_question_transformation():
         )
 
 
-def task_question_to_ccd():
+def task_wf_gen_question():
 
     dest_impl = BUILD / "query" / "implementations.ttl"
     destdir = BUILD / "transformations" / "questionbased"
