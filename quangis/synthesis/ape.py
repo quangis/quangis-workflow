@@ -149,8 +149,8 @@ class APE(object):
             constraints: j_json.JSONObject = j_json.JSONObject(),
             output_dir: Path = Path(".")) -> Iterator[Graph]:
 
-        inputs = self.type_array(False, inputs)
-        outputs = self.type_array(True, outputs)
+        inputs_ape = self.type_array(False, inputs)
+        outputs_ape = self.type_array(False, outputs)
 
         config = j_ape.configuration.APERunConfig\
             .builder()\
@@ -160,14 +160,18 @@ class APE(object):
             .withSolutionMaxLength(solution_length[1])\
             .withMaxNoSolutions(solutions)\
             .withTimeoutSec(timeout)\
-            .withProgramInputs(inputs)\
-            .withProgramOutputs(outputs)\
+            .withProgramInputs(inputs_ape)\
+            .withProgramOutputs(outputs_ape)\
             .withApeDomainSetup(self.setup)\
             .withUseWorkflowInput(getattr(j_ape.models.enums.ConfigEnum,
                 use_workflow_input))\
             .build()
 
         print("Building for", prefix, file=sys.stderr)
+        for x in inputs:
+            print('IN:', self.json_type(x), file=sys.stderr)
+        for x in outputs:
+            print('OUT:', self.json_type(x), file=sys.stderr)
         print("With constraints:", constraints, file=sys.stderr)
 
         result = self.ape.runSynthesis(config)
