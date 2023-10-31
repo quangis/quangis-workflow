@@ -696,7 +696,7 @@ def task_wf_gen_question():
                 print('Output:', ccdt, file=sys.stderr)
 
             for i, wf_raw in enumerate(gen.run(
-                    in_ccds, out_ccds, solutions=10, prefix=WFGEN[name],
+                    in_ccds, out_ccds, solutions=100, prefix=WFGEN[name],
                     constraints=gen.constraint(intermediate_ccds))):
 
                 wf_raw.add((wf_raw.root, TF.implements, task))
@@ -820,7 +820,7 @@ def task_ml_query_questions_intersection():
     for qb in QUESTIONS:
         yield dict(
             name=qb.stem,
-            file_dep=[src_impl, src_results],
+            file_dep=[src_results],  # src_impl
             targets=[dest],
             actions=[(mkdir, [dest.parent]), action],
             verbosity=2
