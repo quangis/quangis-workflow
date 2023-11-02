@@ -133,7 +133,7 @@ def task_vocab_cct():
         actions=[(mkdir, [VOCAB.parent]), action]
     )
 
-def task_tfm():
+def task_transformations():
     """Produce all transformation graphs for existing workflows."""
 
     def action(dependencies, targets) -> bool:
@@ -147,7 +147,8 @@ def task_tfm():
         return True
 
     dest = BUILD / "transformations"
-    for path in ALL_WORKFLOWS:
+    for path in chain((BUILD / "workflows").glob("**/*.ttl"),
+                      (DATA / "workflows" / "expert1").glob("*.ttl")):
         destdir = dest / f"{path.parent.stem}"
         yield dict(name=path.stem,
             file_dep=[path, BUILD / "tools" / "abstract.ttl"],

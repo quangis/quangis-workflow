@@ -91,6 +91,7 @@
   <dia:layer name="Background" visible="true" connectable="false"/>
   <dia:layer name="Background" visible="true" connectable="false"/>
   <dia:layer name="Background" visible="true" connectable="false"/>
+  <dia:layer name="Background" visible="true" connectable="false"/>
   <dia:layer name="Background" visible="true" connectable="true" active="true">
     <dia:object type="Flowchart - Box" version="0" id="O0">
       <dia:attribute name="obj_pos">
@@ -2643,22 +2644,22 @@ query transformation graphs
     </dia:object>
     <dia:object type="Flowchart - Preparation" version="1" id="O64">
       <dia:attribute name="obj_pos">
-        <dia:point val="57.7677,37.1472"/>
+        <dia:point val="56.9687,35.5"/>
       </dia:attribute>
       <dia:attribute name="obj_bb">
-        <dia:rectangle val="57.474,37.0472;84.1574,39.9472"/>
+        <dia:rectangle val="56.6964,35.4;88.2685,39.1"/>
       </dia:attribute>
       <dia:attribute name="meta">
         <dia:composite type="dict"/>
       </dia:attribute>
       <dia:attribute name="elem_corner">
-        <dia:point val="57.7677,37.1472"/>
+        <dia:point val="56.9687,35.5"/>
       </dia:attribute>
       <dia:attribute name="elem_width">
-        <dia:real val="26.096000000000011"/>
+        <dia:real val="31.0275"/>
       </dia:attribute>
       <dia:attribute name="elem_height">
-        <dia:real val="2.6999999999999931"/>
+        <dia:real val="3.5000000000000004"/>
       </dia:attribute>
       <dia:attribute name="line_width">
         <dia:real val="0.10000000000000001"/>
@@ -2683,7 +2684,8 @@ query transformation graphs
         <dia:composite type="text">
           <dia:attribute name="string">
             <dia:string>#Convert CCT graph to CCD input/output specification for APE,
-then run APE and use transforge (sorry, monolithic step)
+then run APE, reorder inputs in the resulting workflow,
+and use transforge to add transformation graphs (sorry, monolithic step)
 [wf_gen_question]#</dia:string>
           </dia:attribute>
           <dia:attribute name="font">
@@ -2693,7 +2695,7 @@ then run APE and use transforge (sorry, monolithic step)
             <dia:real val="0.80000000000000004"/>
           </dia:attribute>
           <dia:attribute name="pos">
-            <dia:point val="70.8157,38.0172"/>
+            <dia:point val="72.4825,36.37"/>
           </dia:attribute>
           <dia:attribute name="color">
             <dia:color val="#000000ff"/>
@@ -2718,14 +2720,14 @@ then run APE and use transforge (sorry, monolithic step)
     </dia:object>
     <dia:object type="Standard - Line" version="0" id="O65">
       <dia:attribute name="obj_pos">
-        <dia:point val="83.4893,33.2205"/>
+        <dia:point val="83.5539,33.2215"/>
       </dia:attribute>
       <dia:attribute name="obj_bb">
-        <dia:rectangle val="76.8474,33.152;83.5578,37.1664"/>
+        <dia:rectangle val="79.813,33.1528;83.6226,35.5185"/>
       </dia:attribute>
       <dia:attribute name="conn_endpoints">
-        <dia:point val="83.4893,33.2205"/>
-        <dia:point val="76.9159,37.0979"/>
+        <dia:point val="83.5539,33.2215"/>
+        <dia:point val="79.8817,35.4498"/>
       </dia:attribute>
       <dia:attribute name="numcp">
         <dia:int val="1"/>
@@ -2962,10 +2964,10 @@ then run APE and use transforge (sorry, monolithic step)
     </dia:object>
     <dia:object type="Standard - Text" version="1" id="O72">
       <dia:attribute name="obj_pos">
-        <dia:point val="74.5437,38.4972"/>
+        <dia:point val="76.915,37.25"/>
       </dia:attribute>
       <dia:attribute name="obj_bb">
-        <dia:rectangle val="74.5437,37.8122;74.5437,38.6872"/>
+        <dia:rectangle val="76.915,36.565;76.915,37.44"/>
       </dia:attribute>
       <dia:attribute name="text">
         <dia:composite type="text">
@@ -2979,7 +2981,7 @@ then run APE and use transforge (sorry, monolithic step)
             <dia:real val="0.80000000000000004"/>
           </dia:attribute>
           <dia:attribute name="pos">
-            <dia:point val="74.5437,38.4972"/>
+            <dia:point val="76.915,37.25"/>
           </dia:attribute>
           <dia:attribute name="color">
             <dia:color val="#000000ff"/>
@@ -3044,14 +3046,14 @@ then run APE and use transforge (sorry, monolithic step)
     </dia:object>
     <dia:object type="Standard - Line" version="0" id="O74">
       <dia:attribute name="obj_pos">
-        <dia:point val="72.9273,39.8973"/>
+        <dia:point val="74.6277,39.0465"/>
       </dia:attribute>
       <dia:attribute name="obj_bb">
-        <dia:rectangle val="68.9099,39.8268;72.9978,43.3866"/>
+        <dia:rectangle val="69.1209,38.9763;74.6979,43.3866"/>
       </dia:attribute>
       <dia:attribute name="conn_endpoints">
-        <dia:point val="72.9273,39.8973"/>
-        <dia:point val="68.9804,43.316"/>
+        <dia:point val="74.6277,39.0465"/>
+        <dia:point val="69.1911,43.3164"/>
       </dia:attribute>
       <dia:attribute name="numcp">
         <dia:int val="1"/>
@@ -3530,6 +3532,42 @@ then run APE and use transforge (sorry, monolithic step)
       </dia:attribute>
       <dia:connections>
         <dia:connection handle="0" to="O5" connection="16"/>
+      </dia:connections>
+    </dia:object>
+    <dia:object type="Standard - Text" version="1" id="O88">
+      <dia:attribute name="obj_pos">
+        <dia:point val="76.915,37.25"/>
+      </dia:attribute>
+      <dia:attribute name="obj_bb">
+        <dia:rectangle val="76.915,36.565;76.915,37.44"/>
+      </dia:attribute>
+      <dia:attribute name="text">
+        <dia:composite type="text">
+          <dia:attribute name="string">
+            <dia:string>##</dia:string>
+          </dia:attribute>
+          <dia:attribute name="font">
+            <dia:font family="sans" style="0" name="Helvetica"/>
+          </dia:attribute>
+          <dia:attribute name="height">
+            <dia:real val="0.80000000000000004"/>
+          </dia:attribute>
+          <dia:attribute name="pos">
+            <dia:point val="76.915,37.25"/>
+          </dia:attribute>
+          <dia:attribute name="color">
+            <dia:color val="#000000ff"/>
+          </dia:attribute>
+          <dia:attribute name="alignment">
+            <dia:enum val="0"/>
+          </dia:attribute>
+        </dia:composite>
+      </dia:attribute>
+      <dia:attribute name="valign">
+        <dia:enum val="3"/>
+      </dia:attribute>
+      <dia:connections>
+        <dia:connection handle="0" to="O64" connection="16"/>
       </dia:connections>
     </dia:object>
   </dia:layer>

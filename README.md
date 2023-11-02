@@ -155,14 +155,14 @@ and operators of the CCT transformation algebra are defined in the
 
 This information is then weaved into a graph of conceptual 
 transformations via the [`transforge`][tf] library, which was developed 
-for this purpose. To perform this step on the manual abstract workflows 
-of [`data/workflows/expert1/`](data/workflows/expert1/), run the 
-following:
+for this purpose. To make transformation graphs for any workflow, just 
+run:
 
-    doit tfm_expert1
+    doit transformations
 
 For the workflows generated based on questions, the transformation 
-graphs are currently part of the deal:
+graphs are currently immediately generated alongside the workflows 
+themselves:
 
     doit wf_gen_question
 
@@ -212,8 +212,8 @@ associated question transformation graphs can be fired using:
 
     doit tdb_query_questions
 
-To assemble those workflows that were generated for a question and also 
-match its transformation graph:
+Afterward, to assemble those workflows that were generated for a 
+question and also match its transformation graph:
 
     doit tdb_query_questions_intersection
 
