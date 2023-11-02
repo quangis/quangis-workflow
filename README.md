@@ -22,6 +22,37 @@ you are running an [Apache Fuseki](https://jena.apache.org/) server at
 [BlazeGraph](https://blazegraph.com/) or the proprietary 
 [MarkLogic](https://marklogic.com).
 
+You can install everything you need within a 
+[Miniconda](https://docs.conda.io/projects/miniconda/en/latest/) 
+environment. First, create it and install the necessary packages:
+
+    conda create -n quangis-wf
+    conda activate quangis-wf
+    conda install python=3.9 spacy spacy-model-en_core_web_sm pyzmq git jpype1 doit tomlkit graphviz pydot platformdirs
+    conda install -c conda-forge openjdk=21
+    pip install antlr4-python3-runtime==4.9.3 word2number --editable=git+https://github.com/quangis/transforge.git@develop#egg=transforge
+
+Then get the repositories you need:
+
+    git clone https://github.com/quangis/geo-question-parser
+    git clone https://github.com/quangis/quangis-workflow
+
+You will also need to download and run Fuseki. To do this, run the 
+following commands. Afterwards, open your browser at 
+`http://localhost:3030` to create the ´cct´ triple store.
+
+    curl -fLo fuseki.zip https://dlcdn.apache.org/jena/binaries/apache-jena-fuseki-4.10.0.zip
+    unzip fuseki.zip
+    cd apache-jena-fuseki-4.10.0
+    java -jar fuseki-server.jar
+
+Finally, while Fuseki is running, open another Miniconda prompt in the 
+´quangis-wf´ environment to be able to run the `doit` recipes:
+
+    conda activate quangis-wf
+    cd quangis-workflow
+    doit list
+
 
 ## Question transformation graphs
 
