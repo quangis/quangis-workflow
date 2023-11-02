@@ -193,11 +193,11 @@ To reproduce the matching between workflow transformation graphs and
 these query transformation graphs, set up your triple store, change the 
 `STORE_*` variables to the appropriate values, then run the following:
 
-    doit ml_upload
+    doit tdb_upload
 
 Then, send your queries:
 
-    doit ml_query_expert1
+    doit tdb_query_expert1
 
 In the `build/eval/` directory, CSV files will be produced that show 
 which workflows are retrieved for which task descriptions, for all 
@@ -210,12 +210,12 @@ To evaluate the workflow, you first want to generate and upload the
 associated question-based workflow transformation graphs. Then, the 
 associated question transformation graphs can be fired using:
 
-    doit ml_query_questions
+    doit tdb_query_questions
 
 To assemble those workflows that were generated for a question and also 
 match its transformation graph:
 
-    doit ml_query_questions_intersection
+    doit tdb_query_questions_intersection
 
 
 ## Tests

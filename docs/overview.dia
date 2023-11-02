@@ -89,6 +89,8 @@
     </dia:attribute>
   </dia:diagramdata>
   <dia:layer name="Background" visible="true" connectable="false"/>
+  <dia:layer name="Background" visible="true" connectable="false"/>
+  <dia:layer name="Background" visible="true" connectable="false"/>
   <dia:layer name="Background" visible="true" connectable="true" active="true">
     <dia:object type="Flowchart - Box" version="0" id="O0">
       <dia:attribute name="obj_pos">
@@ -274,7 +276,7 @@ abstract tools and multitools
             <dia:real val="0.80000000000000004"/>
           </dia:attribute>
           <dia:attribute name="pos">
-            <dia:point val="49.8178,9.02858"/>
+            <dia:point val="49.8177,9.02858"/>
           </dia:attribute>
           <dia:attribute name="color">
             <dia:color val="#000000ff"/>
@@ -491,7 +493,7 @@ abstract tools and multitools
         <dia:composite type="text">
           <dia:attribute name="string">
             <dia:string>#Workflow abstraction
-[wf_abstract]#</dia:string>
+[wf_expert2]#</dia:string>
           </dia:attribute>
           <dia:attribute name="font">
             <dia:font family="sans" style="0" name="Helvetica"/>
@@ -855,19 +857,19 @@ abstract tools and multitools
     </dia:object>
     <dia:object type="Flowchart - Preparation" version="1" id="O19">
       <dia:attribute name="obj_pos">
-        <dia:point val="39.0019,36.9"/>
+        <dia:point val="38.9069,36.9"/>
       </dia:attribute>
       <dia:attribute name="obj_bb">
-        <dia:rectangle val="38.7788,36.8;56.675,39.5"/>
+        <dia:rectangle val="38.6819,36.8;56.7719,39.5"/>
       </dia:attribute>
       <dia:attribute name="meta">
         <dia:composite type="dict"/>
       </dia:attribute>
       <dia:attribute name="elem_corner">
-        <dia:point val="39.0019,36.9"/>
+        <dia:point val="38.9069,36.9"/>
       </dia:attribute>
       <dia:attribute name="elem_width">
-        <dia:real val="17.449999999999996"/>
+        <dia:real val="17.639999999999993"/>
       </dia:attribute>
       <dia:attribute name="elem_height">
         <dia:real val="2.5"/>
@@ -894,8 +896,8 @@ abstract tools and multitools
       <dia:attribute name="text">
         <dia:composite type="text">
           <dia:attribute name="string">
-            <dia:string>#transforge
-[tfm]#</dia:string>
+            <dia:string>#Produce transformations with transforge
+[transformations]#</dia:string>
           </dia:attribute>
           <dia:attribute name="font">
             <dia:font family="sans" style="0" name="Helvetica"/>
@@ -904,7 +906,7 @@ abstract tools and multitools
             <dia:real val="0.80000000000000004"/>
           </dia:attribute>
           <dia:attribute name="pos">
-            <dia:point val="47.7269,38.05"/>
+            <dia:point val="47.7269,38.07"/>
           </dia:attribute>
           <dia:attribute name="color">
             <dia:color val="#000000ff"/>
@@ -929,14 +931,14 @@ abstract tools and multitools
     </dia:object>
     <dia:object type="Standard - Line" version="0" id="O20">
       <dia:attribute name="obj_pos">
-        <dia:point val="43.8404,34.6496"/>
+        <dia:point val="43.8495,34.6496"/>
       </dia:attribute>
       <dia:attribute name="obj_bb">
-        <dia:rectangle val="43.7725,34.5817;47.9179,36.9176"/>
+        <dia:rectangle val="43.7816,34.5817;47.9383,36.9175"/>
       </dia:attribute>
       <dia:attribute name="conn_endpoints">
-        <dia:point val="43.8404,34.6496"/>
-        <dia:point val="47.85,36.8497"/>
+        <dia:point val="43.8495,34.6496"/>
+        <dia:point val="47.8704,36.8497"/>
       </dia:attribute>
       <dia:attribute name="numcp">
         <dia:int val="1"/>
@@ -957,14 +959,14 @@ abstract tools and multitools
     </dia:object>
     <dia:object type="Standard - Line" version="0" id="O21">
       <dia:attribute name="obj_pos">
-        <dia:point val="54.3021,34.8328"/>
+        <dia:point val="54.3114,34.8328"/>
       </dia:attribute>
       <dia:attribute name="obj_bb">
-        <dia:rectangle val="51.7494,34.7625;54.3724,36.9202"/>
+        <dia:rectangle val="51.7695,34.7624;54.3817,36.9202"/>
       </dia:attribute>
       <dia:attribute name="conn_endpoints">
-        <dia:point val="54.3021,34.8328"/>
-        <dia:point val="51.8197,36.8499"/>
+        <dia:point val="54.3114,34.8328"/>
+        <dia:point val="51.8399,36.8499"/>
       </dia:attribute>
       <dia:attribute name="numcp">
         <dia:int val="1"/>
@@ -1031,14 +1033,14 @@ abstract tools and multitools
     </dia:object>
     <dia:object type="Standard - Line" version="0" id="O23">
       <dia:attribute name="obj_pos">
-        <dia:point val="49.6147,39.4503"/>
+        <dia:point val="49.6351,39.4503"/>
       </dia:attribute>
       <dia:attribute name="obj_bb">
-        <dia:rectangle val="48.362,39.3839;49.6811,42.0661"/>
+        <dia:rectangle val="48.3692,39.3838;49.7017,42.0662"/>
       </dia:attribute>
       <dia:attribute name="conn_endpoints">
-        <dia:point val="49.6147,39.4503"/>
-        <dia:point val="48.4285,41.9997"/>
+        <dia:point val="49.6351,39.4503"/>
+        <dia:point val="48.4357,41.9997"/>
       </dia:attribute>
       <dia:attribute name="numcp">
         <dia:int val="1"/>
@@ -1167,7 +1169,7 @@ abstract tools and multitools
         <dia:point val="39.2906,46.9"/>
       </dia:attribute>
       <dia:attribute name="obj_bb">
-        <dia:rectangle val="39.1057,46.8;57.4481,50.3"/>
+        <dia:rectangle val="39.1056,46.8;57.4481,50.3"/>
       </dia:attribute>
       <dia:attribute name="meta">
         <dia:composite type="dict"/>
@@ -1205,7 +1207,7 @@ abstract tools and multitools
           <dia:attribute name="string">
             <dia:string>#Upload to triple store, assuming
 Fuseki is running
-[ml_upload]#</dia:string>
+[tdb_upload]#</dia:string>
           </dia:attribute>
           <dia:attribute name="font">
             <dia:font family="sans" style="0" name="Helvetica"/>
@@ -1214,7 +1216,7 @@ Fuseki is running
             <dia:real val="0.80000000000000004"/>
           </dia:attribute>
           <dia:attribute name="pos">
-            <dia:point val="48.2769,48.05"/>
+            <dia:point val="48.2768,48.07"/>
           </dia:attribute>
           <dia:attribute name="color">
             <dia:color val="#000000ff"/>
@@ -1561,7 +1563,7 @@ Fuseki is running
         <dia:point val="71.8828,10.0104"/>
       </dia:attribute>
       <dia:attribute name="obj_bb">
-        <dia:rectangle val="71.8328,9.96035;84.7078,12.7604"/>
+        <dia:rectangle val="71.8328,9.9604;84.7078,12.7604"/>
       </dia:attribute>
       <dia:attribute name="elem_corner">
         <dia:point val="71.8828,10.0104"/>
@@ -1607,7 +1609,7 @@ Fuseki is running
         <dia:point val="74.8926,14.2604"/>
       </dia:attribute>
       <dia:attribute name="obj_bb">
-        <dia:rectangle val="74.7344,14.1604;84.0562,16.4604"/>
+        <dia:rectangle val="74.7344,14.1604;84.0563,16.4604"/>
       </dia:attribute>
       <dia:attribute name="meta">
         <dia:composite type="dict"/>
@@ -1653,7 +1655,7 @@ Fuseki is running
             <dia:real val="0.80000000000000004"/>
           </dia:attribute>
           <dia:attribute name="pos">
-            <dia:point val="79.3953,15.2104"/>
+            <dia:point val="79.3954,15.2304"/>
           </dia:attribute>
           <dia:attribute name="color">
             <dia:color val="#000000ff"/>
@@ -1681,7 +1683,7 @@ Fuseki is running
         <dia:point val="31.6741,61.45"/>
       </dia:attribute>
       <dia:attribute name="obj_bb">
-        <dia:rectangle val="31.4989,61.35;45.1994,64.2"/>
+        <dia:rectangle val="31.4988,61.35;45.1994,64.2"/>
       </dia:attribute>
       <dia:attribute name="meta">
         <dia:composite type="dict"/>
@@ -1718,7 +1720,7 @@ Fuseki is running
         <dia:composite type="text">
           <dia:attribute name="string">
             <dia:string>#Fire queries (manual)
-[ml_query_expert1]#</dia:string>
+[tdb_query_expert1]#</dia:string>
           </dia:attribute>
           <dia:attribute name="font">
             <dia:font family="sans" style="0" name="Helvetica"/>
@@ -1727,7 +1729,7 @@ Fuseki is running
             <dia:real val="0.80000000000000004"/>
           </dia:attribute>
           <dia:attribute name="pos">
-            <dia:point val="38.3491,62.675"/>
+            <dia:point val="38.3491,62.695"/>
           </dia:attribute>
           <dia:attribute name="color">
             <dia:color val="#000000ff"/>
@@ -1792,7 +1794,7 @@ Fuseki is running
         <dia:composite type="text">
           <dia:attribute name="string">
             <dia:string>#Fire queries (parsed)
-[ml_query_questions]#</dia:string>
+[tdb_query_questions]#</dia:string>
           </dia:attribute>
           <dia:attribute name="font">
             <dia:font family="sans" style="0" name="Helvetica"/>
@@ -1801,7 +1803,7 @@ Fuseki is running
             <dia:real val="0.80000000000000004"/>
           </dia:attribute>
           <dia:attribute name="pos">
-            <dia:point val="78.9063,56.2083"/>
+            <dia:point val="78.9063,56.2283"/>
           </dia:attribute>
           <dia:attribute name="color">
             <dia:color val="#000000ff"/>
@@ -1901,11 +1903,11 @@ Fuseki is running
         <dia:point val="79.124,12.7587"/>
       </dia:attribute>
       <dia:attribute name="obj_bb">
-        <dia:rectangle val="79.0553,12.6899;80.0791,14.2792"/>
+        <dia:rectangle val="79.0553,12.69;80.0791,14.2793"/>
       </dia:attribute>
       <dia:attribute name="conn_endpoints">
         <dia:point val="79.124,12.7587"/>
-        <dia:point val="80.0104,14.2105"/>
+        <dia:point val="80.0104,14.2106"/>
       </dia:attribute>
       <dia:attribute name="numcp">
         <dia:int val="1"/>
@@ -2090,7 +2092,7 @@ Fuseki is running
         <dia:point val="80.5992,16.4098"/>
       </dia:attribute>
       <dia:attribute name="obj_bb">
-        <dia:rectangle val="80.1462,16.3562;80.8677,18.4136"/>
+        <dia:rectangle val="80.1461,16.3562;80.8677,18.4136"/>
       </dia:attribute>
       <dia:attribute name="conn_endpoints">
         <dia:point val="80.5992,16.4098"/>
@@ -2154,7 +2156,7 @@ Fuseki is running
         <dia:point val="71.3035,23.7604"/>
       </dia:attribute>
       <dia:attribute name="obj_bb">
-        <dia:rectangle val="71.1257,23.6604;85.3692,26.5604"/>
+        <dia:rectangle val="71.1257,23.6604;85.3693,26.5604"/>
       </dia:attribute>
       <dia:attribute name="meta">
         <dia:composite type="dict"/>
@@ -2201,7 +2203,7 @@ query transformation graphs
             <dia:real val="0.80000000000000004"/>
           </dia:attribute>
           <dia:attribute name="pos">
-            <dia:point val="78.2475,24.6104"/>
+            <dia:point val="78.2475,24.6304"/>
           </dia:attribute>
           <dia:attribute name="color">
             <dia:color val="#000000ff"/>
@@ -2262,14 +2264,14 @@ query transformation graphs
     </dia:object>
     <dia:object type="Standard - Line" version="0" id="O52">
       <dia:attribute name="obj_pos">
-        <dia:point val="80.2862,21.9598"/>
+        <dia:point val="80.2862,21.9599"/>
       </dia:attribute>
       <dia:attribute name="obj_bb">
-        <dia:rectangle val="79.9066,21.9089;80.6301,23.7612"/>
+        <dia:rectangle val="79.9066,21.909;80.6301,23.7612"/>
       </dia:attribute>
       <dia:attribute name="conn_endpoints">
-        <dia:point val="80.2862,21.9598"/>
-        <dia:point val="80.2558,23.7103"/>
+        <dia:point val="80.2862,21.9599"/>
+        <dia:point val="80.2558,23.7104"/>
       </dia:attribute>
       <dia:attribute name="numcp">
         <dia:int val="1"/>
@@ -2293,7 +2295,7 @@ query transformation graphs
         <dia:point val="81.406,26.5104"/>
       </dia:attribute>
       <dia:attribute name="obj_bb">
-        <dia:rectangle val="81.3356,26.4399;84.7574,30.4917"/>
+        <dia:rectangle val="81.3356,26.44;84.7574,30.4916"/>
       </dia:attribute>
       <dia:attribute name="conn_endpoints">
         <dia:point val="81.406,26.5104"/>
@@ -2449,7 +2451,7 @@ query transformation graphs
         <dia:point val="33.0224,57.9998"/>
       </dia:attribute>
       <dia:attribute name="obj_bb">
-        <dia:rectangle val="32.9531,57.9305;38.2422,61.469"/>
+        <dia:rectangle val="32.9531,57.9305;38.2421,61.469"/>
       </dia:attribute>
       <dia:attribute name="conn_endpoints">
         <dia:point val="33.0224,57.9998"/>
@@ -2588,11 +2590,11 @@ query transformation graphs
         <dia:point val="80.4767,57.6081"/>
       </dia:attribute>
       <dia:attribute name="obj_bb">
-        <dia:rectangle val="79.8287,57.5567;80.552,68.5021"/>
+        <dia:rectangle val="79.8286,57.5567;80.5519,68.5021"/>
       </dia:attribute>
       <dia:attribute name="conn_endpoints">
         <dia:point val="80.4767,57.6081"/>
-        <dia:point val="80.1699,68.4507"/>
+        <dia:point val="80.1698,68.4508"/>
       </dia:attribute>
       <dia:attribute name="numcp">
         <dia:int val="1"/>
@@ -2613,13 +2615,13 @@ query transformation graphs
     </dia:object>
     <dia:object type="Standard - Line" version="0" id="O63">
       <dia:attribute name="obj_pos">
-        <dia:point val="40.3166,64.1495"/>
+        <dia:point val="40.3165,64.1495"/>
       </dia:attribute>
       <dia:attribute name="obj_bb">
-        <dia:rectangle val="40.1428,64.0974;40.8657,69.2035"/>
+        <dia:rectangle val="40.1427,64.0974;40.8656,69.2036"/>
       </dia:attribute>
       <dia:attribute name="conn_endpoints">
-        <dia:point val="40.3166,64.1495"/>
+        <dia:point val="40.3165,64.1495"/>
         <dia:point val="40.5359,69.1514"/>
       </dia:attribute>
       <dia:attribute name="numcp">
@@ -2691,7 +2693,7 @@ then run APE and use transforge (sorry, monolithic step)
             <dia:real val="0.80000000000000004"/>
           </dia:attribute>
           <dia:attribute name="pos">
-            <dia:point val="70.8157,37.9972"/>
+            <dia:point val="70.8157,38.0172"/>
           </dia:attribute>
           <dia:attribute name="color">
             <dia:color val="#000000ff"/>
@@ -2723,7 +2725,7 @@ then run APE and use transforge (sorry, monolithic step)
       </dia:attribute>
       <dia:attribute name="conn_endpoints">
         <dia:point val="83.4893,33.2205"/>
-        <dia:point val="76.9158,37.0979"/>
+        <dia:point val="76.9159,37.0979"/>
       </dia:attribute>
       <dia:attribute name="numcp">
         <dia:int val="1"/>
@@ -2999,7 +3001,7 @@ then run APE and use transforge (sorry, monolithic step)
         <dia:point val="57.828,43.366"/>
       </dia:attribute>
       <dia:attribute name="obj_bb">
-        <dia:rectangle val="57.778,43.316;76.0761,46.8734"/>
+        <dia:rectangle val="57.778,43.316;76.0761,46.8733"/>
       </dia:attribute>
       <dia:attribute name="elem_corner">
         <dia:point val="57.828,43.366"/>
@@ -3029,7 +3031,7 @@ then run APE and use transforge (sorry, monolithic step)
             <dia:real val="0.80000000000000004"/>
           </dia:attribute>
           <dia:attribute name="pos">
-            <dia:point val="66.9271,44.9797"/>
+            <dia:point val="66.927,44.9797"/>
           </dia:attribute>
           <dia:attribute name="color">
             <dia:color val="#000000ff"/>
@@ -3049,7 +3051,7 @@ then run APE and use transforge (sorry, monolithic step)
       </dia:attribute>
       <dia:attribute name="conn_endpoints">
         <dia:point val="72.9273,39.8973"/>
-        <dia:point val="68.9805,43.3161"/>
+        <dia:point val="68.9804,43.316"/>
       </dia:attribute>
       <dia:attribute name="numcp">
         <dia:int val="1"/>
@@ -3070,14 +3072,14 @@ then run APE and use transforge (sorry, monolithic step)
     </dia:object>
     <dia:object type="Standard - Line" version="0" id="O75">
       <dia:attribute name="obj_pos">
-        <dia:point val="58.6482,46.8734"/>
+        <dia:point val="58.6481,46.8734"/>
       </dia:attribute>
       <dia:attribute name="obj_bb">
-        <dia:rectangle val="55.6636,46.814;58.7076,47.7036"/>
+        <dia:rectangle val="55.6636,46.814;58.7075,47.7036"/>
       </dia:attribute>
       <dia:attribute name="conn_endpoints">
-        <dia:point val="58.6482,46.8734"/>
-        <dia:point val="55.723,47.5019"/>
+        <dia:point val="58.6481,46.8734"/>
+        <dia:point val="55.723,47.5018"/>
       </dia:attribute>
       <dia:attribute name="numcp">
         <dia:int val="1"/>
@@ -3312,6 +3314,222 @@ then run APE and use transforge (sorry, monolithic step)
       </dia:attribute>
       <dia:connections>
         <dia:connection handle="0" to="O80" connection="16"/>
+      </dia:connections>
+    </dia:object>
+    <dia:object type="Standard - Text" version="1" id="O82">
+      <dia:attribute name="obj_pos">
+        <dia:point val="50.8443,48.55"/>
+      </dia:attribute>
+      <dia:attribute name="obj_bb">
+        <dia:rectangle val="50.8443,47.865;50.8443,48.74"/>
+      </dia:attribute>
+      <dia:attribute name="text">
+        <dia:composite type="text">
+          <dia:attribute name="string">
+            <dia:string>##</dia:string>
+          </dia:attribute>
+          <dia:attribute name="font">
+            <dia:font family="sans" style="0" name="Helvetica"/>
+          </dia:attribute>
+          <dia:attribute name="height">
+            <dia:real val="0.80000000000000004"/>
+          </dia:attribute>
+          <dia:attribute name="pos">
+            <dia:point val="50.8443,48.55"/>
+          </dia:attribute>
+          <dia:attribute name="color">
+            <dia:color val="#000000ff"/>
+          </dia:attribute>
+          <dia:attribute name="alignment">
+            <dia:enum val="0"/>
+          </dia:attribute>
+        </dia:composite>
+      </dia:attribute>
+      <dia:attribute name="valign">
+        <dia:enum val="3"/>
+      </dia:attribute>
+      <dia:connections>
+        <dia:connection handle="0" to="O27" connection="16"/>
+      </dia:connections>
+    </dia:object>
+    <dia:object type="Standard - Text" version="1" id="O83">
+      <dia:attribute name="obj_pos">
+        <dia:point val="40.2562,62.775"/>
+      </dia:attribute>
+      <dia:attribute name="obj_bb">
+        <dia:rectangle val="40.2562,62.09;40.2562,62.965"/>
+      </dia:attribute>
+      <dia:attribute name="text">
+        <dia:composite type="text">
+          <dia:attribute name="string">
+            <dia:string>##</dia:string>
+          </dia:attribute>
+          <dia:attribute name="font">
+            <dia:font family="sans" style="0" name="Helvetica"/>
+          </dia:attribute>
+          <dia:attribute name="height">
+            <dia:real val="0.80000000000000004"/>
+          </dia:attribute>
+          <dia:attribute name="pos">
+            <dia:point val="40.2562,62.775"/>
+          </dia:attribute>
+          <dia:attribute name="color">
+            <dia:color val="#000000ff"/>
+          </dia:attribute>
+          <dia:attribute name="alignment">
+            <dia:enum val="0"/>
+          </dia:attribute>
+        </dia:composite>
+      </dia:attribute>
+      <dia:attribute name="valign">
+        <dia:enum val="3"/>
+      </dia:attribute>
+      <dia:connections>
+        <dia:connection handle="0" to="O39" connection="16"/>
+      </dia:connections>
+    </dia:object>
+    <dia:object type="Standard - Text" version="1" id="O84">
+      <dia:attribute name="obj_pos">
+        <dia:point val="80.5134,56.3083"/>
+      </dia:attribute>
+      <dia:attribute name="obj_bb">
+        <dia:rectangle val="80.5134,55.6233;80.5134,56.4983"/>
+      </dia:attribute>
+      <dia:attribute name="text">
+        <dia:composite type="text">
+          <dia:attribute name="string">
+            <dia:string>##</dia:string>
+          </dia:attribute>
+          <dia:attribute name="font">
+            <dia:font family="sans" style="0" name="Helvetica"/>
+          </dia:attribute>
+          <dia:attribute name="height">
+            <dia:real val="0.80000000000000004"/>
+          </dia:attribute>
+          <dia:attribute name="pos">
+            <dia:point val="80.5134,56.3083"/>
+          </dia:attribute>
+          <dia:attribute name="color">
+            <dia:color val="#000000ff"/>
+          </dia:attribute>
+          <dia:attribute name="alignment">
+            <dia:enum val="0"/>
+          </dia:attribute>
+        </dia:composite>
+      </dia:attribute>
+      <dia:attribute name="valign">
+        <dia:enum val="3"/>
+      </dia:attribute>
+      <dia:connections>
+        <dia:connection handle="0" to="O40" connection="16"/>
+      </dia:connections>
+    </dia:object>
+    <dia:object type="Standard - Text" version="1" id="O85">
+      <dia:attribute name="obj_pos">
+        <dia:point val="36.9933,25.9631"/>
+      </dia:attribute>
+      <dia:attribute name="obj_bb">
+        <dia:rectangle val="36.9933,25.2781;36.9933,26.1531"/>
+      </dia:attribute>
+      <dia:attribute name="text">
+        <dia:composite type="text">
+          <dia:attribute name="string">
+            <dia:string>##</dia:string>
+          </dia:attribute>
+          <dia:attribute name="font">
+            <dia:font family="sans" style="0" name="Helvetica"/>
+          </dia:attribute>
+          <dia:attribute name="height">
+            <dia:real val="0.80000000000000004"/>
+          </dia:attribute>
+          <dia:attribute name="pos">
+            <dia:point val="36.9933,25.9631"/>
+          </dia:attribute>
+          <dia:attribute name="color">
+            <dia:color val="#000000ff"/>
+          </dia:attribute>
+          <dia:attribute name="alignment">
+            <dia:enum val="0"/>
+          </dia:attribute>
+        </dia:composite>
+      </dia:attribute>
+      <dia:attribute name="valign">
+        <dia:enum val="3"/>
+      </dia:attribute>
+      <dia:connections>
+        <dia:connection handle="0" to="O8" connection="16"/>
+      </dia:connections>
+    </dia:object>
+    <dia:object type="Standard - Text" version="1" id="O86">
+      <dia:attribute name="obj_pos">
+        <dia:point val="50.2469,38.15"/>
+      </dia:attribute>
+      <dia:attribute name="obj_bb">
+        <dia:rectangle val="50.2469,37.465;50.2469,38.34"/>
+      </dia:attribute>
+      <dia:attribute name="text">
+        <dia:composite type="text">
+          <dia:attribute name="string">
+            <dia:string>##</dia:string>
+          </dia:attribute>
+          <dia:attribute name="font">
+            <dia:font family="sans" style="0" name="Helvetica"/>
+          </dia:attribute>
+          <dia:attribute name="height">
+            <dia:real val="0.80000000000000004"/>
+          </dia:attribute>
+          <dia:attribute name="pos">
+            <dia:point val="50.2469,38.15"/>
+          </dia:attribute>
+          <dia:attribute name="color">
+            <dia:color val="#000000ff"/>
+          </dia:attribute>
+          <dia:attribute name="alignment">
+            <dia:enum val="0"/>
+          </dia:attribute>
+        </dia:composite>
+      </dia:attribute>
+      <dia:attribute name="valign">
+        <dia:enum val="3"/>
+      </dia:attribute>
+      <dia:connections>
+        <dia:connection handle="0" to="O19" connection="16"/>
+      </dia:connections>
+    </dia:object>
+    <dia:object type="Standard - Text" version="1" id="O87">
+      <dia:attribute name="obj_pos">
+        <dia:point val="47.6268,20.7132"/>
+      </dia:attribute>
+      <dia:attribute name="obj_bb">
+        <dia:rectangle val="47.6268,20.0282;47.6268,20.9032"/>
+      </dia:attribute>
+      <dia:attribute name="text">
+        <dia:composite type="text">
+          <dia:attribute name="string">
+            <dia:string>##</dia:string>
+          </dia:attribute>
+          <dia:attribute name="font">
+            <dia:font family="sans" style="0" name="Helvetica"/>
+          </dia:attribute>
+          <dia:attribute name="height">
+            <dia:real val="0.80000000000000004"/>
+          </dia:attribute>
+          <dia:attribute name="pos">
+            <dia:point val="47.6268,20.7132"/>
+          </dia:attribute>
+          <dia:attribute name="color">
+            <dia:color val="#000000ff"/>
+          </dia:attribute>
+          <dia:attribute name="alignment">
+            <dia:enum val="0"/>
+          </dia:attribute>
+        </dia:composite>
+      </dia:attribute>
+      <dia:attribute name="valign">
+        <dia:enum val="3"/>
+      </dia:attribute>
+      <dia:connections>
+        <dia:connection handle="0" to="O5" connection="16"/>
       </dia:connections>
     </dia:object>
   </dia:layer>

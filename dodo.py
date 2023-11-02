@@ -154,8 +154,8 @@ def task_tfm():
             targets=[destdir / f"{path.stem}.ttl"],
             actions=[(mkdir, [destdir]), action])
 
-def task_ml_upload_cct():
-    """Upload CCT types to MarkLogic."""
+def task_tdb_upload_cct():
+    """Upload CCT types to triple store."""
     def action(dependencies):
         from quangis.cct import cct, CCT
         from rdflib import URIRef
@@ -173,8 +173,8 @@ def task_ml_upload_cct():
     )
 
 
-def task_ml_upload():
-    """Send known transformation graphs to MarkLogic."""
+def task_tdb_upload():
+    """Send known transformation graphs to triple store."""
 
     # No dependencies because we just want to send any transformation graph 
     # that is generated; not force generation first
@@ -201,7 +201,7 @@ def task_ml_upload():
                 sys.stderr.write(f"Uploaded with {str(result)}...\n")
 
     return dict(
-        task_dep=["ml_upload_cct"],
+        task_dep=["tdb_upload_cct"],
         file_dep=[],
         actions=[action],
         uptodate=[False],
@@ -244,7 +244,7 @@ def task_viz_pdf():
             targets=[destdir / f"{path.stem}.pdf"],
             actions=[(mkdir, [destdir]), action])
 
-def task_ml_query_expert1():
+def task_tdb_query_expert1():
     """Evaluate expert1 workflows' transformations against tasks.
     For this, graphs are sent to the triple store and then queried."""
 
@@ -267,7 +267,7 @@ def task_ml_query_expert1():
     for variant in variants():
         yield dict(
             name=variant[0],
-            task_dep=["ml_upload_cct"],
+            task_dep=["tdb_upload_cct"],
             file_dep=TASKS + WORKFLOWS + [BUILD / "tools" / "abstract.ttl"],
             targets=[destdir / f"{variant}.csv"],
             actions=[(mkdir, [destdir]), (action, variant)],
@@ -752,8 +752,8 @@ def task_wf_gen_question():
         )
 
 
-def task_ml_query_questions():
-    """Send queries to MarkLogic."""
+def task_tdb_query_questions():
+    """Send queries to triple store."""
 
     def action(dependencies, targets):
         from rdflib import Graph, Literal
@@ -784,7 +784,7 @@ def task_ml_query_questions():
         )
 
 
-def task_ml_query_questions_intersection():
+def task_tdb_query_questions_intersection():
     """For generated workflows, we want to find those workflows that were 
     *both* generated *for* the question and that match the transformation graph 
     *of* the question."""
