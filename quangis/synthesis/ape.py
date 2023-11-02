@@ -34,7 +34,7 @@ def start_ape(version="1.1.12") -> None:
     path = cache_dir / name
     if not path.exists():
         print(f"{path} not found; now downloading from {url}", file=sys.stderr)
-        cache_dir.mkdir(exist_ok=True)
+        cache_dir.mkdir(exist_ok=True, parents=True)
         urllib.request.urlretrieve(url, filename=path)
 
     # Start it
