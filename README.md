@@ -95,7 +95,7 @@ have been annotated in such a way that abstract tools can be *extracted*
 from them. The updated tool repository[^1] can be produced at 
 `build/tools/` via:
 
-    doit tool_repo_update
+    doit toolset_update
 
 [^1]: Currently, there are quite a few issues with workflow abstraction, 
     leading to both duplication and needless differentiation. The 
@@ -124,7 +124,7 @@ input/output data configurations, as specified in
 [`data/ioconfig.ttl`](data/ioconfig.ttl). To perform this step and 
 obtain workflows at `build/workflows/generated/`, run:
 
-    doit wf_generate
+    doit wf_gen
 
 
 ### Workflow variants
@@ -133,7 +133,7 @@ An alternative approach is to generate variants of workflows based on
 the input/output types found in expert workflows that we already have. 
 This experiment is not fully fleshed-out, but can be run with:
 
-    doit wf_generate_variants
+    doit wf_gen_variants
 
 
 ### From questions
